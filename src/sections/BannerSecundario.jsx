@@ -5,7 +5,7 @@ const slides = [
     id: 1,
     image: 'https://images.unsplash.com/photo-1550345332-09e3ac987658?w=1400&q=80',
     position: 'center',
-    tag: 'Temporada 2025',
+    tag: 'Temporada 2026',
     numero: '01',
     headline: ['Colección', 'Primavera.'],
     sub: 'Piezas diseñadas para mujeres que no se detienen.',

@@ -141,7 +141,7 @@ export default function Footer() {
 
           {/* Copyright */}
           <p style={{ letterSpacing: '0.1em' }} className="text-[10px] font-light text-stone-600">
-            © 2025 PAVOA. TODOS LOS DERECHOS RESERVADOS.
+            © 2026 PAVOA. TODOS LOS DERECHOS RESERVADOS.
           </p>
 
           {/* Medios de pago en texto */}
