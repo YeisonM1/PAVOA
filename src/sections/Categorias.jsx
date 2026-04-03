@@ -92,7 +92,7 @@ export default function Categorias() {
           style={{ fontFamily: 'var(--font-primary)' }}
           className="text-sm md:text-[15px] font-semibold text-stone-900 tracking-[0.25em] uppercase"
         >
-          Comprar por Categoría
+          DISEÑADO PARA TI
         </h2>
         <a
           href="#catalogo"
