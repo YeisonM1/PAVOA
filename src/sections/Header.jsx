@@ -1,8 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
-import { Menu, User, ShoppingBag, X, ChevronDown, Search } from 'lucide-react';
-import logo from '../assets/LOGO PAVOA.png';
+import { Menu, User, ShoppingBag, X, Search } from 'lucide-react';
+import logo from '../assets/LOGO-PAVOA.svg';
 
-// Íconos SVG minimalistas de Instagram y Facebook
 const InstagramIcon = () => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
     <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
@@ -17,62 +16,83 @@ const FacebookIcon = () => (
   </svg>
 );
 
-const catalogoItems = [
-  {
-    label: 'Nueva Colección',
-    desc: 'Lo más reciente de PAVOA',
-    href: '#nueva-coleccion',
-  },
-  {
-    label: 'Vestidos',
-    desc: 'Elegancia en cada ocasión',
-    href: '#vestidos',
-  },
-  {
-    label: 'Accesorios',
-    desc: 'Los detalles que marcan la diferencia',
-    href: '#accesorios',
-  },
+const mujerItems = [
+  'Camisetas', 'Tops Deportivos', 'Sets', 'Buzos', 'Chaquetas',
+  'Licras', 'Shorts', 'Faldas', 'Vestidos', 'Sudaderas',
+  'Bikers', 'Accesorios', 'Pantalonetas',
 ];
 
+const hombreItems = [
+  'Pantalonetas', 'Camisetas', 'Buzos', 'Joggers',
+];
+
+const categoryImages = {
+  'Camisetas':        'https://images.unsplash.com/photo-1523381210434-271e8be1f52b?w=800&q=80',
+  'Tops Deportivos':  'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=800&q=80',
+  'Sets':             'https://images.unsplash.com/photo-1506629082955-511b1aa562c8?w=800&q=80',
+  'Buzos':            'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=800&q=80',
+  'Chaquetas':        'https://images.unsplash.com/photo-1551232864-3f0890e580d9?w=800&q=80',
+  'Licras':           'https://images.unsplash.com/photo-1538805060514-97d9cc17730c?w=800&q=80',
+  'Shorts':           'https://images.unsplash.com/photo-1562157873-818bc0726f68?w=800&q=80',
+  'Faldas':           'https://images.unsplash.com/photo-1583496661160-fb5886a0aaaa?w=800&q=80',
+  'Vestidos':         'https://images.unsplash.com/photo-1496747611176-843222e1e57c?w=800&q=80',
+  'Sudaderas':        'https://images.unsplash.com/photo-1556821840-3a63f15732ce?w=800&q=80',
+  'Bikers':           'https://images.unsplash.com/photo-1571945153237-4929e783af4a?w=800&q=80',
+  'Accesorios':       'https://images.unsplash.com/photo-1611085583191-a3b181a88401?w=800&q=80',
+  'Pantalonetas':     'https://images.unsplash.com/photo-1591195853828-11db59a44f43?w=800&q=80',
+  'Joggers':          'https://images.unsplash.com/photo-1552902865-b72c031ac5ea?w=800&q=80',
+};
+
+const defaultImage = 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=800&q=80';
+
 const Header = () => {
-  const [isScrolled, setIsScrolled] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [catalogoOpen, setCatalogoOpen] = useState(false);
-  const catalogoRef = useRef(null);
+  const [isScrolled, setIsScrolled]                 = useState(false);
+  const [menuOpen, setMenuOpen]                     = useState(false);
+  const [catalogoOpen, setCatalogoOpen]             = useState(false);
+  const [mobileCatalogoOpen, setMobileCatalogoOpen] = useState(false);
+  const [hoveredItem, setHoveredItem]               = useState(null);
+  const megaRef = useRef(null);
 
   useEffect(() => {
-    const handleScroll = () => setIsScrolled(window.scrollY > 20);
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    const onScroll = () => setIsScrolled(window.scrollY > 20);
+    window.addEventListener('scroll', onScroll);
+    return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
-  // Cierra el dropdown si se hace click afuera
   useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (catalogoRef.current && !catalogoRef.current.contains(e.target)) {
+    const onClickOutside = (e) => {
+      if (megaRef.current && !megaRef.current.contains(e.target)) {
         setCatalogoOpen(false);
       }
     };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener('mousedown', onClickOutside);
+    return () => document.removeEventListener('mousedown', onClickOutside);
   }, []);
+
+  useEffect(() => {
+    document.body.style.overflow = menuOpen ? 'hidden' : '';
+    return () => { document.body.style.overflow = ''; };
+  }, [menuOpen]);
+
+  const catLink = (item) => `#${item.toLowerCase().replace(/\s/g, '-')}`;
+  const activeImage = hoveredItem ? (categoryImages[hoveredItem] || defaultImage) : defaultImage;
 
   return (
     <>
+      {/* ── HEADER ── */}
       <header
-        style={{ fontFamily: 'Montserrat, sans-serif' }}
         className={`fixed top-0 left-0 w-full z-50 transition-all duration-500 border-b ${
-          isScrolled
-            ? 'bg-white/98 border-stone-200 py-3 shadow-sm'
-            : 'bg-white/90 border-transparent py-5'
+          isScrolled ? 'border-stone-200 py-3 shadow-sm' : 'border-transparent py-5'
         } backdrop-blur-md`}
+        style={{
+          fontFamily: 'var(--font-primary)',
+          background: isScrolled ? 'rgba(242,228,225,0.98)' : 'rgba(242,228,225,0.92)',
+        }}
       >
         <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
 
-          {/* IZQUIERDA: Navegación */}
+          {/* IZQUIERDA */}
           <div className="flex-1 flex items-center">
-            {/* Botón menú mobile */}
             <button
               className="md:hidden text-stone-800 mr-4 hover:text-stone-500 transition-colors"
               onClick={() => setMenuOpen(!menuOpen)}
@@ -83,124 +103,292 @@ const Header = () => {
             <nav className="hidden md:flex items-center gap-8 text-[12px] font-medium tracking-[0.2em] text-stone-900">
               <a href="#inicio" className="hover:text-stone-900 transition-colors relative group">
                 INICIO
-                <span className="absolute -bottom-1 left-0 w-0 h-[1px] bg-stone-900 transition-all duration-300 group-hover:w-full" />
+                <span className="absolute -bottom-1 left-0 w-0 h-[1px] transition-all duration-300 group-hover:w-full"
+                  style={{ background: 'var(--color-gold)' }} />
               </a>
 
-              {/* CATÁLOGO con dropdown */}
-              <div className="relative" ref={catalogoRef}>
+              {/* CATÁLOGO trigger */}
+              <div className="relative" ref={megaRef}>
                 <button
-                  onClick={() => setCatalogoOpen(!catalogoOpen)}
-                  className="flex items-center gap-1 hover:text-stone-900 transition-colors relative group"
+                  onClick={() => setCatalogoOpen(v => !v)}
+                  className="flex items-center gap-1.5"
+                  style={{
+                    fontFamily: 'var(--font-primary)',
+                    fontSize: '12px',
+                    fontWeight: 500,
+                    letterSpacing: '0.2em',
+                    color: 'var(--color-black)',
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    padding: 0,
+                  }}
                 >
-                  CATÁLOGO
-                  <ChevronDown
-                    size={12}
-                    strokeWidth={2}
-                    className={`transition-transform duration-300 ${catalogoOpen ? 'rotate-180' : ''}`}
-                  />
-                  <span className="absolute -bottom-1 left-0 w-0 h-[1px] bg-stone-900 transition-all duration-300 group-hover:w-full" />
+                  <span style={{ position: 'relative', paddingBottom: 2 }}>
+                    CATÁLOGO
+                    <span style={{
+                      position: 'absolute', bottom: 0, left: 0,
+                      height: 1,
+                      width: catalogoOpen ? '100%' : '0%',
+                      background: 'var(--color-gold)',
+                      transition: 'width 0.3s ease',
+                    }} />
+                  </span>
+                  <span style={{
+                    display: 'inline-block', width: 7, height: 7,
+                    borderRight: '1.5px solid var(--color-black)',
+                    borderBottom: '1.5px solid var(--color-black)',
+                    transform: catalogoOpen ? 'rotate(-135deg)' : 'rotate(45deg)',
+                    marginTop: catalogoOpen ? '3px' : '-2px',
+                    transition: 'transform 0.3s ease, margin-top 0.3s ease',
+                  }} />
                 </button>
-
-                {/* Dropdown */}
-                <div
-                  className={`absolute top-full left-1/2 -translate-x-1/2 mt-4 w-64 bg-white border border-stone-100 shadow-xl transition-all duration-300 ${
-                    catalogoOpen
-                      ? 'opacity-100 translate-y-0 pointer-events-auto'
-                      : 'opacity-0 -translate-y-2 pointer-events-none'
-                  }`}
-                >
-                  {/* Línea decorativa superior */}
-                  <div className="h-[2px] bg-stone-900 w-full" />
-                  <div className="py-2">
-                    {catalogoItems.map((item, i) => (
-                      <a
-                        key={i}
-                        href={item.href}
-                        onClick={() => setCatalogoOpen(false)}
-                        className="flex flex-col px-6 py-4 hover:bg-stone-50 transition-colors group/item border-b border-stone-50 last:border-none"
-                      >
-                        <span className="text-[11px] font-semibold tracking-[0.15em] text-stone-800 group-hover/item:text-stone-900 transition-colors">
-                          {item.label.toUpperCase()}
-                        </span>
-                        <span className="text-[10px] tracking-wide text-stone-400 mt-0.5 font-light">
-                          {item.desc}
-                        </span>
-                      </a>
-                    ))}
-                  </div>
-                </div>
               </div>
 
               <a href="#contacto" className="hover:text-stone-900 transition-colors relative group">
                 CONTACTO
-                <span className="absolute -bottom-1 left-0 w-0 h-[1px] bg-stone-900 transition-all duration-300 group-hover:w-full" />
+                <span className="absolute -bottom-1 left-0 w-0 h-[1px] transition-all duration-300 group-hover:w-full"
+                  style={{ background: 'var(--color-gold)' }} />
               </a>
             </nav>
           </div>
 
           {/* CENTRO: Logo */}
           <div className="flex-1 flex justify-center">
-            <a href="/">
-              <img src={logo} alt="PAVOA" className="h-11 md:h-14 w-auto object-contain" />
-            </a>
+            <a href="/"><img src={logo} alt="PAVOA" className="h-11 md:h-14 w-auto object-contain" /></a>
           </div>
 
-          {/* DERECHA: Social e íconos */}
+          {/* DERECHA */}
           <div className="flex-1 flex items-center justify-end gap-5 text-stone-900">
             <div className="hidden sm:flex items-center gap-4">
-              <a href="#" className="hover:text-stone-900 transition-colors">
-                <InstagramIcon />
-              </a>
-              <a href="#" className="hover:text-stone-900 transition-colors">
-                <FacebookIcon />
-              </a>
+              <a href="#" className="hover:text-stone-900 transition-colors"><InstagramIcon /></a>
+              <a href="#" className="hover:text-stone-900 transition-colors"><FacebookIcon /></a>
             </div>
-
             <div className="w-[1px] h-4 bg-stone-200 hidden sm:block" />
-
-            <button className="hover:text-stone-900 transition-colors">
-                <Search size={20} strokeWidth={1.8} />
-            </button>
-
-            <button className="hover:text-stone-900 transition-colors">
-              <User size={20} strokeWidth={1.8} />
-            </button>
-
+            <button className="hover:text-stone-900 transition-colors"><Search size={20} strokeWidth={1.8} /></button>
+            <button className="hover:text-stone-900 transition-colors"><User size={20} strokeWidth={1.8} /></button>
             <button className="hover:text-stone-900 transition-colors relative">
               <ShoppingBag size={20} strokeWidth={1.8} />
               <span className="absolute -top-1 -right-1 flex h-2 w-2">
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-stone-800" />
+                <span className="relative inline-flex rounded-full h-2 w-2" style={{ background: 'var(--color-black)' }} />
               </span>
             </button>
           </div>
         </div>
       </header>
 
-      {/* Menú móvil */}
+      {/* ── MEGA MENÚ DESKTOP FULL WIDTH ── */}
       <div
-        style={{ fontFamily: 'Montserrat, sans-serif' }}
-        className={`fixed inset-0 z-40 bg-white transition-all duration-500 flex flex-col pt-24 px-8 ${
+        style={{
+          position: 'fixed',
+          left: 0, right: 0,
+          top: isScrolled ? '52px' : '68px',
+          zIndex: 49,
+          fontFamily: 'var(--font-primary)',
+          background: 'var(--color-bg)',
+          borderTop: '1px solid var(--color-gold)',
+          borderBottom: '1px solid var(--color-border)',
+          overflow: 'hidden',
+          maxHeight: catalogoOpen ? '600px' : '0px',
+          opacity: catalogoOpen ? 1 : 0,
+          transition: 'max-height 0.45s cubic-bezier(0.4,0,0.2,1), opacity 0.3s ease, top 0.5s ease',
+          pointerEvents: catalogoOpen ? 'auto' : 'none',
+          boxShadow: catalogoOpen ? '0 8px 40px rgba(11,11,11,0.08)' : 'none',
+        }}
+      >
+        <div style={{
+          maxWidth: 1280, margin: '0 auto',
+          padding: '44px 64px',
+          display: 'grid',
+          gridTemplateColumns: '1fr 1px 1fr 1px 1.2fr',
+          alignItems: 'start',
+        }}>
+
+          {/* ── COLUMNA MUJER ── */}
+          <div style={{ paddingRight: 48 }}>
+            <p style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.32em', color: 'var(--color-gold)', marginBottom: 24 }}>
+              MUJER
+            </p>
+            <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 0 }}>
+              {mujerItems.map((item, i) => (
+                <li key={item}>
+                  <a
+                    href={catLink(item)}
+                    onClick={() => setCatalogoOpen(false)}
+                    onMouseEnter={() => setHoveredItem(item)}
+                    onMouseLeave={() => setHoveredItem(null)}
+                    style={{ display: 'flex', alignItems: 'baseline', gap: 12, padding: '7px 0', textDecoration: 'none', position: 'relative', transition: 'all 0.2s ease' }}
+                  >
+                    <span style={{
+                      fontSize: 8, fontWeight: 600, letterSpacing: '0.1em',
+                      color: hoveredItem === item ? 'var(--color-gold)' : '#c8bfb4',
+                      minWidth: 16, transition: 'color 0.2s ease', userSelect: 'none',
+                    }}>
+                      {String(i + 1).padStart(2, '0')}
+                    </span>
+                    <span style={{
+                      fontSize: 10.5, fontWeight: 500, letterSpacing: '0.18em',
+                      color: hoveredItem === item ? 'var(--color-black)' : 'var(--color-charcoal)',
+                      transition: 'color 0.2s ease', position: 'relative',
+                    }}>
+                      {item.toUpperCase()}
+                      <span style={{
+                        position: 'absolute', bottom: -1, left: 0, height: 1,
+                        width: hoveredItem === item ? '100%' : '0%',
+                        background: 'var(--color-gold)', transition: 'width 0.3s ease',
+                      }} />
+                    </span>
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Separador 1 */}
+          <div style={{ background: 'var(--color-gold)', alignSelf: 'stretch' }} />
+
+          {/* ── COLUMNA HOMBRE ── */}
+          <div style={{ paddingLeft: 48, paddingRight: 48 }}>
+            <p style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.32em', color: 'var(--color-gold)', marginBottom: 24 }}>
+              HOMBRE
+            </p>
+            <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 0 }}>
+              {hombreItems.map((item, i) => (
+                <li key={item}>
+                  <a
+                    href={catLink(item)}
+                    onClick={() => setCatalogoOpen(false)}
+                    onMouseEnter={() => setHoveredItem(item)}
+                    onMouseLeave={() => setHoveredItem(null)}
+                    style={{ display: 'flex', alignItems: 'baseline', gap: 12, padding: '7px 0', textDecoration: 'none', position: 'relative', transition: 'all 0.2s ease' }}
+                  >
+                    <span style={{
+                      fontSize: 8, fontWeight: 600, letterSpacing: '0.1em',
+                      color: hoveredItem === item ? 'var(--color-gold)' : '#c8bfb4',
+                      minWidth: 16, transition: 'color 0.2s ease', userSelect: 'none',
+                    }}>
+                      {String(i + 1).padStart(2, '0')}
+                    </span>
+                    <span style={{
+                      fontSize: 10.5, fontWeight: 500, letterSpacing: '0.18em',
+                      color: hoveredItem === item ? 'var(--color-black)' : 'var(--color-charcoal)',
+                      transition: 'color 0.2s ease', position: 'relative',
+                    }}>
+                      {item.toUpperCase()}
+                      <span style={{
+                        position: 'absolute', bottom: -1, left: 0, height: 1,
+                        width: hoveredItem === item ? '100%' : '0%',
+                        background: 'var(--color-gold)', transition: 'width 0.3s ease',
+                      }} />
+                    </span>
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Separador 2 */}
+          <div style={{ background: 'var(--color-gold)', alignSelf: 'stretch' }} />
+
+          {/* ── COLUMNA VISUAL DINÁMICA ── */}
+          <div style={{ paddingLeft: 48, position: 'relative', height: 420 }}>
+            <div style={{
+              position: 'absolute', inset: 0,
+              backgroundImage: `url(${activeImage})`,
+              backgroundSize: 'cover', backgroundPosition: 'center top',
+              transition: 'opacity 0.4s ease', opacity: 0.88,
+            }} />
+            <div style={{
+              position: 'absolute', inset: 0,
+              background: 'linear-gradient(to top, rgba(242,228,225,0.92) 0%, rgba(242,228,225,0.2) 60%, transparent 100%)',
+            }} />
+            <div style={{ position: 'absolute', bottom: 28, left: 28, right: 16 }}>
+              {hoveredItem ? (
+                <>
+                  <p style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.28em', color: 'var(--color-gold)', marginBottom: 8 }}>
+                    VER COLECCIÓN →
+                  </p>
+                  <p style={{ fontSize: 22, fontWeight: 300, letterSpacing: '0.18em', color: 'var(--color-black)', lineHeight: 1.2, textTransform: 'uppercase' }}>
+                    {hoveredItem}
+                  </p>
+                  <div style={{ marginTop: 10, height: 1, width: 48, background: 'var(--color-gold)' }} />
+                </>
+              ) : (
+                <p style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.32em', color: 'var(--color-gold)' }}>
+                  PAVOA — NUEVA COLECCIÓN
+                </p>
+              )}
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      {/* ── MENÚ MÓVIL ── */}
+      <div
+        style={{ fontFamily: 'var(--font-primary)', background: 'var(--color-bg)' }}
+        className={`fixed inset-0 z-40 transition-all duration-500 flex flex-col pt-24 px-8 overflow-y-auto ${
           menuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
         }`}
       >
-        <nav className="flex flex-col gap-6 text-[13px] font-medium tracking-[0.2em] text-stone-900">
-          <a href="#inicio" onClick={() => setMenuOpen(false)} className="hover:text-stone-900 transition-colors border-b border-stone-100 pb-4">INICIO</a>
-          <div className="border-b border-stone-100 pb-4">
-            <p className="mb-3 text-stone-800">CATÁLOGO</p>
-            <div className="flex flex-col gap-3 pl-4">
-              {catalogoItems.map((item, i) => (
-                <a key={i} href={item.href} onClick={() => setMenuOpen(false)} className="text-stone-400 hover:text-stone-900 transition-colors text-[11px]">
-                  {item.label.toUpperCase()}
+        <nav className="flex flex-col text-[13px] font-medium tracking-[0.2em] text-stone-900">
+          <a href="#inicio" onClick={() => setMenuOpen(false)}
+            className="hover:text-stone-900 transition-colors border-b border-stone-100 py-4">
+            INICIO
+          </a>
+
+          <div className="border-b border-stone-100">
+            <button
+              onClick={() => setMobileCatalogoOpen(v => !v)}
+              className="w-full flex justify-between items-center py-4 text-stone-800 text-left"
+              style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'var(--font-primary)', fontSize: 13, fontWeight: 500, letterSpacing: '0.2em' }}
+            >
+              CATÁLOGO
+              <span style={{
+                display: 'inline-block', width: 7, height: 7,
+                borderRight: '1.5px solid var(--color-black)',
+                borderBottom: '1.5px solid var(--color-black)',
+                transform: mobileCatalogoOpen ? 'rotate(-135deg)' : 'rotate(45deg)',
+                marginTop: mobileCatalogoOpen ? '3px' : '-2px',
+                transition: 'transform 0.3s ease, margin-top 0.3s ease',
+              }} />
+            </button>
+
+            <div style={{
+              overflow: 'hidden',
+              maxHeight: mobileCatalogoOpen ? '600px' : '0px',
+              transition: 'max-height 0.4s cubic-bezier(0.4,0,0.2,1)',
+            }}>
+              <p style={{ fontSize: 8.5, fontWeight: 600, letterSpacing: '0.28em', color: 'var(--color-gold)', padding: '14px 16px 8px' }}>MUJER</p>
+              {mujerItems.map((item, i) => (
+                <a key={item} href={catLink(item)} onClick={() => setMenuOpen(false)}
+                  style={{ display: 'flex', alignItems: 'baseline', gap: 10, fontSize: 11, fontWeight: 500, letterSpacing: '0.15em', color: 'var(--color-charcoal)', textDecoration: 'none', padding: '8px 16px' }}>
+                  <span style={{ fontSize: 7.5, color: 'var(--color-gold)', minWidth: 14 }}>{String(i + 1).padStart(2, '0')}</span>
+                  {item.toUpperCase()}
                 </a>
               ))}
+
+              <p style={{ fontSize: 8.5, fontWeight: 600, letterSpacing: '0.28em', color: 'var(--color-gold)', padding: '18px 16px 8px' }}>HOMBRE</p>
+              {hombreItems.map((item, i) => (
+                <a key={item} href={catLink(item)} onClick={() => setMenuOpen(false)}
+                  style={{ display: 'flex', alignItems: 'baseline', gap: 10, fontSize: 11, fontWeight: 500, letterSpacing: '0.15em', color: 'var(--color-charcoal)', textDecoration: 'none', padding: '8px 16px' }}>
+                  <span style={{ fontSize: 7.5, color: 'var(--color-gold)', minWidth: 14 }}>{String(i + 1).padStart(2, '0')}</span>
+                  {item.toUpperCase()}
+                </a>
+              ))}
+              <div style={{ height: 16 }} />
             </div>
           </div>
-          <a href="#contacto" onClick={() => setMenuOpen(false)} className="hover:text-stone-900 transition-colors border-b border-stone-100 pb-4">CONTACTO</a>
+
+          <a href="#contacto" onClick={() => setMenuOpen(false)}
+            className="hover:text-stone-900 transition-colors border-b border-stone-100 py-4">
+            CONTACTO
+          </a>
         </nav>
 
-        <div className="flex items-center gap-5 mt-8 text-stone-400">
-          <a href="#"><InstagramIcon /></a>
-          <a href="#"><FacebookIcon /></a>
+        <div className="flex items-center gap-5 mt-8" style={{ color: 'var(--color-charcoal)' }}>
+          <a href="#" style={{ color: 'var(--color-charcoal)' }}><InstagramIcon /></a>
+          <a href="#" style={{ color: 'var(--color-charcoal)' }}><FacebookIcon /></a>
         </div>
       </div>
     </>
