@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { Plus, Minus } from 'lucide-react';
 import { CartContext } from '../App';
 import { productosDB } from '../data/db'; // Conectamos nuestra base de datos
+import CrossSelling from '../sections/CrossSelling';
 
 export default function ProductPage() {
   const { id } = useParams();
@@ -157,6 +158,7 @@ export default function ProductPage() {
           </div>
         </div>
       </div>
+      <CrossSelling currentProductId={producto.id} />
     </div>
   );
 }

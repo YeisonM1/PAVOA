@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import logo from '../assets/LOGO-PAVOA.svg';
 import { CartContext } from '../App'; // ── NUEVO: Importamos el contexto
 import CartDrawer from './CartDrawer';
+import SearchOverlay from './SearchOverlay';
 
 const InstagramIcon = () => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -52,6 +53,7 @@ const Header = () => {
   // ── NUEVO: Extraemos datos del carrito ──
   const { cartCount, isCartAnimating } = useContext(CartContext);
   const [cartOpen, setCartOpen] = useState(false); // Estado para abrir/cerrar el panel
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
 
   const [isScrolled, setIsScrolled]                 = useState(false);
   const [menuOpen, setMenuOpen]                     = useState(false);
@@ -220,7 +222,9 @@ const Header = () => {
               <a href="#" className="hover:text-stone-900 transition-colors"><FacebookIcon /></a>
             </div>
             <div className="w-[1px] h-4 bg-stone-200 hidden sm:block" />
-            <button className="hover:text-stone-900 transition-colors"><Search size={20} strokeWidth={1.8} /></button>
+            <button onClick={() => setIsSearchOpen(true)} className="hover:text-stone-900 transition-colors">
+              <Search size={20} strokeWidth={1.8} />
+            </button>
             <button className="hover:text-stone-900 transition-colors"><User size={20} strokeWidth={1.8} /></button>
             
             {/* ── MODIFICADO: Botón del Carrito con Evento onClick ── */}
@@ -466,9 +470,10 @@ const Header = () => {
           )}
         </div>
       </div>
-      
+
       {/* ── IMPORTAMOS EL COMPONENTE DEL CARRITO ── */}
       <CartDrawer cartOpen={cartOpen} setCartOpen={setCartOpen} />
+      <SearchOverlay isSearchOpen={isSearchOpen} setIsSearchOpen={setIsSearchOpen} />
     </>
   );
 };
