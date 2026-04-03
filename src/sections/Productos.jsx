@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 const productos = [
   {
@@ -36,8 +36,12 @@ const productos = [
 ];
 
 function ProductCard({ producto }) {
+  // Estado exclusivo para controlar el panel de tallas en móvil (Táctil)
+  const [showMobileSizes, setShowMobileSizes] = useState(false);
+
   return (
-    <div className="group cursor-pointer flex flex-col gap-4">
+    <div className="group cursor-pointer flex flex-col gap-4 w-[75vw] sm:w-[45vw] md:w-full flex-shrink-0 snap-center relative">
+      
       {/* ── CONTENEDOR DE IMAGEN Y QUICK SHOP ── */}
       <div className="relative overflow-hidden bg-stone-100" style={{ aspectRatio: '3/4' }}>
         
@@ -51,31 +55,51 @@ function ProductCard({ producto }) {
           </span>
         )}
 
-        {/* Imagen principal (Con zoom sutil) */}
+        {/* Imagen principal (Con zoom sutil en desktop hover) */}
         <img
           src={producto.imagen1}
           alt={producto.nombre}
-          className="absolute inset-0 w-full h-full object-cover transition-all duration-[800ms] ease-[cubic-bezier(0.25,1,0.5,1)] group-hover:scale-105"
+          className="absolute inset-0 w-full h-full object-cover transition-all duration-[800ms] ease-[cubic-bezier(0.25,1,0.5,1)] md:group-hover:scale-105"
         />
 
-        {/* Imagen hover (Fade In + Zoom) */}
+        {/* Imagen hover (Fade In + Zoom - Solo Desktop) */}
         <img
           src={producto.imagen2}
           alt={producto.nombre}
-          className="absolute inset-0 w-full h-full object-cover transition-all duration-[800ms] ease-[cubic-bezier(0.25,1,0.5,1)] opacity-0 group-hover:opacity-100 group-hover:scale-105"
+          className="absolute inset-0 w-full h-full object-cover transition-all duration-[800ms] ease-[cubic-bezier(0.25,1,0.5,1)] opacity-0 md:group-hover:opacity-100 md:group-hover:scale-105"
         />
 
-        {/* Overlay sutil para que el panel inferior resalte */}
-        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-500 z-10 pointer-events-none" />
+        {/* Overlay sutil para que el panel inferior resalte en Desktop */}
+        <div className="absolute inset-0 bg-black/0 md:group-hover:bg-black/10 transition-colors duration-500 z-10 pointer-events-none" />
 
-        {/* ── PANEL QUICK SHOP (Glassmorphism) ── */}
-        <div className="absolute bottom-0 left-0 right-0 translate-y-full group-hover:translate-y-0 transition-transform duration-500 ease-[cubic-bezier(0.25,1,0.5,1)] z-20">
-          <div className="bg-white/70 backdrop-blur-md pt-5 pb-6 px-4 border-t border-white/40 flex flex-col items-center gap-4 shadow-[0_-10px_30px_rgba(0,0,0,0.05)]">
+        {/* ── BOTÓN '+' MÓVIL (Táctil) ── */}
+        <button 
+          onClick={(e) => { e.stopPropagation(); setShowMobileSizes(true); }}
+          className="md:hidden absolute bottom-3 right-3 w-9 h-9 bg-white/90 backdrop-blur-md rounded-full flex items-center justify-center shadow-lg z-30 text-stone-900"
+          aria-label="Seleccionar talla"
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+            <path d="M12 5v14M5 12h14"/>
+          </svg>
+        </button>
+
+        {/* ── OVERLAY MÓVIL OSCURO (Cierra el panel de tallas al tocar fuera) ── */}
+        <div 
+          onClick={(e) => { e.stopPropagation(); setShowMobileSizes(false); }}
+          className={`md:hidden absolute inset-0 bg-black/20 z-30 transition-opacity duration-300 ${showMobileSizes ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`} 
+        />
+
+        {/* ── PANEL QUICK SHOP (Glassmorphism Slide Up) ── */}
+        <div className={`absolute bottom-0 left-0 right-0 z-40 transition-transform duration-500 ease-[cubic-bezier(0.25,1,0.5,1)] 
+          md:translate-y-full md:group-hover:translate-y-0
+          ${showMobileSizes ? 'translate-y-0' : 'translate-y-full'}
+        `}>
+          <div className="bg-white/80 backdrop-blur-md pt-5 pb-6 px-4 border-t border-white/40 flex flex-col items-center gap-4 shadow-[0_-10px_30px_rgba(0,0,0,0.05)]">
             <span 
               style={{ fontFamily: 'var(--font-primary)' }} 
               className="text-[9px] font-bold tracking-[0.25em] text-stone-800 uppercase"
             >
-              Agregar Rápido
+              Seleccionar Talla
             </span>
             
             {/* Botones de Tallas */}
@@ -84,7 +108,7 @@ function ProductCard({ producto }) {
                 <button 
                   key={talla} 
                   style={{ fontFamily: 'var(--font-primary)' }}
-                  className="w-10 h-10 flex items-center justify-center text-[11px] font-medium text-stone-700 border border-stone-300/60 bg-white/50 hover:bg-stone-900 hover:text-white hover:border-stone-900 transition-all duration-300"
+                  className="w-10 h-10 flex items-center justify-center text-[11px] font-medium text-stone-700 border border-stone-300/60 bg-white/60 hover:bg-stone-900 hover:text-white hover:border-stone-900 transition-all duration-300"
                 >
                   {talla}
                 </button>
@@ -95,7 +119,6 @@ function ProductCard({ producto }) {
       </div>
 
       {/* ── INFO DEL PRODUCTO (Ultra limpia) ── */}
-      {/* ── INFO DEL PRODUCTO (Ultra limpia) ── */}
       <div className="flex flex-col items-center text-center">
         <h3
           style={{ fontFamily: 'var(--font-primary)' }}
@@ -104,12 +127,11 @@ function ProductCard({ producto }) {
           {producto.nombre}
         </h3>
         
-        {/* El precio está oculto por defecto y aparece flotando hacia arriba en hover */}
-        {/* CAMBIO: Aumentamos h-[20px] a h-[24px] para que quepa el texto más grande */}
+        {/* Precio: Visible siempre en móvil, animado en hover para Desktop */}
         <div className="h-[24px] overflow-hidden mt-1.5">
           <p
             style={{ fontFamily: 'var(--font-primary)' }}
-            className="text-[13px] font-semibold text-stone-500 transform translate-y-full opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-500 ease-out"
+            className="text-[13px] font-semibold text-stone-500 transform translate-y-0 opacity-100 md:translate-y-full md:opacity-0 md:group-hover:translate-y-0 md:group-hover:opacity-100 transition-all duration-500 ease-out"
           >
             {producto.precio}
           </p>
@@ -121,18 +143,15 @@ function ProductCard({ producto }) {
 
 export default function Productos() {
   return (
-    <section className="w-full bg-white py-24 px-6 md:px-12 lg:px-16">
-      {/* Contenedor principal alineado con el ancho de las demás secciones */}
+    <section className="w-full bg-white py-24 px-6 md:px-12 lg:px-16 overflow-hidden">
       <div className="max-w-[1400px] mx-auto">
 
         {/* ── TÍTULO ESTILO EDITORIAL ── */}
         <div className="flex items-end justify-between mb-12 border-b border-stone-200 pb-6">
           <div className="flex flex-col gap-1">
-            {/* Micro-título de contexto */}
             <span style={{ fontFamily: 'var(--font-primary)' }} className="text-[9px] text-stone-500 tracking-[0.3em] uppercase font-medium">
               Lo más buscado
             </span>
-            {/* Título Principal */}
             <h2
               style={{ fontFamily: 'var(--font-primary)' }}
               className="text-lg md:text-xl font-light text-stone-900 tracking-[0.2em] uppercase"
@@ -151,11 +170,17 @@ export default function Productos() {
           </a>
         </div>
 
-        {/* ── CUADRÍCULA DE PRODUCTOS ── */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 lg:gap-8">
+        {/* ── CARRUSEL MÓVIL / CUADRÍCULA DESKTOP ── */}
+        <div 
+          className="flex overflow-x-auto pb-8 -mx-6 px-6 md:mx-0 md:px-0 md:pb-0 md:grid md:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-8 snap-x snap-mandatory [&::-webkit-scrollbar]:hidden" 
+          style={{ scrollbarWidth: 'none' }}
+        >
           {productos.map((p) => (
             <ProductCard key={p.id} producto={p} />
           ))}
+          
+          {/* Tarjeta fantasma en móvil para dar un margen final agradable al deslizar */}
+          <div className="w-[10vw] md:hidden flex-shrink-0" aria-hidden="true" />
         </div>
 
       </div>
