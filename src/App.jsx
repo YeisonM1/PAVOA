@@ -41,6 +41,7 @@ function App() {
             <Routes>
               <Route path="/" element={<HomePage />} />
               <Route path="/categoria" element={<CategoriaPage />} />
+              <Route path="/categoria/:id" element={<CategoriaPage />} />
             </Routes>
           </div>
           <Footer />

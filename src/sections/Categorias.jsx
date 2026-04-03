@@ -6,28 +6,28 @@ const categorias = {
     id: 1,
     nombre: 'Sets Completos',
     desc: 'La colección definitiva',
-    href: '/categoria', 
+    href: '/categoria/sets', // ── NUEVO: Ruta específica
     image: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=1000&q=80', 
   },
   superior: {
     id: 2,
     nombre: 'Tops & Superior',
     desc: 'Soporte y diseño',
-    href: '/categoria',
+    href: '/categoria/superior', // ── NUEVO: Ruta específica
     image: 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=1000&q=80',
   },
   nicho1: {
     id: 3,
     nombre: 'Movimiento',
     desc: 'Libertad sin límites',
-    href: '/categoria',
+    href: '/categoria/movimiento', // ── NUEVO: Ruta específica
     image: 'https://images.unsplash.com/photo-1538805060514-97d9cc17730c?w=800&q=80',
   },
   nicho2: {
     id: 4,
     nombre: 'Accesorios',
     desc: 'El toque final',
-    href: '/categoria',
+    href: '/categoria/accesorios', // ── NUEVO: Ruta específica
     image: 'https://images.unsplash.com/photo-1611085583191-a3b181a88401?w=800&q=80',
   }
 };

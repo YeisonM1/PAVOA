@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef, useContext } from 'react';
 import { Menu, User, ShoppingBag, X, Search } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { CartContext } from '../App';
 import logo from '../assets/LOGO-PAVOA.svg';
+import { CartContext } from '../App'; // ── NUEVO: Importamos el contexto
+import CartDrawer from './CartDrawer';
 
 const InstagramIcon = () => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -48,7 +49,10 @@ const categoryImages = {
 const defaultImage = 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=800&q=80';
 
 const Header = () => {
+  // ── NUEVO: Extraemos datos del carrito ──
   const { cartCount, isCartAnimating } = useContext(CartContext);
+  const [cartOpen, setCartOpen] = useState(false); // Estado para abrir/cerrar el panel
+
   const [isScrolled, setIsScrolled]                 = useState(false);
   const [menuOpen, setMenuOpen]                     = useState(false);
   const [catalogoOpen, setCatalogoOpen]             = useState(false);
@@ -57,7 +61,7 @@ const Header = () => {
   const [hoveredItem, setHoveredItem]               = useState(null);
   
   const megaRef = useRef(null);
-  const panelRef = useRef(null); // <-- 1. NUEVA REFERENCIA
+  const panelRef = useRef(null); 
 
   useEffect(() => {
     const onScroll = () => setIsScrolled(window.scrollY > 20);
@@ -67,7 +71,6 @@ const Header = () => {
 
   useEffect(() => {
     const onClickOutside = (e) => {
-      // <-- 2. ARREGLO DEL BUG: Validamos que el clic no sea ni en el botón ni en el panel
       if (
         megaRef.current && !megaRef.current.contains(e.target) &&
         panelRef.current && !panelRef.current.contains(e.target)
@@ -79,10 +82,11 @@ const Header = () => {
     return () => document.removeEventListener('mousedown', onClickOutside);
   }, []);
 
+  // ── MODIFICADO: Bloqueamos el scroll si el menú O el carrito están abiertos ──
   useEffect(() => {
-    document.body.style.overflow = menuOpen ? 'hidden' : '';
+    document.body.style.overflow = (menuOpen || cartOpen) ? 'hidden' : '';
     return () => { document.body.style.overflow = ''; };
-  }, [menuOpen]);
+  }, [menuOpen, cartOpen]);
 
   const activeImage = hoveredItem ? (categoryImages[hoveredItem] || defaultImage) : defaultImage;
 
@@ -123,7 +127,7 @@ const Header = () => {
           {badge && (
             <span style={{
               fontSize: 6.5, fontWeight: 600, letterSpacing: '0.1em',
-              color: badge === 'NUEVO' ? 'var(--color-gold)' : 'var(--color-charcoal)',
+              color: badge === 'NUEVO' ? 'var(--color-gold)' : 'var(--color-border)',
               border: `1px solid ${badge === 'NUEVO' ? 'var(--color-gold)' : 'var(--color-border)'}`,
               padding: '2px 4px', borderRadius: 2,
             }}>
@@ -218,11 +222,13 @@ const Header = () => {
             <div className="w-[1px] h-4 bg-stone-200 hidden sm:block" />
             <button className="hover:text-stone-900 transition-colors"><Search size={20} strokeWidth={1.8} /></button>
             <button className="hover:text-stone-900 transition-colors"><User size={20} strokeWidth={1.8} /></button>
-            {/* ── REEMPLAZAR BOTÓN DE SHOPPING BAG ── */}
-            <button className="hover:text-stone-900 transition-colors relative">
+            
+            {/* ── MODIFICADO: Botón del Carrito con Evento onClick ── */}
+            <button 
+              onClick={() => setCartOpen(true)}
+              className="hover:text-stone-900 transition-colors relative"
+            >
               <ShoppingBag size={20} strokeWidth={1.8} />
-              
-              {/* Si hay productos, mostramos el número. Si no, mostramos tu punto negro original */}
               {cartCount > 0 ? (
                 <span 
                   className={`absolute -top-1.5 -right-2 flex h-4 w-4 items-center justify-center rounded-full text-[9px] font-bold text-white transition-transform duration-300 ${isCartAnimating ? 'scale-125' : 'scale-100'}`}
@@ -240,9 +246,9 @@ const Header = () => {
         </div>
       </header>
 
-      {/* ── MEGA MENÚ DESKTOP FULL WIDTH ── */}
+      {/* ── MEGA MENÚ DESKTOP ── */}
       <div
-        ref={panelRef} // <-- 3. APLICAMOS LA REFERENCIA AL PANEL ENTERO
+        ref={panelRef}
         style={{
           position: 'fixed', left: 0, right: 0, top: isScrolled ? '52px' : '68px', zIndex: 49,
           fontFamily: 'var(--font-primary)', background: 'var(--color-bg)',
@@ -331,7 +337,6 @@ const Header = () => {
 
           <div style={{ background: 'var(--color-gold)', alignSelf: 'stretch' }} />
 
-          {/* ── 4. VISUAL DINÁMICA CONVERTIDA EN ENLACE ── */}
           <Link 
             to="/categoria"
             onClick={() => { setCatalogoOpen(false); window.scrollTo(0, 0); }}
@@ -461,6 +466,9 @@ const Header = () => {
           )}
         </div>
       </div>
+      
+      {/* ── IMPORTAMOS EL COMPONENTE DEL CARRITO ── */}
+      <CartDrawer cartOpen={cartOpen} setCartOpen={setCartOpen} />
     </>
   );
 };
