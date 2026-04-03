@@ -1,50 +1,49 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { Link } from 'react-router-dom';
 
 const categorias = {
   protagonista: {
     id: 1,
     nombre: 'Sets Completos',
     desc: 'La colección definitiva',
-    href: '#sets',
+    href: '/categoria', 
     image: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=1000&q=80', 
   },
   superior: {
     id: 2,
     nombre: 'Tops & Superior',
     desc: 'Soporte y diseño',
-    href: '#superior',
+    href: '/categoria',
     image: 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=1000&q=80',
   },
   nicho1: {
     id: 3,
-    nombre: 'ESSENTIALS',
-    desc: 'Movimiento libre',
-    href: '#bottoms',
+    nombre: 'Movimiento',
+    desc: 'Libertad sin límites',
+    href: '/categoria',
     image: 'https://images.unsplash.com/photo-1538805060514-97d9cc17730c?w=800&q=80',
   },
   nicho2: {
     id: 4,
     nombre: 'Accesorios',
     desc: 'El toque final',
-    href: '#accesorios',
+    href: '/categoria',
     image: 'https://images.unsplash.com/photo-1611085583191-a3b181a88401?w=800&q=80',
   }
 };
 
 const CategoriaCard = ({ cat, className, delay = 0 }) => {
-  // Estados para controlar la aparición táctil
   const [isVisible, setIsVisible] = useState(false);
   const cardRef = useRef(null);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
       ([entry]) => {
-        // Cuando el elemento entra un 15% en la pantalla, disparamos la animación
         if (entry.isIntersecting) {
           setTimeout(() => {
             setIsVisible(true);
           }, delay);
-          observer.disconnect(); // Solo se anima la primera vez que se ve
+          observer.disconnect(); 
         }
       },
       { threshold: 0.15 }
@@ -58,13 +57,10 @@ const CategoriaCard = ({ cat, className, delay = 0 }) => {
   }, [delay]);
 
   return (
-    <a
+    <Link
       ref={cardRef}
-      href={cat.href}
-      /* * LÓGICA DE ANIMACIÓN: 
-       * Móvil: Arranca oculto, abajo y pequeño. Al ser visible, vuelve a la normalidad.
-       * Desktop (md:): Se fuerza a estado normal (!opacity-100) para no afectar la versión PC.
-       */
+      to={cat.href}
+      onClick={() => window.scrollTo(0, 0)}
       className={`group relative overflow-hidden block ${className} 
         ${isVisible ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-12 scale-95'}
         md:!opacity-100 md:!translate-y-0 md:!scale-100
@@ -81,7 +77,6 @@ const CategoriaCard = ({ cat, className, delay = 0 }) => {
       <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent opacity-90 md:opacity-80" />
       <div className="absolute inset-0 bg-black/0 md:group-hover:bg-black/10 transition-colors duration-500" />
 
-      {/* ── TEXTOS (Revelación Sincronizada y Atrasada) ── */}
       <div className="absolute bottom-0 left-0 p-6 md:p-8 flex flex-col justify-end w-full z-20">
         <p
           style={{ fontFamily: 'var(--font-primary)' }}
@@ -117,7 +112,7 @@ const CategoriaCard = ({ cat, className, delay = 0 }) => {
           </span>
         </div>
       </div>
-    </a>
+    </Link>
   );
 };
 
@@ -138,33 +133,30 @@ export default function Categorias() {
           </h2>
         </div>
         
-        <a
-          href="#catalogo"
+        <Link
+          to="/categoria"
+          onClick={() => window.scrollTo(0, 0)}
           style={{ fontFamily: 'var(--font-primary)', letterSpacing: '0.15em' }}
           className="text-[10px] font-bold text-stone-500 hover:text-stone-900 transition-colors uppercase flex items-center gap-2 group"
         >
           Explorar
           <span className="transform transition-transform duration-300 group-hover:translate-x-1">→</span>
-        </a>
+        </Link>
       </div>
 
       <div className="max-w-[1400px] mx-auto grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6">
         
         <div className="h-[55vh] md:h-[75vh]">
-          {/* Aparece de inmediato al hacer scroll */}
           <CategoriaCard cat={categorias.protagonista} className="w-full h-full" delay={0} />
         </div>
 
         <div className="flex flex-col gap-4 lg:gap-6">
           <div className="h-[35vh] md:h-[calc(37.5vh-0.75rem)] w-full">
-            {/* Aparece de inmediato al llegar a su altura */}
             <CategoriaCard cat={categorias.superior} className="w-full h-full" delay={0} />
           </div>
 
-          {/* Inferior (Dos nichos cuadrados en móvil y desktop) */}
-          {/* CAMBIO: gap-4 -> gap-6 para dar más 'respiración' en móvil */}
+          {/* El gap-6 que ajustamos para el celular */}
           <div className="h-[35vh] md:h-[calc(37.5vh-0.75rem)] w-full grid grid-cols-2 gap-6 lg:gap-6">
-            {/* Efecto Escalonado: Nicho1 aparece primero, Nicho2 un instante después */}
             <CategoriaCard cat={categorias.nicho1} className="w-full h-full" delay={0} />
             <CategoriaCard cat={categorias.nicho2} className="w-full h-full" delay={150} />
           </div>

@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Menu, User, ShoppingBag, X, Search } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import logo from '../assets/LOGO-PAVOA.svg';
 
 const InstagramIcon = () => (
@@ -52,7 +53,9 @@ const Header = () => {
   const [mobileCatalogoOpen, setMobileCatalogoOpen] = useState(false);
   const [mobileTab, setMobileTab]                   = useState('mujer');
   const [hoveredItem, setHoveredItem]               = useState(null);
+  
   const megaRef = useRef(null);
+  const panelRef = useRef(null); // <-- 1. NUEVA REFERENCIA
 
   useEffect(() => {
     const onScroll = () => setIsScrolled(window.scrollY > 20);
@@ -62,7 +65,11 @@ const Header = () => {
 
   useEffect(() => {
     const onClickOutside = (e) => {
-      if (megaRef.current && !megaRef.current.contains(e.target)) {
+      // <-- 2. ARREGLO DEL BUG: Validamos que el clic no sea ni en el botón ni en el panel
+      if (
+        megaRef.current && !megaRef.current.contains(e.target) &&
+        panelRef.current && !panelRef.current.contains(e.target)
+      ) {
         setCatalogoOpen(false);
       }
     };
@@ -75,20 +82,20 @@ const Header = () => {
     return () => { document.body.style.overflow = ''; };
   }, [menuOpen]);
 
-  const catLink = (item) => `#${item.toLowerCase().replace(/\s/g, '-')}`;
   const activeImage = hoveredItem ? (categoryImages[hoveredItem] || defaultImage) : defaultImage;
 
-  // ── FUNCIÓN HELPER PARA RENDERIZAR ENLACES DESKTOP (Spotlight + Badges) ──
   const renderDesktopLink = (item, badge = null) => {
     const isHovered = hoveredItem === item;
-    // Efecto Spotlight: Reduce opacidad si el usuario está haciendo hover en OTRO elemento
     const isDimmed = hoveredItem && !isHovered && hoveredItem !== 'destacados'; 
     
     return (
       <li key={item}>
-        <a
-          href={catLink(item)}
-          onClick={() => setCatalogoOpen(false)}
+        <Link
+          to="/categoria"
+          onClick={() => { 
+            setCatalogoOpen(false); 
+            window.scrollTo(0, 0); 
+          }}
           onMouseEnter={() => setHoveredItem(item)}
           onMouseLeave={() => setHoveredItem(null)}
           style={{ 
@@ -121,27 +128,23 @@ const Header = () => {
               {badge}
             </span>
           )}
-        </a>
+        </Link>
       </li>
     );
   };
 
   return (
     <>
-      {/* ── HEADER ── */}
       <header
           className={`fixed top-0 left-0 w-full z-50 transition-all duration-500 border-b ${
             isScrolled ? 'border-white/10 py-2 shadow-lg' : 'border-transparent py-4'
           } backdrop-blur-md`}
           style={{
             fontFamily: 'var(--font-primary)',
-            // Aquí puedes cambiar a un Café Oscuro: '#2B1E16' o Gris: '#1C1C1C'
             background: isScrolled ? 'rgba(242, 228, 225, 0.98)' : 'rgba(242, 228, 225, 0.92)',
           }}
         >
         <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
-
-          {/* IZQUIERDA */}
           <div className="flex-1 flex items-center">
             <button
               className="md:hidden text-stone-800 mr-4 hover:text-stone-500 transition-colors"
@@ -151,52 +154,42 @@ const Header = () => {
             </button>
 
             <nav className="hidden md:flex items-center gap-8 text-[12px] font-medium tracking-[0.2em]">
-              {/* INICIO */}
-              <a href="#inicio" className="transition-opacity hover:opacity-70 relative group" style={{ color: '#3E2723' }}>
+              <Link 
+                to="/" 
+                onClick={() => window.scrollTo(0, 0)}
+                className="transition-opacity hover:opacity-70 relative group" 
+                style={{ color: '#3E2723' }}
+              >
                 INICIO
                 <span className="absolute -bottom-1 left-0 w-0 h-[1px] transition-all duration-300 group-hover:w-full"
                   style={{ background: 'var(--color-gold)' }} />
-              </a>
+              </Link>
 
-              {/* CATÁLOGO trigger */}
               <div className="relative" ref={megaRef}>
                 <button
                   onClick={() => setCatalogoOpen(v => !v)}
                   className="flex items-center gap-1.5 transition-opacity hover:opacity-70"
                   style={{
-                    fontFamily: 'var(--font-primary)',
-                    fontSize: '12px',
-                    fontWeight: 500,
-                    letterSpacing: '0.2em',
-                    color: '#3E2723', /* <-- CAMBIO A CAFÉ OSCURO */
-                    background: 'none',
-                    border: 'none',
-                    cursor: 'pointer',
-                    padding: 0,
+                    fontFamily: 'var(--font-primary)', fontSize: '12px', fontWeight: 500, letterSpacing: '0.2em',
+                    color: '#3E2723', background: 'none', border: 'none', cursor: 'pointer', padding: 0,
                   }}
                 >
                   <span style={{ position: 'relative', paddingBottom: 2 }}>
                     CATÁLOGO
                     <span style={{
-                      position: 'absolute', bottom: 0, left: 0,
-                      height: 1,
-                      width: catalogoOpen ? '100%' : '0%',
-                      background: 'var(--color-gold)',
-                      transition: 'width 0.3s ease',
+                      position: 'absolute', bottom: 0, left: 0, height: 1,
+                      width: catalogoOpen ? '100%' : '0%', background: 'var(--color-gold)', transition: 'width 0.3s ease',
                     }} />
                   </span>
                   <span style={{
                     display: 'inline-block', width: 7, height: 7,
-                    borderRight: '1.5px solid #3E2723', /* <-- FLECHA EN CAFÉ OSCURO */
-                    borderBottom: '1.5px solid #3E2723', /* <-- FLECHA EN CAFÉ OSCURO */
+                    borderRight: '1.5px solid #3E2723', borderBottom: '1.5px solid #3E2723',
                     transform: catalogoOpen ? 'rotate(-135deg)' : 'rotate(45deg)',
-                    marginTop: catalogoOpen ? '3px' : '-2px',
-                    transition: 'transform 0.3s ease, margin-top 0.3s ease',
+                    marginTop: catalogoOpen ? '3px' : '-2px', transition: 'transform 0.3s ease, margin-top 0.3s ease',
                   }} />
                 </button>
               </div>
 
-              {/* CONTACTO */}
               <a href="#contacto" className="transition-opacity hover:opacity-70 relative group" style={{ color: '#3E2723' }}>
                 CONTACTO
                 <span className="absolute -bottom-1 left-0 w-0 h-[1px] transition-all duration-300 group-hover:w-full"
@@ -205,21 +198,16 @@ const Header = () => {
             </nav>
           </div>
 
-          {/* CENTRO: Logo */}
           <div className="flex-1 flex justify-center">
-            <a href="/">
+            <Link to="/" onClick={() => window.scrollTo(0, 0)}>
               <img 
                 src={logo} 
                 alt="PAVOA" 
-                // CAMBIO: h-11 -> h-14 | md:h-14 -> md:h-20
                 className="h-14 md:h-20 w-auto object-contain transition-transform duration-500" 
-                style={{ 
-                }}
               />
-            </a>
+            </Link>
           </div>
 
-          {/* DERECHA */}
           <div className="flex-1 flex items-center justify-end gap-5 text-stone-900">
             <div className="hidden sm:flex items-center gap-4">
               <a href="#" className="hover:text-stone-900 transition-colors"><InstagramIcon /></a>
@@ -240,39 +228,21 @@ const Header = () => {
 
       {/* ── MEGA MENÚ DESKTOP FULL WIDTH ── */}
       <div
+        ref={panelRef} // <-- 3. APLICAMOS LA REFERENCIA AL PANEL ENTERO
         style={{
-          position: 'fixed',
-          left: 0, right: 0,
-          top: isScrolled ? '52px' : '68px',
-          zIndex: 49,
-          fontFamily: 'var(--font-primary)',
-          background: 'var(--color-bg)',
-          borderTop: '1px solid var(--color-gold)',
-          borderBottom: '1px solid var(--color-border)',
-          overflow: 'hidden',
-          maxHeight: catalogoOpen ? '650px' : '0px',
-          opacity: catalogoOpen ? 1 : 0,
+          position: 'fixed', left: 0, right: 0, top: isScrolled ? '52px' : '68px', zIndex: 49,
+          fontFamily: 'var(--font-primary)', background: 'var(--color-bg)',
+          borderTop: '1px solid var(--color-gold)', borderBottom: '1px solid var(--color-border)',
+          overflow: 'hidden', maxHeight: catalogoOpen ? '650px' : '0px', opacity: catalogoOpen ? 1 : 0,
           transition: 'max-height 0.45s cubic-bezier(0.4,0,0.2,1), opacity 0.3s ease, top 0.5s ease',
-          pointerEvents: catalogoOpen ? 'auto' : 'none',
-          boxShadow: catalogoOpen ? '0 8px 40px rgba(11,11,11,0.08)' : 'none',
+          pointerEvents: catalogoOpen ? 'auto' : 'none', boxShadow: catalogoOpen ? '0 8px 40px rgba(11,11,11,0.08)' : 'none',
         }}
       >
-        <div style={{
-          maxWidth: 1280, margin: '0 auto',
-          padding: '44px 64px',
-          display: 'grid',
-          gridTemplateColumns: '1fr 1px 1fr 1px 1.2fr',
-          alignItems: 'start',
-        }}>
+        <div style={{ maxWidth: 1280, margin: '0 auto', padding: '44px 64px', display: 'grid', gridTemplateColumns: '1fr 1px 1fr 1px 1.2fr', alignItems: 'start' }}>
 
-          {/* ── COLUMNA MUJER (Editorial) ── */}
           <div style={{ paddingRight: 48 }}>
-            <p style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.32em', color: 'var(--color-gold)', marginBottom: 24 }}>
-              MUJER
-            </p>
-            
+            <p style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.32em', color: 'var(--color-gold)', marginBottom: 24 }}>MUJER</p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              {/* Sección: Superior */}
               <div>
                 <p style={{ fontSize: 7.5, fontWeight: 600, letterSpacing: '0.2em', color: 'var(--color-charcoal)', opacity: 0.5, marginBottom: 8 }}>SUPERIOR</p>
                 <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 0 }}>
@@ -282,8 +252,6 @@ const Header = () => {
                   {renderDesktopLink('Chaquetas')}
                 </ul>
               </div>
-
-              {/* Sección: Inferior */}
               <div>
                 <p style={{ fontSize: 7.5, fontWeight: 600, letterSpacing: '0.2em', color: 'var(--color-charcoal)', opacity: 0.5, marginBottom: 8 }}>INFERIOR</p>
                 <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 0 }}>
@@ -295,8 +263,6 @@ const Header = () => {
                   {renderDesktopLink('Pantalonetas')}
                 </ul>
               </div>
-
-              {/* Sección: Otros */}
               <div>
                 <p style={{ fontSize: 7.5, fontWeight: 600, letterSpacing: '0.2em', color: 'var(--color-charcoal)', opacity: 0.5, marginBottom: 8 }}>OTROS</p>
                 <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 0 }}>
@@ -308,15 +274,11 @@ const Header = () => {
             </div>
           </div>
 
-          {/* Separador 1 */}
           <div style={{ background: 'var(--color-gold)', alignSelf: 'stretch' }} />
 
-          {/* ── COLUMNA HOMBRE (Balanceada) ── */}
           <div style={{ paddingLeft: 48, paddingRight: 48, display: 'flex', flexDirection: 'column', height: '100%' }}>
             <div>
-              <p style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.32em', color: 'var(--color-gold)', marginBottom: 24 }}>
-                HOMBRE
-              </p>
+              <p style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.32em', color: 'var(--color-gold)', marginBottom: 24 }}>HOMBRE</p>
               <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 0 }}>
                 {renderDesktopLink('Pantalonetas')}
                 {renderDesktopLink('Camisetas')}
@@ -324,20 +286,20 @@ const Header = () => {
                 {renderDesktopLink('Joggers', 'BEST SELLER')}
               </ul>
             </div>
-
-            {/* Enlaces Rápidos - Para balancear visualmente la altura de la columna Mujer */}
             <div style={{ marginTop: 'auto', paddingTop: 32, borderTop: '1px solid var(--color-border)' }}>
-              <p style={{ fontSize: 7.5, fontWeight: 600, letterSpacing: '0.2em', color: 'var(--color-charcoal)', opacity: 0.5, marginBottom: 12 }}>
-                DESTACADOS
-              </p>
+              <p style={{ fontSize: 7.5, fontWeight: 600, letterSpacing: '0.2em', color: 'var(--color-charcoal)', opacity: 0.5, marginBottom: 12 }}>DESTACADOS</p>
               <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 10 }}>
                 {[
-                  { label: 'VER TODO HOMBRE →', href: '#todo-hombre' },
+                  { label: 'VER TODO HOMBRE →', href: '/categoria' },
                   { label: 'GUÍA DE TALLAS', href: '#tallas' },
-                  { label: 'COLECCIÓN ESSENTIAL', href: '#essential' }
+                  { label: 'COLECCIÓN ESSENTIAL', href: '/categoria' }
                 ].map((link) => (
                   <li key={link.label}>
-                    <a href={link.href}
+                    <Link to={link.href}
+                       onClick={() => { 
+                         setCatalogoOpen(false); 
+                         window.scrollTo(0, 0); 
+                       }}
                        onMouseEnter={() => setHoveredItem('destacados')}
                        onMouseLeave={() => setHoveredItem(null)}
                        style={{ 
@@ -346,69 +308,63 @@ const Header = () => {
                          opacity: (hoveredItem && hoveredItem !== 'destacados') ? 0.35 : 1, transition: 'opacity 0.3s ease'
                        }}>
                       {link.label}
-                    </a>
+                    </Link>
                   </li>
                 ))}
               </ul>
             </div>
           </div>
 
-          {/* Separador 2 */}
           <div style={{ background: 'var(--color-gold)', alignSelf: 'stretch' }} />
 
-          {/* ── COLUMNA VISUAL DINÁMICA ── */}
-          <div style={{ paddingLeft: 48, position: 'relative', height: 420 }}>
+          {/* ── 4. VISUAL DINÁMICA CONVERTIDA EN ENLACE ── */}
+          <Link 
+            to="/categoria"
+            onClick={() => { setCatalogoOpen(false); window.scrollTo(0, 0); }}
+            style={{ paddingLeft: 48, position: 'relative', height: 420, display: 'block', textDecoration: 'none' }}
+          >
             <div style={{
-              position: 'absolute', inset: 0,
-              backgroundImage: `url(${activeImage})`,
-              backgroundSize: 'cover', backgroundPosition: 'center top',
+              position: 'absolute', inset: 0, backgroundImage: `url(${activeImage})`, backgroundSize: 'cover', backgroundPosition: 'center top',
               transition: 'opacity 0.4s ease', opacity: 0.88,
             }} />
             <div style={{
-              position: 'absolute', inset: 0,
-              background: 'linear-gradient(to top, rgba(242,228,225,0.92) 0%, rgba(242,228,225,0.2) 60%, transparent 100%)',
+              position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(242,228,225,0.92) 0%, rgba(242,228,225,0.2) 60%, transparent 100%)',
             }} />
             <div style={{ position: 'absolute', bottom: 28, left: 28, right: 16 }}>
               {(hoveredItem && hoveredItem !== 'destacados') ? (
                 <>
-                  <p style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.28em', color: 'var(--color-gold)', marginBottom: 8 }}>
-                    VER COLECCIÓN →
-                  </p>
-                  <p style={{ fontSize: 22, fontWeight: 300, letterSpacing: '0.18em', color: 'var(--color-black)', lineHeight: 1.2, textTransform: 'uppercase' }}>
-                    {hoveredItem}
-                  </p>
+                  <p style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.28em', color: 'var(--color-gold)', marginBottom: 8 }}>VER COLECCIÓN →</p>
+                  <p style={{ fontSize: 22, fontWeight: 300, letterSpacing: '0.18em', color: 'var(--color-black)', lineHeight: 1.2, textTransform: 'uppercase' }}>{hoveredItem}</p>
                   <div style={{ marginTop: 10, height: 1, width: 48, background: 'var(--color-gold)' }} />
                 </>
               ) : (
-                <p style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.32em', color: 'var(--color-gold)' }}>
-                  PAVOA — NUEVA COLECCIÓN
-                </p>
+                <p style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.32em', color: 'var(--color-gold)' }}>PAVOA — NUEVA COLECCIÓN</p>
               )}
             </div>
-          </div>
+          </Link>
 
         </div>
       </div>
 
-      {/* ── MENÚ MÓVIL (Intacto) ── */}
-      {/* ── MENÚ MÓVIL (Rediseñado - Drill-down & Tabs) ── */}
+      {/* ── MENÚ MÓVIL ── */}
       <div
         style={{ fontFamily: 'var(--font-primary)', background: 'var(--color-bg)' }}
         className={`fixed inset-0 z-40 transition-opacity duration-500 overflow-hidden ${
           menuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
         }`}
       >
-        {/* PANEL PRINCIPAL (Desliza hacia la izquierda cuando se abre el catálogo) */}
-        <div 
-          className={`absolute inset-0 pt-24 px-8 transition-transform duration-500 ease-[cubic-bezier(0.4,0,0.2,1)] ${
-            mobileCatalogoOpen ? '-translate-x-full' : 'translate-x-0'
-          }`}
-        >
+        <div className={`absolute inset-0 pt-24 px-8 transition-transform duration-500 ease-[cubic-bezier(0.4,0,0.2,1)] ${mobileCatalogoOpen ? '-translate-x-full' : 'translate-x-0'}`}>
           <nav className="flex flex-col text-[13px] font-medium tracking-[0.2em] text-stone-900">
-            <a href="#inicio" onClick={() => setMenuOpen(false)}
-              className="hover:text-stone-900 transition-colors border-b border-stone-100 py-5">
+            <Link 
+              to="/" 
+              onClick={() => { 
+                setMenuOpen(false); 
+                window.scrollTo(0, 0); 
+              }} 
+              className="hover:text-stone-900 transition-colors border-b border-stone-100 py-5"
+            >
               INICIO
-            </a>
+            </Link>
 
             <button
               onClick={() => setMobileCatalogoOpen(true)}
@@ -416,12 +372,10 @@ const Header = () => {
               style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'var(--font-primary)', fontSize: 13, fontWeight: 500, letterSpacing: '0.2em' }}
             >
               CATÁLOGO
-              {/* Flecha que indica navegación profunda */}
               <span style={{ fontSize: 16, color: 'var(--color-gold)', fontWeight: 300 }}>→</span>
             </button>
 
-            <a href="#contacto" onClick={() => setMenuOpen(false)}
-              className="hover:text-stone-900 transition-colors border-b border-stone-100 py-5">
+            <a href="#contacto" onClick={() => { setMenuOpen(false); window.scrollTo(0, 0); }} className="hover:text-stone-900 transition-colors border-b border-stone-100 py-5">
               CONTACTO
             </a>
           </nav>
@@ -432,14 +386,10 @@ const Header = () => {
           </div>
         </div>
 
-        {/* PANEL DE CATÁLOGO (Entra deslizando desde la derecha) */}
         <div 
-          className={`absolute inset-0 pt-24 px-8 transition-transform duration-500 ease-[cubic-bezier(0.4,0,0.2,1)] overflow-y-auto pb-12 ${
-            mobileCatalogoOpen ? 'translate-x-0' : 'translate-x-full'
-          }`}
+          className={`absolute inset-0 pt-24 px-8 transition-transform duration-500 ease-[cubic-bezier(0.4,0,0.2,1)] overflow-y-auto pb-12 ${mobileCatalogoOpen ? 'translate-x-0' : 'translate-x-full'}`}
           style={{ background: 'var(--color-bg)' }}
         >
-          {/* Botón Volver */}
           <button 
             onClick={() => setMobileCatalogoOpen(false)}
             className="flex items-center gap-2 mb-8 text-stone-500 hover:text-stone-900 transition-colors"
@@ -448,32 +398,24 @@ const Header = () => {
             <span style={{ fontSize: 14 }}>←</span> VOLVER
           </button>
 
-          {/* Segmented Control (Pestañas Mujer / Hombre) */}
           <div className="flex mb-8 border-b border-stone-200">
-            <button 
-              onClick={() => setMobileTab('mujer')}
-              className={`flex-1 pb-4 text-center text-[11px] font-bold tracking-[0.2em] transition-colors relative ${mobileTab === 'mujer' ? 'text-stone-900' : 'text-stone-400'}`}
-            >
+            <button onClick={() => setMobileTab('mujer')} className={`flex-1 pb-4 text-center text-[11px] font-bold tracking-[0.2em] transition-colors relative ${mobileTab === 'mujer' ? 'text-stone-900' : 'text-stone-400'}`}>
               MUJER
               {mobileTab === 'mujer' && <span className="absolute bottom-0 left-0 w-full h-[2px] bg-stone-900 transition-all" />}
             </button>
-            <button 
-              onClick={() => setMobileTab('hombre')}
-              className={`flex-1 pb-4 text-center text-[11px] font-bold tracking-[0.2em] transition-colors relative ${mobileTab === 'hombre' ? 'text-stone-900' : 'text-stone-400'}`}
-            >
+            <button onClick={() => setMobileTab('hombre')} className={`flex-1 pb-4 text-center text-[11px] font-bold tracking-[0.2em] transition-colors relative ${mobileTab === 'hombre' ? 'text-stone-900' : 'text-stone-400'}`}>
               HOMBRE
               {mobileTab === 'hombre' && <span className="absolute bottom-0 left-0 w-full h-[2px] bg-stone-900 transition-all" />}
             </button>
           </div>
 
-          {/* Contenido Pestaña: MUJER (Con agrupación editorial) */}
           {mobileTab === 'mujer' && (
             <div className="flex flex-col gap-8 animate-fade-in">
               <div>
                 <p style={{ fontSize: 8.5, fontWeight: 600, letterSpacing: '0.28em', color: 'var(--color-gold)', marginBottom: 12 }}>SUPERIOR</p>
                 <div className="flex flex-col gap-4">
                   {['Camisetas', 'Tops Deportivos', 'Buzos', 'Chaquetas'].map(item => (
-                    <a key={item} href={catLink(item)} onClick={() => setMenuOpen(false)} className="text-[12px] font-medium tracking-[0.15em] text-stone-800">{item.toUpperCase()}</a>
+                    <Link key={item} to="/categoria" onClick={() => { setMenuOpen(false); window.scrollTo(0, 0); }} className="text-[12px] font-medium tracking-[0.15em] text-stone-800">{item.toUpperCase()}</Link>
                   ))}
                 </div>
               </div>
@@ -481,7 +423,7 @@ const Header = () => {
                 <p style={{ fontSize: 8.5, fontWeight: 600, letterSpacing: '0.28em', color: 'var(--color-gold)', marginBottom: 12 }}>INFERIOR</p>
                 <div className="flex flex-col gap-4">
                   {['Licras', 'Shorts', 'Faldas', 'Sudaderas', 'Bikers', 'Pantalonetas'].map(item => (
-                    <a key={item} href={catLink(item)} onClick={() => setMenuOpen(false)} className="text-[12px] font-medium tracking-[0.15em] text-stone-800">{item.toUpperCase()}</a>
+                    <Link key={item} to="/categoria" onClick={() => { setMenuOpen(false); window.scrollTo(0, 0); }} className="text-[12px] font-medium tracking-[0.15em] text-stone-800">{item.toUpperCase()}</Link>
                   ))}
                 </div>
               </div>
@@ -489,18 +431,17 @@ const Header = () => {
                 <p style={{ fontSize: 8.5, fontWeight: 600, letterSpacing: '0.28em', color: 'var(--color-gold)', marginBottom: 12 }}>OTROS</p>
                 <div className="flex flex-col gap-4">
                   {['Sets', 'Vestidos', 'Accesorios'].map(item => (
-                    <a key={item} href={catLink(item)} onClick={() => setMenuOpen(false)} className="text-[12px] font-medium tracking-[0.15em] text-stone-800">{item.toUpperCase()}</a>
+                    <Link key={item} to="/categoria" onClick={() => { setMenuOpen(false); window.scrollTo(0, 0); }} className="text-[12px] font-medium tracking-[0.15em] text-stone-800">{item.toUpperCase()}</Link>
                   ))}
                 </div>
               </div>
             </div>
           )}
 
-          {/* Contenido Pestaña: HOMBRE */}
           {mobileTab === 'hombre' && (
             <div className="flex flex-col gap-4 animate-fade-in">
               {hombreItems.map(item => (
-                <a key={item} href={catLink(item)} onClick={() => setMenuOpen(false)} className="text-[12px] font-medium tracking-[0.15em] text-stone-800">{item.toUpperCase()}</a>
+                <Link key={item} to="/categoria" onClick={() => { setMenuOpen(false); window.scrollTo(0, 0); }} className="text-[12px] font-medium tracking-[0.15em] text-stone-800">{item.toUpperCase()}</Link>
               ))}
             </div>
           )}
