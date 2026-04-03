@@ -59,9 +59,10 @@ function ProductCard({ producto }) {
   const [addingSize, setAddingSize] = useState(null); 
 
   const handleSizeClick = (e, talla) => {
+    e.preventDefault(); 
     e.stopPropagation(); 
     setAddingSize(talla);
-    addToCart();
+    addToCart(producto, talla); // <--- CAMBIA ESTA LÍNEA
     setTimeout(() => {
       setAddingSize(null);
       setShowMobileSizes(false);

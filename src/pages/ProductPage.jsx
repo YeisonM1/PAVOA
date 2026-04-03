@@ -21,10 +21,10 @@ export default function ProductPage() {
       return;
     }
     setAdding(true);
-    addToCart();
+    addToCart(producto, tallaSeleccionada); // <--- CAMBIA ESTA LÍNEA
     setTimeout(() => {
       setAdding(false);
-      setTallaSeleccionada(null); // Reseteamos la talla después de agregar
+      setTallaSeleccionada(null); 
     }, 1000);
   };
 

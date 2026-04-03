@@ -10,10 +10,10 @@ function ProductCard({ producto }) {
   const [addingSize, setAddingSize] = useState(null);
 
   const handleSizeClick = (e, talla) => {
-    e.preventDefault(); // Evita que el Link nos lleve a otra página al dar clic a la talla
+    e.preventDefault(); 
     e.stopPropagation(); 
     setAddingSize(talla);
-    addToCart();
+    addToCart(producto, talla); // <--- CAMBIA ESTA LÍNEA
     setTimeout(() => {
       setAddingSize(null);
       setShowMobileSizes(false);
