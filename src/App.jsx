@@ -5,6 +5,7 @@ import Header from './sections/Header';
 import Footer from './sections/Footer';
 import HomePage from './pages/HomePage';
 import CategoriaPage from './pages/CategoriaPage';
+import ProductPage from './pages/ProductPage';
 
 // ── 1. NUEVO: CREAMOS EL CONTEXTO DEL CARRITO ──
 export const CartContext = createContext();
@@ -42,6 +43,7 @@ function App() {
               <Route path="/" element={<HomePage />} />
               <Route path="/categoria" element={<CategoriaPage />} />
               <Route path="/categoria/:id" element={<CategoriaPage />} />
+              <Route path="/producto/:id" element={<ProductPage />} />
             </Routes>
           </div>
           <Footer />
