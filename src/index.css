@@ -1,3 +1,24 @@
+/* 1. LA FUENTE EXTERNA DEBE SER LA LÍNEA 1 (Aquí puse Raleway como pediste antes) */
+@import url('https://fonts.googleapis.com/css2?family=Raleway:wght@200;300;400;500;600;700&display=swap');
+
+/* 2. TAILWIND DEBE SER LA LÍNEA 2 (Solo una vez) */
+@import "tailwindcss";
+
+/* 3. TUS VARIABLES (Asegúrate de mantener el import de tus variables actuales) */
+@import "./styles/variables.css";
+
+/* 4. CONFIGURACIÓN DEL TEMA */
+@theme {
+  --font-sans: 'Raleway', sans-serif;
+}
+
+/* 5. APLICACIÓN AL BODY */
+@layer base {
+  body {
+    font-family: var(--font-sans);
+  }
+}
+
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600&display=swap');
 @import "tailwindcss";
 @import "tailwindcss";

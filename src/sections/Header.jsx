@@ -1,6 +1,7 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useContext } from 'react';
 import { Menu, User, ShoppingBag, X, Search } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { CartContext } from '../App';
 import logo from '../assets/LOGO-PAVOA.svg';
 
 const InstagramIcon = () => (
@@ -47,6 +48,7 @@ const categoryImages = {
 const defaultImage = 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=800&q=80';
 
 const Header = () => {
+  const { cartCount, isCartAnimating } = useContext(CartContext);
   const [isScrolled, setIsScrolled]                 = useState(false);
   const [menuOpen, setMenuOpen]                     = useState(false);
   const [catalogoOpen, setCatalogoOpen]             = useState(false);
@@ -216,11 +218,23 @@ const Header = () => {
             <div className="w-[1px] h-4 bg-stone-200 hidden sm:block" />
             <button className="hover:text-stone-900 transition-colors"><Search size={20} strokeWidth={1.8} /></button>
             <button className="hover:text-stone-900 transition-colors"><User size={20} strokeWidth={1.8} /></button>
+            {/* ── REEMPLAZAR BOTÓN DE SHOPPING BAG ── */}
             <button className="hover:text-stone-900 transition-colors relative">
               <ShoppingBag size={20} strokeWidth={1.8} />
-              <span className="absolute -top-1 -right-1 flex h-2 w-2">
-                <span className="relative inline-flex rounded-full h-2 w-2" style={{ background: 'var(--color-black)' }} />
-              </span>
+              
+              {/* Si hay productos, mostramos el número. Si no, mostramos tu punto negro original */}
+              {cartCount > 0 ? (
+                <span 
+                  className={`absolute -top-1.5 -right-2 flex h-4 w-4 items-center justify-center rounded-full text-[9px] font-bold text-white transition-transform duration-300 ${isCartAnimating ? 'scale-125' : 'scale-100'}`}
+                  style={{ background: 'var(--color-gold)' }}
+                >
+                  {cartCount}
+                </span>
+              ) : (
+                <span className="absolute -top-1 -right-1 flex h-2 w-2">
+                  <span className="relative inline-flex rounded-full h-2 w-2" style={{ background: 'var(--color-black)' }} />
+                </span>
+              )}
             </button>
           </div>
         </div>
