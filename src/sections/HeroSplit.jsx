@@ -3,28 +3,28 @@ import { useState, useEffect } from 'react';
 const slides = [
   {
     id: 1,
-    image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=900&q=80',
+    image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=1600&q=80',
     tag: 'Nueva Colección',
-    headline: ['Hecha para', 'Rendir.'],
+    headline: ['El lujo de', 'sentirte', 'tú.'],
     sub: 'Diseños que acompañan cada movimiento. Rendimiento sin sacrificar elegancia.',
     cta: 'Ver Colección',
     href: '#catalogo',
   },
   {
     id: 2,
-    image: 'https://images.unsplash.com/photo-1518611012118-696072aa579a?w=900&q=80',
+    image: 'https://images.unsplash.com/photo-1518611012118-696072aa579a?w=1600&q=80',
     tag: 'Temporada 2026',
-    headline: ['Fuerza.', 'Elegancia.'],
-    sub: 'Cada prenda diseñada para mujeres que no se detienen.',
+    headline: ['Fuerza &', 'Elegancia', 'pura.'],
+    sub: 'Cada prenda diseñada para mujeres que no se detienen en su día a día.',
     cta: 'Explorar',
     href: '#catalogo',
   },
   {
     id: 3,
-    image: 'https://images.unsplash.com/photo-1541534741688-6078c6bfb5c5?w=900&q=80',
+    image: 'https://images.unsplash.com/photo-1541534741688-6078c6bfb5c5?w=1600&q=80',
     tag: 'Best Sellers',
-    headline: ['Tu mejor', 'versión.'],
-    sub: 'Las piezas favoritas de nuestra comunidad. Limitadas.',
+    headline: ['Descubre', 'tu mejor', 'versión.'],
+    sub: 'Las piezas favoritas de nuestra comunidad. Ediciones estrictamente limitadas.',
     cta: 'Comprar Ahora',
     href: '#catalogo',
   },
@@ -33,24 +33,22 @@ const slides = [
 export default function HeroSplit() {
   const [current, setCurrent] = useState(0);
   const [animating, setAnimating] = useState(false);
-  const [direction, setDirection] = useState('up');
 
   const goTo = (idx) => {
     if (animating || idx === current) return;
-    setDirection(idx > current ? 'up' : 'down');
     setAnimating(true);
     setTimeout(() => {
       setCurrent(idx);
       setAnimating(false);
-    }, 500);
+    }, 600); // Ligeramente más lento para una transición más lujosa
   };
 
   const next = () => goTo((current + 1) % slides.length);
   const prev = () => goTo((current - 1 + slides.length) % slides.length);
 
-  // Auto-avance cada 5s
+  // Auto-avance cada 6s
   useEffect(() => {
-    const t = setTimeout(next, 5000);
+    const t = setTimeout(next, 6000);
     return () => clearTimeout(t);
   }, [current]);
 
@@ -59,118 +57,102 @@ export default function HeroSplit() {
   return (
     <section className="w-full h-screen flex flex-col md:flex-row overflow-hidden bg-white">
 
-      {/* LADO IZQUIERDO — Imagen */}
-      <div className="relative w-full md:w-1/2 h-1/2 md:h-full overflow-hidden bg-stone-100">
+      {/* ── 70% IZQUIERDA: IMAGEN INMERSIVA ── */}
+      {/* En móvil ocupa 60% del alto, en desktop 70% del ancho */}
+      <div className="relative w-full h-[60vh] md:w-[70%] md:h-full overflow-hidden bg-stone-100">
         <img
           key={s.id + '-img'}
           src={s.image}
           alt={s.tag}
-          className={`w-full h-full object-cover transition-all duration-700 ease-in-out ${
-            animating ? 'scale-105 opacity-0' : 'scale-100 opacity-100'
+          className={`w-full h-full object-cover transition-all duration-1000 ease-[cubic-bezier(0.25,1,0.5,1)] ${
+            animating ? 'scale-105 opacity-80' : 'scale-100 opacity-100'
           }`}
         />
-        {/* Overlay sutil */}
-        <div className="absolute inset-0 bg-black/10" />
+        {/* Overlay sutil para dar dramatismo a la foto */}
+        <div className="absolute inset-0 bg-black/10 transition-opacity duration-1000" />
 
-        {/* Tag flotante */}
-        <div className="absolute top-8 left-8">
-          <span
-            style={{ fontFamily: 'Montserrat, sans-serif', letterSpacing: '0.2em' }}
-            className="text-[10px] font-medium text-white bg-black/40 backdrop-blur-sm px-4 py-2"
-          >
-            {s.tag.toUpperCase()}
-          </span>
-        </div>
-
-        {/* Contador */}
+        {/* Indicador de Pagina (Minimalista) */}
         <div
-          style={{ fontFamily: 'Montserrat, sans-serif' }}
-          className="absolute bottom-8 left-8 text-white/70 text-[11px] tracking-widest"
+          style={{ fontFamily: 'var(--font-primary)' }}
+          className="absolute bottom-8 left-8 text-white/90 text-[10px] tracking-[0.3em] font-medium"
         >
-          {String(current + 1).padStart(2, '0')} / {String(slides.length).padStart(2, '0')}
+          {String(current + 1).padStart(2, '0')} — {String(slides.length).padStart(2, '0')}
         </div>
       </div>
 
-      {/* LADO DERECHO — Texto */}
-      <div className="w-full md:w-1/2 h-1/2 md:h-full flex flex-col justify-center px-10 md:px-16 lg:px-24 bg-white relative">
-
-        {/* Línea decorativa */}
-        <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[2px] h-24 bg-stone-900 hidden md:block" />
-
+      {/* ── 30% DERECHA: TEXTO EDITORIAL ── */}
+      {/* En móvil toma el resto del espacio, en desktop 30% del ancho */}
+      <div 
+        style={{ background: 'var(--color-bg)' }}
+        className="w-full flex-1 md:w-[30%] md:h-full flex flex-col justify-center px-8 sm:px-12 md:px-10 lg:px-14 relative z-10"
+      >
         <div
           key={s.id + '-text'}
-          className={`transition-all duration-500 ease-out ${
-            animating ? 'opacity-0 translate-y-6' : 'opacity-100 translate-y-0'
+          className={`transition-all duration-700 ease-[cubic-bezier(0.25,1,0.5,1)] flex flex-col ${
+            animating ? 'opacity-0 translate-y-8' : 'opacity-100 translate-y-0'
           }`}
         >
-          {/* Tag */}
+          {/* Etiqueta Superior */}
           <p
-            style={{ fontFamily: 'Montserrat, sans-serif', letterSpacing: '0.25em' }}
-            className="text-[10px] font-semibold text-stone-400 mb-6"
+            style={{ fontFamily: 'var(--font-primary)', letterSpacing: '0.3em' }}
+            className="text-[9px] font-semibold text-stone-500 uppercase mb-8"
           >
-            {s.tag.toUpperCase()}
+            {s.tag}
           </p>
 
-          {/* Headline */}
+          {/* Titular en MAYÚSCULAS */}
           <h1
-            style={{ fontFamily: 'Montserrat, sans-serif' }}
-            className="text-5xl md:text-6xl lg:text-7xl font-light text-stone-900 leading-tight mb-6"
+            style={{ fontFamily: 'var(--font-primary)' }}
+            className="text-4xl sm:text-5xl lg:text-[3.25rem] xl:text-6xl font-light text-stone-900 leading-[1.05] uppercase tracking-wide mb-8"
           >
             {s.headline.map((line, i) => (
               <span key={i} className="block">
                 {i === s.headline.length - 1
-                  ? <strong className="font-semibold">{line}</strong>
+                  ? <strong className="font-bold">{line}</strong>
                   : line}
               </span>
             ))}
           </h1>
 
-          {/* Subtexto */}
+          {/* Subtexto en MAYÚSCULAS (pero más pequeño) */}
           <p
-            style={{ fontFamily: 'Montserrat, sans-serif' }}
-            className="text-stone-500 text-sm font-light leading-relaxed max-w-sm mb-10"
+            style={{ fontFamily: 'var(--font-primary)', letterSpacing: '0.1em' }}
+            className="text-stone-600 text-[9px] sm:text-[10px] font-medium uppercase leading-relaxed max-w-[280px] mb-12 opacity-80"
           >
             {s.sub}
           </p>
 
-          {/* CTA */}
-          <a
-            href={s.href}
-            style={{ fontFamily: 'Montserrat, sans-serif', letterSpacing: '0.2em' }}
-            className="inline-block text-[11px] font-semibold text-white bg-stone-900 px-8 py-4 hover:bg-stone-700 transition-colors duration-300"
-          >
-            {s.cta.toUpperCase()}
-          </a>
+          {/* Botón Minimalista (Tipo Alta Costura) */}
+          <div>
+            <a
+              href={s.href}
+              style={{ fontFamily: 'var(--font-primary)', letterSpacing: '0.25em' }}
+              className="inline-flex items-center text-[10px] font-bold text-stone-900 uppercase border-b border-stone-900 pb-1.5 hover:text-stone-500 hover:border-stone-500 transition-all duration-300 group"
+            >
+              {s.cta}
+              <span className="ml-3 transform transition-transform duration-300 group-hover:translate-x-2">→</span>
+            </a>
+          </div>
         </div>
 
-        {/* Navegación */}
-        <div className="absolute bottom-8 right-10 md:right-16 flex items-center gap-6">
+        {/* ── CONTROLES DE NAVEGACIÓN ── */}
+        <div className="absolute bottom-8 right-8 md:right-12 flex gap-4">
           <button
             onClick={prev}
-            className="text-stone-400 hover:text-stone-900 transition-colors text-xl font-light"
+            className="w-10 h-10 flex items-center justify-center border border-stone-300 rounded-full text-stone-500 hover:bg-stone-900 hover:text-white hover:border-stone-900 transition-all duration-300"
             aria-label="Anterior"
           >
-            ←
+            <span className="text-sm font-light">←</span>
           </button>
-          <div className="flex gap-2">
-            {slides.map((_, i) => (
-              <button
-                key={i}
-                onClick={() => goTo(i)}
-                className={`transition-all duration-300 rounded-full ${
-                  i === current ? 'w-6 h-1.5 bg-stone-900' : 'w-1.5 h-1.5 bg-stone-300'
-                }`}
-              />
-            ))}
-          </div>
           <button
             onClick={next}
-            className="text-stone-400 hover:text-stone-900 transition-colors text-xl font-light"
+            className="w-10 h-10 flex items-center justify-center border border-stone-300 rounded-full text-stone-500 hover:bg-stone-900 hover:text-white hover:border-stone-900 transition-all duration-300"
             aria-label="Siguiente"
           >
-            →
+            <span className="text-sm font-light">→</span>
           </button>
         </div>
+
       </div>
     </section>
   );

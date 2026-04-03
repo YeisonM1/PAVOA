@@ -99,7 +99,7 @@ export default function Footer() {
           </p>
           <ul className="space-y-3 text-[11px] font-light">
             <li><a href="#" className="hover:text-white transition-colors">Nueva Colección</a></li>
-            <li><a href="#" className="hover:text-white transition-colors">Vestidos</a></li>
+            <li><a href="#" className="hover:text-white transition-colors">Prendas Superiores</a></li>
             <li><a href="#" className="hover:text-white transition-colors">Accesorios</a></li>
             <li><a href="#" className="hover:text-white transition-colors">Más Vendidos</a></li>
           </ul>

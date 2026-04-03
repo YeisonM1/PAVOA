@@ -130,14 +130,15 @@ const Header = () => {
     <>
       {/* ── HEADER ── */}
       <header
-        className={`fixed top-0 left-0 w-full z-50 transition-all duration-500 border-b ${
-          isScrolled ? 'border-stone-200 py-3 shadow-sm' : 'border-transparent py-5'
-        } backdrop-blur-md`}
-        style={{
-          fontFamily: 'var(--font-primary)',
-          background: isScrolled ? 'rgba(242,228,225,0.98)' : 'rgba(242,228,225,0.92)',
-        }}
-      >
+          className={`fixed top-0 left-0 w-full z-50 transition-all duration-500 border-b ${
+            isScrolled ? 'border-white/10 py-2 shadow-lg' : 'border-transparent py-4'
+          } backdrop-blur-md`}
+          style={{
+            fontFamily: 'var(--font-primary)',
+            // Aquí puedes cambiar a un Café Oscuro: '#2B1E16' o Gris: '#1C1C1C'
+            background: isScrolled ? 'rgba(242, 228, 225, 0.98)' : 'rgba(242, 228, 225, 0.92)',
+          }}
+        >
         <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
 
           {/* IZQUIERDA */}
@@ -149,8 +150,9 @@ const Header = () => {
               {menuOpen ? <X size={22} strokeWidth={1.5} /> : <Menu size={22} strokeWidth={1.5} />}
             </button>
 
-            <nav className="hidden md:flex items-center gap-8 text-[12px] font-medium tracking-[0.2em] text-stone-900">
-              <a href="#inicio" className="hover:text-stone-900 transition-colors relative group">
+            <nav className="hidden md:flex items-center gap-8 text-[12px] font-medium tracking-[0.2em]">
+              {/* INICIO */}
+              <a href="#inicio" className="transition-opacity hover:opacity-70 relative group" style={{ color: '#3E2723' }}>
                 INICIO
                 <span className="absolute -bottom-1 left-0 w-0 h-[1px] transition-all duration-300 group-hover:w-full"
                   style={{ background: 'var(--color-gold)' }} />
@@ -160,13 +162,13 @@ const Header = () => {
               <div className="relative" ref={megaRef}>
                 <button
                   onClick={() => setCatalogoOpen(v => !v)}
-                  className="flex items-center gap-1.5"
+                  className="flex items-center gap-1.5 transition-opacity hover:opacity-70"
                   style={{
                     fontFamily: 'var(--font-primary)',
                     fontSize: '12px',
                     fontWeight: 500,
                     letterSpacing: '0.2em',
-                    color: 'var(--color-black)',
+                    color: '#3E2723', /* <-- CAMBIO A CAFÉ OSCURO */
                     background: 'none',
                     border: 'none',
                     cursor: 'pointer',
@@ -185,8 +187,8 @@ const Header = () => {
                   </span>
                   <span style={{
                     display: 'inline-block', width: 7, height: 7,
-                    borderRight: '1.5px solid var(--color-black)',
-                    borderBottom: '1.5px solid var(--color-black)',
+                    borderRight: '1.5px solid #3E2723', /* <-- FLECHA EN CAFÉ OSCURO */
+                    borderBottom: '1.5px solid #3E2723', /* <-- FLECHA EN CAFÉ OSCURO */
                     transform: catalogoOpen ? 'rotate(-135deg)' : 'rotate(45deg)',
                     marginTop: catalogoOpen ? '3px' : '-2px',
                     transition: 'transform 0.3s ease, margin-top 0.3s ease',
@@ -194,7 +196,8 @@ const Header = () => {
                 </button>
               </div>
 
-              <a href="#contacto" className="hover:text-stone-900 transition-colors relative group">
+              {/* CONTACTO */}
+              <a href="#contacto" className="transition-opacity hover:opacity-70 relative group" style={{ color: '#3E2723' }}>
                 CONTACTO
                 <span className="absolute -bottom-1 left-0 w-0 h-[1px] transition-all duration-300 group-hover:w-full"
                   style={{ background: 'var(--color-gold)' }} />
@@ -204,7 +207,16 @@ const Header = () => {
 
           {/* CENTRO: Logo */}
           <div className="flex-1 flex justify-center">
-            <a href="/"><img src={logo} alt="PAVOA" className="h-11 md:h-14 w-auto object-contain" /></a>
+            <a href="/">
+              <img 
+                src={logo} 
+                alt="PAVOA" 
+                // CAMBIO: h-11 -> h-14 | md:h-14 -> md:h-20
+                className="h-14 md:h-20 w-auto object-contain transition-transform duration-500" 
+                style={{ 
+                }}
+              />
+            </a>
           </div>
 
           {/* DERECHA */}

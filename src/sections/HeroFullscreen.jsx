@@ -1,196 +1,183 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 
 const slides = [
   {
     id: 1,
-    image: 'https://images.unsplash.com/photo-1552674605-db6ffd4facb5?w=1400&q=80',
-    tag: 'Rendimiento',
-    headline: 'Muévete sin límites.',
-    sub: 'Tecnología de tejido premium que se adapta a ti.',
-    cta: 'Descubrir',
+    image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=1600&q=80',
+    tag: 'Nueva Colección',
+    headline: ['El lujo de', 'sentirte', 'tú.'],
+    sub: 'Diseños que acompañan cada movimiento. Rendimiento sin sacrificar elegancia.',
+    cta: 'Ver Colección',
     href: '#catalogo',
-    align: 'left',
   },
   {
     id: 2,
-    image: 'https://images.unsplash.com/photo-1506629082955-511b1aa562c8?w=1400&q=80',
-    tag: 'Estilo',
-    headline: 'El lujo de sentirte tú.',
-    sub: 'Cada detalle pensado para la mujer que lo exige todo.',
-    cta: 'Ver Colección',
+    image: 'https://images.unsplash.com/photo-1518611012118-696072aa579a?w=1600&q=80',
+    tag: 'Temporada 2026',
+    headline: ['Fuerza &', 'Elegancia', 'pura.'],
+    sub: 'Cada prenda diseñada para mujeres que no se detienen en su día a día.',
+    cta: 'Explorar',
     href: '#catalogo',
-    align: 'center',
   },
   {
     id: 3,
-    image: 'https://images.unsplash.com/photo-1594381898411-846e7d193883?w=1400&q=80',
-    tag: 'Exclusivo',
-    headline: 'Diseñado para ganar.',
-    sub: 'Colección limitada. Piezas que definen tu entrenamiento.',
+    image: 'https://images.unsplash.com/photo-1541534741688-6078c6bfb5c5?w=1600&q=80',
+    tag: 'Best Sellers',
+    headline: ['Descubre', 'tu mejor', 'versión.'],
+    sub: 'Las piezas favoritas de nuestra comunidad. Ediciones estrictamente limitadas.',
     cta: 'Comprar Ahora',
     href: '#catalogo',
-    align: 'right',
   },
 ];
 
 export default function HeroFullscreen() {
   const [current, setCurrent] = useState(0);
-  const [prev, setPrev] = useState(null);
   const [animating, setAnimating] = useState(false);
-  const progressRef = useRef(null);
-  const timerRef = useRef(null);
 
   const goTo = (idx) => {
     if (animating || idx === current) return;
     setAnimating(true);
-    setPrev(current);
-    setCurrent(idx);
     setTimeout(() => {
-      setPrev(null);
+      setCurrent(idx);
       setAnimating(false);
-    }, 700);
+    }, 800); // Transición más lenta para el efecto cinematográfico
   };
 
   const next = () => goTo((current + 1) % slides.length);
+  const prev = () => goTo((current - 1 + slides.length) % slides.length);
 
-  // Auto-avance
+  // Auto-avance cada 6s
   useEffect(() => {
-    timerRef.current = setTimeout(next, 5500);
-    return () => clearTimeout(timerRef.current);
+    const t = setTimeout(next, 6000);
+    return () => clearTimeout(t);
   }, [current]);
 
   const s = slides[current];
-  const alignClass = {
-    left: 'items-start text-left',
-    center: 'items-center text-center',
-    right: 'items-end text-right',
-  }[s.align];
 
   return (
     <section className="relative w-full h-screen overflow-hidden bg-black">
-
-      {/* Slide anterior (sale hacia arriba con zoom out) */}
-      {prev !== null && (
+      
+      {/* ── IMÁGENES CON EFECTO KEN BURNS (Zoom Lento) ── */}
+      {slides.map((slide, index) => (
         <div
-          className="absolute inset-0 z-10 transition-all duration-700 ease-in-out"
-          style={{ transform: 'scale(1.05) translateY(-4%)', opacity: 0 }}
+          key={slide.id}
+          className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${
+            index === current ? 'opacity-100 z-10' : 'opacity-0 z-0'
+          }`}
         >
           <img
-            src={slides[prev].image}
-            alt=""
-            className="w-full h-full object-cover"
+            src={slide.image}
+            alt={slide.tag}
+            // El 'scale-105' en hover o animado da esa sensación de que la foto respira
+            className={`w-full h-full object-cover origin-center transition-transform duration-[6000ms] ease-linear ${
+              index === current ? 'scale-105' : 'scale-100'
+            }`}
           />
-          <div className="absolute inset-0 bg-black/40" />
         </div>
-      )}
+      ))}
 
-      {/* Slide actual (entra desde abajo) */}
-      <div
-        key={s.id}
-        className={`absolute inset-0 z-20 transition-all duration-700 ease-out ${
-          animating ? 'opacity-0 translate-y-4' : 'opacity-100 translate-y-0'
-        }`}
-      >
-        <img
-          src={s.image}
-          alt={s.tag}
-          className={`w-full h-full object-cover transition-transform duration-[6000ms] ease-out ${
-            animating ? 'scale-100' : 'scale-105'
+      {/* ── TEXT PROTECTION (Gradiente) ── */}
+      {/* Esto oscurece solo la parte de abajo para que el texto blanco resalte siempre */}
+      <div className="absolute inset-0 z-10 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none" />
+      
+      {/* Overlay adicional muy sutil para igualar tonos */}
+      <div className="absolute inset-0 z-10 bg-black/10 pointer-events-none" />
+
+      {/* ── CONTENIDO DEL TEXTO (Anclado abajo a la izquierda) ── */}
+      <div className="absolute inset-0 z-20 flex flex-col justify-end pb-16 md:pb-20 lg:pb-24 px-8 sm:px-12 md:px-16 lg:px-24">
+        <div
+          key={s.id + '-text'}
+          className={`transition-all duration-700 ease-[cubic-bezier(0.25,1,0.5,1)] ${
+            animating ? 'opacity-0 translate-y-8' : 'opacity-100 translate-y-0'
           }`}
-        />
-        {/* Gradiente */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-black/10" />
-      </div>
-
-      {/* Contenido */}
-      <div
-        key={s.id + '-content'}
-        className={`absolute inset-0 z-30 flex flex-col justify-end pb-20 px-10 md:px-20 ${alignClass} transition-all duration-500 delay-200 ${
-          animating ? 'opacity-0 translate-y-6' : 'opacity-100 translate-y-0'
-        }`}
-      >
-        {/* Tag */}
-        <p
-          style={{ fontFamily: 'Montserrat, sans-serif', letterSpacing: '0.3em' }}
-          className="text-[10px] font-semibold text-white/60 mb-4"
         >
-          {s.tag.toUpperCase()}
-        </p>
-
-        {/* Headline */}
-        <h2
-          style={{ fontFamily: 'Montserrat, sans-serif' }}
-          className="text-5xl md:text-7xl lg:text-8xl font-light text-white leading-tight mb-5 max-w-3xl"
-        >
-          {s.headline}
-        </h2>
-
-        {/* Sub */}
-        <p
-          style={{ fontFamily: 'Montserrat, sans-serif' }}
-          className="text-white/70 text-sm font-light max-w-md mb-8 leading-relaxed"
-        >
-          {s.sub}
-        </p>
-
-        {/* CTA */}
-        <a
-          href={s.href}
-          style={{ fontFamily: 'Montserrat, sans-serif', letterSpacing: '0.2em' }}
-          className="inline-block text-[11px] font-semibold text-stone-900 bg-white px-8 py-4 hover:bg-stone-100 transition-colors duration-300 w-fit"
-        >
-          {s.cta.toUpperCase()}
-        </a>
-      </div>
-
-      {/* Barras de progreso */}
-      <div className="absolute bottom-6 left-10 md:left-20 z-30 flex items-center gap-3">
-        {slides.map((_, i) => (
-          <button
-            key={i}
-            onClick={() => goTo(i)}
-            className="relative h-[2px] bg-white/20 overflow-hidden transition-all duration-300"
-            style={{ width: i === current ? '48px' : '24px' }}
-            aria-label={`Slide ${i + 1}`}
+          {/* Tag */}
+          <p
+            style={{ fontFamily: 'var(--font-primary)', letterSpacing: '0.3em' }}
+            className="text-[10px] font-semibold text-white/80 uppercase mb-4"
           >
-            {i === current && (
-              <span
-                className="absolute inset-y-0 left-0 bg-white animate-[progress_5.5s_linear_forwards]"
-                style={{
-                  animation: 'fillbar 5.5s linear forwards',
-                }}
-              />
-            )}
-            {i < current && <span className="absolute inset-0 bg-white" />}
+            {s.tag}
+          </p>
+
+          {/* Titular */}
+          <h1
+            style={{ fontFamily: 'var(--font-primary)' }}
+            className="text-5xl sm:text-6xl md:text-7xl lg:text-[5.5rem] font-light text-white leading-[1.05] uppercase tracking-wide mb-6 drop-shadow-lg"
+          >
+            {s.headline.map((line, i) => (
+              <span key={i} className="block">
+                {i === s.headline.length - 1
+                  ? <strong className="font-semibold text-white">{line}</strong>
+                  : line}
+              </span>
+            ))}
+          </h1>
+
+          {/* Subtexto */}
+          <p
+            style={{ fontFamily: 'var(--font-primary)', letterSpacing: '0.15em' }}
+            className="text-white/80 text-[10px] sm:text-[11px] font-medium uppercase leading-relaxed max-w-md mb-10 drop-shadow-md"
+          >
+            {s.sub}
+          </p>
+
+          {/* Botón Minimalista Invertido (Blanco) */}
+          <a
+            href={s.href}
+            style={{ fontFamily: 'var(--font-primary)', letterSpacing: '0.25em' }}
+            className="inline-flex items-center text-[11px] font-bold text-white uppercase border-b border-white pb-2 hover:text-stone-300 hover:border-stone-300 transition-all duration-300 group"
+          >
+            {s.cta}
+            <span className="ml-4 transform transition-transform duration-300 group-hover:translate-x-3">→</span>
+          </a>
+        </div>
+      </div>
+
+      {/* ── CONTROLES Y PAGINACIÓN ── */}
+      <div className="absolute bottom-10 right-8 md:right-16 z-20 flex items-center gap-8">
+        {/* Paginación */}
+        <div
+          style={{ fontFamily: 'var(--font-primary)' }}
+          className="text-white/90 text-[11px] tracking-[0.3em] font-medium hidden sm:block"
+        >
+          {String(current + 1).padStart(2, '0')} — {String(slides.length).padStart(2, '0')}
+        </div>
+
+        {/* Flechas */}
+        {/* Flechas Rediseñadas (Premium, Delicadas, Trazo Fino) */}
+        <div className="flex gap-3">
+          {/* Botón Anterior */}
+          <button
+            onClick={prev}
+            className="w-12 h-12 flex items-center justify-center border border-white/20 rounded-full text-white/70 hover:bg-white hover:text-black hover:border-white transition-all duration-500 backdrop-blur-sm group"
+            aria-label="Anterior"
+          >
+            {/* Icono SVG Delicado ← */}
+            <svg 
+              width="18" height="18" viewBox="0 0 24 24" fill="none" 
+              className="transform transition-transform duration-300 group-hover:-translate-x-1"
+            >
+              <path d="M19 12H5M5 12L12 19M5 12L12 5" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
           </button>
-        ))}
+          
+          {/* Botón Siguiente */}
+          <button
+            onClick={next}
+            className="w-12 h-12 flex items-center justify-center border border-white/20 rounded-full text-white/70 hover:bg-white hover:text-black hover:border-white transition-all duration-500 backdrop-blur-sm group"
+            aria-label="Siguiente"
+          >
+            {/* Icono SVG Delicado → */}
+            <svg 
+              width="18" height="18" viewBox="0 0 24 24" fill="none" 
+              className="transform transition-transform duration-300 group-hover:translate-x-1"
+            >
+              <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </button>
+        </div>
       </div>
 
-      {/* Número slide */}
-      <div
-        style={{ fontFamily: 'Montserrat, sans-serif' }}
-        className="absolute top-8 right-10 md:right-20 z-30 text-white/40 text-[11px] tracking-widest"
-      >
-        {String(current + 1).padStart(2, '0')} — {String(slides.length).padStart(2, '0')}
-      </div>
-
-      {/* Flecha siguiente */}
-      <button
-        onClick={next}
-        className="absolute right-8 top-1/2 -translate-y-1/2 z-30 text-white/40 hover:text-white transition-colors duration-300 text-2xl font-light hidden md:block"
-        aria-label="Siguiente"
-      >
-        ↓
-      </button>
-
-      <style>{`
-        @keyframes fillbar {
-          from { width: 0% }
-          to   { width: 100% }
-        }
-      `}</style>
     </section>
   );
-} 
-
-//
+}

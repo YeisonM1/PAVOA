@@ -15,13 +15,13 @@ function App() {
     <div className="min-h-screen bg-white font-sans">
 
       <Header />
-      {/*<HeroSplit /> */}
+      {/* <HeroSplit />*/}
       <HeroFullscreen />
       {/* <Ticker /> */}
       <Categorias />
       <Productos />
       <Filosofia />
-      {/* <BannerSecundario /> */}
+      {/* <BannerSecundario />  */}
       <Instagram />
       <Footer />
 
