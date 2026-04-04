@@ -1,24 +1,43 @@
-/* 1. LA FUENTE EXTERNA DEBE SER LA LÍNEA 1 (Aquí puse Raleway como pediste antes) */
-@import url('https://fonts.googleapis.com/css2?family=Raleway:wght@200;300;400;500;600;700&display=swap');
+/* 1. FUENTE — solo una vez */
+@import url('https://fonts.googleapis.com/css2?family=Raleway:wght@300;400;500;600&display=swap');
 
-/* 2. TAILWIND DEBE SER LA LÍNEA 2 (Solo una vez) */
+/* 2. TAILWIND — solo una vez */
 @import "tailwindcss";
 
-/* 3. TUS VARIABLES (Asegúrate de mantener el import de tus variables actuales) */
-@import "./styles/variables.css";
+/* 3. VARIABLES */
+:root {
+  /* Tipografía */
+  --font-primary: 'Raleway', sans-serif;
 
-/* 4. CONFIGURACIÓN DEL TEMA */
+  /* Colores principales */
+  --color-black:     #0B0B0B;
+  --color-charcoal:  #3A3A3A;
+  --color-white:     #ffffff;
+
+  /* Fondos */
+  --color-bg:        #F2E4E1;
+  --color-ivory:     #F6F1EA;
+
+  /* Dorados / Acentos */
+  --color-gold:      #DFCDB4;
+  --color-gold-mid:  #E7D9C6;
+  --color-gold-soft: #EEE5D8;
+
+  /* Bordes */
+  --color-border:    #e0d8ce;
+}
+
+/* 4. TEMA DE TAILWIND */
 @theme {
   --font-sans: 'Raleway', sans-serif;
 }
 
-/* 5. APLICACIÓN AL BODY */
+/* 5. BASE */
 @layer base {
   body {
-    font-family: var(--font-sans);
+    font-family: var(--font-primary);
+    background-color: var(--color-white);
+    color: var(--color-black);
+    -webkit-font-smoothing: antialiased;
   }
 }
-
-@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600&display=swap');
-@import "tailwindcss";
-@import "tailwindcss";

@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { CartContext } from '../App';
 import FilterDrawer from '../sections/FilterDrawer';
 import { getProductos, getCategoriaById } from '../services/productService'; // 👈 Esta es la línea clave
+import SEO from '../components/SEO';
 
 // ── COMPONENTE DE TARJETA DE PRODUCTO ──
 function ProductCard({ producto }) {
@@ -29,8 +30,8 @@ function ProductCard({ producto }) {
             {producto.tag}
           </span>
         )}
-        <img src={producto.imagen1} alt={producto.nombre} className="absolute inset-0 w-full h-full object-cover transition-all duration-[800ms] ease-[cubic-bezier(0.25,1,0.5,1)] md:group-hover:scale-105" />
-        <img src={producto.imagen2} alt={producto.nombre} className="absolute inset-0 w-full h-full object-cover transition-all duration-[800ms] ease-[cubic-bezier(0.25,1,0.5,1)] opacity-0 md:group-hover:opacity-100 md:group-hover:scale-105" />
+        <img src={producto.imagen1} alt={producto.nombre} loading="lazy" className="absolute inset-0 w-full h-full object-cover transition-all duration-[800ms] ease-[cubic-bezier(0.25,1,0.5,1)] md:group-hover:scale-105" />
+        <img src={producto.imagen2} alt={producto.nombre} loading="lazy" className="absolute inset-0 w-full h-full object-cover transition-all duration-[800ms] ease-[cubic-bezier(0.25,1,0.5,1)] opacity-0 md:group-hover:opacity-100 md:group-hover:scale-105" />
         <div className="absolute inset-0 bg-black/0 md:group-hover:bg-black/10 transition-colors duration-500 z-10 pointer-events-none" />
 
         <button onClick={(e) => { e.stopPropagation(); setShowMobileSizes(true); }} className="md:hidden absolute bottom-3 right-3 w-9 h-9 bg-white/90 backdrop-blur-md rounded-full flex items-center justify-center shadow-lg z-30 text-stone-900">
@@ -150,6 +151,12 @@ useEffect(() => {
     
   return (
     <div className="min-h-screen bg-white relative">
+
+      <SEO
+        title={`${dataHeader.titulo1}${dataHeader.titulo2}`}
+        description={dataHeader.desc}
+        url={id ? `/categoria/${id}` : '/categoria'}
+      />
       
       {/* ── 1. HERO EDITORIAL (DINÁMICO) ── */}
       <section className="relative w-full h-[60vh] md:h-[70vh] flex items-end justify-center pb-16 md:pb-24 overflow-hidden">

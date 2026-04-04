@@ -4,6 +4,7 @@ import { Plus, Minus } from 'lucide-react';
 import { CartContext } from '../App';
 import CrossSelling from '../sections/CrossSelling';
 import { getProductoById } from '../services/productService'; // Conexión a DB
+import SEO from '../components/SEO';
 
 export default function ProductPage() {
   const { id } = useParams();
@@ -72,6 +73,13 @@ export default function ProductPage() {
 
   return (
     <div className="min-h-screen bg-white" style={{ fontFamily: 'var(--font-primary)' }}>
+
+    <SEO
+      title={producto.nombre}
+      description={producto.descripcion || `Compra ${producto.nombre} en PAVOA. Alta calidad deportiva con envío a toda Colombia.`}
+      url={`/producto/${id}`}
+    />
+
       <div className="flex flex-col lg:flex-row max-w-[1600px] mx-auto pt-[72px] md:pt-[88px]">
         
         {/* ── COLUMNA IZQUIERDA: GALERÍA DE IMÁGENES ── */}
@@ -98,7 +106,9 @@ export default function ProductPage() {
                   imagenActiva === img ? 'border-stone-900 opacity-100' : 'border-transparent opacity-50 hover:opacity-100'
                 }`}
               >
-                <img src={img} alt={`${producto.nombre} vista ${index + 1}`} className="w-full h-full object-cover" />
+                <img src={img} alt={`${producto.nombre} vista ${index + 1}`} 
+                className="w-full h-full object-cover" 
+                loading="lazy" />  // 👈 agrega esto 
               </button>
             ))}
           </div>
