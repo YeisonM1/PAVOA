@@ -117,54 +117,50 @@ const Header = () => {
 
   const activeImage = hoveredItem ? (categoryImages[hoveredItem] || defaultImage) : defaultImage;
 
-  const renderDesktopLink = (item, badge = null) => {
-    const isHovered = hoveredItem === item;
-    const isDimmed = hoveredItem && !isHovered && hoveredItem !== 'destacados'; 
-    
-    return (
-      <li key={item}>
-        <Link
-          to={`/categoria/${item.toLowerCase()}`}
-          onClick={() => { 
-            setCatalogoOpen(false); 
-            window.scrollTo(0, 0); 
-          }}
-          onMouseEnter={() => setHoveredItem(item)}
-          onMouseLeave={() => setHoveredItem(null)}
-          style={{ 
-            display: 'flex', alignItems: 'center', gap: 10, padding: '5px 0', 
-            textDecoration: 'none', position: 'relative', 
-            transition: 'all 0.3s ease',
-            opacity: isDimmed ? 0.35 : 1, 
-            transform: isHovered ? 'translateX(6px)' : 'none' 
-          }}
-        >
-          <span style={{
-            fontSize: 10.5, fontWeight: 500, letterSpacing: '0.18em',
-            color: isHovered ? 'var(--color-black)' : 'var(--color-charcoal)',
-            transition: 'color 0.2s ease', position: 'relative',
-          }}>
-            {item.toUpperCase()}
-            <span style={{
-              position: 'absolute', bottom: -2, left: 0, height: 1,
-              width: isHovered ? '100%' : '0%',
-              background: 'var(--color-gold)', transition: 'width 0.3s ease',
-            }} />
-          </span>
-          {badge && (
-            <span style={{
-              fontSize: 6.5, fontWeight: 600, letterSpacing: '0.1em',
-              color: badge === 'NUEVO' ? 'var(--color-gold)' : 'var(--color-border)',
-              border: `1px solid ${badge === 'NUEVO' ? 'var(--color-gold)' : 'var(--color-border)'}`,
-              padding: '2px 4px', borderRadius: 2,
-            }}>
-              {badge}
-            </span>
-          )}
-        </Link>
-      </li>
-    );
-  };
+  // ── MEJORA 5: Refactorización a Tailwind (Código limpio y mantenible) ──
+  const renderDesktopLink = (item, badge = null) => {
+    const isHovered = hoveredItem === item;
+    const isDimmed = hoveredItem && !isHovered && hoveredItem !== 'destacados'; 
+    
+    return (
+      <li key={item}>
+        <Link
+          to={`/categoria/${item.toLowerCase()}`}
+          onClick={() => { 
+            setCatalogoOpen(false); 
+            window.scrollTo(0, 0); 
+          }}
+          onMouseEnter={() => setHoveredItem(item)}
+          onMouseLeave={() => setHoveredItem(null)}
+          className={`flex items-center gap-2.5 py-1.5 relative transition-all duration-300 ease-out ${
+            isDimmed ? 'opacity-35' : 'opacity-100'
+          } ${isHovered ? 'translate-x-1.5' : 'translate-x-0'}`}
+        >
+          <span className={`text-[10.5px] font-medium tracking-[0.18em] relative transition-colors duration-200 ${
+            isHovered ? 'text-black' : 'text-stone-700'
+          }`}>
+            {item.toUpperCase()}
+            {/* Línea animada inferior */}
+            <span 
+              className="absolute -bottom-0.5 left-0 h-[1px] transition-all duration-300 ease-out"
+              style={{ width: isHovered ? '100%' : '0%', background: 'var(--color-gold)' }} 
+            />
+          </span>
+          {badge && (
+            <span 
+              className="text-[6.5px] font-semibold tracking-[0.1em] px-1 py-0.5 rounded-[2px] border"
+              style={{
+                color: badge === 'NUEVO' ? 'var(--color-gold)' : 'var(--color-border)',
+                borderColor: badge === 'NUEVO' ? 'var(--color-gold)' : 'var(--color-border)'
+              }}
+            >
+              {badge}
+            </span>
+          )}
+        </Link>
+      </li>
+    );
+  };
 
   return (
     <>
