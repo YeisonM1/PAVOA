@@ -65,9 +65,34 @@ const Header = () => {
   const megaRef = useRef(null);
   const panelRef = useRef(null); 
 
+  // ── MEJORA 3.1: Precarga de imágenes del Mega Menú (Zero-Fricción) ──
   useEffect(() => {
-    const onScroll = () => setIsScrolled(window.scrollY > 20);
-    window.addEventListener('scroll', onScroll);
+    // Le decimos al navegador que descargue estas imágenes silenciosamente en segundo plano
+    Object.values(categoryImages).forEach((url) => {
+      const img = new Image();
+      img.src = url;
+    });
+    const defaultImg = new Image();
+    defaultImg.src = defaultImage;
+  }, []);
+
+// ── MEJORA 1: Scroll de alto rendimiento ──
+  useEffect(() => {
+    let ticking = false;
+
+    const onScroll = () => {
+      // Solo ejecutamos la lógica si el navegador no está ya procesando un frame
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          setIsScrolled(window.scrollY > 20);
+          ticking = false;
+        });
+        ticking = true;
+      }
+    };
+
+    // { passive: true } es vital para evitar el "scroll jank" (tirones) en móviles
+    window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
@@ -154,11 +179,14 @@ const Header = () => {
         >
         <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
           <div className="flex-1 flex items-center">
+{/* ── MEJORA 4: Accesibilidad Menú Móvil ── */}
             <button
               className="md:hidden text-stone-800 mr-4 hover:text-stone-500 transition-colors"
               onClick={() => setMenuOpen(!menuOpen)}
+              aria-label={menuOpen ? "Cerrar menú" : "Abrir menú principal"}
+              aria-expanded={menuOpen}
             >
-              {menuOpen ? <X size={22} strokeWidth={1.5} /> : <Menu size={22} strokeWidth={1.5} />}
+              {menuOpen ? <X size={22} strokeWidth={1.5} aria-hidden="true" /> : <Menu size={22} strokeWidth={1.5} aria-hidden="true" />}
             </button>
 
             <nav className="hidden md:flex items-center gap-8 text-[12px] font-medium tracking-[0.2em]">
@@ -174,8 +202,11 @@ const Header = () => {
               </Link>
 
               <div className="relative" ref={megaRef}>
+                {/* ── MEJORA 4: Accesibilidad Catálogo Desktop ── */}
                 <button
                   onClick={() => setCatalogoOpen(v => !v)}
+                  aria-expanded={catalogoOpen}
+                  aria-haspopup="true"
                   className="flex items-center gap-1.5 transition-opacity hover:opacity-70"
                   style={{
                     fontFamily: 'var(--font-primary)', fontSize: '12px', fontWeight: 500, letterSpacing: '0.2em',
@@ -222,15 +253,19 @@ const Header = () => {
               <a href="#" className="hover:text-stone-900 transition-colors"><FacebookIcon /></a>
             </div>
             <div className="w-[1px] h-4 bg-stone-200 hidden sm:block" />
-            <button onClick={() => setIsSearchOpen(true)} className="hover:text-stone-900 transition-colors">
-              <Search size={20} strokeWidth={1.8} />
+{/* ── MEJORA 4: Accesibilidad Botones de Herramientas ── */}
+            <button onClick={() => setIsSearchOpen(true)} className="hover:text-stone-900 transition-colors" aria-label="Abrir búsqueda">
+              <Search size={20} strokeWidth={1.8} aria-hidden="true" />
             </button>
-            <button className="hover:text-stone-900 transition-colors"><User size={20} strokeWidth={1.8} /></button>
             
-            {/* ── MODIFICADO: Botón del Carrito con Evento onClick ── */}
+            <button className="hover:text-stone-900 transition-colors" aria-label="Ir a mi cuenta">
+              <User size={20} strokeWidth={1.8} aria-hidden="true" />
+            </button>
+            
             <button 
               onClick={() => setCartOpen(true)}
               className="hover:text-stone-900 transition-colors relative"
+              aria-label={cartCount > 0 ? `Abrir carrito. Tienes ${cartCount} artículos` : "Abrir carrito. Tu carrito está vacío"}
             >
               <ShoppingBag size={20} strokeWidth={1.8} />
               {cartCount > 0 ? (
@@ -251,6 +286,18 @@ const Header = () => {
       </header>
 
       {/* ── MEGA MENÚ DESKTOP ── */}
+      
+      {/* ── MEJORA 3.2: Overlay de fondo para inmersión total ── */}
+      <div 
+        style={{
+          position: 'fixed', inset: 0, top: isScrolled ? '52px' : '68px', zIndex: 48,
+          backgroundColor: 'rgba(20, 15, 15, 0.4)', backdropFilter: 'blur(3px)',
+          opacity: catalogoOpen ? 1 : 0, pointerEvents: catalogoOpen ? 'auto' : 'none',
+          transition: 'opacity 0.4s ease, top 0.5s ease'
+        }}
+        onClick={() => setCatalogoOpen(false)}
+      />
+
       <div
         ref={panelRef}
         style={{
@@ -410,51 +457,54 @@ const Header = () => {
         </div>
 
         <div 
-          className={`absolute inset-0 pt-24 px-8 transition-transform duration-500 ease-[cubic-bezier(0.4,0,0.2,1)] overflow-y-auto pb-12 ${mobileCatalogoOpen ? 'translate-x-0' : 'translate-x-full'}`}
+          className={`absolute inset-0 pt-24 px-6 transition-transform duration-500 ease-[cubic-bezier(0.4,0,0.2,1)] overflow-y-auto pb-12 ${mobileCatalogoOpen ? 'translate-x-0' : 'translate-x-full'}`}
           style={{ background: 'var(--color-bg)' }}
         >
+          {/* 1. Botón Volver: Área táctil expandida y feedback visual */}
           <button 
             onClick={() => setMobileCatalogoOpen(false)}
-            className="flex items-center gap-2 mb-8 text-stone-500 hover:text-stone-900 transition-colors"
-            style={{ background: 'none', border: 'none', padding: 0, fontSize: 10, fontWeight: 600, letterSpacing: '0.2em' }}
+            className="flex items-center gap-2 mb-6 text-stone-500 hover:text-stone-900 transition-colors py-3 px-2 -ml-2 rounded-lg active:bg-stone-100/60"
+            style={{ background: 'none', border: 'none', fontSize: 11, fontWeight: 600, letterSpacing: '0.2em' }}
           >
-            <span style={{ fontSize: 14 }}>←</span> VOLVER
+            <span style={{ fontSize: 16 }}>←</span> VOLVER
           </button>
 
+          {/* 2. Pestañas: Más altas para facilitar el toque con el pulgar */}
           <div className="flex mb-8 border-b border-stone-200">
-            <button onClick={() => setMobileTab('mujer')} className={`flex-1 pb-4 text-center text-[11px] font-bold tracking-[0.2em] transition-colors relative ${mobileTab === 'mujer' ? 'text-stone-900' : 'text-stone-400'}`}>
+            <button onClick={() => setMobileTab('mujer')} className={`flex-1 py-4 text-center text-[12px] font-bold tracking-[0.2em] transition-colors relative active:bg-stone-50 ${mobileTab === 'mujer' ? 'text-stone-900' : 'text-stone-400'}`}>
               MUJER
               {mobileTab === 'mujer' && <span className="absolute bottom-0 left-0 w-full h-[2px] bg-stone-900 transition-all" />}
             </button>
-            <button onClick={() => setMobileTab('hombre')} className={`flex-1 pb-4 text-center text-[11px] font-bold tracking-[0.2em] transition-colors relative ${mobileTab === 'hombre' ? 'text-stone-900' : 'text-stone-400'}`}>
+            <button onClick={() => setMobileTab('hombre')} className={`flex-1 py-4 text-center text-[12px] font-bold tracking-[0.2em] transition-colors relative active:bg-stone-50 ${mobileTab === 'hombre' ? 'text-stone-900' : 'text-stone-400'}`}>
               HOMBRE
               {mobileTab === 'hombre' && <span className="absolute bottom-0 left-0 w-full h-[2px] bg-stone-900 transition-all" />}
             </button>
           </div>
 
+          {/* 3. Enlaces: Convertidos en bloques grandes con "active state" (estilo app nativa) */}
           {mobileTab === 'mujer' && (
-            <div className="flex flex-col gap-8 animate-fade-in">
+            <div className="flex flex-col gap-6 animate-fade-in">
               <div>
-                <p style={{ fontSize: 8.5, fontWeight: 600, letterSpacing: '0.28em', color: 'var(--color-gold)', marginBottom: 12 }}>SUPERIOR</p>
-                <div className="flex flex-col gap-4">
+                <p style={{ fontSize: 8.5, fontWeight: 600, letterSpacing: '0.28em', color: 'var(--color-gold)', marginBottom: 8, paddingLeft: 8 }}>SUPERIOR</p>
+                <div className="flex flex-col gap-1">
                   {['Camisetas', 'Tops Deportivos', 'Buzos', 'Chaquetas'].map(item => (
-                    <Link key={item} to={`/categoria/${item.toLowerCase()}`} onClick={() => { setMenuOpen(false); window.scrollTo(0, 0); }} className="text-[12px] font-medium tracking-[0.15em] text-stone-800">{item.toUpperCase()}</Link>
+                    <Link key={item} to={`/categoria/${item.toLowerCase()}`} onClick={() => { setMenuOpen(false); window.scrollTo(0, 0); }} className="block py-3 px-2 rounded-lg text-[12px] font-medium tracking-[0.15em] text-stone-800 active:bg-stone-100/60 transition-colors">{item.toUpperCase()}</Link>
                   ))}
                 </div>
               </div>
               <div>
-                <p style={{ fontSize: 8.5, fontWeight: 600, letterSpacing: '0.28em', color: 'var(--color-gold)', marginBottom: 12 }}>INFERIOR</p>
-                <div className="flex flex-col gap-4">
+                <p style={{ fontSize: 8.5, fontWeight: 600, letterSpacing: '0.28em', color: 'var(--color-gold)', marginBottom: 8, paddingLeft: 8 }}>INFERIOR</p>
+                <div className="flex flex-col gap-1">
                   {['Licras', 'Shorts', 'Faldas', 'Sudaderas', 'Bikers', 'Pantalonetas'].map(item => (
-                    <Link key={item} to={`/categoria/${item.toLowerCase()}`} onClick={() => { setMenuOpen(false); window.scrollTo(0, 0); }} className="text-[12px] font-medium tracking-[0.15em] text-stone-800">{item.toUpperCase()}</Link>
+                    <Link key={item} to={`/categoria/${item.toLowerCase()}`} onClick={() => { setMenuOpen(false); window.scrollTo(0, 0); }} className="block py-3 px-2 rounded-lg text-[12px] font-medium tracking-[0.15em] text-stone-800 active:bg-stone-100/60 transition-colors">{item.toUpperCase()}</Link>
                   ))}
                 </div>
               </div>
               <div>
-                <p style={{ fontSize: 8.5, fontWeight: 600, letterSpacing: '0.28em', color: 'var(--color-gold)', marginBottom: 12 }}>OTROS</p>
-                <div className="flex flex-col gap-4">
+                <p style={{ fontSize: 8.5, fontWeight: 600, letterSpacing: '0.28em', color: 'var(--color-gold)', marginBottom: 8, paddingLeft: 8 }}>OTROS</p>
+                <div className="flex flex-col gap-1">
                   {['Sets', 'Vestidos', 'Accesorios'].map(item => (
-                    <Link key={item} to={`/categoria/${item.toLowerCase()}`} onClick={() => { setMenuOpen(false); window.scrollTo(0, 0); }} className="text-[12px] font-medium tracking-[0.15em] text-stone-800">{item.toUpperCase()}</Link>
+                    <Link key={item} to={`/categoria/${item.toLowerCase()}`} onClick={() => { setMenuOpen(false); window.scrollTo(0, 0); }} className="block py-3 px-2 rounded-lg text-[12px] font-medium tracking-[0.15em] text-stone-800 active:bg-stone-100/60 transition-colors">{item.toUpperCase()}</Link>
                   ))}
                 </div>
               </div>
@@ -462,9 +512,9 @@ const Header = () => {
           )}
 
           {mobileTab === 'hombre' && (
-            <div className="flex flex-col gap-4 animate-fade-in">
+            <div className="flex flex-col gap-1 animate-fade-in">
               {hombreItems.map(item => (
-                <Link key={item} to={`/categoria/${item.toLowerCase()}`} onClick={() => { setMenuOpen(false); window.scrollTo(0, 0); }} className="text-[12px] font-medium tracking-[0.15em] text-stone-800">{item.toUpperCase()}</Link>
+                <Link key={item} to={`/categoria/${item.toLowerCase()}`} onClick={() => { setMenuOpen(false); window.scrollTo(0, 0); }} className="block py-3 px-2 rounded-lg text-[12px] font-medium tracking-[0.15em] text-stone-800 active:bg-stone-100/60 transition-colors">{item.toUpperCase()}</Link>
               ))}
             </div>
           )}
