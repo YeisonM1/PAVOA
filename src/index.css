@@ -1,7 +1,6 @@
-/* 1. FUENTE — solo una vez */
-@import url('https://fonts.googleapis.com/css2?family=Raleway:wght@300;400;500;600&display=swap');
+/* FUENTE: cargada de forma asíncrona desde index.html — no va aquí */
 
-/* 2. TAILWIND — solo una vez */
+/* 1. TAILWIND — solo una vez */
 @import "tailwindcss";
 
 /* 3. VARIABLES */
