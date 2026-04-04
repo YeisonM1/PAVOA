@@ -88,11 +88,12 @@ export default function ProductPage() {
           {/* Imagen Principal (Mediana) */}
           <div className="w-full bg-stone-100 overflow-hidden relative">
             <img 
-              key={imagenActiva} // Esto reinicia la animación al cambiar de imagen
+              key={imagenActiva}
               src={imagenActiva} 
-              alt={producto.nombre} 
+              alt={producto.nombre}
+              width={900} height={1200}
               className="w-full h-auto object-cover animate-fade-in" 
-              style={{ maxHeight: '75vh' }} // Limita la altura para que no sea gigante
+              style={{ maxHeight: '75vh' }}
             />
           </div>
 
@@ -106,9 +107,10 @@ export default function ProductPage() {
                   imagenActiva === img ? 'border-stone-900 opacity-100' : 'border-transparent opacity-50 hover:opacity-100'
                 }`}
               >
-                <img src={img} alt={`${producto.nombre} vista ${index + 1}`} 
-                className="w-full h-full object-cover" 
-                loading="lazy" />  // 👈 agrega esto 
+                <img src={img} alt={`${producto.nombre} vista ${index + 1}`}
+                  width={80} height={96}
+                  className="w-full h-full object-cover" 
+                  loading="lazy" />
               </button>
             ))}
           </div>

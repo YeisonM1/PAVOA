@@ -30,8 +30,8 @@ function ProductCard({ producto }) {
             {producto.tag}
           </span>
         )}
-        <img src={producto.imagen1} alt={producto.nombre} loading="lazy" className="absolute inset-0 w-full h-full object-cover transition-all duration-[800ms] ease-[cubic-bezier(0.25,1,0.5,1)] md:group-hover:scale-105" />
-        <img src={producto.imagen2} alt={producto.nombre} loading="lazy" className="absolute inset-0 w-full h-full object-cover transition-all duration-[800ms] ease-[cubic-bezier(0.25,1,0.5,1)] opacity-0 md:group-hover:opacity-100 md:group-hover:scale-105" />
+        <img src={producto.imagen1} alt={producto.nombre} loading="lazy" width={600} height={800} className="absolute inset-0 w-full h-full object-cover transition-all duration-[800ms] ease-[cubic-bezier(0.25,1,0.5,1)] md:group-hover:scale-105" />
+        <img src={producto.imagen2} alt={producto.nombre} loading="lazy" width={600} height={800} className="absolute inset-0 w-full h-full object-cover transition-all duration-[800ms] ease-[cubic-bezier(0.25,1,0.5,1)] opacity-0 md:group-hover:opacity-100 md:group-hover:scale-105" />
         <div className="absolute inset-0 bg-black/0 md:group-hover:bg-black/10 transition-colors duration-500 z-10 pointer-events-none" />
 
         <button onClick={(e) => { e.stopPropagation(); setShowMobileSizes(true); }} className="md:hidden absolute bottom-3 right-3 w-9 h-9 bg-white/90 backdrop-blur-md rounded-full flex items-center justify-center shadow-lg z-30 text-stone-900">
@@ -164,6 +164,7 @@ useEffect(() => {
           key={dataHeader.heroImage} 
           src={dataHeader.heroImage} 
           alt={dataHeader.titulo1 + dataHeader.titulo2} 
+          width={1600} height={900}
           className="absolute inset-0 w-full h-full object-cover animate-fade-in"
         />
         <div className="absolute inset-0 bg-black/40" />
