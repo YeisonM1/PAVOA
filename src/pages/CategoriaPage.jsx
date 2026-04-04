@@ -90,7 +90,7 @@ export default function CategoriaPage() {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
 
   // 3. Efecto para cargar TODO desde Supabase
-  useEffect(() => {
+useEffect(() => {
     const cargarTodo = async () => {
       setLoading(true);
 
@@ -106,19 +106,22 @@ export default function CategoriaPage() {
       }
 
       // --- B. Cargar el Banner de la Categoría ---
-      const categoriaId = id ? id.toLowerCase() : 'default';
-      let infoCategoria = await getCategoriaById(categoriaId);
+      // Forzamos a que el ID sea siempre minúsculas y sin espacios para buscar en Supabase
+      const categoriaIdBusqueda = id ? id.toLowerCase().trim() : 'default';
       
-      // Si la categoría no tiene banner en DB, usamos el 'default'
+      let infoCategoria = await getCategoriaById(categoriaIdBusqueda);
+      
+      // Si no existe esa categoría específica, intentamos buscar 'default'
       if (!infoCategoria) {
+        console.log(`⚠️ Categoría "${categoriaIdBusqueda}" no encontrada en DB, cargando banner default...`);
         infoCategoria = await getCategoriaById('default');
       }
 
-      // Fallback extremo por si aún no creas el 'default' en Supabase
+      // Si ni siquiera existe el 'default' en Supabase, usamos este respaldo manual
       setDataHeader(infoCategoria || {
         titulo1: 'Cole',
         titulo2: 'cciones',
-        desc: 'Descubre nuestra línea completa de prendas.',
+        desc: 'Descubre nuestra línea completa de prendas diseñadas para ser tu segunda piel.',
         heroImage: 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=1600&q=80'
       });
 
@@ -126,7 +129,7 @@ export default function CategoriaPage() {
     };
 
     cargarTodo();
-  }, [id]);
+  }, [id]); // 👈 Aquí termina el useEffect correctamente
 
   useEffect(() => {
     if (isFilterOpen) document.body.style.overflow = 'hidden';
