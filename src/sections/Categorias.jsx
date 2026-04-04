@@ -7,28 +7,28 @@ const categorias = {
     nombre: 'Sets Completos',
     desc: 'La colección definitiva',
     href: '/categoria/sets', // ── NUEVO: Ruta específica
-    image: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=1000&q=80', 
+    image: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=500&q=70&fm=webp&auto=format', 
   },
   superior: {
     id: 2,
     nombre: 'Tops & Superior',
     desc: 'Soporte y diseño',
     href: '/categoria/superior', // ── NUEVO: Ruta específica
-    image: 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=1000&q=80',
+    image: 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=500&q=70&fm=webp&auto=format',
   },
   nicho1: {
     id: 3,
     nombre: 'Movimiento',
     desc: 'Libertad sin límites',
     href: '/categoria/movimiento', // ── NUEVO: Ruta específica
-    image: 'https://images.unsplash.com/photo-1538805060514-97d9cc17730c?w=800&q=80',
+    image: 'https://images.unsplash.com/photo-1538805060514-97d9cc17730c?w=400&q=70&fm=webp&auto=format',
   },
   nicho2: {
     id: 4,
     nombre: 'Accesorios',
     desc: 'El toque final',
     href: '/categoria/accesorios', // ── NUEVO: Ruta específica
-    image: 'https://images.unsplash.com/photo-1611085583191-a3b181a88401?w=800&q=80',
+    image: 'https://images.unsplash.com/photo-1611085583191-a3b181a88401?w=400&q=70&fm=webp&auto=format',
   }
 };
 
