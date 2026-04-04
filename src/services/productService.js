@@ -1,23 +1,30 @@
 import { supabase } from '../config/supabase';
 
+// Trae TODOS los productos (Para el Home y Categorías)
 export const getProductos = async () => {
   try {
-    console.log("Intentando conectar con Supabase...");
-    
+    const { data, error } = await supabase.from('productos').select('*');
+    if (error) throw error;
+    return data || [];
+  } catch (err) {
+    console.error('❌ Error de conexión:', err);
+    return [];
+  }
+};
+
+// Trae UN SOLO producto por su ID (Para la página 1 a 1)
+export const getProductoById = async (id) => {
+  try {
     const { data, error } = await supabase
       .from('productos')
-      .select('*');
+      .select('*')
+      .eq('id', id)
+      .single(); // Le decimos que solo queremos un resultado
 
-    if (error) {
-      console.error('❌ Error de Supabase:', error.message);
-      return [];
-    }
-    
-    console.log("✅ Conexión exitosa. Productos recibidos:", data);
-    return data || [];
-    
+    if (error) throw error;
+    return data;
   } catch (err) {
-    console.error('❌ Error fatal de conexión:', err);
-    return [];
+    console.error(`❌ Error al obtener el producto con id ${id}:`, err);
+    return null;
   }
 };

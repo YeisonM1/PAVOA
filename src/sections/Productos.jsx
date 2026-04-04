@@ -107,6 +107,9 @@ export default function Productos() {
     cargarProductos();
   }, []);
 
+  // 👇 AGREGA ESTA LÍNEA PARA VER QUÉ ESTÁ LLEGANDO
+  console.log("Datos de los productos:", productos);
+
   if (loading) {
     return (
       <div className="w-full py-32 flex justify-center items-center bg-white">

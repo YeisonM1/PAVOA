@@ -2,19 +2,32 @@ import React, { useState, useContext, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Plus, Minus } from 'lucide-react';
 import { CartContext } from '../App';
-import { productosDB } from '../data/db'; // Conectamos nuestra base de datos
 import CrossSelling from '../sections/CrossSelling';
+import { getProductoById } from '../services/productService'; // Conexión a DB
 
 export default function ProductPage() {
   const { id } = useParams();
   const { addToCart } = useContext(CartContext);
   
-  // Buscamos el producto en nuestra DB. Si no existe, volvemos a la tienda.
-  const producto = productosDB.find(p => p.id === id) || productosDB[0];
+  // Estados para la carga de datos
+  const [producto, setProducto] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   const [tallaSeleccionada, setTallaSeleccionada] = useState(null);
   const [adding, setAdding] = useState(false);
-  const [openAccordion, setOpenAccordion] = useState('detalles'); // Para los menús desplegables
+  const [openAccordion, setOpenAccordion] = useState('detalles');
+
+  // Cargamos el producto desde Supabase al entrar a la página
+  useEffect(() => {
+    const cargarProducto = async () => {
+      setLoading(true);
+      const data = await getProductoById(id);
+      setProducto(data);
+      setLoading(false);
+    };
+    cargarProducto();
+    window.scrollTo(0, 0); // Sube la pantalla al inicio
+  }, [id]);
 
   const handleAddToCart = () => {
     if (!tallaSeleccionada) {
@@ -22,7 +35,7 @@ export default function ProductPage() {
       return;
     }
     setAdding(true);
-    addToCart(producto, tallaSeleccionada); // <--- CAMBIA ESTA LÍNEA
+    addToCart(producto, tallaSeleccionada);
     setTimeout(() => {
       setAdding(false);
       setTallaSeleccionada(null); 
@@ -33,34 +46,64 @@ export default function ProductPage() {
     setOpenAccordion(openAccordion === seccion ? null : seccion);
   };
 
+  // ── PANTALLAS DE CARGA Y ERROR ──
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white" style={{ fontFamily: 'var(--font-primary)' }}>
+        <span className="text-[10px] font-bold tracking-[0.3em] uppercase text-stone-500 animate-pulse">Cargando pieza...</span>
+      </div>
+    );
+  }
+
+  if (!producto) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-white gap-6" style={{ fontFamily: 'var(--font-primary)' }}>
+        <span className="text-[10px] font-bold tracking-[0.3em] uppercase text-stone-900">Pieza no encontrada</span>
+        <Link to="/" className="text-[10px] tracking-[0.2em] uppercase border-b border-stone-900 pb-1">Volver al inicio</Link>
+      </div>
+    );
+  }
+
+  // ── PROTECCIÓN DE DATOS (Si están vacíos en Supabase, ponemos valores por defecto) ──
+  const detallesArray = producto.detalles ? producto.detalles.split(',') : ['Diseño exclusivo PAVOA', 'Material de alta compresión'];
+  const cuidadosTexto = producto.cuidados || 'Lavar a máquina en frío con colores similares. No usar secadora.';
+
   return (
     <div className="min-h-screen bg-white" style={{ fontFamily: 'var(--font-primary)' }}>
-      
-      {/* ── LAYOUT EDITORIAL (Izquierda fotos, Derecha Info) ── */}
       <div className="flex flex-col lg:flex-row max-w-[1600px] mx-auto pt-[72px] md:pt-[88px]">
         
         {/* ── COLUMNA IZQUIERDA: GALERÍA DE IMÁGENES ── */}
         <div className="w-full lg:w-3/5 flex flex-col gap-1 lg:gap-4 lg:p-4">
           <img src={producto.imagen1} alt={producto.nombre} className="w-full object-cover animate-fade-in" />
-          <img src={producto.imagen2} alt={producto.nombre} className="w-full object-cover" />
+          {producto.imagen2 && (
+            <img src={producto.imagen2} alt={producto.nombre} className="w-full object-cover" />
+          )}
         </div>
 
         {/* ── COLUMNA DERECHA: INFORMACIÓN STICKY ── */}
         <div className="w-full lg:w-2/5 px-6 py-12 lg:px-16 lg:py-24 relative">
-          
           <div className="lg:sticky lg:top-[120px]">
-            {/* Navegación (Breadcrumb) */}
+            
+            {/* Navegación (Breadcrumb) - Ajustado a lo que pidió tu clienta */}
             <nav className="mb-8">
-              <span className="text-[10px] tracking-[0.2em] text-stone-500 uppercase">
+              <span className="text-[10px] tracking-[0.2em] text-stone-500 uppercase flex flex-wrap items-center">
                 <Link to="/" className="hover:text-stone-900 transition-colors">Inicio</Link> 
                 <span className="mx-2">/</span> 
                 <Link to="/categoria" className="hover:text-stone-900 transition-colors">Catálogo</Link>
                 <span className="mx-2">/</span> 
+                
+                {producto.categoria && (
+                  <>
+                    <Link to={`/categoria/${producto.categoria.toLowerCase()}`} className="hover:text-stone-900 transition-colors">
+                      {producto.categoria}
+                    </Link>
+                    <span className="mx-2">/</span> 
+                  </>
+                )}
                 <span className="text-stone-900 font-bold">{producto.nombre}</span>
               </span>
             </nav>
 
-            {/* Título y Precio */}
             <h1 className="text-2xl md:text-3xl font-light text-stone-900 tracking-[0.15em] uppercase mb-4">
               {producto.nombre}
             </h1>
@@ -68,7 +111,6 @@ export default function ProductPage() {
               {producto.precio}
             </p>
 
-            {/* Descripción */}
             <p className="text-[12px] md:text-[13px] text-stone-600 tracking-[0.1em] leading-relaxed mb-12 uppercase">
               {producto.descripcion}
             </p>
@@ -81,7 +123,6 @@ export default function ProductPage() {
                   Guía de tallas
                 </button>
               </div>
-              
               <div className="grid grid-cols-4 gap-3">
                 {['S', 'M', 'L', 'XL'].map(talla => (
                   <button 
@@ -100,64 +141,53 @@ export default function ProductPage() {
               </div>
             </div>
 
-            {/* Botón Añadir a la Bolsa */}
+            {/* Botón Añadir */}
             <button 
               onClick={handleAddToCart}
               className={`w-full h-14 text-[10px] font-bold tracking-[0.25em] uppercase transition-all duration-300 flex items-center justify-center gap-3
-                ${adding 
-                  ? 'bg-stone-800 text-white border border-stone-800 scale-[0.98]' 
-                  : 'bg-stone-900 text-white hover:bg-stone-800'
-                }
+                ${adding ? 'bg-stone-800 text-white border border-stone-800 scale-[0.98]' : 'bg-stone-900 text-white hover:bg-stone-800'}
               `}
             >
               {adding ? 'Agregado ✔' : 'Añadir a la bolsa'}
             </button>
 
-            {/* Separador */}
             <div className="w-full h-[1px] bg-stone-200 my-12" />
 
-            {/* Acordeones de Detalles y Cuidados */}
             <div className="flex flex-col">
-              
-              {/* Acordeón 1: Detalles */}
+              {/* Acordeón: Detalles */}
               <div className="border-b border-stone-200">
-                <button 
-                  onClick={() => toggleAccordion('detalles')}
-                  className="w-full py-6 flex items-center justify-between text-left group"
-                >
+                <button onClick={() => toggleAccordion('detalles')} className="w-full py-6 flex items-center justify-between text-left group">
                   <span className="text-[10px] font-bold tracking-[0.2em] text-stone-900 uppercase">Detalles del diseño</span>
                   {openAccordion === 'detalles' ? <Minus size={14} className="text-stone-500" /> : <Plus size={14} className="text-stone-500" />}
                 </button>
                 <div className={`overflow-hidden transition-all duration-300 ease-in-out ${openAccordion === 'detalles' ? 'max-h-40 pb-6' : 'max-h-0'}`}>
                   <ul className="list-disc pl-4 flex flex-col gap-2">
-                    {producto.detalles.map((detalle, idx) => (
-                      <li key={idx} className="text-[11px] text-stone-600 tracking-[0.1em] uppercase">{detalle}</li>
+                    {detallesArray.map((detalle, idx) => (
+                      <li key={idx} className="text-[11px] text-stone-600 tracking-[0.1em] uppercase">{detalle.trim()}</li>
                     ))}
                   </ul>
                 </div>
               </div>
 
-              {/* Acordeón 2: Cuidados */}
+              {/* Acordeón: Cuidados */}
               <div className="border-b border-stone-200">
-                <button 
-                  onClick={() => toggleAccordion('cuidados')}
-                  className="w-full py-6 flex items-center justify-between text-left group"
-                >
+                <button onClick={() => toggleAccordion('cuidados')} className="w-full py-6 flex items-center justify-between text-left group">
                   <span className="text-[10px] font-bold tracking-[0.2em] text-stone-900 uppercase">Composición y Cuidados</span>
                   {openAccordion === 'cuidados' ? <Minus size={14} className="text-stone-500" /> : <Plus size={14} className="text-stone-500" />}
                 </button>
                 <div className={`overflow-hidden transition-all duration-300 ease-in-out ${openAccordion === 'cuidados' ? 'max-h-40 pb-6' : 'max-h-0'}`}>
                   <p className="text-[11px] text-stone-600 tracking-[0.1em] leading-relaxed uppercase">
-                    {producto.cuidados}
+                    {cuidadosTexto}
                   </p>
                 </div>
               </div>
-
             </div>
 
           </div>
         </div>
       </div>
+
+      {/* CrossSelling */}
       <CrossSelling currentProductId={producto.id} />
     </div>
   );
