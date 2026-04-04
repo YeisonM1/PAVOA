@@ -99,7 +99,7 @@ const Header = () => {
     return (
       <li key={item}>
         <Link
-          to="/categoria"
+          to={`/categoria/${item.toLowerCase()}`}
           onClick={() => { 
             setCatalogoOpen(false); 
             window.scrollTo(0, 0); 
@@ -314,9 +314,9 @@ const Header = () => {
               <p style={{ fontSize: 7.5, fontWeight: 600, letterSpacing: '0.2em', color: 'var(--color-charcoal)', opacity: 0.5, marginBottom: 12 }}>DESTACADOS</p>
               <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 10 }}>
                 {[
-                  { label: 'VER TODO HOMBRE →', href: '/categoria' },
+                  { label: 'VER TODO HOMBRE →', href: '/categoria/hombre' }, // 👈 Cambiado
                   { label: 'GUÍA DE TALLAS', href: '#tallas' },
-                  { label: 'COLECCIÓN ESSENTIAL', href: '/categoria' }
+                  { label: 'COLECCIÓN ESSENTIAL', href: '/categoria/essential' } // 👈 Cambiado
                 ].map((link) => (
                   <li key={link.label}>
                     <Link to={link.href}
@@ -342,7 +342,7 @@ const Header = () => {
           <div style={{ background: 'var(--color-gold)', alignSelf: 'stretch' }} />
 
           <Link 
-            to="/categoria"
+            to={hoveredItem && hoveredItem !== 'destacados' ? `/categoria/${hoveredItem.toLowerCase()}` : '/categoria'}
             onClick={() => { setCatalogoOpen(false); window.scrollTo(0, 0); }}
             style={{ paddingLeft: 48, position: 'relative', height: 420, display: 'block', textDecoration: 'none' }}
           >
@@ -438,7 +438,7 @@ const Header = () => {
                 <p style={{ fontSize: 8.5, fontWeight: 600, letterSpacing: '0.28em', color: 'var(--color-gold)', marginBottom: 12 }}>SUPERIOR</p>
                 <div className="flex flex-col gap-4">
                   {['Camisetas', 'Tops Deportivos', 'Buzos', 'Chaquetas'].map(item => (
-                    <Link key={item} to="/categoria" onClick={() => { setMenuOpen(false); window.scrollTo(0, 0); }} className="text-[12px] font-medium tracking-[0.15em] text-stone-800">{item.toUpperCase()}</Link>
+                    <Link key={item} to={`/categoria/${item.toLowerCase()}`} onClick={() => { setMenuOpen(false); window.scrollTo(0, 0); }} className="text-[12px] font-medium tracking-[0.15em] text-stone-800">{item.toUpperCase()}</Link>
                   ))}
                 </div>
               </div>
@@ -446,7 +446,7 @@ const Header = () => {
                 <p style={{ fontSize: 8.5, fontWeight: 600, letterSpacing: '0.28em', color: 'var(--color-gold)', marginBottom: 12 }}>INFERIOR</p>
                 <div className="flex flex-col gap-4">
                   {['Licras', 'Shorts', 'Faldas', 'Sudaderas', 'Bikers', 'Pantalonetas'].map(item => (
-                    <Link key={item} to="/categoria" onClick={() => { setMenuOpen(false); window.scrollTo(0, 0); }} className="text-[12px] font-medium tracking-[0.15em] text-stone-800">{item.toUpperCase()}</Link>
+                    <Link key={item} to={`/categoria/${item.toLowerCase()}`} onClick={() => { setMenuOpen(false); window.scrollTo(0, 0); }} className="text-[12px] font-medium tracking-[0.15em] text-stone-800">{item.toUpperCase()}</Link>
                   ))}
                 </div>
               </div>
@@ -454,7 +454,7 @@ const Header = () => {
                 <p style={{ fontSize: 8.5, fontWeight: 600, letterSpacing: '0.28em', color: 'var(--color-gold)', marginBottom: 12 }}>OTROS</p>
                 <div className="flex flex-col gap-4">
                   {['Sets', 'Vestidos', 'Accesorios'].map(item => (
-                    <Link key={item} to="/categoria" onClick={() => { setMenuOpen(false); window.scrollTo(0, 0); }} className="text-[12px] font-medium tracking-[0.15em] text-stone-800">{item.toUpperCase()}</Link>
+                    <Link key={item} to={`/categoria/${item.toLowerCase()}`} onClick={() => { setMenuOpen(false); window.scrollTo(0, 0); }} className="text-[12px] font-medium tracking-[0.15em] text-stone-800">{item.toUpperCase()}</Link>
                   ))}
                 </div>
               </div>
@@ -464,7 +464,7 @@ const Header = () => {
           {mobileTab === 'hombre' && (
             <div className="flex flex-col gap-4 animate-fade-in">
               {hombreItems.map(item => (
-                <Link key={item} to="/categoria" onClick={() => { setMenuOpen(false); window.scrollTo(0, 0); }} className="text-[12px] font-medium tracking-[0.15em] text-stone-800">{item.toUpperCase()}</Link>
+                <Link key={item} to={`/categoria/${item.toLowerCase()}`} onClick={() => { setMenuOpen(false); window.scrollTo(0, 0); }} className="text-[12px] font-medium tracking-[0.15em] text-stone-800">{item.toUpperCase()}</Link>
               ))}
             </div>
           )}

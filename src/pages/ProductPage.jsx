@@ -12,6 +12,7 @@ export default function ProductPage() {
   // Estados para la carga de datos
   const [producto, setProducto] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [imagenActiva, setImagenActiva] = useState(null); // 👈 NUEVO ESTADO
 
   const [tallaSeleccionada, setTallaSeleccionada] = useState(null);
   const [adding, setAdding] = useState(false);
@@ -23,6 +24,7 @@ export default function ProductPage() {
       setLoading(true);
       const data = await getProductoById(id);
       setProducto(data);
+      if (data) setImagenActiva(data.imagen1); // 👈 Asignamos la imagen principal al cargar
       setLoading(false);
     };
     cargarProducto();
@@ -73,11 +75,34 @@ export default function ProductPage() {
       <div className="flex flex-col lg:flex-row max-w-[1600px] mx-auto pt-[72px] md:pt-[88px]">
         
         {/* ── COLUMNA IZQUIERDA: GALERÍA DE IMÁGENES ── */}
-        <div className="w-full lg:w-3/5 flex flex-col gap-1 lg:gap-4 lg:p-4">
-          <img src={producto.imagen1} alt={producto.nombre} className="w-full object-cover animate-fade-in" />
-          {producto.imagen2 && (
-            <img src={producto.imagen2} alt={producto.nombre} className="w-full object-cover" />
-          )}
+        <div className="w-full lg:w-3/5 flex flex-col gap-4 lg:p-4">
+          
+          {/* Imagen Principal (Mediana) */}
+          <div className="w-full bg-stone-100 overflow-hidden relative">
+            <img 
+              key={imagenActiva} // Esto reinicia la animación al cambiar de imagen
+              src={imagenActiva} 
+              alt={producto.nombre} 
+              className="w-full h-auto object-cover animate-fade-in" 
+              style={{ maxHeight: '75vh' }} // Limita la altura para que no sea gigante
+            />
+          </div>
+
+          {/* Fila de Miniaturas (Thumbnails) */}
+          <div className="flex gap-4 overflow-x-auto pb-2">
+            {[producto.imagen1, producto.imagen2].filter(Boolean).map((img, index) => (
+              <button
+                key={index}
+                onClick={() => setImagenActiva(img)}
+                className={`w-20 h-24 flex-shrink-0 overflow-hidden border transition-all duration-300 ${
+                  imagenActiva === img ? 'border-stone-900 opacity-100' : 'border-transparent opacity-50 hover:opacity-100'
+                }`}
+              >
+                <img src={img} alt={`${producto.nombre} vista ${index + 1}`} className="w-full h-full object-cover" />
+              </button>
+            ))}
+          </div>
+
         </div>
 
         {/* ── COLUMNA DERECHA: INFORMACIÓN STICKY ── */}

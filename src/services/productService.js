@@ -28,3 +28,20 @@ export const getProductoById = async (id) => {
     return null;
   }
 };
+
+// Trae la información del banner de una categoría específica
+export const getCategoriaById = async (id) => {
+  try {
+    const { data, error } = await supabase
+      .from('categorias')
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (error) throw error;
+    return data;
+  } catch (err) {
+    console.error(`❌ Error al obtener categoría ${id}:`, err);
+    return null;
+  }
+};

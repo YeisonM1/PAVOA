@@ -1,56 +1,8 @@
 import React, { useState, useContext, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { CartContext } from '../App';
-import FilterDrawer from '../sections/FilterDrawer'; // ── IMPORTAMOS EL NUEVO COMPONENTE
-
-// ── DICCIONARIO DE DATOS (Simulando una Base de Datos) ──
-const categoryDataDB = {
-  'movimiento': {
-    titulo1: 'Movi',
-    titulo2: 'miento',
-    desc: 'Siluetas diseñadas para fluir contigo. Soporte absoluto, cero restricciones.',
-    heroImage: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=1600&q=80',
-    productos: [
-      { id: 101, nombre: 'Legging Ónix', precio: '$180.000', imagen1: 'https://images.unsplash.com/photo-1538805060514-97d9cc17730c?w=600&q=80', imagen2: 'https://images.unsplash.com/photo-1509631179647-0177331693ae?w=600&q=80', tag: 'Bestseller' },
-      { id: 102, nombre: 'Biker Éter', precio: '$140.000', imagen1: 'https://images.unsplash.com/photo-1571945153237-4929e783af4a?w=600&q=80', imagen2: 'https://images.unsplash.com/photo-1548690312-e3b507d8c110?w=600&q=80', tag: null },
-    ]
-  },
-  'sets': {
-    titulo1: 'Sets ',
-    titulo2: 'Completos',
-    desc: 'La colección definitiva. Looks armados para tu día a día con máxima elegancia.',
-    heroImage: 'https://images.unsplash.com/photo-1506629082955-511b1aa562c8?w=1600&q=80',
-    productos: [
-      { id: 201, nombre: 'Conjunto Nómada', precio: '$360.000', imagen1: 'https://images.unsplash.com/photo-1509631179647-0177331693ae?w=600&q=80', imagen2: 'https://images.unsplash.com/photo-1518459031867-a89b944bffe4?w=600&q=80', tag: 'Nuevo' },
-      { id: 202, nombre: 'Conjunto Vértice', precio: '$280.000', imagen1: 'https://images.unsplash.com/photo-1552664730-d307ca884978?w=600&q=80', imagen2: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=600&q=80', tag: null },
-    ]
-  },
-  'superior': {
-    titulo1: 'Tops & ',
-    titulo2: 'Superior',
-    desc: 'Soporte y diseño para acompañar cada uno de tus movimientos con máxima seguridad.',
-    heroImage: 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=1600&q=80',
-    productos: [
-      { id: 301, nombre: 'Top Esencial', precio: '$120.000', imagen1: 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=600&q=80', imagen2: 'https://images.unsplash.com/photo-1538805060514-97d9cc17730c?w=600&q=80', tag: 'Básico' }
-    ]
-  },
-  'accesorios': {
-    titulo1: 'Acce',
-    titulo2: 'sorios',
-    desc: 'El toque final. Detalles que elevan tu experiencia dentro y fuera del entrenamiento.',
-    heroImage: 'https://images.unsplash.com/photo-1611085583191-a3b181a88401?w=1600&q=80',
-    productos: [
-      { id: 401, nombre: 'Bolso Nómada', precio: '$190.000', imagen1: 'https://images.unsplash.com/photo-1548690312-e3b507d8c110?w=600&q=80', imagen2: 'https://images.unsplash.com/photo-1509631179647-0177331693ae?w=600&q=80', tag: null }
-    ]
-  },
-  'default': {
-    titulo1: 'Cole',
-    titulo2: 'cciones',
-    desc: 'Descubre nuestra línea completa de prendas diseñadas para ser tu segunda piel.',
-    heroImage: 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=1600&q=80',
-    productos: []
-  }
-};
+import FilterDrawer from '../sections/FilterDrawer';
+import { getProductos, getCategoriaById } from '../services/productService'; // 👈 Esta es la línea clave
 
 // ── COMPONENTE DE TARJETA DE PRODUCTO ──
 function ProductCard({ producto }) {
@@ -70,7 +22,7 @@ function ProductCard({ producto }) {
   };
 
   return (
-    <div className="group cursor-pointer flex flex-col gap-4 relative">
+    <Link to={`/producto/${producto.id}`} className="group cursor-pointer flex flex-col gap-4 relative block">
       <div className="relative overflow-hidden bg-stone-100" style={{ aspectRatio: '3/4' }}>
         {producto.tag && (
           <span style={{ fontFamily: 'var(--font-primary)' }} className="absolute top-4 left-4 z-30 text-[8px] font-bold text-white bg-stone-900 px-3 py-1.5 uppercase tracking-[0.15em]">
@@ -118,31 +70,80 @@ function ProductCard({ producto }) {
           <p style={{ fontFamily: 'var(--font-primary)' }} className="text-[13px] font-semibold text-stone-500 transform translate-y-0 opacity-100 md:translate-y-full md:opacity-0 md:group-hover:translate-y-0 md:group-hover:opacity-100 transition-all duration-500 ease-out">{producto.precio}</p>
         </div>
       </div>
-    </div>
+    </Link>
   );
 }
 
 // ── PÁGINA PRINCIPAL DE CATEGORÍA ──
 export default function CategoriaPage() {
   const { id } = useParams();
-  const data = categoryDataDB[id] || categoryDataDB['default'];
 
+  // 1. Estados para los datos de Supabase
+  const [productosDB, setProductosDB] = useState([]);
+  const [dataHeader, setDataHeader] = useState(null); // 👈 Nuevo estado para el banner
+  const [loading, setLoading] = useState(true);
+
+  // 2. Estados para UI
   const [isSortOpen, setIsSortOpen] = useState(false);
   const [sortOption, setSortOption] = useState('Lo más nuevo');
   const sortOptions = ['Lo más nuevo', 'Precio: Menor a Mayor', 'Precio: Mayor a Menor'];
-  
-  // Estado para controlar si el cajón de filtros en móvil está abierto
   const [isFilterOpen, setIsFilterOpen] = useState(false);
 
-  // Bloquea el scroll del fondo solo cuando los filtros móviles están abiertos
+  // 3. Efecto para cargar TODO desde Supabase
   useEffect(() => {
-    if (isFilterOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
-    }
+    const cargarTodo = async () => {
+      setLoading(true);
+
+      // --- A. Cargar los Productos ---
+      const todosLosProductos = await getProductos();
+      if (id && id !== 'default') {
+        const filtrados = todosLosProductos.filter(
+          p => p.categoria && p.categoria.toLowerCase() === id.toLowerCase()
+        );
+        setProductosDB(filtrados);
+      } else {
+        setProductosDB(todosLosProductos);
+      }
+
+      // --- B. Cargar el Banner de la Categoría ---
+      const categoriaId = id ? id.toLowerCase() : 'default';
+      let infoCategoria = await getCategoriaById(categoriaId);
+      
+      // Si la categoría no tiene banner en DB, usamos el 'default'
+      if (!infoCategoria) {
+        infoCategoria = await getCategoriaById('default');
+      }
+
+      // Fallback extremo por si aún no creas el 'default' en Supabase
+      setDataHeader(infoCategoria || {
+        titulo1: 'Cole',
+        titulo2: 'cciones',
+        desc: 'Descubre nuestra línea completa de prendas.',
+        heroImage: 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=1600&q=80'
+      });
+
+      setLoading(false);
+    };
+
+    cargarTodo();
+  }, [id]);
+
+  useEffect(() => {
+    if (isFilterOpen) document.body.style.overflow = 'hidden';
+    else document.body.style.overflow = '';
     return () => { document.body.style.overflow = ''; };
   }, [isFilterOpen]);
+
+  // Pantalla de carga mientras traemos el banner y los productos
+  if (loading || !dataHeader) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white" style={{ fontFamily: 'var(--font-primary)' }}>
+        <span className="text-[10px] font-bold tracking-[0.3em] uppercase text-stone-500 animate-pulse">
+          Sincronizando Colección...
+        </span>
+      </div>
+    );
+  }
     
   return (
     <div className="min-h-screen bg-white relative">
@@ -150,9 +151,9 @@ export default function CategoriaPage() {
       {/* ── 1. HERO EDITORIAL (DINÁMICO) ── */}
       <section className="relative w-full h-[60vh] md:h-[70vh] flex items-end justify-center pb-16 md:pb-24 overflow-hidden">
         <img 
-          key={data.heroImage} 
-          src={data.heroImage} 
-          alt={data.titulo1 + data.titulo2} 
+          key={dataHeader.heroImage} 
+          src={dataHeader.heroImage} 
+          alt={dataHeader.titulo1 + dataHeader.titulo2} 
           className="absolute inset-0 w-full h-full object-cover animate-fade-in"
         />
         <div className="absolute inset-0 bg-black/40" />
@@ -165,10 +166,10 @@ export default function CategoriaPage() {
           </nav>
           
           <h1 style={{ fontFamily: 'var(--font-primary)' }} className="text-3xl md:text-5xl font-light text-white tracking-[0.2em] uppercase mb-4">
-            {data.titulo1}<strong className="font-bold">{data.titulo2}</strong>
+            {dataHeader.titulo1}<strong className="font-bold">{dataHeader.titulo2}</strong>
           </h1>
           <p style={{ fontFamily: 'var(--font-primary)' }} className="text-[11px] md:text-xs text-white/80 tracking-[0.15em] max-w-md mx-auto uppercase leading-relaxed">
-            {data.desc}
+            {dataHeader.desc}
           </p>
         </div>
       </section>
@@ -212,7 +213,7 @@ export default function CategoriaPage() {
           </div>
           
           <span style={{ fontFamily: 'var(--font-primary)' }} className="md:hidden text-[11px] text-stone-500 tracking-[0.15em] uppercase">
-            {data.productos.length} Piezas
+            {productosDB.length} Piezas
           </span>
         </div>
       </div>
@@ -226,18 +227,26 @@ export default function CategoriaPage() {
 
           {/* ── CUADRÍCULA DE PRODUCTOS ── */}
           <div className="flex-1">
-            <div className="grid grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-12 md:gap-x-8 md:gap-y-16">
-              {data.productos.map((p) => (
-                <ProductCard key={p.id} producto={p} />
-              ))}
-            </div>
-            
-            {data.productos.length > 0 && (
-              <div className="mt-20 flex justify-center">
-                <button style={{ fontFamily: 'var(--font-primary)' }} className="text-[11px] font-bold text-stone-900 tracking-[0.2em] uppercase border-b border-stone-900 pb-1 hover:text-stone-500 hover:border-stone-500 transition-colors">
-                  Cargar más piezas
-                </button>
-              </div>
+            {loading ? (
+               <div className="w-full py-20 flex justify-center text-[10px] uppercase tracking-[0.2em] text-stone-500 animate-pulse" style={{ fontFamily: 'var(--font-primary)' }}>
+                 Sincronizando catálogo...
+               </div>
+            ) : (
+              <>
+                <div className="grid grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-12 md:gap-x-8 md:gap-y-16">
+                  {productosDB.map((p) => (
+                    <ProductCard key={p.id} producto={p} />
+                  ))}
+                </div>
+                
+                {productosDB.length > 0 && (
+                  <div className="mt-20 flex justify-center">
+                    <button style={{ fontFamily: 'var(--font-primary)' }} className="text-[11px] font-bold text-stone-900 tracking-[0.2em] uppercase border-b border-stone-900 pb-1 hover:text-stone-500 hover:border-stone-500 transition-colors">
+                      Cargar más piezas
+                    </button>
+                  </div>
+                )}
+              </>
             )}
           </div>
 
