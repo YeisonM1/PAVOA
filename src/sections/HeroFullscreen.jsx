@@ -6,8 +6,8 @@ const slides = [
     image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=1200&q=70&fm=webp&auto=format',
     tag: 'Nueva Colección',
     headline: ['El lujo de', 'sentirte', 'tú.'],
-    sub: 'Diseños que acompañan cada movimiento. Rendimiento sin sacrificar elegancia.',
-    cta: 'Ver Colección',
+    sub: 'Descubre nuestra nueva colección diseñada para mujeres que buscan estilo, rendimiento y exclusividad.',
+    cta: 'Explorar colección',
     href: '#catalogo',
   },
   {
@@ -25,7 +25,7 @@ const slides = [
     tag: 'Best Sellers',
     headline: ['Descubre', 'tu mejor', 'versión.'],
     sub: 'Las piezas favoritas de nuestra comunidad. Ediciones estrictamente limitadas.',
-    cta: 'Comprar Ahora',
+    cta: 'Descubrir colección',
     href: '#catalogo',
   },
 ];
@@ -121,7 +121,7 @@ export default function HeroFullscreen() {
             {s.sub}
           </p>
 
-          {/* Botón Minimalista Invertido (Blanco) */}
+          {/* Botón */}
           <a
             href={s.href}
             style={{ fontFamily: 'var(--font-primary)', letterSpacing: '0.25em' }}
@@ -130,6 +130,14 @@ export default function HeroFullscreen() {
             {s.cta}
             <span className="ml-4 transform transition-transform duration-300 group-hover:translate-x-3">→</span>
           </a>
+
+          {/* Línea de confianza (DEBE IR AQUÍ, FUERA) */}
+          <p
+            style={{ fontFamily: 'var(--font-primary)', letterSpacing: '0.2em' }}
+            className="text-white/40 text-[8px] sm:text-[9px] mt-5 tracking-[0.25em]"
+          >
+            Envíos a todo el país  ·  Piezas limitadas
+          </p>
         </div>
       </div>
 
