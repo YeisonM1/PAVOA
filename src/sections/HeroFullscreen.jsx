@@ -136,7 +136,7 @@ export default function HeroFullscreen() {
             style={{ fontFamily: 'var(--font-primary)', letterSpacing: '0.2em' }}
             className="text-white/40 text-[8px] sm:text-[9px] mt-5 tracking-[0.25em]"
           >
-            Envíos a todo el país  ·  Piezas limitadas
+            Envíos a todo el país  -  Piezas limitadas
           </p>
         </div>
       </div>
