@@ -1,113 +1,41 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { CartContext } from '../App';
-import { getProductos } from '../services/productService'; // Conexión a Supabase
+import { getProductos } from '../services/productService';
+import ProductCard from '../components/ProductCard'
 
-// ── 1. NUEVO COMPONENTE: SKELETON LOADER ──
+// ─────────────────────────────────────────
+// CONSTANTES
+// ─────────────────────────────────────────
+const TABS = [
+  { label: 'NUEVO',       value: 'nuevo'      },
+  { label: 'MÁS VENDIDO', value: 'bestseller' },
+  { label: 'TENDENCIA',   value: 'tendencia'  },
+];
+
+// ─────────────────────────────────────────
+// SKELETON
+// ─────────────────────────────────────────
 function SkeletonCard() {
   return (
     <div className="flex flex-col gap-4 w-[75vw] sm:w-[45vw] md:w-full flex-shrink-0 snap-center animate-pulse">
       <div className="bg-stone-200 w-full relative overflow-hidden" style={{ aspectRatio: '3/4' }}>
-        {/* Brillo animado opcional para el skeleton */}
-        <div className="absolute inset-0 -translate-x-full animate-[shimmer_1.5s_infinite] bg-gradient-to-r from-stone-200 via-stone-100 to-stone-200"></div>
+        <div className="absolute inset-0 -translate-x-full animate-[shimmer_1.5s_infinite] bg-gradient-to-r from-stone-200 via-stone-100 to-stone-200" />
       </div>
       <div className="flex flex-col items-center gap-2 mt-1.5">
-        <div className="h-2.5 w-24 bg-stone-200 rounded"></div>
-        <div className="h-3 w-16 bg-stone-100 rounded"></div>
+        <div className="h-2.5 w-24 bg-stone-200 rounded" />
+        <div className="h-3 w-16 bg-stone-100 rounded" />
       </div>
     </div>
   );
 }
 
-// ── 2. COMPONENTE DE LA TARJETA ORIGINAL ──
-function ProductCard({ producto }) {
-  const [showMobileSizes, setShowMobileSizes] = useState(false);
-  const { addToCart } = useContext(CartContext);
-  const [addingSize, setAddingSize] = useState(null);
-
-  const handleSizeClick = (e, talla) => {
-    e.preventDefault(); 
-    e.stopPropagation(); 
-    setAddingSize(talla);
-    addToCart(producto, talla); 
-    setTimeout(() => {
-      setAddingSize(null);
-      setShowMobileSizes(false);
-    }, 1000);
-  };
-
-  return (
-    <Link 
-      to={`/producto/${producto.id}`} 
-      className="group cursor-pointer flex flex-col gap-4 w-[75vw] sm:w-[45vw] md:w-full flex-shrink-0 snap-center relative block"
-    >
-      <div className="relative overflow-hidden bg-stone-100" style={{ aspectRatio: '3/4' }}>
-        
-        {producto.tag && (
-          <span style={{ fontFamily: 'var(--font-primary)' }} className="absolute top-4 left-4 z-30 text-[8px] font-bold text-white bg-stone-900 px-3 py-1.5 uppercase tracking-[0.15em]">
-            {producto.tag}
-          </span>
-        )}
-
-        <img src={producto.imagen1} alt={producto.nombre} className="absolute inset-0 w-full h-full object-cover transition-all duration-[800ms] ease-[cubic-bezier(0.25,1,0.5,1)] md:group-hover:scale-105" />
-        {producto.imagen2 && (
-          <img src={producto.imagen2} alt={producto.nombre} className="absolute inset-0 w-full h-full object-cover transition-all duration-[800ms] ease-[cubic-bezier(0.25,1,0.5,1)] opacity-0 md:group-hover:opacity-100 md:group-hover:scale-105" />
-        )}
-        <div className="absolute inset-0 bg-black/0 md:group-hover:bg-black/10 transition-colors duration-500 z-10 pointer-events-none" />
-
-        <button 
-          onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowMobileSizes(true); }} 
-          className="md:hidden absolute bottom-3 right-3 w-9 h-9 bg-white/90 backdrop-blur-md rounded-full flex items-center justify-center shadow-lg z-30 text-stone-900"
-        >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>
-        </button>
-
-        <div 
-          onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowMobileSizes(false); }} 
-          className={`md:hidden absolute inset-0 bg-black/20 z-30 transition-opacity duration-300 ${showMobileSizes ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`} 
-        />
-
-        <div className={`absolute bottom-0 left-0 right-0 z-40 transition-transform duration-500 ease-[cubic-bezier(0.25,1,0.5,1)] md:translate-y-full md:group-hover:translate-y-0 ${showMobileSizes ? 'translate-y-0' : 'translate-y-full'}`}>
-          <div className="bg-white/80 backdrop-blur-md pt-5 pb-6 px-4 border-t border-white/40 flex flex-col items-center gap-4 shadow-[0_-10px_30px_rgba(0,0,0,0.05)]">
-            <span style={{ fontFamily: 'var(--font-primary)' }} className="text-[9px] font-bold tracking-[0.25em] text-stone-800 uppercase">Seleccionar Talla</span>
-            <div className="flex gap-2 w-full justify-center">
-              {['S', 'M', 'L'].map(talla => {
-                const isAdding = addingSize === talla;
-                return (
-                  <button 
-                    key={talla} 
-                    onClick={(e) => handleSizeClick(e, talla)}
-                    style={{ fontFamily: 'var(--font-primary)' }} 
-                    className={`w-10 h-10 flex items-center justify-center text-[11px] font-medium transition-all duration-300
-                      ${isAdding 
-                        ? 'bg-stone-900 text-white border-stone-900 scale-105' 
-                        : 'text-stone-700 border border-stone-300/60 bg-white/60 hover:bg-stone-900 hover:text-white hover:border-stone-900'
-                      }
-                    `}
-                  >
-                    {isAdding ? '✔' : talla}
-                  </button>
-                )
-              })}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="flex flex-col items-center text-center">
-        <h3 style={{ fontFamily: 'var(--font-primary)' }} className="text-[11px] font-bold text-stone-900 tracking-[0.15em] uppercase">{producto.nombre}</h3>
-        <div className="h-[24px] overflow-hidden mt-1.5">
-          <p style={{ fontFamily: 'var(--font-primary)' }} className="text-[13px] font-semibold text-stone-500 transform translate-y-0 opacity-100 md:translate-y-full md:opacity-0 md:group-hover:translate-y-0 md:group-hover:opacity-100 transition-all duration-500 ease-out">{producto.precio}</p>
-        </div>
-      </div>
-    </Link>
-  );
-}
-
-// ── 3. SECCIÓN PRINCIPAL ──
+// ─────────────────────────────────────────
+// SECCIÓN PRINCIPAL — Tu Segunda Piel
+// ─────────────────────────────────────────
 export default function Productos() {
-  const [productos, setProductos] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [productos, setProductos]   = useState([]);
+  const [loading, setLoading]       = useState(true);
+  const [activeTab, setActiveTab]   = useState('nuevo');
 
   useEffect(() => {
     const cargarProductos = async () => {
@@ -118,26 +46,24 @@ export default function Productos() {
     cargarProductos();
   }, []);
 
-  console.log("Datos de los productos:", productos);
+  // Filtrar por tab activo
+  const productosFiltrados = productos.filter(
+    (p) => p.tag?.toLowerCase() === activeTab
+  );
 
-  // 👇 AQUÍ ESTÁ EL SKELETON REEMPLAZANDO EL "Cargando..."
+  // Skeleton
   if (loading) {
     return (
       <section className="w-full bg-white py-24 px-6 md:px-12 lg:px-16 overflow-hidden relative" id="catalogo">
         <div className="max-w-[1400px] mx-auto">
           <div className="flex items-end justify-between mb-12 border-b border-stone-200 pb-6">
             <div className="flex flex-col gap-2">
-              <div className="h-2 w-24 bg-stone-200 animate-pulse"></div>
-              <div className="h-5 w-48 bg-stone-200 animate-pulse"></div>
+              <div className="h-2 w-24 bg-stone-200 animate-pulse" />
+              <div className="h-5 w-48 bg-stone-200 animate-pulse" />
             </div>
           </div>
-
-          {/* Mismo grid de productos, pero renderizando los Skeletons */}
           <div className="flex overflow-x-auto pb-8 -mx-6 px-6 md:mx-0 md:px-0 md:pb-0 md:grid md:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-8 snap-x snap-mandatory [&::-webkit-scrollbar]:hidden" style={{ scrollbarWidth: 'none' }}>
-            {[1, 2, 3, 4].map((i) => (
-              <SkeletonCard key={i} />
-            ))}
-            <div className="w-[10vw] md:hidden flex-shrink-0" aria-hidden="true" />
+            {[1, 2, 3, 4].map(i => <SkeletonCard key={i} />)}
           </div>
         </div>
       </section>
@@ -147,25 +73,74 @@ export default function Productos() {
   return (
     <section className="w-full bg-white py-24 px-6 md:px-12 lg:px-16 overflow-hidden relative" id="catalogo">
       <div className="max-w-[1400px] mx-auto">
-        <div className="flex items-end justify-between mb-12 border-b border-stone-200 pb-6">
+
+        {/* Header de sección */}
+        <div className="flex items-end justify-between mb-8 border-b border-stone-200 pb-6">
           <div className="flex flex-col gap-1">
-            <span style={{ fontFamily: 'var(--font-primary)' }} className="text-[9px] text-stone-500 tracking-[0.3em] uppercase font-medium">Nueva Temporada</span>
+            <span style={{ fontFamily: 'var(--font-primary)' }} className="text-[9px] text-stone-500 tracking-[0.3em] uppercase font-medium">
+              Nueva Temporada
+            </span>
             <h2 style={{ fontFamily: 'var(--font-primary)' }} className="text-lg md:text-xl font-light text-stone-900 tracking-[0.2em] uppercase">
               TU SEGUNDA <strong className="font-bold">PIEL</strong>
             </h2>
           </div>
-          <Link to="/categoria" style={{ fontFamily: 'var(--font-primary)', letterSpacing: '0.15em' }} className="text-[10px] font-bold text-stone-500 hover:text-stone-900 transition-colors uppercase flex items-center gap-2 group">
+          <Link
+            to="/categoria"
+            style={{ fontFamily: 'var(--font-primary)', letterSpacing: '0.15em' }}
+            className="text-[10px] font-bold text-stone-500 hover:text-stone-900 transition-colors uppercase flex items-center gap-2 group"
+          >
             Ver todo
             <span className="transform transition-transform duration-300 group-hover:translate-x-1">→</span>
           </Link>
         </div>
 
-        <div className="flex overflow-x-auto pb-8 -mx-6 px-6 md:mx-0 md:px-0 md:pb-0 md:grid md:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-8 snap-x snap-mandatory [&::-webkit-scrollbar]:hidden" style={{ scrollbarWidth: 'none' }}>
-          {productos.map((p) => (
-            <ProductCard key={p.id} producto={p} />
+        {/* Tabs de filtro */}
+        <div className="flex gap-0 mb-10 border-b border-stone-100">
+          {TABS.map(tab => (
+            <button
+              key={tab.value}
+              onClick={() => setActiveTab(tab.value)}
+              style={{ fontFamily: 'var(--font-primary)' }}
+              className={`relative pb-3 px-5 text-[10px] font-bold tracking-[0.25em] uppercase transition-colors duration-200
+                ${activeTab === tab.value ? 'text-stone-900' : 'text-stone-400 hover:text-stone-600'}
+              `}
+            >
+              {tab.label}
+              {/* Línea indicadora activa */}
+              <span
+                className="absolute bottom-0 left-0 w-full h-[1.5px] transition-all duration-300 ease-out"
+                style={{
+                  background:  activeTab === tab.value ? 'var(--color-gold)' : 'transparent',
+                  transform:   activeTab === tab.value ? 'scaleX(1)' : 'scaleX(0)',
+                  transformOrigin: 'left',
+                }}
+              />
+            </button>
           ))}
-          <div className="w-[10vw] md:hidden flex-shrink-0" aria-hidden="true" />
         </div>
+
+        {/* Grid de productos */}
+        {productosFiltrados.length > 0 ? (
+          <div
+            className="flex overflow-x-auto pb-8 -mx-6 px-6 md:mx-0 md:px-0 md:pb-0 md:grid md:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-8 snap-x snap-mandatory [&::-webkit-scrollbar]:hidden"
+            style={{ scrollbarWidth: 'none' }}
+          >
+            {productosFiltrados.map(p => (
+              <ProductCard key={p.id} producto={p} />
+            ))}
+            <div className="w-[10vw] md:hidden flex-shrink-0" aria-hidden="true" />
+          </div>
+        ) : (
+          // Estado vacío — cuando no hay productos con ese tag
+          <div className="flex flex-col items-center justify-center py-20 gap-3">
+            <span style={{ fontFamily: 'var(--font-primary)' }} className="text-[9px] font-bold tracking-[0.3em] uppercase text-stone-300">
+              Próximamente
+            </span>
+            <p style={{ fontFamily: 'var(--font-primary)' }} className="text-[11px] tracking-[0.15em] text-stone-400 uppercase">
+              Nuevas piezas en camino
+            </p>
+          </div>
+        )}
       </div>
     </section>
   );

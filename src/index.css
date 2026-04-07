@@ -1,42 +1,46 @@
-/* FUENTE: cargada de forma asíncrona desde index.html — no va aquí */
-
-/* 1. TAILWIND — solo una vez */
+/* 1. TAILWIND */
 @import "tailwindcss";
 
-/* 3. VARIABLES */
-:root {
+/* 2. TEMA DE TAILWIND — tokens disponibles como clases de Tailwind */
+@theme {
   /* Tipografía */
-  --font-primary: 'Raleway', sans-serif;
+  --font-sans: 'Raleway', sans-serif;
 
   /* Colores principales */
-  --color-black:     #0B0B0B;
-  --color-charcoal:  #3A3A3A;
-  --color-white:     #ffffff;
+  --color-black:      #0B0B0B;
+  --color-charcoal:   #3A3A3A;
+  --color-white:      #ffffff;
 
   /* Fondos */
-  --color-bg:        #F2E4E1;
-  --color-ivory:     #F6F1EA;
+  --color-bg:         #F2E4E1;
+  --color-ivory:      #F6F1EA;
 
   /* Dorados / Acentos */
-  --color-gold:      #DFCDB4;
-  --color-gold-mid:  #E7D9C6;
-  --color-gold-soft: #EEE5D8;
+  --color-gold:       #DFCDB4;
+  --color-gold-mid:   #E7D9C6;
+  --color-gold-soft:  #EEE5D8;
 
   /* Bordes */
-  --color-border:    #e0d8ce;
+  --color-border:     #e0d8ce;
 }
 
-/* 4. TEMA DE TAILWIND */
-@theme {
-  --font-sans: 'Raleway', sans-serif;
-}
-
-/* 5. BASE */
+/* 3. BASE */
 @layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
   body {
-    font-family: var(--font-primary);
+    font-family: var(--font-sans);          /* ✅ var() en lugar de theme() */
     background-color: var(--color-white);
     color: var(--color-black);
     -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Selección de texto con color de marca */
+  ::selection {
+    background-color: var(--color-gold);
+    color: var(--color-black);
   }
 }

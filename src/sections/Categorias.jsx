@@ -6,7 +6,7 @@ const categorias = {
     id: 1,
     nombre: 'Sets Completos',
     desc: 'La colección definitiva',
-    href: '/categoria/sets', // ── NUEVO: Ruta específica
+    href: '/categoria/sets-completos', // ── NUEVO: Ruta específica
     image: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=500&q=70&fm=webp&auto=format', 
   },
   superior: {
