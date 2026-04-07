@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { productImage } from '../utils/imageUrl';
 
 export default function ProductCard({ producto }) {
   const [showMobileSizes, setShowMobileSizes] = useState(false);
@@ -31,14 +32,14 @@ export default function ProductCard({ producto }) {
         )}
 
         <img
-          src={producto.imagen1}
+          src={productImage(producto.imagen1)}
           alt={producto.nombre}
           loading="lazy"
           className="absolute inset-0 w-full h-full object-cover transition-all duration-[800ms] ease-[cubic-bezier(0.25,1,0.5,1)] md:group-hover:scale-105"
         />
         {producto.imagen2 && (
           <img
-            src={producto.imagen2}
+            src={productImage(producto.imagen2)}
             alt={producto.nombre}
             loading="lazy"
             className="absolute inset-0 w-full h-full object-cover transition-all duration-[800ms] ease-[cubic-bezier(0.25,1,0.5,1)] opacity-0 md:group-hover:opacity-100 md:group-hover:scale-105"

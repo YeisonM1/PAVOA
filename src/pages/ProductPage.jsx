@@ -121,7 +121,7 @@ export default function ProductPage() {
           <div className="w-full bg-stone-100 overflow-hidden relative">
             <img
               key={imagenActiva}
-              src={imagenActiva}
+              src={productImage(imagenActiva)}
               alt={producto.nombre}
               width={900} height={1200}
               className="w-full h-auto object-cover animate-fade-in"
@@ -137,7 +137,7 @@ export default function ProductPage() {
                   imagenActiva === img ? 'border-stone-900 opacity-100' : 'border-transparent opacity-50 hover:opacity-100'
                 }`}
               >
-                <img src={img} alt={`${producto.nombre} vista ${index + 1}`}
+                <img src={thumbImage(img)} alt={`${producto.nombre} vista ${index + 1}`}
                   width={80} height={96} className="w-full h-full object-cover" loading="lazy" />
               </button>
             ))}

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
+import { categoryImage } from '../utils/imageUrl';
 
 const categorias = {
   protagonista: {
@@ -68,7 +69,7 @@ const CategoriaCard = ({ cat, className, delay = 0 }) => {
       `}
     >
       <img
-        src={cat.image}
+        src={categoryImage(cat.image)}
         alt={cat.nombre}
         className="w-full h-full object-cover transition-transform duration-[2000ms] ease-out md:group-hover:scale-105 scale-110"
         style={{ transformOrigin: 'center center' }}

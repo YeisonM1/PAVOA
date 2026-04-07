@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { heroImage } from '../utils/imageUrl';
 
 const slides = [
   {
@@ -66,7 +67,7 @@ export default function HeroFullscreen() {
           }`}
         >
           <img
-            src={slide.image}
+            src={heroImage(slide.image)}
             alt={slide.tag}
             // El 'scale-105' en hover o animado da esa sensación de que la foto respira
             className={`w-full h-full object-cover origin-center transition-transform duration-[6000ms] ease-linear ${
