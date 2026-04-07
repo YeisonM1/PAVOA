@@ -8,25 +8,23 @@ export default function CartDrawer({ cartOpen, setCartOpen }) {
   const { cartItems, cartCount, cartTotal, removeFromCart, updateQuantity } = useContext(CartContext);
 
   const handleWhatsAppCheckout = () => {
-    // ✅ Mensaje más profesional y completo
-    let mensaje = "¡Hola PAVOA! 👋 Me gustaría concretar mi pedido:\n\n";
-    mensaje += "🛍️ *DETALLE DEL PEDIDO*\n";
-    mensaje += "─────────────────────\n";
+    let mensaje = "Hola PAVOA, me gustaria concretar mi pedido:\n\n";
+    mensaje += "DETALLE DEL PEDIDO\n";
+    mensaje += "-------------------\n";
 
     cartItems.forEach((item, i) => {
-      // ✅ Incluye color si fue seleccionado
       const color = item.producto.colorSeleccionado
         ? `, Color: ${item.producto.colorSeleccionado}`
         : '';
-      mensaje += `${i + 1}. *${item.producto.nombre}*\n`;
-      mensaje += `   • Talla: ${item.talla}${color}\n`;
-      mensaje += `   • Cantidad: ${item.cantidad}\n`;
-      mensaje += `   • Precio: ${item.producto.precio}\n\n`;
+      mensaje += `${i + 1}. ${item.producto.nombre}\n`;
+      mensaje += `   Talla: ${item.talla}${color}\n`;
+      mensaje += `   Cantidad: ${item.cantidad}\n`;
+      mensaje += `   Precio: ${item.producto.precio}\n\n`;
     });
 
-    mensaje += "─────────────────────\n";
-    mensaje += `💰 *Total estimado: $${cartTotal.toLocaleString('es-CO')}*\n\n`;
-    mensaje += "Quedo atenta a los pasos para confirmar el pago. ¡Gracias! 🙏";
+    mensaje += "-------------------\n";
+    mensaje += `Total estimado: ${cartTotal.toLocaleString('es-CO')}\n\n`;
+    mensaje += "Quedo atenta a los pasos para confirmar el pago.";
 
     window.open(
       `https://wa.me/${NUMERO_WHATSAPP}?text=${encodeURIComponent(mensaje)}`,
