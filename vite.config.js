@@ -11,22 +11,29 @@ export default defineConfig({
   build: {
     rollupOptions: {
       output: {
-        manualChunks: {
-          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
-          'vendor-icons': ['lucide-react', 'react-icons'],
-          'vendor-db':    ['@supabase/supabase-js'],
-        }
+        // ✅ Vite 8 (rolldown) requiere función, no objeto
+        manualChunks: (id) => {
+          if (id.includes('react') || id.includes('react-dom') || id.includes('react-router-dom')) {
+            return 'vendor-react';
+          }
+          if (id.includes('lucide-react') || id.includes('react-icons')) {
+            return 'vendor-icons';
+          }
+          if (id.includes('@supabase')) {
+            return 'vendor-db';
+          }
+        },
       }
     },
     chunkSizeWarningLimit: 600,
-    // ✅ esbuild es más rápido que terser y ya está incluido en Vite — no requiere instalación
-    minify: 'esbuild',
     sourcemap: false,
   },
 
-  // ✅ Elimina console.log y debugger en producción
-  esbuild: {
-    drop: ['console', 'debugger'],
+  // ✅ Vite 8 usa oxc por defecto — eliminamos console.log en producción
+  oxc: {
+    transform: {
+      drop: ['console', 'debugger'],
+    }
   },
 
   // ✅ Alias para imports más limpios
