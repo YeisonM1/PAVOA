@@ -36,7 +36,6 @@ export default function SearchOverlay({ isSearchOpen, setIsSearchOpen }) {
       className={`fixed inset-0 z-[80] bg-white/95 backdrop-blur-md transition-all duration-500 flex flex-col
         ${isSearchOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}
       `}
-      style={{ fontFamily: 'var(--font-primary)' }}
     >
       {/* Cabecera del buscador */}
       <div className="flex items-center justify-between px-6 md:px-16 py-8">

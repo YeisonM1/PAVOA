@@ -87,7 +87,7 @@ export default function ProductPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-white" style={{ fontFamily: 'var(--font-primary)' }}>
+      <div className="min-h-screen flex items-center justify-center bg-white" >
         <span className="text-[10px] font-bold tracking-[0.3em] uppercase text-stone-500 animate-pulse">Cargando pieza...</span>
       </div>
     );
@@ -95,7 +95,7 @@ export default function ProductPage() {
 
   if (!producto) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-white gap-6" style={{ fontFamily: 'var(--font-primary)' }}>
+      <div className="min-h-screen flex flex-col items-center justify-center bg-white gap-6" >
         <span className="text-[10px] font-bold tracking-[0.3em] uppercase text-stone-900">Pieza no encontrada</span>
         <Link to="/" className="text-[10px] tracking-[0.2em] uppercase border-b border-stone-900 pb-1">Volver al inicio</Link>
       </div>
@@ -108,7 +108,7 @@ export default function ProductPage() {
   const cuidadosTexto = producto.cuidados || 'Lavar a máquina en frío con colores similares. No usar secadora.';
 
   return (
-    <div className="min-h-screen bg-white" style={{ fontFamily: 'var(--font-primary)' }}>
+    <div className="min-h-screen bg-white" >
       <SEO
         title={producto.nombre}
         description={producto.descripcion || `Compra ${producto.nombre} en PAVOA. Alta calidad deportiva con envío a toda Colombia.`}
@@ -229,8 +229,7 @@ export default function ProductPage() {
                           style={{ backgroundColor: c.hex }}
                         />
                         <span
-                          style={{ fontFamily: 'var(--font-primary)' }}
-                          className={`text-[8px] tracking-[0.1em] uppercase transition-colors ${
+                                                   className={`text-[8px] tracking-[0.1em] uppercase transition-colors ${
                             activo ? 'text-stone-900 font-bold' : 'text-stone-400'
                           }`}
                         >

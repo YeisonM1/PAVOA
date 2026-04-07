@@ -5,20 +5,7 @@ import logo from '../assets/LOGO-PAVOA.svg';
 import { CartContext } from '../App';
 import CartDrawer from './CartDrawer';
 import SearchOverlay from './SearchOverlay';
-
-const InstagramIcon = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-    <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
-    <circle cx="12" cy="12" r="4"/>
-    <circle cx="17.5" cy="6.5" r="0.5" fill="currentColor" stroke="none"/>
-  </svg>
-);
-
-const FacebookIcon = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/>
-  </svg>
-);
+import { InstagramIcon, FacebookIcon } from '../components/Icons';
 
 const mujerItems = [
   'Camisetas', 'Tops Deportivos', 'Sets', 'Buzos', 'Chaquetas',
@@ -169,7 +156,6 @@ const Header = () => {
           isScrolled ? 'border-white/10 py-2 shadow-lg' : 'border-transparent py-4'
         } backdrop-blur-md`}
         style={{
-          fontFamily: 'var(--font-primary)',
           background: isScrolled ? 'rgba(242, 228, 225, 0.98)' : 'rgba(242, 228, 225, 0.92)',
         }}
       >
@@ -203,7 +189,7 @@ const Header = () => {
                   aria-haspopup="true"
                   className="flex items-center gap-1.5 transition-opacity hover:opacity-70"
                   style={{
-                    fontFamily: 'var(--font-primary)', fontSize: '12px', fontWeight: 500,
+                    fontSize: '12px', fontWeight: 500,
                     letterSpacing: '0.2em', color: '#3E2723', background: 'none',
                     border: 'none', cursor: 'pointer', padding: 0,
                   }}
@@ -300,7 +286,7 @@ const Header = () => {
         ref={panelRef}
         style={{
           position: 'fixed', left: 0, right: 0, top: isScrolled ? '52px' : '68px', zIndex: 49,
-          fontFamily: 'var(--font-primary)', background: 'var(--color-bg)',
+          background: 'var(--color-bg)',
           borderTop: '1px solid var(--color-gold)', borderBottom: '1px solid var(--color-border)',
           overflow: 'hidden', maxHeight: catalogoOpen ? '650px' : '0px', opacity: catalogoOpen ? 1 : 0,
           transition: 'max-height 0.45s cubic-bezier(0.4,0,0.2,1), opacity 0.3s ease, top 0.5s ease',
@@ -425,7 +411,7 @@ const Header = () => {
 
       {/* ── MENÚ MÓVIL ── */}
       <div
-        style={{ fontFamily: 'var(--font-primary)', background: 'var(--color-bg)' }}
+        style={{ background: 'var(--color-bg)' }}
         className={`fixed inset-0 z-40 transition-opacity duration-500 overflow-hidden ${
           menuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
         }`}
@@ -443,7 +429,7 @@ const Header = () => {
             <button
               onClick={() => setMobileCatalogoOpen(true)}
               className="w-full flex justify-between items-center py-5 border-b border-stone-100 text-stone-800 text-left"
-              style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'var(--font-primary)', fontSize: 13, fontWeight: 500, letterSpacing: '0.2em' }}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 500, letterSpacing: '0.2em' }}
             >
               CATÁLOGO
               <span style={{ fontSize: 16, color: 'var(--color-gold)', fontWeight: 300 }}>→</span>

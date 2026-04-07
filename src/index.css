@@ -5,6 +5,7 @@
 @theme {
   /* Tipografía */
   --font-sans: 'Raleway', sans-serif;
+  --font-primary: 'Raleway', sans-serif; /* alias — eliminar inline styles que lo usan */
 
   /* Colores principales */
   --color-black:      #0B0B0B;

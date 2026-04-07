@@ -51,8 +51,7 @@ export default function FilterDrawer({
                 <button
                   key={talla}
                   onClick={() => onTallaChange(talla)}
-                  style={{ fontFamily: 'var(--font-primary)' }}
-                  className={`h-9 flex items-center justify-center border text-[10px] font-medium transition-colors
+                                   className={`h-9 flex items-center justify-center border text-[10px] font-medium transition-colors
                     ${activa
                       ? 'bg-stone-900 text-white border-stone-900'
                       : 'border-stone-200 text-stone-600 hover:border-stone-900 hover:text-stone-900'
@@ -104,7 +103,7 @@ export default function FilterDrawer({
 
           {/* Nombres de colores seleccionados */}
           {coloresFiltro.length > 0 && (
-            <p style={{ fontFamily: 'var(--font-primary)' }} className="text-[9px] text-stone-400 tracking-[0.15em] mt-3 uppercase">
+            <p  className="text-[9px] text-stone-400 tracking-[0.15em] mt-3 uppercase">
               {coloresFiltro.join(' · ')}
             </p>
           )}
@@ -115,8 +114,7 @@ export default function FilterDrawer({
       {hayFiltrosActivos && (
         <button
           onClick={onLimpiar}
-          style={{ fontFamily: 'var(--font-primary)' }}
-          className="text-[9px] font-bold tracking-[0.2em] text-stone-400 hover:text-stone-900 uppercase underline underline-offset-4 transition-colors text-left"
+                   className="text-[9px] font-bold tracking-[0.2em] text-stone-400 hover:text-stone-900 uppercase underline underline-offset-4 transition-colors text-left"
         >
           Limpiar filtros
         </button>
@@ -139,7 +137,7 @@ export default function FilterDrawer({
           className={`fixed top-0 left-0 h-full w-full sm:w-[350px] z-[70] flex flex-col transition-transform duration-500 ease-[cubic-bezier(0.25,1,0.5,1)] ${
             isFilterOpen ? 'translate-x-0' : '-translate-x-full'
           }`}
-          style={{ background: 'var(--color-bg)', fontFamily: 'var(--font-primary)' }}
+          style={{ background: 'var(--color-bg)' }}
         >
           <div className="flex items-center justify-between px-8 py-6 border-b border-stone-200/50">
             <span className="text-[11px] font-bold tracking-[0.2em] text-stone-900 uppercase">Filtros</span>
@@ -153,8 +151,7 @@ export default function FilterDrawer({
           <div className="border-t border-stone-200/50 px-8 py-6 bg-white/40 backdrop-blur-md">
             <button
               onClick={() => setIsFilterOpen(false)}
-              style={{ fontFamily: 'var(--font-primary)' }}
-              className="w-full bg-stone-900 text-white py-4 text-[10px] font-bold tracking-[0.25em] uppercase hover:bg-stone-800 transition-colors"
+                           className="w-full bg-stone-900 text-white py-4 text-[10px] font-bold tracking-[0.25em] uppercase hover:bg-stone-800 transition-colors"
             >
               {hayFiltrosActivos
                 ? `Ver ${totalFiltrados} ${totalFiltrados === 1 ? 'pieza' : 'piezas'}`
@@ -167,8 +164,7 @@ export default function FilterDrawer({
       {/* ── ESCRITORIO ── */}
       <aside
         className="hidden lg:block w-[220px] flex-shrink-0 pr-8 sticky top-[120px] self-start"
-        style={{ fontFamily: 'var(--font-primary)' }}
-      >
+             >
         <FilterContent />
       </aside>
     </>

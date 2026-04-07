@@ -30,8 +30,8 @@ export default function CrossSelling({ currentProductId }) {
     <section className="w-full bg-stone-50 py-24 px-6 md:px-12 lg:px-16 border-t border-stone-200">
       <div className="max-w-[1400px] mx-auto">
         <div className="flex flex-col items-center mb-16 text-center">
-          <span style={{ fontFamily: 'var(--font-primary)' }} className="text-[10px] text-stone-500 tracking-[0.2em] uppercase font-bold mb-3">Recomendaciones</span>
-          <h2 style={{ fontFamily: 'var(--font-primary)' }} className="text-xl md:text-2xl font-light text-stone-900 tracking-[0.15em] uppercase">
+          <span className="text-[10px] text-stone-500 tracking-[0.2em] uppercase font-bold mb-3">Recomendaciones</span>
+          <h2 className="text-xl md:text-2xl font-light text-stone-900 tracking-[0.15em] uppercase">
             Completa el look
           </h2>
         </div>
@@ -46,8 +46,8 @@ export default function CrossSelling({ currentProductId }) {
                 )}
               </div>
               <div className="text-center mt-4">
-                <h3 style={{ fontFamily: 'var(--font-primary)' }} className="text-[10px] font-bold tracking-[0.15em] uppercase text-stone-900">{producto.nombre}</h3>
-                <p style={{ fontFamily: 'var(--font-primary)' }} className="text-[12px] font-medium text-stone-500 mt-1">{producto.precio}</p>
+                <h3 className="text-[10px] font-bold tracking-[0.15em] uppercase text-stone-900">{producto.nombre}</h3>
+                <p className="text-[12px] font-medium text-stone-500 mt-1">{producto.precio}</p>
               </div>
             </Link>
           ))}

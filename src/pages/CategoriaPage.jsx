@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { parsePrice } from '../utils/price';
 import { useParams, Link } from 'react-router-dom';
 import FilterDrawer from '../sections/FilterDrawer';
 import ProductCard from '../components/ProductCard';
@@ -135,17 +136,9 @@ export default function CategoriaPage() {
 
     // Ordenamiento
     if (sortOption === 'Precio: Menor a Mayor') {
-      resultado.sort((a, b) => {
-        const pa = parseInt(a.precio.replace(/\D/g, ''));
-        const pb = parseInt(b.precio.replace(/\D/g, ''));
-        return pa - pb;
-      });
+      resultado.sort((a, b) => parsePrice(a.precio) - parsePrice(b.precio));
     } else if (sortOption === 'Precio: Mayor a Menor') {
-      resultado.sort((a, b) => {
-        const pa = parseInt(a.precio.replace(/\D/g, ''));
-        const pb = parseInt(b.precio.replace(/\D/g, ''));
-        return pb - pa;
-      });
+      resultado.sort((a, b) => parsePrice(b.precio) - parsePrice(a.precio));
     }
 
     return resultado;
@@ -155,7 +148,7 @@ export default function CategoriaPage() {
 
   if (loading || !dataHeader) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-white" style={{ fontFamily: 'var(--font-primary)' }}>
+      <div className="min-h-screen flex items-center justify-center bg-white" >
         <span className="text-[10px] font-bold tracking-[0.3em] uppercase text-stone-500 animate-pulse">
           Sincronizando Colección...
         </span>
@@ -183,15 +176,15 @@ export default function CategoriaPage() {
         <div className="absolute inset-0 bg-black/40" />
         <div className="relative z-10 text-center px-6">
           <nav className="mb-4">
-            <span style={{ fontFamily: 'var(--font-primary)' }} className="text-[10px] tracking-[0.2em] text-white/70 uppercase">
+            <span  className="text-[10px] tracking-[0.2em] text-white/70 uppercase">
               <Link to="/" className="hover:text-white transition-colors">Inicio</Link>
               <span className="mx-2">/</span> Colecciones
             </span>
           </nav>
-          <h1 style={{ fontFamily: 'var(--font-primary)' }} className="text-3xl md:text-5xl font-light text-white tracking-[0.2em] uppercase mb-4">
+          <h1  className="text-3xl md:text-5xl font-light text-white tracking-[0.2em] uppercase mb-4">
             {dataHeader.titulo1}<strong className="font-bold">{dataHeader.titulo2}</strong>
           </h1>
-          <p style={{ fontFamily: 'var(--font-primary)' }} className="text-[11px] md:text-xs text-white/80 tracking-[0.15em] max-w-md mx-auto uppercase leading-relaxed">
+          <p  className="text-[11px] md:text-xs text-white/80 tracking-[0.15em] max-w-md mx-auto uppercase leading-relaxed">
             {dataHeader.desc}
           </p>
         </div>
@@ -203,8 +196,7 @@ export default function CategoriaPage() {
           <div className="flex items-center gap-4">
             <button
               onClick={() => setIsFilterOpen(true)}
-              style={{ fontFamily: 'var(--font-primary)' }}
-              className="lg:hidden text-xs font-medium text-stone-900 tracking-[0.15em] uppercase flex items-center gap-2 hover:opacity-70 transition-opacity"
+                           className="lg:hidden text-xs font-medium text-stone-900 tracking-[0.15em] uppercase flex items-center gap-2 hover:opacity-70 transition-opacity"
             >
               Filtros
               {hayFiltrosActivos && (
@@ -222,11 +214,10 @@ export default function CategoriaPage() {
           </div>
 
           <div className="hidden md:flex items-center gap-4 relative">
-            <span style={{ fontFamily: 'var(--font-primary)' }} className="text-xs text-stone-500 tracking-[0.15em] uppercase">Ordenar por:</span>
+            <span  className="text-xs text-stone-500 tracking-[0.15em] uppercase">Ordenar por:</span>
             <button
               onClick={() => setIsSortOpen(!isSortOpen)}
-              style={{ fontFamily: 'var(--font-primary)' }}
-              className="text-xs font-medium text-stone-900 tracking-[0.15em] uppercase bg-transparent border-none outline-none cursor-pointer flex items-center gap-2 hover:opacity-70 transition-opacity"
+                           className="text-xs font-medium text-stone-900 tracking-[0.15em] uppercase bg-transparent border-none outline-none cursor-pointer flex items-center gap-2 hover:opacity-70 transition-opacity"
             >
               {sortOption}
               <svg className={`w-4 h-4 transition-transform duration-300 ${isSortOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -237,8 +228,7 @@ export default function CategoriaPage() {
               <div className="py-2 flex flex-col">
                 {sortOptions.map(option => (
                   <button key={option} onClick={() => { setSortOption(option); setIsSortOpen(false); }}
-                    style={{ fontFamily: 'var(--font-primary)' }}
-                    className={`text-left px-6 py-4 text-xs tracking-[0.15em] uppercase hover:bg-stone-50 transition-colors ${sortOption === option ? 'font-bold text-stone-900' : 'font-medium text-stone-500'}`}>
+                                       className={`text-left px-6 py-4 text-xs tracking-[0.15em] uppercase hover:bg-stone-50 transition-colors ${sortOption === option ? 'font-bold text-stone-900' : 'font-medium text-stone-500'}`}>
                     {option}
                   </button>
                 ))}
@@ -246,7 +236,7 @@ export default function CategoriaPage() {
             </div>
           </div>
 
-          <span style={{ fontFamily: 'var(--font-primary)' }} className="text-[11px] text-stone-500 tracking-[0.15em] uppercase">
+          <span  className="text-[11px] text-stone-500 tracking-[0.15em] uppercase">
             {productosFiltrados.length} {productosFiltrados.length === 1 ? 'Pieza' : 'Piezas'}
           </span>
         </div>
@@ -279,7 +269,7 @@ export default function CategoriaPage() {
                 </div>
                 {productosFiltrados.length > 0 && (
                   <div className="mt-20 flex justify-center">
-                    <button style={{ fontFamily: 'var(--font-primary)' }} className="text-[11px] font-bold text-stone-900 tracking-[0.2em] uppercase border-b border-stone-900 pb-1 hover:text-stone-500 hover:border-stone-500 transition-colors">
+                    <button  className="text-[11px] font-bold text-stone-900 tracking-[0.2em] uppercase border-b border-stone-900 pb-1 hover:text-stone-500 hover:border-stone-500 transition-colors">
                       Cargar más piezas
                     </button>
                   </div>
@@ -288,17 +278,16 @@ export default function CategoriaPage() {
             ) : (
               // ── ESTADO VACÍO ──
               <div className="flex flex-col items-center justify-center py-32 gap-4">
-                <span style={{ fontFamily: 'var(--font-primary)' }} className="text-[9px] font-bold tracking-[0.3em] uppercase text-stone-300">
+                <span  className="text-[9px] font-bold tracking-[0.3em] uppercase text-stone-300">
                   Sin resultados
                 </span>
-                <p style={{ fontFamily: 'var(--font-primary)' }} className="text-[12px] tracking-[0.15em] text-stone-400 uppercase text-center">
+                <p  className="text-[12px] tracking-[0.15em] text-stone-400 uppercase text-center">
                   No hay piezas con esos filtros
                 </p>
                 {hayFiltrosActivos && (
                   <button
                     onClick={handleLimpiar}
-                    style={{ fontFamily: 'var(--font-primary)' }}
-                    className="mt-2 text-[10px] font-bold tracking-[0.2em] uppercase border-b border-stone-900 pb-1 text-stone-900 hover:opacity-60 transition-opacity"
+                                       className="mt-2 text-[10px] font-bold tracking-[0.2em] uppercase border-b border-stone-900 pb-1 text-stone-900 hover:opacity-60 transition-opacity"
                   >
                     Limpiar filtros
                   </button>

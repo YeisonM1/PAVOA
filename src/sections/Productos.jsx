@@ -77,16 +77,16 @@ export default function Productos() {
         {/* Header de sección */}
         <div className="flex items-end justify-between mb-8 border-b border-stone-200 pb-6">
           <div className="flex flex-col gap-1">
-            <span style={{ fontFamily: 'var(--font-primary)' }} className="text-[9px] text-stone-500 tracking-[0.3em] uppercase font-medium">
+            <span  className="text-[9px] text-stone-500 tracking-[0.3em] uppercase font-medium">
               Nueva Temporada
             </span>
-            <h2 style={{ fontFamily: 'var(--font-primary)' }} className="text-lg md:text-xl font-light text-stone-900 tracking-[0.2em] uppercase">
+            <h2  className="text-lg md:text-xl font-light text-stone-900 tracking-[0.2em] uppercase">
               TU SEGUNDA <strong className="font-bold">PIEL</strong>
             </h2>
           </div>
           <Link
             to="/categoria"
-            style={{ fontFamily: 'var(--font-primary)', letterSpacing: '0.15em' }}
+            style={{ letterSpacing: '0.15em' }}
             className="text-[10px] font-bold text-stone-500 hover:text-stone-900 transition-colors uppercase flex items-center gap-2 group"
           >
             Ver todo
@@ -100,8 +100,7 @@ export default function Productos() {
             <button
               key={tab.value}
               onClick={() => setActiveTab(tab.value)}
-              style={{ fontFamily: 'var(--font-primary)' }}
-              className={`relative pb-3 px-5 text-[10px] font-bold tracking-[0.25em] uppercase transition-colors duration-200
+                           className={`relative pb-3 px-5 text-[10px] font-bold tracking-[0.25em] uppercase transition-colors duration-200
                 ${activeTab === tab.value ? 'text-stone-900' : 'text-stone-400 hover:text-stone-600'}
               `}
             >
@@ -133,10 +132,10 @@ export default function Productos() {
         ) : (
           // Estado vacío — cuando no hay productos con ese tag
           <div className="flex flex-col items-center justify-center py-20 gap-3">
-            <span style={{ fontFamily: 'var(--font-primary)' }} className="text-[9px] font-bold tracking-[0.3em] uppercase text-stone-300">
+            <span  className="text-[9px] font-bold tracking-[0.3em] uppercase text-stone-300">
               Próximamente
             </span>
-            <p style={{ fontFamily: 'var(--font-primary)' }} className="text-[11px] tracking-[0.15em] text-stone-400 uppercase">
+            <p  className="text-[11px] tracking-[0.15em] text-stone-400 uppercase">
               Nuevas piezas en camino
             </p>
           </div>
