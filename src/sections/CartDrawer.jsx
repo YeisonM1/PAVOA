@@ -3,25 +3,16 @@ import { X, ShoppingBag } from 'lucide-react';
 import { CartContext } from '../App';
 
 export default function CartDrawer({ cartOpen, setCartOpen }) {
-  // Extraemos las nuevas funciones del Contexto
   const { cartItems, cartCount, cartTotal, removeFromCart, updateQuantity } = useContext(CartContext);
 
-  // ── FUNCIÓN CHECKOUT WHATSAPP ──
   const handleWhatsAppCheckout = () => {
-    // Reemplaza este número por tu WhatsApp real de PAVOA (ej: 573001234567)
     const numeroWhatsApp = "573000000000"; 
-    
     let mensaje = "Hola PAVOA, quiero concretar mi compra:\n\n";
-    
     cartItems.forEach(item => {
       mensaje += `- ${item.cantidad}x ${item.producto.nombre} (Talla: ${item.talla})\n`;
     });
-    
     mensaje += `\n*Total estimado: $${cartTotal.toLocaleString('es-CO')}*\n\nQuedo atenta(o) a los pasos para el pago.`;
-    
-    // Abrimos WhatsApp con el mensaje pre-escrito
-    const url = `https://wa.me/${numeroWhatsApp}?text=${encodeURIComponent(mensaje)}`;
-    window.open(url, '_blank');
+    window.open(`https://wa.me/${numeroWhatsApp}?text=${encodeURIComponent(mensaje)}`, '_blank');
   };
 
   return (
@@ -39,20 +30,24 @@ export default function CartDrawer({ cartOpen, setCartOpen }) {
           <span className="text-[11px] font-bold tracking-[0.2em] text-stone-900 uppercase">
             Tu Bolsa ({cartCount})
           </span>
-          <button onClick={() => setCartOpen(false)} className="text-stone-500 hover:text-stone-900 transition-colors">
-            <X size={20} strokeWidth={1.5} />
+          {/* ✅ aria-label agregado */}
+          <button
+            onClick={() => setCartOpen(false)}
+            className="text-stone-500 hover:text-stone-900 transition-colors"
+            aria-label="Cerrar carrito"
+          >
+            <X size={20} strokeWidth={1.5} aria-hidden="true" />
           </button>
         </div>
 
         <div className="flex-grow overflow-y-auto px-8 py-8 flex flex-col">
           {cartItems.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-center gap-4 opacity-50">
-              <ShoppingBag size={32} strokeWidth={1} className="text-stone-400" />
+              <ShoppingBag size={32} strokeWidth={1} className="text-stone-400" aria-hidden="true" />
               <p className="text-[11px] tracking-[0.15em] uppercase text-stone-500">Tu bolsa está vacía</p>
             </div>
           ) : (
             <div className="flex flex-col gap-8">
-              {/* ── MAPEAMOS LOS PRODUCTOS REALES ── */}
               {cartItems.map((item, index) => (
                 <div key={index} className="flex gap-5 group">
                   <div className="w-24 h-[126px] bg-stone-100 overflow-hidden relative flex-shrink-0">
@@ -61,26 +56,30 @@ export default function CartDrawer({ cartOpen, setCartOpen }) {
                   <div className="flex flex-col justify-center flex-grow py-1">
                     <div className="flex justify-between items-start mb-1.5">
                       <h4 className="text-[11px] font-bold tracking-[0.15em] text-stone-900 uppercase">{item.producto.nombre}</h4>
+                      {/* ✅ aria-label agregado */}
                       <button 
                         onClick={() => removeFromCart(item.producto.id, item.talla)}
                         className="text-stone-400 hover:text-stone-900 transition-colors"
+                        aria-label={`Eliminar ${item.producto.nombre} del carrito`}
                       >
-                        <X size={14} strokeWidth={2} />
+                        <X size={14} strokeWidth={2} aria-hidden="true" />
                       </button>
                     </div>
                     <p className="text-[10px] text-stone-500 tracking-[0.1em] mb-4 uppercase">Talla: {item.talla}</p>
                     
                     <div className="flex justify-between items-end mt-auto">
-                      {/* Botones de Cantidad (+ y -) */}
                       <div className="flex items-center border border-stone-200/80">
+                        {/* ✅ aria-labels en botones de cantidad */}
                         <button 
                           onClick={() => updateQuantity(item.producto.id, item.talla, -1)}
                           className="w-6 h-6 flex items-center justify-center text-stone-500 hover:text-stone-900 hover:bg-stone-50 transition-colors"
+                          aria-label={`Reducir cantidad de ${item.producto.nombre}`}
                         >-</button>
-                        <span className="text-[10px] w-6 text-center font-medium">{item.cantidad}</span>
+                        <span className="text-[10px] w-6 text-center font-medium" aria-live="polite">{item.cantidad}</span>
                         <button 
                           onClick={() => updateQuantity(item.producto.id, item.talla, 1)}
                           className="w-6 h-6 flex items-center justify-center text-stone-500 hover:text-stone-900 hover:bg-stone-50 transition-colors"
+                          aria-label={`Aumentar cantidad de ${item.producto.nombre}`}
                         >+</button>
                       </div>
                       <p className="text-[12px] font-semibold text-stone-900">{item.producto.precio}</p>
@@ -98,14 +97,13 @@ export default function CartDrawer({ cartOpen, setCartOpen }) {
               <span className="text-[10px] font-bold tracking-[0.2em] text-stone-500 uppercase">Subtotal Estimado</span>
               <span className="text-[14px] font-bold text-stone-900">${cartTotal.toLocaleString('es-CO')}</span>
             </div>
-            
-            {/* ── BOTÓN DE WHATSAPP ── */}
             <button 
               onClick={handleWhatsAppCheckout}
               className="w-full bg-stone-900 text-white py-4 text-[10px] font-bold tracking-[0.25em] uppercase hover:bg-stone-800 transition-colors flex items-center justify-center gap-2"
+              aria-label="Finalizar compra por WhatsApp"
             >
               Finalizar Compra
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
             </button>
           </div>
         )}

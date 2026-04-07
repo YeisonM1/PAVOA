@@ -238,6 +238,8 @@ const Header = () => {
               <img 
                 src={logo} 
                 alt="PAVOA" 
+                width={160}
+                height={72}
                 className="h-14 md:h-20 w-auto object-contain transition-transform duration-500" 
               />
             </Link>
