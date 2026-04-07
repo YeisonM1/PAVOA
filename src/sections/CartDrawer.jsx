@@ -6,6 +6,7 @@ const NUMERO_WHATSAPP = "573007056457"; // ✅ Número real de PAVOA
 
 export default function CartDrawer({ cartOpen, setCartOpen }) {
   const { cartItems, cartCount, cartTotal, removeFromCart, updateQuantity } = useContext(CartContext);
+  const [modalOpen, setModalOpen] = React.useState(false); // ✅ NUEVO
 
   const handleWhatsAppCheckout = () => {
     let mensaje = "Hola PAVOA, me gustaria concretar mi pedido:\n\n";
@@ -142,7 +143,7 @@ export default function CartDrawer({ cartOpen, setCartOpen }) {
               </span>
             </div>
             <button 
-              onClick={handleWhatsAppCheckout}
+              onClick={() => setModalOpen(true)} // ✅ Abre modal, no WhatsApp directo
               className="w-full bg-stone-900 text-white py-4 text-[10px] font-bold tracking-[0.25em] uppercase hover:bg-stone-800 transition-colors flex items-center justify-center gap-2"
               aria-label="Finalizar compra por WhatsApp"
             >
@@ -153,6 +154,104 @@ export default function CartDrawer({ cartOpen, setCartOpen }) {
             </button>
           </div>
         )}
+      </div>
+      {/* ── MODAL DE CONFIRMACIÓN ── */}
+      <div className={`fixed inset-0 z-[80] flex items-center justify-center px-4 transition-all duration-300 ${
+        modalOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
+      }`}>
+        {/* Overlay */}
+        <div
+          className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+          onClick={() => setModalOpen(false)}
+        />
+
+        {/* Panel */}
+        <div
+          className={`relative w-full max-w-md bg-white z-10 transition-all duration-300 ${
+            modalOpen ? 'translate-y-0 scale-100' : 'translate-y-4 scale-95'
+          }`}
+          style={{ fontFamily: 'var(--font-primary)' }}
+        >
+          {/* Header */}
+          <div className="flex items-center justify-between px-8 py-6 border-b border-stone-100">
+            <span className="text-[11px] font-bold tracking-[0.2em] text-stone-900 uppercase">
+              Confirmar pedido
+            </span>
+            <button
+              onClick={() => setModalOpen(false)}
+              className="text-stone-400 hover:text-stone-900 transition-colors"
+              aria-label="Cerrar modal"
+            >
+              <X size={18} strokeWidth={1.5} aria-hidden="true" />
+            </button>
+          </div>
+
+          {/* Resumen de productos */}
+          <div className="px-8 py-6 flex flex-col gap-5 max-h-[50vh] overflow-y-auto">
+            {cartItems.map((item, i) => (
+              <div key={i} className="flex gap-4">
+                <div className="w-16 h-20 bg-stone-100 overflow-hidden flex-shrink-0">
+                  <img
+                    src={item.producto.imagen1}
+                    alt={item.producto.nombre}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <div className="flex flex-col justify-center gap-1 flex-grow">
+                  <p className="text-[11px] font-bold tracking-[0.12em] text-stone-900 uppercase">
+                    {item.producto.nombre}
+                  </p>
+                  <div className="flex flex-col gap-0.5">
+                    <p className="text-[10px] text-stone-500 tracking-[0.08em] uppercase">
+                      Talla: {item.talla}
+                      {item.producto.colorSeleccionado && ` · Color: ${item.producto.colorSeleccionado}`}
+                    </p>
+                    <p className="text-[10px] text-stone-500 tracking-[0.08em] uppercase">
+                      Cantidad: {item.cantidad}
+                    </p>
+                  </div>
+                  <p className="text-[12px] font-semibold text-stone-900 mt-1">
+                    {item.producto.precio}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Total */}
+          <div className="px-8 py-4 border-t border-stone-100 flex justify-between items-center">
+            <span className="text-[10px] font-bold tracking-[0.2em] text-stone-500 uppercase">
+              Total estimado
+            </span>
+            <span className="text-[15px] font-bold text-stone-900">
+              ${cartTotal.toLocaleString('es-CO')}
+            </span>
+          </div>
+
+          {/* Botones */}
+          <div className="px-8 py-6 border-t border-stone-100 grid grid-cols-2 gap-3">
+            <button
+              onClick={() => setModalOpen(false)}
+              style={{ fontFamily: 'var(--font-primary)' }}
+              className="h-12 border border-stone-200 text-[10px] font-bold tracking-[0.2em] uppercase text-stone-600 hover:border-stone-900 hover:text-stone-900 transition-colors"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={() => {
+                setModalOpen(false);
+                handleWhatsAppCheckout();
+              }}
+              style={{ fontFamily: 'var(--font-primary)' }}
+              className="h-12 bg-stone-900 text-white text-[10px] font-bold tracking-[0.2em] uppercase hover:bg-stone-800 transition-colors flex items-center justify-center gap-2"
+            >
+              Confirmar
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                <path d="M5 12h14M12 5l7 7-7 7"/>
+              </svg>
+            </button>
+          </div>
+        </div>
       </div>
     </>
   );
