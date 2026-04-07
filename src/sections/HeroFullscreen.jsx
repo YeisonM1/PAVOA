@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
 import { heroImage } from '../utils/imageUrl';
+import { useCarousel } from '../hooks/useCarousel';
 
 const slides = [
   {
@@ -32,27 +32,7 @@ const slides = [
 ];
 
 export default function HeroFullscreen() {
-  const [current, setCurrent] = useState(0);
-  const [animating, setAnimating] = useState(false);
-
-  const goTo = (idx) => {
-    if (animating || idx === current) return;
-    setAnimating(true);
-    setTimeout(() => {
-      setCurrent(idx);
-      setAnimating(false);
-    }, 800); // Transición más lenta para el efecto cinematográfico
-  };
-
-  const next = () => goTo((current + 1) % slides.length);
-  const prev = () => goTo((current - 1 + slides.length) % slides.length);
-
-  // Auto-avance cada 6s
-  useEffect(() => {
-    const t = setTimeout(next, 6000);
-    return () => clearTimeout(t);
-  }, [current]);
-
+  const { current, animating, next, prev } = useCarousel(slides.length, 6000, 800);
   const s = slides[current];
 
   return (
@@ -94,7 +74,7 @@ export default function HeroFullscreen() {
         >
           {/* Tag */}
           <p
-            style={{ fontFamily: 'var(--font-primary)', letterSpacing: '0.3em' }}
+            style={{ letterSpacing: '0.3em' }}
             className="text-[10px] font-semibold text-white/80 uppercase mb-4"
           >
             {s.tag}
@@ -102,8 +82,7 @@ export default function HeroFullscreen() {
 
           {/* Titular */}
           <h1
-            style={{ fontFamily: 'var(--font-primary)' }}
-            className="text-5xl sm:text-6xl md:text-7xl lg:text-[5.5rem] font-light text-white leading-[1.05] uppercase tracking-wide mb-6 drop-shadow-lg"
+                       className="text-5xl sm:text-6xl md:text-7xl lg:text-[5.5rem] font-light text-white leading-[1.05] uppercase tracking-wide mb-6 drop-shadow-lg"
           >
             {s.headline.map((line, i) => (
               <span key={i} className="block">
@@ -116,7 +95,7 @@ export default function HeroFullscreen() {
 
           {/* Subtexto */}
           <p
-            style={{ fontFamily: 'var(--font-primary)', letterSpacing: '0.15em' }}
+            style={{ letterSpacing: '0.15em' }}
             className="text-white/80 text-[10px] sm:text-[11px] font-medium uppercase leading-relaxed max-w-md mb-10 drop-shadow-md"
           >
             {s.sub}
@@ -125,7 +104,7 @@ export default function HeroFullscreen() {
           {/* Botón */}
           <a
             href={s.href}
-            style={{ fontFamily: 'var(--font-primary)', letterSpacing: '0.25em' }}
+            style={{ letterSpacing: '0.25em' }}
             className="inline-flex items-center text-[11px] font-bold text-white uppercase border-b border-white pb-2 hover:text-stone-300 hover:border-stone-300 transition-all duration-300 group"
           >
             {s.cta}
@@ -134,7 +113,7 @@ export default function HeroFullscreen() {
 
           {/* Línea de confianza (DEBE IR AQUÍ, FUERA) */}
           <p
-            style={{ fontFamily: 'var(--font-primary)', letterSpacing: '0.2em' }}
+            style={{ letterSpacing: '0.2em' }}
             className="text-white/40 text-[8px] sm:text-[9px] mt-5 tracking-[0.25em]"
           >
             Envíos a todo el país  -  Piezas limitadas
@@ -146,8 +125,7 @@ export default function HeroFullscreen() {
       <div className="absolute bottom-10 right-8 md:right-16 z-20 flex items-center gap-8">
         {/* Paginación */}
         <div
-          style={{ fontFamily: 'var(--font-primary)' }}
-          className="text-white/90 text-[11px] tracking-[0.3em] font-medium hidden sm:block"
+                   className="text-white/90 text-[11px] tracking-[0.3em] font-medium hidden sm:block"
         >
           {String(current + 1).padStart(2, '0')} — {String(slides.length).padStart(2, '0')}
         </div>

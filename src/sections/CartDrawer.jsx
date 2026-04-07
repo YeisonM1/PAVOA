@@ -2,7 +2,7 @@ import React, { useContext } from 'react';
 import { X, ShoppingBag } from 'lucide-react';
 import { CartContext } from '../App';
 
-const NUMERO_WHATSAPP = "573007056457"; // ✅ Número real de PAVOA
+const NUMERO_WHATSAPP = import.meta.env.VITE_WHATSAPP_NUMBER;
 
 export default function CartDrawer({ cartOpen, setCartOpen }) {
   const { cartItems, cartCount, cartTotal, removeFromCart, updateQuantity } = useContext(CartContext);
@@ -46,7 +46,7 @@ export default function CartDrawer({ cartOpen, setCartOpen }) {
         className={`fixed top-0 right-0 h-full w-full sm:w-[400px] z-[70] flex flex-col transition-transform duration-500 ease-[cubic-bezier(0.25,1,0.5,1)] ${
           cartOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
-        style={{ background: 'var(--color-bg)', fontFamily: 'var(--font-primary)' }}
+        style={{ background: 'var(--color-bg)' }}
       >
         <div className="flex items-center justify-between px-8 py-6 border-b border-stone-200/50">
           <span className="text-[11px] font-bold tracking-[0.2em] text-stone-900 uppercase">
@@ -69,8 +69,8 @@ export default function CartDrawer({ cartOpen, setCartOpen }) {
             </div>
           ) : (
             <div className="flex flex-col gap-8">
-              {cartItems.map((item, index) => (
-                <div key={index} className="flex gap-5 group">
+              {cartItems.map((item) => (
+                <div key={`${item.producto.id}-${item.talla}`} className="flex gap-5 group">
                   <div className="w-24 h-[126px] bg-stone-100 overflow-hidden relative flex-shrink-0">
                     <img
                       src={item.producto.imagen1}
@@ -170,8 +170,7 @@ export default function CartDrawer({ cartOpen, setCartOpen }) {
           className={`relative w-full max-w-md bg-white z-10 transition-all duration-300 ${
             modalOpen ? 'translate-y-0 scale-100' : 'translate-y-4 scale-95'
           }`}
-          style={{ fontFamily: 'var(--font-primary)' }}
-        >
+                 >
           {/* Header */}
           <div className="flex items-center justify-between px-8 py-6 border-b border-stone-100">
             <span className="text-[11px] font-bold tracking-[0.2em] text-stone-900 uppercase">
@@ -188,8 +187,8 @@ export default function CartDrawer({ cartOpen, setCartOpen }) {
 
           {/* Resumen de productos */}
           <div className="px-8 py-6 flex flex-col gap-5 max-h-[50vh] overflow-y-auto">
-            {cartItems.map((item, i) => (
-              <div key={i} className="flex gap-4">
+            {cartItems.map((item) => (
+              <div key={`modal-${item.producto.id}-${item.talla}`} className="flex gap-4">
                 <div className="w-16 h-20 bg-stone-100 overflow-hidden flex-shrink-0">
                   <img
                     src={item.producto.imagen1}
@@ -232,8 +231,7 @@ export default function CartDrawer({ cartOpen, setCartOpen }) {
           <div className="px-8 py-6 border-t border-stone-100 grid grid-cols-2 gap-3">
             <button
               onClick={() => setModalOpen(false)}
-              style={{ fontFamily: 'var(--font-primary)' }}
-              className="h-12 border border-stone-200 text-[10px] font-bold tracking-[0.2em] uppercase text-stone-600 hover:border-stone-900 hover:text-stone-900 transition-colors"
+                           className="h-12 border border-stone-200 text-[10px] font-bold tracking-[0.2em] uppercase text-stone-600 hover:border-stone-900 hover:text-stone-900 transition-colors"
             >
               Cancelar
             </button>
@@ -242,8 +240,7 @@ export default function CartDrawer({ cartOpen, setCartOpen }) {
                 setModalOpen(false);
                 handleWhatsAppCheckout();
               }}
-              style={{ fontFamily: 'var(--font-primary)' }}
-              className="h-12 bg-stone-900 text-white text-[10px] font-bold tracking-[0.2em] uppercase hover:bg-stone-800 transition-colors flex items-center justify-center gap-2"
+                           className="h-12 bg-stone-900 text-white text-[10px] font-bold tracking-[0.2em] uppercase hover:bg-stone-800 transition-colors flex items-center justify-center gap-2"
             >
               Confirmar
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">

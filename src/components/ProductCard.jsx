@@ -24,8 +24,7 @@ export default function ProductCard({ producto }) {
 
         {producto.tag && (
           <span
-            style={{ fontFamily: 'var(--font-primary)' }}
-            className="absolute top-4 left-4 z-30 text-[8px] font-bold text-white bg-stone-900 px-3 py-1.5 uppercase tracking-[0.15em]"
+                       className="absolute top-4 left-4 z-30 text-[8px] font-bold text-white bg-stone-900 px-3 py-1.5 uppercase tracking-[0.15em]"
           >
             {producto.tag}
           </span>
@@ -77,7 +76,7 @@ export default function ProductCard({ producto }) {
             <div className="bg-white/80 backdrop-blur-md pt-5 pb-6 px-4 border-t border-white/40 flex flex-col items-center gap-4 shadow-[0_-10px_30px_rgba(0,0,0,0.05)]">
               {esTallaUnica ? (
                 <>
-                  <span style={{ fontFamily: 'var(--font-primary)' }} className="text-[9px] font-bold tracking-[0.25em] text-stone-400 uppercase">
+                  <span  className="text-[9px] font-bold tracking-[0.25em] text-stone-400 uppercase">
                     Talla disponible
                   </span>
                   <div className="px-6 h-10 flex items-center justify-center text-[11px] font-medium text-stone-400 border border-stone-200 bg-stone-50 cursor-default select-none tracking-[0.1em]">
@@ -86,21 +85,20 @@ export default function ProductCard({ producto }) {
                 </>
               ) : (
                 <>
-                  <span style={{ fontFamily: 'var(--font-primary)' }} className="text-[9px] font-bold tracking-[0.25em] text-stone-800 uppercase">
+                  <span  className="text-[9px] font-bold tracking-[0.25em] text-stone-800 uppercase">
                     Seleccionar Talla
                   </span>
                   <div className="flex gap-2 w-full justify-center">
                     {tallas.map(talla => (
                       <span
                         key={talla}
-                        style={{ fontFamily: 'var(--font-primary)' }}
-                        className="w-10 h-10 flex items-center justify-center text-[11px] font-medium text-stone-700 border border-stone-300/60 bg-white/60 hover:bg-stone-900 hover:text-white hover:border-stone-900 transition-all duration-300 cursor-pointer"
+                                               className="w-10 h-10 flex items-center justify-center text-[11px] font-medium text-stone-700 border border-stone-300/60 bg-white/60 hover:bg-stone-900 hover:text-white hover:border-stone-900 transition-all duration-300 cursor-pointer"
                       >
                         {talla}
                       </span>
                     ))}
                   </div>
-                  <span style={{ fontFamily: 'var(--font-primary)' }} className="text-[8px] tracking-[0.2em] text-stone-400 uppercase">
+                  <span  className="text-[8px] tracking-[0.2em] text-stone-400 uppercase">
                     Ver producto →
                   </span>
                 </>
@@ -112,11 +110,11 @@ export default function ProductCard({ producto }) {
 
       {/* Info */}
       <div className="flex flex-col items-center text-center">
-        <h3 style={{ fontFamily: 'var(--font-primary)' }} className="text-[11px] font-bold text-stone-900 tracking-[0.15em] uppercase">
+        <h3  className="text-[11px] font-bold text-stone-900 tracking-[0.15em] uppercase">
           {producto.nombre}
         </h3>
         <div className="h-[24px] overflow-hidden mt-1.5">
-          <p style={{ fontFamily: 'var(--font-primary)' }} className="text-[13px] font-semibold text-stone-500 transform translate-y-0 opacity-100 md:translate-y-full md:opacity-0 md:group-hover:translate-y-0 md:group-hover:opacity-100 transition-all duration-500 ease-out">
+          <p  className="text-[13px] font-semibold text-stone-500 transform translate-y-0 opacity-100 md:translate-y-full md:opacity-0 md:group-hover:translate-y-0 md:group-hover:opacity-100 transition-all duration-500 ease-out">
             {producto.precio}
           </p>
         </div>

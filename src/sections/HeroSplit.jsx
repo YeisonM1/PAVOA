@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useCarousel } from '../hooks/useCarousel';
 
 const slides = [
   {
@@ -31,27 +31,7 @@ const slides = [
 ];
 
 export default function HeroSplit() {
-  const [current, setCurrent] = useState(0);
-  const [animating, setAnimating] = useState(false);
-
-  const goTo = (idx) => {
-    if (animating || idx === current) return;
-    setAnimating(true);
-    setTimeout(() => {
-      setCurrent(idx);
-      setAnimating(false);
-    }, 600); // Ligeramente más lento para una transición más lujosa
-  };
-
-  const next = () => goTo((current + 1) % slides.length);
-  const prev = () => goTo((current - 1 + slides.length) % slides.length);
-
-  // Auto-avance cada 6s
-  useEffect(() => {
-    const t = setTimeout(next, 6000);
-    return () => clearTimeout(t);
-  }, [current]);
-
+  const { current, animating, next, prev } = useCarousel(slides.length, 6000, 600);
   const s = slides[current];
 
   return (
@@ -73,8 +53,7 @@ export default function HeroSplit() {
 
         {/* Indicador de Pagina (Minimalista) */}
         <div
-          style={{ fontFamily: 'var(--font-primary)' }}
-          className="absolute bottom-8 left-8 text-white/90 text-[10px] tracking-[0.3em] font-medium"
+                   className="absolute bottom-8 left-8 text-white/90 text-[10px] tracking-[0.3em] font-medium"
         >
           {String(current + 1).padStart(2, '0')} — {String(slides.length).padStart(2, '0')}
         </div>
@@ -94,7 +73,7 @@ export default function HeroSplit() {
         >
           {/* Etiqueta Superior */}
           <p
-            style={{ fontFamily: 'var(--font-primary)', letterSpacing: '0.3em' }}
+            style={{ letterSpacing: '0.3em' }}
             className="text-[9px] font-semibold text-stone-500 uppercase mb-8"
           >
             {s.tag}
@@ -102,8 +81,7 @@ export default function HeroSplit() {
 
           {/* Titular en MAYÚSCULAS */}
           <h1
-            style={{ fontFamily: 'var(--font-primary)' }}
-            className="text-4xl sm:text-5xl lg:text-[3.25rem] xl:text-6xl font-light text-stone-900 leading-[1.05] uppercase tracking-wide mb-8"
+                       className="text-4xl sm:text-5xl lg:text-[3.25rem] xl:text-6xl font-light text-stone-900 leading-[1.05] uppercase tracking-wide mb-8"
           >
             {s.headline.map((line, i) => (
               <span key={i} className="block">
@@ -116,7 +94,7 @@ export default function HeroSplit() {
 
           {/* Subtexto en MAYÚSCULAS (pero más pequeño) */}
           <p
-            style={{ fontFamily: 'var(--font-primary)', letterSpacing: '0.1em' }}
+            style={{ letterSpacing: '0.1em' }}
             className="text-stone-600 text-[9px] sm:text-[10px] font-medium uppercase leading-relaxed max-w-[280px] mb-12 opacity-80"
           >
             {s.sub}
@@ -126,7 +104,7 @@ export default function HeroSplit() {
           <div>
             <a
               href={s.href}
-              style={{ fontFamily: 'var(--font-primary)', letterSpacing: '0.25em' }}
+              style={{ letterSpacing: '0.25em' }}
               className="inline-flex items-center text-[10px] font-bold text-stone-900 uppercase border-b border-stone-900 pb-1.5 hover:text-stone-500 hover:border-stone-500 transition-all duration-300 group"
             >
               {s.cta}

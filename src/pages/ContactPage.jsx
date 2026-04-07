@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import SEO from '../components/SEO';
 import { enviarContacto } from '../services/productService';
+import { WhatsAppIcon, MailIcon, ClockIcon } from '../components/Icons';
 
 const ASUNTOS = [
   'Selecciona un asunto',
@@ -11,26 +12,6 @@ const ASUNTOS = [
   'Disponibilidad de producto',
   'Otro',
 ];
-
-const WhatsAppIcon = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-    <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>
-  </svg>
-);
-
-const MailIcon = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
-    <polyline points="22,6 12,13 2,6"/>
-  </svg>
-);
-
-const ClockIcon = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-    <circle cx="12" cy="12" r="10"/>
-    <polyline points="12,6 12,12 16,14"/>
-  </svg>
-);
 
 export default function ContactPage() {
   const [form, setForm] = useState({
@@ -89,7 +70,7 @@ export default function ContactPage() {
   const labelBase   = `text-[9px] font-bold tracking-[0.25em] uppercase text-stone-500 block mb-2`;
 
   return (
-    <div className="min-h-screen bg-white" style={{ fontFamily: 'var(--font-primary)' }}>
+    <div className="min-h-screen bg-white" >
       <SEO
         title="Contacto"
         description="¿Tienes preguntas sobre tallas, pedidos o colecciones? Escríbenos y te respondemos pronto."
@@ -208,8 +189,7 @@ export default function ContactPage() {
                     value={form.nombre} onChange={handleChange}
                     placeholder="Tu nombre completo"
                     className={`${inputBase} ${errores.nombre ? inputError : inputNormal}`}
-                    style={{ fontFamily: 'var(--font-primary)' }}
-                  />
+                                     />
                   {errores.nombre && <p className="text-[10px] text-red-400 mt-1 tracking-[0.05em]">{errores.nombre}</p>}
                 </div>
 
@@ -221,8 +201,7 @@ export default function ContactPage() {
                     value={form.contacto} onChange={handleChange}
                     placeholder="hola@correo.com o +57 300 000 0000"
                     className={`${inputBase} ${errores.contacto ? inputError : inputNormal}`}
-                    style={{ fontFamily: 'var(--font-primary)' }}
-                  />
+                                     />
                   {errores.contacto && <p className="text-[10px] text-red-400 mt-1 tracking-[0.05em]">{errores.contacto}</p>}
                 </div>
 
@@ -236,7 +215,7 @@ export default function ContactPage() {
                       ${errores.asunto ? 'border-red-300' : 'border-stone-200 hover:border-stone-900'}
                       ${form.asunto === 'Selecciona un asunto' ? 'text-stone-400' : 'text-stone-900'}
                     `}
-                    style={{ fontFamily: 'var(--font-primary)', background: 'none' }}
+                    style={{ background: 'none' }}
                     aria-haspopup="listbox"
                     aria-expanded={asuntoOpen}
                   >
@@ -268,8 +247,7 @@ export default function ContactPage() {
                           setErrores(prev => ({ ...prev, asunto: null }));
                           setAsuntoOpen(false);
                         }}
-                        style={{ fontFamily: 'var(--font-primary)' }}
-                        className={`w-full text-left px-5 py-4 text-[11px] tracking-[0.1em] transition-colors duration-150
+                                               className={`w-full text-left px-5 py-4 text-[11px] tracking-[0.1em] transition-colors duration-150
                           ${form.asunto === a ? 'bg-stone-900 text-white' : 'text-stone-700 hover:bg-stone-50'}
                         `}
                       >
@@ -288,8 +266,7 @@ export default function ContactPage() {
                     value={form.mensaje} onChange={handleChange}
                     placeholder="Cuéntanos en qué podemos ayudarte..."
                     className={`${inputBase} ${errores.mensaje ? inputError : inputNormal} resize-none`}
-                    style={{ fontFamily: 'var(--font-primary)' }}
-                  />
+                                     />
                   {errores.mensaje && <p className="text-[10px] text-red-400 mt-1 tracking-[0.05em]">{errores.mensaje}</p>}
                 </div>
 

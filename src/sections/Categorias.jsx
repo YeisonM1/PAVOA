@@ -80,8 +80,7 @@ const CategoriaCard = ({ cat, className, delay = 0 }) => {
 
       <div className="absolute bottom-0 left-0 p-6 md:p-8 flex flex-col justify-end w-full z-20">
         <p
-          style={{ fontFamily: 'var(--font-primary)' }}
-          className={`text-[9px] font-medium text-white/80 uppercase tracking-[0.25em] mb-1 
+                   className={`text-[9px] font-medium text-white/80 uppercase tracking-[0.25em] mb-1 
             ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}
             md:transform md:translate-y-2 md:opacity-0 md:group-hover:translate-y-0 md:group-hover:opacity-100 
             transition-all duration-700 delay-300 md:delay-0
@@ -92,8 +91,7 @@ const CategoriaCard = ({ cat, className, delay = 0 }) => {
         
         <div className="flex items-end justify-between">
           <h3
-            style={{ fontFamily: 'var(--font-primary)' }}
-            className={`text-lg md:text-xl font-medium text-white uppercase tracking-[0.15em]
+                       className={`text-lg md:text-xl font-medium text-white uppercase tracking-[0.15em]
               ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}
               md:!opacity-100 md:!translate-y-0
               transition-all duration-700 delay-[400ms] md:delay-0
@@ -123,12 +121,11 @@ export default function Categorias() {
       
       <div className="max-w-[1400px] mx-auto mb-10 md:mb-12 flex items-end justify-between border-b border-stone-200 pb-6">
         <div className="flex flex-col gap-1">
-          <span style={{ fontFamily: 'var(--font-primary)' }} className="text-[9px] text-stone-500 tracking-[0.3em] uppercase font-medium">
+          <span  className="text-[9px] text-stone-500 tracking-[0.3em] uppercase font-medium">
             Descubre tu estilo
           </span>
           <h2
-            style={{ fontFamily: 'var(--font-primary)' }}
-            className="text-lg md:text-xl font-light text-stone-900 tracking-[0.2em] uppercase"
+                       className="text-lg md:text-xl font-light text-stone-900 tracking-[0.2em] uppercase"
           >
             DISEÑADO <strong className="font-bold">PARA TI</strong>
           </h2>
@@ -137,7 +134,7 @@ export default function Categorias() {
         <Link
           to="/categoria"
           onClick={() => window.scrollTo(0, 0)}
-          style={{ fontFamily: 'var(--font-primary)', letterSpacing: '0.15em' }}
+          style={{ letterSpacing: '0.15em' }}
           className="text-[10px] font-bold text-stone-500 hover:text-stone-900 transition-colors uppercase flex items-center gap-2 group"
         >
           Explorar
