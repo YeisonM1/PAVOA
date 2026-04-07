@@ -7,6 +7,7 @@ import Footer from './sections/Footer';
 const HomePage     = lazy(() => import('./pages/HomePage'));
 const CategoriaPage = lazy(() => import('./pages/CategoriaPage'));
 const ProductPage  = lazy(() => import('./pages/ProductPage'));
+const ContactPage = lazy(() => import('./pages/ContactPage'));
 
 export const CartContext = createContext();
 
@@ -91,6 +92,7 @@ function App() {
                 <Route path="/categoria"     element={<CategoriaPage />} />
                 <Route path="/categoria/:id" element={<CategoriaPage />} />
                 <Route path="/producto/:id"  element={<ProductPage />} />
+                <Route path="/contacto" element={<ContactPage />} />
               </Routes>
             </Suspense>
           </div>

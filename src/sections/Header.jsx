@@ -225,11 +225,16 @@ const Header = () => {
                 </button>
               </div>
 
-              <a href="#contacto" className="transition-opacity hover:opacity-70 relative group" style={{ color: '#3E2723' }}>
-                CONTACTO
-                <span className="absolute -bottom-1 left-0 w-0 h-[1px] transition-all duration-300 group-hover:w-full"
-                  style={{ background: 'var(--color-gold)' }} />
-              </a>
+              <Link
+                  to="/contacto"
+                  onClick={() => window.scrollTo(0, 0)}
+                  className="transition-opacity hover:opacity-70 relative group"
+                  style={{ color: '#3E2723' }}
+                >
+                  CONTACTO
+                  <span className="absolute -bottom-1 left-0 w-0 h-[1px] transition-all duration-300 group-hover:w-full"
+                    style={{ background: 'var(--color-gold)' }} />
+              </Link>
             </nav>
           </div>
 
@@ -443,9 +448,13 @@ const Header = () => {
               CATÁLOGO
               <span style={{ fontSize: 16, color: 'var(--color-gold)', fontWeight: 300 }}>→</span>
             </button>
-            <a href="#contacto" onClick={() => { setMenuOpen(false); window.scrollTo(0, 0); }} className="hover:text-stone-900 transition-colors border-b border-stone-100 py-5">
-              CONTACTO
-            </a>
+            <Link
+                to="/contacto"
+                onClick={() => { setMenuOpen(false); window.scrollTo(0, 0); }}
+                className="hover:text-stone-900 transition-colors border-b border-stone-100 py-5"
+              >
+                CONTACTO
+            </Link>
           </nav>
           <div className="flex items-center gap-5 mt-10" style={{ color: 'var(--color-charcoal)' }}>
             <a href="#" style={{ color: 'var(--color-charcoal)' }}><InstagramIcon /></a>

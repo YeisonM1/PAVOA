@@ -45,3 +45,17 @@ export const getCategoriaById = async (id) => {
     return null;
   }
 };
+
+// Guarda un mensaje de contacto en Supabase
+export const enviarContacto = async ({ nombre, contacto, asunto, mensaje }) => {
+  try {
+    const { error } = await supabase
+      .from('contactos')
+      .insert([{ nombre, contacto, asunto, mensaje }]);
+    if (error) throw error;
+    return true;
+  } catch (err) {
+    console.error('❌ Error al enviar contacto:', err);
+    return false;
+  }
+};
