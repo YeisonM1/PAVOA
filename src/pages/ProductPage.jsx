@@ -5,6 +5,7 @@ import { CartContext } from '../App';
 import CrossSelling from '../sections/CrossSelling';
 import { getProductoById } from '../services/productService';
 import SEO from '../components/SEO';
+import { productImage, thumbImage } from '../utils/imageUrl';
 
 export default function ProductPage() {
   const { id } = useParams();
