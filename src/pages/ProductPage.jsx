@@ -14,6 +14,7 @@ export default function ProductPage() {
   const [producto, setProducto]                   = useState(null);
   const [loading, setLoading]                     = useState(true);
   const [imagenActiva, setImagenActiva]           = useState(null);
+  const [fadeKey, setFadeKey]                     = useState(0); // ✅ para fade
   const [tallaSeleccionada, setTallaSeleccionada] = useState(null);
   const [colorSeleccionado, setColorSeleccionado] = useState(null);
   const [cantidad, setCantidad]                   = useState(1);
@@ -43,7 +44,6 @@ export default function ProductPage() {
     } catch { return []; }
   }, [producto?.variantes]);
 
-  // Colores únicos (sin duplicados)
   const coloresUnicos = useMemo(() => {
     const vistos = new Set();
     return variantes.filter(v => {
@@ -53,15 +53,11 @@ export default function ProductPage() {
     });
   }, [variantes]);
 
-  // Tallas disponibles según el color seleccionado
   const tallasDisponibles = useMemo(() => {
     if (!colorSeleccionado) return [];
-    return variantes
-      .filter(v => v.color === colorSeleccionado)
-      .map(v => v.talla);
+    return variantes.filter(v => v.color === colorSeleccionado).map(v => v.talla);
   }, [variantes, colorSeleccionado]);
 
-  // Stock de la combinación actual
   const stockActual = useMemo(() => {
     if (!colorSeleccionado || !tallaSeleccionada) return null;
     const v = variantes.find(v => v.color === colorSeleccionado && v.talla === tallaSeleccionada);
@@ -72,9 +68,16 @@ export default function ProductPage() {
   const tieneVariantes = variantes.length > 0;
   // ──────────────────────────────────────────────────────────
 
+  // ✅ Cambio de imagen con fade
+  const handleImageChange = (img) => {
+    if (img === imagenActiva) return;
+    setImagenActiva(img);
+    setFadeKey(k => k + 1);
+  };
+
   const handleColorSelect = (color) => {
     setColorSeleccionado(colorSeleccionado === color ? null : color);
-    setTallaSeleccionada(null); // resetear talla al cambiar color
+    setTallaSeleccionada(null);
   };
 
   const handleAddToCart = () => {
@@ -88,7 +91,6 @@ export default function ProductPage() {
       if (el) { el.classList.add('animate-pulse'); setTimeout(() => el.classList.remove('animate-pulse'), 800); }
       return;
     }
-
     setAdding(true);
     const tallaFinal = esTallaUnica ? 'ÚNICA' : tallaSeleccionada;
     addToCart({ ...producto, colorSeleccionado }, tallaFinal, cantidad);
@@ -121,6 +123,7 @@ export default function ProductPage() {
     );
   }
 
+  const imagenes = [producto.imagen1, producto.imagen2].filter(Boolean);
   const detallesArray = producto.detalles
     ? producto.detalles.split(',')
     : ['Diseño exclusivo PAVOA', 'Material de alta compresión'];
@@ -134,38 +137,74 @@ export default function ProductPage() {
         url={`/producto/${id}`}
       />
 
-      <div className="flex flex-col lg:flex-row max-w-[1600px] mx-auto pt-[72px] md:pt-[88px]">
+      {/* ✅ pt mayor para separar del header */}
+      <div className="flex flex-col lg:flex-row max-w-[1600px] mx-auto pt-[100px] md:pt-[120px]">
 
         {/* ── GALERÍA ── */}
-        <div className="w-full lg:w-3/5 flex flex-col gap-4 lg:p-4">
-          <div className="w-full bg-stone-100 overflow-hidden relative">
+        <div className="w-full lg:w-3/5 flex flex-row gap-3 lg:p-4">
+
+          {/* ✅ Thumbnails verticales a la izquierda — solo desktop */}
+          {imagenes.length > 1 && (
+            <div className="hidden lg:flex flex-col gap-3 w-[72px] flex-shrink-0">
+              {imagenes.map((img, i) => (
+                <button
+                  key={i}
+                  onClick={() => handleImageChange(img)}
+                  className={`w-full overflow-hidden border transition-all duration-300 ${
+                    imagenActiva === img
+                      ? 'border-stone-900 opacity-100'
+                      : 'border-transparent opacity-40 hover:opacity-80'
+                  }`}
+                  style={{ aspectRatio: '3/4' }}
+                >
+                  <img
+                    src={thumbImage(img)}
+                    alt={`${producto.nombre} vista ${i + 1}`}
+                    width={72} height={96}
+                    className="w-full h-full object-cover"
+                    loading="lazy"
+                  />
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* ✅ Imagen principal con fade */}
+          <div className="flex-1 bg-stone-100 overflow-hidden relative" style={{ aspectRatio: '2/3', maxHeight: '70vh' }}>
             <img
-              key={imagenActiva}
+              key={fadeKey}
               src={productImage(imagenActiva)}
               alt={producto.nombre}
               width={900} height={1200}
-              className="w-full h-auto object-cover animate-fade-in"
-              style={{ maxHeight: '75vh' }}
+              className="w-full h-full object-cover"
+              style={{ animation: 'fadeIn 0.4s ease' }}
             />
+            <style>{`@keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }`}</style>
           </div>
-          <div className="flex gap-4 overflow-x-auto pb-2">
-            {[producto.imagen1, producto.imagen2].filter(Boolean).map((img, index) => (
-              <button
-                key={index}
-                onClick={() => setImagenActiva(img)}
-                className={`w-20 h-24 flex-shrink-0 overflow-hidden border transition-all duration-300 ${
-                  imagenActiva === img ? 'border-stone-900 opacity-100' : 'border-transparent opacity-50 hover:opacity-100'
-                }`}
-              >
-                <img src={thumbImage(img)} alt={`${producto.nombre} vista ${index + 1}`}
-                  width={80} height={96} className="w-full h-full object-cover" loading="lazy" />
-              </button>
-            ))}
-          </div>
+
+          {/* ✅ Thumbnails horizontales móvil — solo mobile */}
+          {imagenes.length > 1 && (
+            <div className="lg:hidden flex gap-3 overflow-x-auto pb-2 mt-3 w-full">
+              {imagenes.map((img, i) => (
+                <button
+                  key={i}
+                  onClick={() => handleImageChange(img)}
+                  className={`w-16 h-20 flex-shrink-0 overflow-hidden border transition-all duration-300 ${
+                    imagenActiva === img
+                      ? 'border-stone-900 opacity-100'
+                      : 'border-transparent opacity-40 hover:opacity-80'
+                  }`}
+                >
+                  <img src={thumbImage(img)} alt={`${producto.nombre} vista ${i + 1}`}
+                    width={64} height={80} className="w-full h-full object-cover" loading="lazy" />
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* ── INFO ── */}
-        <div className="w-full lg:w-2/5 px-6 py-12 lg:px-16 lg:py-24 relative">
+        <div className="w-full lg:w-2/5 px-6 py-12 lg:px-16 lg:py-16 relative">
           <div className="lg:sticky lg:top-[120px]">
 
             {/* Breadcrumb */}
@@ -205,8 +244,7 @@ export default function ProductPage() {
                   className="w-11 h-11 flex items-center justify-center text-stone-600 hover:text-stone-900 hover:bg-stone-50 disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
                   <Minus size={13} strokeWidth={2} />
                 </button>
-                <span className="w-12 h-11 flex items-center justify-center text-[13px] font-medium text-stone-900 border-x border-stone-200 select-none"
-                  aria-live="polite">
+                <span className="w-12 h-11 flex items-center justify-center text-[13px] font-medium text-stone-900 border-x border-stone-200 select-none" aria-live="polite">
                   {cantidad}
                 </span>
                 <button onClick={incrementar} aria-label="Aumentar cantidad"
@@ -229,24 +267,13 @@ export default function ProductPage() {
                   {coloresUnicos.map(v => {
                     const activo = colorSeleccionado === v.color;
                     return (
-                      <button
-                        key={v.color}
-                        onClick={() => handleColorSelect(v.color)}
-                        title={v.color}
+                      <button key={v.color} onClick={() => handleColorSelect(v.color)} title={v.color}
                         className="flex flex-col items-center gap-1.5 group"
-                        aria-label={`Color ${v.color}${activo ? ', seleccionado' : ''}`}
-                      >
-                        <div
-                          className={`w-7 h-7 rounded-full border transition-all duration-200 group-hover:scale-110
-                            ${activo
-                              ? 'ring-2 ring-offset-2 ring-stone-900 border-stone-300 scale-110'
-                              : 'border-stone-200 shadow-sm'
-                            }`}
-                          style={{ backgroundColor: v.hex }}
-                        />
-                        <span className={`text-[8px] tracking-[0.1em] uppercase transition-colors ${
-                          activo ? 'text-stone-900 font-bold' : 'text-stone-400'
-                        }`}>
+                        aria-label={`Color ${v.color}${activo ? ', seleccionado' : ''}`}>
+                        <div className={`w-7 h-7 rounded-full border transition-all duration-200 group-hover:scale-110
+                          ${activo ? 'ring-2 ring-offset-2 ring-stone-900 border-stone-300 scale-110' : 'border-stone-200 shadow-sm'}`}
+                          style={{ backgroundColor: v.hex }} />
+                        <span className={`text-[8px] tracking-[0.1em] uppercase transition-colors ${activo ? 'text-stone-900 font-bold' : 'text-stone-400'}`}>
                           {v.color}
                         </span>
                       </button>
@@ -256,7 +283,7 @@ export default function ProductPage() {
               </div>
             )}
 
-            {/* ── SELECTOR DE TALLAS (solo aparece si hay color seleccionado) ── */}
+            {/* ── SELECTOR DE TALLAS ── */}
             {colorSeleccionado && (
               <div id="talla-selector" className="mb-10">
                 <div className="flex justify-between items-end mb-4">
@@ -281,17 +308,12 @@ export default function ProductPage() {
                     {tallasDisponibles.map(talla => (
                       <button key={talla} onClick={() => setTallaSeleccionada(talla)}
                         className={`h-12 border flex items-center justify-center text-[11px] font-medium tracking-[0.05em] transition-colors uppercase
-                          ${tallaSeleccionada === talla
-                            ? 'border-stone-900 bg-stone-900 text-white'
-                            : 'border-stone-200 text-stone-600 hover:border-stone-900'
-                          }`}>
+                          ${tallaSeleccionada === talla ? 'border-stone-900 bg-stone-900 text-white' : 'border-stone-200 text-stone-600 hover:border-stone-900'}`}>
                         {talla}
                       </button>
                     ))}
                   </div>
                 )}
-
-                {/* Stock bajo */}
                 {stockActual !== null && stockActual <= 3 && stockActual > 0 && (
                   <p className="text-[9px] tracking-[0.15em] text-amber-700 uppercase mt-3">
                     Solo {stockActual} {stockActual === 1 ? 'unidad disponible' : 'unidades disponibles'}
@@ -301,11 +323,9 @@ export default function ProductPage() {
             )}
 
             {/* ── BOTÓN AÑADIR ── */}
-            <button
-              onClick={handleAddToCart}
+            <button onClick={handleAddToCart}
               className={`w-full h-14 text-[10px] font-bold tracking-[0.25em] uppercase transition-all duration-300 flex items-center justify-center gap-3
-                ${adding ? 'bg-stone-800 text-white scale-[0.98]' : 'bg-stone-900 text-white hover:bg-stone-800'}`}
-            >
+                ${adding ? 'bg-stone-800 text-white scale-[0.98]' : 'bg-stone-900 text-white hover:bg-stone-800'}`}>
               {adding ? 'Agregado ✔' : 'Añadir a la bolsa'}
             </button>
 
