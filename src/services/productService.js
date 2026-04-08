@@ -1,35 +1,112 @@
 import { supabase } from '../config/supabase';
 
-// Trae TODOS los productos (Para el Home y Categorías)
+// ── Configuración Shopify ──────────────────────────────
+const SHOPIFY_DOMAIN   = import.meta.env.VITE_SHOPIFY_DOMAIN;
+const SHOPIFY_TOKEN    = import.meta.env.VITE_SHOPIFY_TOKEN;
+const SHOPIFY_ENDPOINT = `https://${SHOPIFY_DOMAIN}/api/2026-04/graphql.json`;
+
+const shopifyFetch = async (query, variables = {}) => {
+  const res = await fetch(SHOPIFY_ENDPOINT, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Shopify-Storefront-Access-Token': SHOPIFY_TOKEN,
+    },
+    body: JSON.stringify({ query, variables }),
+  });
+  const { data, errors } = await res.json();
+  if (errors) throw new Error(errors[0].message);
+  return data;
+};
+
+// ── Convierte producto Shopify → estructura PAVOA ──────
+const mapProducto = (node) => {
+  const variantes = node.variants.edges.map(({ node: v }) => ({
+    color:  v.selectedOptions.find(o => o.name === 'Color')?.value || '',
+    hex:    v.selectedOptions.find(o => o.name === 'Hex')?.value   || '#888',
+    talla:  v.selectedOptions.find(o => o.name === 'Talla')?.value || 'ÚNICA',
+    stock:  v.quantityAvailable ?? 0,
+    variantId: v.id,
+  }));
+
+  return {
+    id:          node.handle,
+    shopifyId:   node.id,
+    nombre:      node.title,
+    descripcion: node.description,
+    precio:      `$${Number(node.priceRange.minVariantPrice.amount).toLocaleString('es-CO')}`,
+    imagen1:     node.images.edges[0]?.node.url || '',
+    imagen2:     node.images.edges[1]?.node.url || '',
+    categoria:   node.productType?.toLowerCase() || '',
+    tag:         node.tags[0] || '',
+    detalles:    node.metafield?.value || '',
+    variantes,
+  };
+};
+// ──────────────────────────────────────────────────────
+
+// ── Trae TODOS los productos ───────────────────────────
 export const getProductos = async () => {
   try {
-    const { data, error } = await supabase.from('productos').select('*');
-    if (error) throw error;
-    return data || [];
+    const data = await shopifyFetch(`
+      query {
+        products(first: 100) {
+          edges {
+            node {
+              id handle title description productType tags
+              priceRange { minVariantPrice { amount } }
+              images(first: 2) { edges { node { url } } }
+              metafield(namespace: "pavoa", key: "detalles") { value }
+              variants(first: 20) {
+                edges {
+                  node {
+                    id quantityAvailable
+                    selectedOptions { name value }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    `);
+    return data.products.edges.map(({ node }) => mapProducto(node));
   } catch (err) {
-    console.error('❌ Error de conexión:', err);
+    console.error('❌ Error getProductos:', err);
     return [];
   }
 };
 
-// Trae UN SOLO producto por su ID (Para la página 1 a 1)
-export const getProductoById = async (id) => {
+// ── Trae UN producto por handle (slug) ─────────────────
+export const getProductoById = async (handle) => {
   try {
-    const { data, error } = await supabase
-      .from('productos')
-      .select('*')
-      .eq('id', id)
-      .single(); // Le decimos que solo queremos un resultado
-
-    if (error) throw error;
-    return data;
+    const data = await shopifyFetch(`
+      query($handle: String!) {
+        product(handle: $handle) {
+          id handle title description productType tags
+          priceRange { minVariantPrice { amount } }
+          images(first: 2) { edges { node { url } } }
+          metafield(namespace: "pavoa", key: "detalles") { value }
+          variants(first: 20) {
+            edges {
+              node {
+                id quantityAvailable
+                selectedOptions { name value }
+              }
+            }
+          }
+        }
+      }
+    `, { handle });
+    if (!data.product) return null;
+    return mapProducto(data.product);
   } catch (err) {
-    console.error(`❌ Error al obtener el producto con id ${id}:`, err);
+    console.error(`❌ Error getProductoById ${handle}:`, err);
     return null;
   }
 };
 
-// Trae la información del banner de una categoría específica
+// ── Trae info del banner de categoría (sigue en Supabase)
 export const getCategoriaById = async (id) => {
   try {
     const { data, error } = await supabase
@@ -37,16 +114,15 @@ export const getCategoriaById = async (id) => {
       .select('*')
       .eq('id', id)
       .single();
-
     if (error) throw error;
     return data;
   } catch (err) {
-    console.error(`❌ Error al obtener categoría ${id}:`, err);
+    console.error(`❌ Error getCategoriaById ${id}:`, err);
     return null;
   }
 };
 
-// Guarda un mensaje de contacto en Supabase
+// ── Contacto sigue en Supabase ─────────────────────────
 export const enviarContacto = async ({ nombre, contacto, asunto, mensaje }) => {
   try {
     const { error } = await supabase
@@ -55,7 +131,7 @@ export const enviarContacto = async ({ nombre, contacto, asunto, mensaje }) => {
     if (error) throw error;
     return true;
   } catch (err) {
-    console.error('❌ Error al enviar contacto:', err);
+    console.error('❌ Error enviarContacto:', err);
     return false;
   }
 };
