@@ -18,9 +18,11 @@ export default function SearchOverlay({ isSearchOpen, setIsSearchOpen }) {
 
   useEffect(() => {
     if (query.trim().length > 0) {
+      const q = query.toLowerCase();
       const filtrados = productos.filter(p =>
-        p.nombre.toLowerCase().includes(query.toLowerCase()) ||
-        p.descripcion.toLowerCase().includes(query.toLowerCase())
+        p.nombre?.toLowerCase().includes(q) ||
+        p.descripcion?.toLowerCase().includes(q) ||
+        p.categoria?.toLowerCase().includes(q)
       );
       setResultados(filtrados);
     } else {
