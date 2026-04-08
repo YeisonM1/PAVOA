@@ -23,7 +23,7 @@ const shopifyFetch = async (query, variables = {}) => {
 const mapProducto = (node) => {
   const variantes = node.variants.edges.map(({ node: v }) => ({
     color:  v.selectedOptions.find(o => o.name === 'Color')?.value || '',
-    hex:    v.selectedOptions.find(o => o.name === 'Hex')?.value   || '#888',
+    hex: v.metafield?.value || '#888',
     talla:  v.selectedOptions.find(o => o.name === 'Talla')?.value || 'ÚNICA',
     stock:  v.quantityAvailable ?? 0,
     variantId: v.id,
@@ -57,11 +57,15 @@ export const getProductos = async () => {
               priceRange { minVariantPrice { amount } }
               images(first: 2) { edges { node { url } } }
               metafield(namespace: "pavoa", key: "detalles") { value }
-              variants(first: 20) {
-                edges {
-                  node {
-                    id quantityAvailable
-                    selectedOptions { name value }
+              
+            variants(first: 20) {
+              edges {
+                node {
+                  id
+                  quantityAvailable
+                  selectedOptions { name value }
+                  metafield(namespace: "custom", key: "color_hex") {
+                    value
                   }
                 }
               }
@@ -88,10 +92,13 @@ export const getProductoById = async (handle) => {
           images(first: 2) { edges { node { url } } }
           metafield(namespace: "pavoa", key: "detalles") { value }
           variants(first: 20) {
-            edges {
-              node {
-                id quantityAvailable
-                selectedOptions { name value }
+          edges {
+            node {
+              id
+              quantityAvailable
+              selectedOptions { name value }
+              metafield(namespace: "custom", key: "color_hex") {
+                value
               }
             }
           }
