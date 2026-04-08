@@ -15,7 +15,7 @@ export default function ProductPage() {
   const [loading, setLoading]                     = useState(true);
   const [imagenActiva, setImagenActiva]           = useState(null);
   const [tallaSeleccionada, setTallaSeleccionada] = useState(null);
-  const [colorSeleccionado, setColorSeleccionado] = useState(null); // ✅ NUEVO
+  const [colorSeleccionado, setColorSeleccionado] = useState(null);
   const [cantidad, setCantidad]                   = useState(1);
   const [adding, setAdding]                       = useState(false);
   const [openAccordion, setOpenAccordion]         = useState('detalles');
@@ -32,46 +32,65 @@ export default function ProductPage() {
     window.scrollTo(0, 0);
   }, [id]);
 
-  const colores = useMemo(() => {
-    if (!producto?.colores) return [];
+  // ── VARIANTES ──────────────────────────────────────────────
+  const variantes = useMemo(() => {
+    if (!producto?.variantes) return [];
     try {
-      const parsed = typeof producto.colores === 'string'
-        ? JSON.parse(producto.colores)
-        : producto.colores;
+      const parsed = typeof producto.variantes === 'string'
+        ? JSON.parse(producto.variantes)
+        : producto.variantes;
       return Array.isArray(parsed) ? parsed : [];
     } catch { return []; }
-  }, [producto?.colores]);
+  }, [producto?.variantes]);
 
-  const tallas = useMemo(() => {
-    if (!producto?.tallas) return [];
-    try {
-      return typeof producto.tallas === 'string'
-        ? JSON.parse(producto.tallas)
-        : producto.tallas;
-    } catch { return []; }
-  }, [producto?.tallas]);
+  // Colores únicos (sin duplicados)
+  const coloresUnicos = useMemo(() => {
+    const vistos = new Set();
+    return variantes.filter(v => {
+      if (vistos.has(v.color)) return false;
+      vistos.add(v.color);
+      return true;
+    });
+  }, [variantes]);
 
-  const esTallaUnica = tallas.length === 1 && tallas[0] === 'ÚNICA';
-  const tieneTallas  = tallas.length > 0;
-  const tieneColores = colores.length > 0;
+  // Tallas disponibles según el color seleccionado
+  const tallasDisponibles = useMemo(() => {
+    if (!colorSeleccionado) return [];
+    return variantes
+      .filter(v => v.color === colorSeleccionado)
+      .map(v => v.talla);
+  }, [variantes, colorSeleccionado]);
+
+  // Stock de la combinación actual
+  const stockActual = useMemo(() => {
+    if (!colorSeleccionado || !tallaSeleccionada) return null;
+    const v = variantes.find(v => v.color === colorSeleccionado && v.talla === tallaSeleccionada);
+    return v?.stock ?? 0;
+  }, [variantes, colorSeleccionado, tallaSeleccionada]);
+
+  const esTallaUnica   = tallasDisponibles.length === 1 && tallasDisponibles[0] === 'ÚNICA';
+  const tieneVariantes = variantes.length > 0;
+  // ──────────────────────────────────────────────────────────
+
+  const handleColorSelect = (color) => {
+    setColorSeleccionado(colorSeleccionado === color ? null : color);
+    setTallaSeleccionada(null); // resetear talla al cambiar color
+  };
 
   const handleAddToCart = () => {
-    // ✅ Validar talla si aplica
-    if (tieneTallas && !esTallaUnica && !tallaSeleccionada) {
-      const el = document.getElementById('talla-selector');
+    if (!colorSeleccionado) {
+      const el = document.getElementById('color-selector');
       if (el) { el.classList.add('animate-pulse'); setTimeout(() => el.classList.remove('animate-pulse'), 800); }
       return;
     }
-    // ✅ Validar color si aplica
-    if (tieneColores && !colorSeleccionado) {
-      const el = document.getElementById('color-selector');
+    if (!esTallaUnica && !tallaSeleccionada) {
+      const el = document.getElementById('talla-selector');
       if (el) { el.classList.add('animate-pulse'); setTimeout(() => el.classList.remove('animate-pulse'), 800); }
       return;
     }
 
     setAdding(true);
     const tallaFinal = esTallaUnica ? 'ÚNICA' : tallaSeleccionada;
-    // ✅ Pasamos color al carrito también
     addToCart({ ...producto, colorSeleccionado }, tallaFinal, cantidad);
     setTimeout(() => {
       setAdding(false);
@@ -87,7 +106,7 @@ export default function ProductPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-white" >
+      <div className="min-h-screen flex items-center justify-center bg-white">
         <span className="text-[10px] font-bold tracking-[0.3em] uppercase text-stone-500 animate-pulse">Cargando pieza...</span>
       </div>
     );
@@ -95,7 +114,7 @@ export default function ProductPage() {
 
   if (!producto) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-white gap-6" >
+      <div className="min-h-screen flex flex-col items-center justify-center bg-white gap-6">
         <span className="text-[10px] font-bold tracking-[0.3em] uppercase text-stone-900">Pieza no encontrada</span>
         <Link to="/" className="text-[10px] tracking-[0.2em] uppercase border-b border-stone-900 pb-1">Volver al inicio</Link>
       </div>
@@ -108,7 +127,7 @@ export default function ProductPage() {
   const cuidadosTexto = producto.cuidados || null;
 
   return (
-    <div className="min-h-screen bg-white" >
+    <div className="min-h-screen bg-white">
       <SEO
         title={producto.nombre}
         description={producto.descripcion || `Compra ${producto.nombre} en PAVOA. Alta calidad deportiva con envío a toda Colombia.`}
@@ -197,28 +216,25 @@ export default function ProductPage() {
               </div>
             </div>
 
-            {/* ── ✅ SELECTOR DE COLOR ── */}
-            {tieneColores && (
+            {/* ── SELECTOR DE COLOR ── */}
+            {tieneVariantes && (
               <div id="color-selector" className="mb-8">
                 <div className="flex justify-between items-end mb-4">
                   <span className="text-[10px] font-bold tracking-[0.2em] text-stone-900 uppercase">Color</span>
-                  {/* Muestra el nombre del color seleccionado */}
                   {colorSeleccionado && (
-                    <span className="text-[9px] tracking-[0.15em] text-stone-500 uppercase">
-                      {colorSeleccionado}
-                    </span>
+                    <span className="text-[9px] tracking-[0.15em] text-stone-500 uppercase">{colorSeleccionado}</span>
                   )}
                 </div>
                 <div className="flex items-center gap-3 flex-wrap">
-                  {colores.map(c => {
-                    const activo = colorSeleccionado === c.nombre;
+                  {coloresUnicos.map(v => {
+                    const activo = colorSeleccionado === v.color;
                     return (
                       <button
-                        key={c.nombre}
-                        onClick={() => setColorSeleccionado(activo ? null : c.nombre)}
-                        title={c.nombre}
+                        key={v.color}
+                        onClick={() => handleColorSelect(v.color)}
+                        title={v.color}
                         className="flex flex-col items-center gap-1.5 group"
-                        aria-label={`Color ${c.nombre}${activo ? ', seleccionado' : ''}`}
+                        aria-label={`Color ${v.color}${activo ? ', seleccionado' : ''}`}
                       >
                         <div
                           className={`w-7 h-7 rounded-full border transition-all duration-200 group-hover:scale-110
@@ -226,14 +242,12 @@ export default function ProductPage() {
                               ? 'ring-2 ring-offset-2 ring-stone-900 border-stone-300 scale-110'
                               : 'border-stone-200 shadow-sm'
                             }`}
-                          style={{ backgroundColor: c.hex }}
+                          style={{ backgroundColor: v.hex }}
                         />
-                        <span
-                                                   className={`text-[8px] tracking-[0.1em] uppercase transition-colors ${
-                            activo ? 'text-stone-900 font-bold' : 'text-stone-400'
-                          }`}
-                        >
-                          {c.nombre}
+                        <span className={`text-[8px] tracking-[0.1em] uppercase transition-colors ${
+                          activo ? 'text-stone-900 font-bold' : 'text-stone-400'
+                        }`}>
+                          {v.color}
                         </span>
                       </button>
                     );
@@ -242,8 +256,8 @@ export default function ProductPage() {
               </div>
             )}
 
-            {/* ── SELECTOR DE TALLAS ── */}
-            {tieneTallas && (
+            {/* ── SELECTOR DE TALLAS (solo aparece si hay color seleccionado) ── */}
+            {colorSeleccionado && (
               <div id="talla-selector" className="mb-10">
                 <div className="flex justify-between items-end mb-4">
                   <span className="text-[10px] font-bold tracking-[0.2em] text-stone-900 uppercase">Talla</span>
@@ -255,8 +269,7 @@ export default function ProductPage() {
                 </div>
                 {esTallaUnica ? (
                   <div className="flex flex-col gap-3">
-                    <div className="h-12 border border-stone-200 bg-stone-50 flex items-center justify-center cursor-default select-none"
-                      aria-label="Este producto es talla única">
+                    <div className="h-12 border border-stone-200 bg-stone-50 flex items-center justify-center cursor-default select-none">
                       <span className="text-[11px] font-medium text-stone-400 tracking-[0.15em] uppercase">Talla Única</span>
                     </div>
                     <p className="text-[9px] tracking-[0.15em] text-stone-400 uppercase text-center">
@@ -264,8 +277,8 @@ export default function ProductPage() {
                     </p>
                   </div>
                 ) : (
-                  <div className="grid gap-3" style={{ gridTemplateColumns: `repeat(${Math.min(tallas.length, 4)}, minmax(0, 1fr))` }}>
-                    {tallas.map(talla => (
+                  <div className="grid gap-3" style={{ gridTemplateColumns: `repeat(${Math.min(tallasDisponibles.length, 4)}, minmax(0, 1fr))` }}>
+                    {tallasDisponibles.map(talla => (
                       <button key={talla} onClick={() => setTallaSeleccionada(talla)}
                         className={`h-12 border flex items-center justify-center text-[11px] font-medium tracking-[0.05em] transition-colors uppercase
                           ${tallaSeleccionada === talla
@@ -276,6 +289,13 @@ export default function ProductPage() {
                       </button>
                     ))}
                   </div>
+                )}
+
+                {/* Stock bajo */}
+                {stockActual !== null && stockActual <= 3 && stockActual > 0 && (
+                  <p className="text-[9px] tracking-[0.15em] text-amber-700 uppercase mt-3">
+                    Solo {stockActual} {stockActual === 1 ? 'unidad disponible' : 'unidades disponibles'}
+                  </p>
                 )}
               </div>
             )}
@@ -298,7 +318,7 @@ export default function ProductPage() {
                   <span className="text-[10px] font-bold tracking-[0.2em] text-stone-900 uppercase">Detalles del diseño</span>
                   {openAccordion === 'detalles' ? <Minus size={14} className="text-stone-500" /> : <Plus size={14} className="text-stone-500" />}
                 </button>
-                <div className={`overflow-hidden transition-all duration-300 ease-in-out ${openAccordion === 'detalles' ? 'max-h-[600px]' : 'max-h-0'}`}>
+                <div className={`overflow-hidden transition-all duration-300 ease-in-out ${openAccordion === 'detalles' ? 'max-h-[600px] pb-6' : 'max-h-0'}`}>
                   <ul className="list-disc pl-4 flex flex-col gap-2">
                     {detallesArray.map((d, i) => (
                       <li key={i} className="text-[11px] text-stone-600 tracking-[0.1em] uppercase">{d.trim()}</li>
@@ -312,11 +332,11 @@ export default function ProductPage() {
                   {openAccordion === 'cuidados' ? <Minus size={14} className="text-stone-500" /> : <Plus size={14} className="text-stone-500" />}
                 </button>
                 <div className={`overflow-hidden transition-all duration-300 ease-in-out ${openAccordion === 'cuidados' ? 'max-h-[600px] pb-6' : 'max-h-0'}`}>
-                {cuidadosTexto
-                  ? <p className="text-[11px] text-stone-600 tracking-[0.1em] leading-relaxed uppercase">{cuidadosTexto}</p>
-                  : <p className="text-[11px] text-stone-400 tracking-[0.1em] uppercase">Sin indicaciones especiales.</p>
-                }
-              </div>
+                  {cuidadosTexto
+                    ? <p className="text-[11px] text-stone-600 tracking-[0.1em] leading-relaxed uppercase">{cuidadosTexto}</p>
+                    : <p className="text-[11px] text-stone-400 tracking-[0.1em] uppercase">Sin indicaciones especiales.</p>
+                  }
+                </div>
               </div>
             </div>
 
