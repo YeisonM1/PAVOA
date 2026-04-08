@@ -6,7 +6,6 @@ import ProductCard from '../components/ProductCard';
 import { getProductos, getCategoriaById } from '../services/productService';
 import SEO from '../components/SEO';
 
-// ── Helper: parsea variantes desde Supabase (JSON string → array)
 const parseVariantes = (raw) => {
   if (!raw) return [];
   if (Array.isArray(raw)) return raw;
@@ -14,25 +13,45 @@ const parseVariantes = (raw) => {
   catch { return []; }
 };
 
+// ── SKELETON ────────────────────────────────────────────
+function SkeletonCard() {
+  return (
+    <div className="flex flex-col gap-4 animate-pulse">
+      <div className="bg-stone-200 w-full relative overflow-hidden" style={{ aspectRatio: '3/4' }}>
+        <div className="absolute inset-0 -translate-x-full animate-[shimmer_1.5s_infinite] bg-gradient-to-r from-stone-200 via-stone-100 to-stone-200" />
+      </div>
+      <div className="flex flex-col items-center gap-2">
+        <div className="h-2.5 w-24 bg-stone-200 rounded" />
+        <div className="h-3 w-16 bg-stone-100 rounded" />
+      </div>
+    </div>
+  );
+}
+
+function SkeletonHero() {
+  return (
+    <div className="relative w-full h-[60vh] md:h-[70vh] bg-stone-200 animate-pulse">
+      <div className="absolute inset-0 -translate-x-full animate-[shimmer_1.5s_infinite] bg-gradient-to-r from-stone-200 via-stone-100 to-stone-200" />
+    </div>
+  );
+}
+// ────────────────────────────────────────────────────────
+
 export default function CategoriaPage() {
   const { id } = useParams();
 
-  // ── DATOS ──
   const [productosDB, setProductosDB] = useState([]);
   const [dataHeader, setDataHeader]   = useState(null);
   const [loading, setLoading]         = useState(true);
 
-  // ── UI ──
   const [isSortOpen, setIsSortOpen]     = useState(false);
   const [sortOption, setSortOption]     = useState('Lo más nuevo');
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const sortOptions = ['Lo más nuevo', 'Precio: Menor a Mayor', 'Precio: Mayor a Menor'];
 
-  // ── FILTROS SELECCIONADOS ──
   const [tallasFiltro, setTallasFiltro]   = useState([]);
   const [coloresFiltro, setColoresFiltro] = useState([]);
 
-  // ── CARGA DE DATOS ──
   useEffect(() => {
     const cargarTodo = async () => {
       setLoading(true);
@@ -63,7 +82,6 @@ export default function CategoriaPage() {
     return () => { document.body.style.overflow = ''; };
   }, [isFilterOpen]);
 
-  // ── TALLAS DISPONIBLES — extraídas de variantes ──
   const tallasDisponibles = useMemo(() => {
     const orden = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'ÚNICA'];
     const set = new Set();
@@ -75,78 +93,56 @@ export default function CategoriaPage() {
     return orden.filter(t => set.has(t));
   }, [productosDB]);
 
-  // ── COLORES DISPONIBLES — extraídos de variantes ──
   const coloresDisponibles = useMemo(() => {
     const mapa = new Map();
     productosDB.forEach(p => {
       parseVariantes(p.variantes).forEach(v => {
-        if (v.color && v.hex && !mapa.has(v.color)) {
-          mapa.set(v.color, v.hex);
-        }
+        if (v.color && v.hex && !mapa.has(v.color)) mapa.set(v.color, v.hex);
       });
     });
     return Array.from(mapa, ([nombre, hex]) => ({ nombre, hex }));
   }, [productosDB]);
 
-  // ── HANDLERS DE FILTROS ──
-  const handleTallaChange = (talla) => {
-    setTallasFiltro(prev =>
-      prev.includes(talla) ? prev.filter(t => t !== talla) : [...prev, talla]
-    );
-  };
+  const handleTallaChange  = (t) => setTallasFiltro(prev => prev.includes(t) ? prev.filter(x => x !== t) : [...prev, t]);
+  const handleColorChange  = (c) => setColoresFiltro(prev => prev.includes(c) ? prev.filter(x => x !== c) : [...prev, c]);
+  const handleLimpiar      = () => { setTallasFiltro([]); setColoresFiltro([]); };
 
-  const handleColorChange = (nombre) => {
-    setColoresFiltro(prev =>
-      prev.includes(nombre) ? prev.filter(c => c !== nombre) : [...prev, nombre]
-    );
-  };
-
-  const handleLimpiar = () => {
-    setTallasFiltro([]);
-    setColoresFiltro([]);
-  };
-
-  // ── PRODUCTOS FILTRADOS (lógica AND) ──
   const productosFiltrados = useMemo(() => {
-    let resultado = [...productosDB];
-
-    // Filtro de talla — busca en variantes
-    if (tallasFiltro.length > 0) {
-      resultado = resultado.filter(p => {
-        const tallas = parseVariantes(p.variantes).map(v => v.talla);
-        return tallasFiltro.every(t => tallas.includes(t));
-      });
-    }
-
-    // Filtro de color — busca en variantes
-    if (coloresFiltro.length > 0) {
-      resultado = resultado.filter(p => {
-        const colores = parseVariantes(p.variantes).map(v => v.color);
-        return coloresFiltro.every(c => colores.includes(c));
-      });
-    }
-
-    // Ordenamiento
-    if (sortOption === 'Precio: Menor a Mayor') {
-      resultado.sort((a, b) => parsePrice(a.precio) - parsePrice(b.precio));
-    } else if (sortOption === 'Precio: Mayor a Menor') {
-      resultado.sort((a, b) => parsePrice(b.precio) - parsePrice(a.precio));
-    }
-
-    return resultado;
+    let res = [...productosDB];
+    if (tallasFiltro.length > 0)
+      res = res.filter(p => tallasFiltro.every(t => parseVariantes(p.variantes).map(v => v.talla).includes(t)));
+    if (coloresFiltro.length > 0)
+      res = res.filter(p => coloresFiltro.every(c => parseVariantes(p.variantes).map(v => v.color).includes(c)));
+    if (sortOption === 'Precio: Menor a Mayor') res.sort((a, b) => parsePrice(a.precio) - parsePrice(b.precio));
+    if (sortOption === 'Precio: Mayor a Menor') res.sort((a, b) => parsePrice(b.precio) - parsePrice(a.precio));
+    return res;
   }, [productosDB, tallasFiltro, coloresFiltro, sortOption]);
 
   const hayFiltrosActivos = tallasFiltro.length > 0 || coloresFiltro.length > 0;
 
-  if (loading || !dataHeader) {
+  // ── SKELETON LOADING ────────────────────────────────
+  if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-white">
-        <span className="text-[10px] font-bold tracking-[0.3em] uppercase text-stone-500 animate-pulse">
-          Sincronizando Colección...
-        </span>
+      <div className="min-h-screen bg-white">
+        <SkeletonHero />
+        {/* Barra de filtros skeleton */}
+        <div className="w-full border-b border-stone-200 h-16 md:h-20 flex items-center px-6 md:px-12 lg:px-16 gap-4">
+          <div className="h-3 w-16 bg-stone-200 rounded animate-pulse" />
+          <div className="flex-1" />
+          <div className="h-3 w-24 bg-stone-200 rounded animate-pulse" />
+        </div>
+        {/* Grid skeleton */}
+        <section className="w-full py-12 px-6 md:px-12 lg:px-16">
+          <div className="max-w-[1400px] mx-auto">
+            <div className="grid grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-12 md:gap-x-8 md:gap-y-16">
+              {[1, 2, 3, 4, 5, 6].map(i => <SkeletonCard key={i} />)}
+            </div>
+          </div>
+        </section>
       </div>
     );
   }
+  // ────────────────────────────────────────────────────
 
   return (
     <div className="min-h-screen bg-white relative">
@@ -186,10 +182,8 @@ export default function CategoriaPage() {
       <div className="sticky top-[72px] md:top-[88px] z-30 w-full bg-white/80 backdrop-blur-md border-b border-stone-200 transition-all duration-300">
         <div className="max-w-[1400px] mx-auto px-6 md:px-12 lg:px-16 h-16 md:h-20 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <button
-              onClick={() => setIsFilterOpen(true)}
-              className="text-xs font-medium text-stone-900 tracking-[0.15em] uppercase flex items-center gap-2 hover:opacity-70 transition-opacity"
-            >
+            <button onClick={() => setIsFilterOpen(true)}
+              className="text-xs font-medium text-stone-900 tracking-[0.15em] uppercase flex items-center gap-2 hover:opacity-70 transition-opacity">
               Filtros
               {hayFiltrosActivos && (
                 <span className="w-4 h-4 rounded-full bg-stone-900 text-white text-[8px] flex items-center justify-center">
@@ -200,17 +194,13 @@ export default function CategoriaPage() {
                 <path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/>
               </svg>
             </button>
-            <span className="hidden lg:block text-[11px] font-bold text-stone-900 tracking-[0.2em] uppercase">
-              Catálogo
-            </span>
+            <span className="hidden lg:block text-[11px] font-bold text-stone-900 tracking-[0.2em] uppercase">Catálogo</span>
           </div>
 
           <div className="hidden md:flex items-center gap-4 relative">
             <span className="text-xs text-stone-500 tracking-[0.15em] uppercase">Ordenar por:</span>
-            <button
-              onClick={() => setIsSortOpen(!isSortOpen)}
-              className="text-xs font-medium text-stone-900 tracking-[0.15em] uppercase bg-transparent border-none outline-none cursor-pointer flex items-center gap-2 hover:opacity-70 transition-opacity"
-            >
+            <button onClick={() => setIsSortOpen(!isSortOpen)}
+              className="text-xs font-medium text-stone-900 tracking-[0.15em] uppercase bg-transparent border-none outline-none cursor-pointer flex items-center gap-2 hover:opacity-70 transition-opacity">
               {sortOption}
               <svg className={`w-4 h-4 transition-transform duration-300 ${isSortOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M19 9l-7 7-7-7" />
@@ -237,7 +227,6 @@ export default function CategoriaPage() {
       {/* ── CONTENIDO ── */}
       <section className="w-full py-12 px-6 md:px-12 lg:px-16">
         <div className="max-w-[1400px] mx-auto flex flex-col lg:flex-row gap-8 lg:gap-12 relative">
-
           <FilterDrawer
             isFilterOpen={isFilterOpen}
             setIsFilterOpen={setIsFilterOpen}
@@ -250,14 +239,11 @@ export default function CategoriaPage() {
             onLimpiar={handleLimpiar}
             totalFiltrados={productosFiltrados.length}
           />
-
           <div className="flex-1">
             {productosFiltrados.length > 0 ? (
               <>
                 <div className="grid grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-12 md:gap-x-8 md:gap-y-16">
-                  {productosFiltrados.map(p => (
-                    <ProductCard key={p.id} producto={p} />
-                  ))}
+                  {productosFiltrados.map(p => <ProductCard key={p.id} producto={p} />)}
                 </div>
                 <div className="mt-20 flex justify-center">
                   <button className="text-[11px] font-bold text-stone-900 tracking-[0.2em] uppercase border-b border-stone-900 pb-1 hover:text-stone-500 hover:border-stone-500 transition-colors">
@@ -267,17 +253,11 @@ export default function CategoriaPage() {
               </>
             ) : (
               <div className="flex flex-col items-center justify-center py-32 gap-4">
-                <span className="text-[9px] font-bold tracking-[0.3em] uppercase text-stone-300">
-                  Sin resultados
-                </span>
-                <p className="text-[12px] tracking-[0.15em] text-stone-400 uppercase text-center">
-                  No hay piezas con esos filtros
-                </p>
+                <span className="text-[9px] font-bold tracking-[0.3em] uppercase text-stone-300">Sin resultados</span>
+                <p className="text-[12px] tracking-[0.15em] text-stone-400 uppercase text-center">No hay piezas con esos filtros</p>
                 {hayFiltrosActivos && (
-                  <button
-                    onClick={handleLimpiar}
-                    className="mt-2 text-[10px] font-bold tracking-[0.2em] uppercase border-b border-stone-900 pb-1 text-stone-900 hover:opacity-60 transition-opacity"
-                  >
+                  <button onClick={handleLimpiar}
+                    className="mt-2 text-[10px] font-bold tracking-[0.2em] uppercase border-b border-stone-900 pb-1 text-stone-900 hover:opacity-60 transition-opacity">
                     Limpiar filtros
                   </button>
                 )}
