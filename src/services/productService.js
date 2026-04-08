@@ -23,7 +23,7 @@ const shopifyFetch = async (query, variables = {}) => {
 const mapProducto = (node) => {
   const variantes = node.variants.edges.map(({ node: v }) => ({
     color:  v.selectedOptions.find(o => o.name === 'Color')?.value || '',
-    hex: v.metafield?.value || '#888',
+    hex:    v.metafield?.value || '#888',
     talla:  v.selectedOptions.find(o => o.name === 'Talla')?.value || 'ÚNICA',
     stock:  v.quantityAvailable ?? 0,
     variantId: v.id,
@@ -43,7 +43,6 @@ const mapProducto = (node) => {
     variantes,
   };
 };
-// ──────────────────────────────────────────────────────
 
 // ── Trae TODOS los productos ───────────────────────────
 export const getProductos = async () => {
@@ -57,15 +56,15 @@ export const getProductos = async () => {
               priceRange { minVariantPrice { amount } }
               images(first: 2) { edges { node { url } } }
               metafield(namespace: "pavoa", key: "detalles") { value }
-              
-            variants(first: 20) {
-              edges {
-                node {
-                  id
-                  quantityAvailable
-                  selectedOptions { name value }
-                  metafield(namespace: "custom", key: "color_hex") {
-                    value
+              variants(first: 20) {
+                edges {
+                  node {
+                    id
+                    quantityAvailable
+                    selectedOptions { name value }
+                    metafield(namespace: "custom", key: "color_hex") {
+                      value
+                    }
                   }
                 }
               }
@@ -92,13 +91,14 @@ export const getProductoById = async (handle) => {
           images(first: 2) { edges { node { url } } }
           metafield(namespace: "pavoa", key: "detalles") { value }
           variants(first: 20) {
-          edges {
-            node {
-              id
-              quantityAvailable
-              selectedOptions { name value }
-              metafield(namespace: "custom", key: "color_hex") {
-                value
+            edges {
+              node {
+                id
+                quantityAvailable
+                selectedOptions { name value }
+                metafield(namespace: "custom", key: "color_hex") {
+                  value
+                }
               }
             }
           }
