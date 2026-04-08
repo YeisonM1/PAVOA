@@ -107,6 +107,7 @@ export default function CheckoutPage() {
     mensaje += `Quedo atenta a los pasos para confirmar el pago.`;
 
     setTimeout(() => {
+    console.log('Número WhatsApp:', NUMERO_WHATSAPP);
       window.open(
         `https://wa.me/${NUMERO_WHATSAPP}?text=${encodeURIComponent(mensaje)}`,
         '_blank'
