@@ -105,7 +105,7 @@ export default function ProductPage() {
   const detallesArray = producto.detalles
     ? producto.detalles.split(',')
     : ['Diseño exclusivo PAVOA', 'Material de alta compresión'];
-  const cuidadosTexto = producto.cuidados || 'Lavar a máquina en frío con colores similares. No usar secadora.';
+  const cuidadosTexto = producto.cuidados || null;
 
   return (
     <div className="min-h-screen bg-white" >
@@ -311,9 +311,12 @@ export default function ProductPage() {
                   <span className="text-[10px] font-bold tracking-[0.2em] text-stone-900 uppercase">Composición y Cuidados</span>
                   {openAccordion === 'cuidados' ? <Minus size={14} className="text-stone-500" /> : <Plus size={14} className="text-stone-500" />}
                 </button>
-                <div className={`overflow-hidden transition-all duration-300 ease-in-out ${openAccordion === 'cuidados' ? 'max-h-40 pb-6' : 'max-h-0'}`}>
-                  <p className="text-[11px] text-stone-600 tracking-[0.1em] leading-relaxed uppercase">{cuidadosTexto}</p>
-                </div>
+                <div className={`overflow-hidden transition-all duration-300 ease-in-out ${openAccordion === 'cuidados' ? 'max-h-[600px] pb-6' : 'max-h-0'}`}>
+                {cuidadosTexto
+                  ? <p className="text-[11px] text-stone-600 tracking-[0.1em] leading-relaxed uppercase">{cuidadosTexto}</p>
+                  : <p className="text-[11px] text-stone-400 tracking-[0.1em] uppercase">Sin indicaciones especiales.</p>
+                }
+              </div>
               </div>
             </div>
 
