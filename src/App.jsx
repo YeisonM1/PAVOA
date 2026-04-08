@@ -5,10 +5,11 @@ import { CartProvider, CartContext } from './context/CartContext';
 import Header from './sections/Header';
 import Footer from './sections/Footer';
 
-const HomePage     = lazy(() => import('./pages/HomePage'));
+const HomePage      = lazy(() => import('./pages/HomePage'));
 const CategoriaPage = lazy(() => import('./pages/CategoriaPage'));
-const ProductPage  = lazy(() => import('./pages/ProductPage'));
-const ContactPage  = lazy(() => import('./pages/ContactPage'));
+const ProductPage   = lazy(() => import('./pages/ProductPage'));
+const ContactPage   = lazy(() => import('./pages/ContactPage'));
+const CheckoutPage  = lazy(() => import('./pages/CheckoutPage')); // ✅ NUEVO
 
 // Re-export CartContext so existing imports keep working
 export { CartContext };
@@ -40,6 +41,7 @@ function AppShell() {
               <Route path="/categoria/:id" element={<CategoriaPage />} />
               <Route path="/producto/:id"  element={<ProductPage />} />
               <Route path="/contacto"      element={<ContactPage />} />
+              <Route path="/checkout"      element={<CheckoutPage />} /> {/* ✅ NUEVO */}
             </Routes>
           </Suspense>
         </div>

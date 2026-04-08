@@ -1,10 +1,12 @@
 import React, { useContext } from 'react';
 import { X, ShoppingBag } from 'lucide-react';
 import { CartContext } from '../App';
+import { useNavigate } from 'react-router-dom';
 
 const NUMERO_WHATSAPP = import.meta.env.VITE_WHATSAPP_NUMBER;
 
 export default function CartDrawer({ cartOpen, setCartOpen }) {
+  const navigate = useNavigate();
   const { cartItems, cartCount, cartTotal, removeFromCart, updateQuantity } = useContext(CartContext);
   const [modalOpen, setModalOpen] = React.useState(false); // ✅ NUEVO
 
@@ -238,7 +240,8 @@ export default function CartDrawer({ cartOpen, setCartOpen }) {
             <button
               onClick={() => {
                 setModalOpen(false);
-                handleWhatsAppCheckout();
+                setCartOpen(false);
+                navigate('/checkout');
               }}
                            className="h-12 bg-stone-900 text-white text-[10px] font-bold tracking-[0.2em] uppercase hover:bg-stone-800 transition-colors flex items-center justify-center gap-2"
             >
