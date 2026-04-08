@@ -56,7 +56,7 @@ export default function ProductCard({ producto }) {
         {tieneTallas && !esTallaUnica && (
           <button
             onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowMobileSizes(true); }}
-            className="md:hidden absolute bottom-3 right-3 w-9 h-9 bg-white/90 backdrop-blur-md rounded-full flex items-center justify-center shadow-lg z-30 text-stone-900"
+            className="lg:hidden absolute bottom-3 right-3 w-9 h-9 bg-white/90 backdrop-blur-md rounded-full flex items-center justify-center shadow-lg z-30 text-stone-900"
             aria-label="Ver tallas disponibles"
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
@@ -68,7 +68,7 @@ export default function ProductCard({ producto }) {
         {/* Overlay oscuro móvil */}
         <div
           onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowMobileSizes(false); }}
-          className={`md:hidden absolute inset-0 bg-black/20 z-30 transition-opacity duration-300 ${
+          className={`lg:hidden absolute inset-0 bg-black/20 z-30 transition-opacity duration-300 ${
             showMobileSizes ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
           }`}
         />
@@ -76,7 +76,7 @@ export default function ProductCard({ producto }) {
         {/* Panel de tallas */}
         {tieneTallas && (
           <div className={`absolute bottom-0 left-0 right-0 z-40 transition-transform duration-500 ease-[cubic-bezier(0.25,1,0.5,1)]
-            md:translate-y-full md:group-hover:translate-y-0
+            lg:translate-y-full lg:group-hover:translate-y-0  
             ${showMobileSizes ? 'translate-y-0' : 'translate-y-full'}
           `}>
             <div className="bg-white/80 backdrop-blur-md pt-5 pb-6 px-4 border-t border-white/40 flex flex-col items-center gap-4 shadow-[0_-10px_30px_rgba(0,0,0,0.05)]">

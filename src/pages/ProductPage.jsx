@@ -184,19 +184,19 @@ export default function ProductPage() {
 
           {/* ✅ Thumbnails horizontales móvil — solo mobile */}
           {imagenes.length > 1 && (
-            <div className="lg:hidden flex gap-3 overflow-x-auto pb-2 mt-3 w-full">
+            <div className="lg:hidden flex gap-3 overflow-x-auto pb-2 mt-3 w-full px-1">
               {imagenes.map((img, i) => (
                 <button
                   key={i}
                   onClick={() => handleImageChange(img)}
-                  className={`w-16 h-20 flex-shrink-0 overflow-hidden border transition-all duration-300 ${
+                  className={`w-24 h-32 flex-shrink-0 overflow-hidden border transition-all duration-300 ${
                     imagenActiva === img
                       ? 'border-stone-900 opacity-100'
                       : 'border-transparent opacity-40 hover:opacity-80'
                   }`}
                 >
                   <img src={thumbImage(img)} alt={`${producto.nombre} vista ${i + 1}`}
-                    width={64} height={80} className="w-full h-full object-cover" loading="lazy" />
+                    width={96} height={128} className="w-full h-full object-cover" loading="lazy" />
                 </button>
               ))}
             </div>
@@ -232,9 +232,11 @@ export default function ProductPage() {
             <p className="text-sm md:text-base font-medium text-stone-600 tracking-[0.1em] mb-10">
               {producto.precio}
             </p>
-            <p className="text-[12px] md:text-[13px] text-stone-600 tracking-[0.1em] leading-relaxed mb-12 uppercase">
-              {producto.descripcion}
-            </p>
+            <div className="text-[12px] md:text-[13px] text-stone-600 tracking-[0.1em] leading-loose mb-12 uppercase flex flex-col gap-3">
+              {producto.descripcion?.split('.').filter(s => s.trim()).map((oracion, i) => (
+                <p key={i}>{oracion.trim()}.</p>
+              ))}
+            </div>
 
             {/* ── CANTIDAD ── */}
             <div className="mb-8">
