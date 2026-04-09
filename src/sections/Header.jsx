@@ -194,7 +194,7 @@ const Header = () => {
                     border: 'none', cursor: 'pointer', padding: 0,
                   }}
                 >
-                  <span style={{ position: 'relative', paddingBottom: 2 }}>
+                  <span style={{ position: 'relative' }}>
                     CATÁLOGO
                     <span style={{
                       position: 'absolute', bottom: 0, left: 0, height: 1,
@@ -206,6 +206,7 @@ const Header = () => {
                     display: 'inline-block', width: 7, height: 7,
                     borderRight: '1.5px solid #3E2723', borderBottom: '1.5px solid #3E2723',
                     transform: catalogoOpen ? 'rotate(-135deg)' : 'rotate(45deg)', 
+                    verticalAlign: 'middle',
                     transition: 'transform 0.3s ease',
                   }} />
                 </button>
