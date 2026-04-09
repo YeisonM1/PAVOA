@@ -42,10 +42,30 @@ const mapProducto = (node) => {
     imagen2:     node.images.edges[1]?.node.url || '',
     categoria:   node.productType?.toLowerCase() || '',
     tag:         node.tags[0] || '',
-    detalles:    node.metafield?.value || '',
+    // ✏️ CAMBIO: usa aliases para leer ambos metafields
+    detalles:    node.detallesField?.value || '',
+    cuidados:    node.cuidadosField?.value || '',
     variantes,
   };
 };
+
+// ── Fragmento reutilizable con ambos metafields ────────
+const PRODUCT_FIELDS = `
+  id handle title description productType tags
+  priceRange { minVariantPrice { amount } }
+  images(first: 2) { edges { node { url } } }
+  detallesField: metafield(namespace: "pavoa", key: "detalles") { value }
+  cuidadosField: metafield(namespace: "pavoa", key: "cuidados") { value }
+  variants(first: 20) {
+    edges {
+      node {
+        id quantityAvailable
+        selectedOptions { name value }
+        metafield(namespace: "custom", key: "color_hex") { value }
+      }
+    }
+  }
+`;
 
 // ── Trae TODOS los productos ───────────────────────────
 export const getProductos = async () => {
@@ -54,21 +74,7 @@ export const getProductos = async () => {
       query {
         products(first: 100) {
           edges {
-            node {
-              id handle title description productType tags
-              priceRange { minVariantPrice { amount } }
-              images(first: 2) { edges { node { url } } }
-              metafield(namespace: "pavoa", key: "detalles") { value }
-              variants(first: 20) {
-                edges {
-                  node {
-                    id quantityAvailable
-                    selectedOptions { name value }
-                    metafield(namespace: "custom", key: "color_hex") { value }
-                  }
-                }
-              }
-            }
+            node { ${PRODUCT_FIELDS} }
           }
         }
       }
@@ -85,21 +91,7 @@ export const getProductoById = async (handle) => {
   try {
     const data = await shopifyFetch(`
       query($handle: String!) {
-        product(handle: $handle) {
-          id handle title description productType tags
-          priceRange { minVariantPrice { amount } }
-          images(first: 2) { edges { node { url } } }
-          metafield(namespace: "pavoa", key: "detalles") { value }
-          variants(first: 20) {
-            edges {
-              node {
-                id quantityAvailable
-                selectedOptions { name value }
-                metafield(namespace: "custom", key: "color_hex") { value }
-              }
-            }
-          }
-        }
+        product(handle: $handle) { ${PRODUCT_FIELDS} }
       }
     `, { handle });
     if (!data.product) return null;
