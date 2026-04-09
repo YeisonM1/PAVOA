@@ -1,6 +1,5 @@
 import { supabase } from '../config/supabase';
 
-// ── Configuración Shopify ──────────────────────────────
 const SHOPIFY_DOMAIN   = import.meta.env.VITE_SHOPIFY_DOMAIN;
 const SHOPIFY_TOKEN    = import.meta.env.VITE_SHOPIFY_TOKEN;
 const SHOPIFY_ENDPOINT = `https://${SHOPIFY_DOMAIN}/api/2026-04/graphql.json`;
@@ -21,13 +20,17 @@ const shopifyFetch = async (query, variables = {}) => {
 
 // ── Convierte producto Shopify → estructura PAVOA ──────
 const mapProducto = (node) => {
-  const variantes = node.variants.edges.map(({ node: v }) => ({
-    color:  v.selectedOptions.find(o => o.name === 'Color')?.value || '',
-    hex:    v.selectedOptions.find(o => o.name === 'Hex')?.value   || '#888',
-    talla:  v.selectedOptions.find(o => o.name === 'Talla')?.value || 'ÚNICA',
-    stock:  v.quantityAvailable ?? 0,
-    variantId: v.id,
-  }));
+  const variantes = node.variants.edges.map(({ node: v }) => {
+    const hexRaw = v.metafield?.value || '#888888';
+    const hex = hexRaw.startsWith('#') ? hexRaw : `#${hexRaw}`;
+    return {
+      color:     v.selectedOptions.find(o => o.name === 'Color')?.value || '',
+      hex,
+      talla:     v.selectedOptions.find(o => o.name === 'Talla')?.value || 'ÚNICA',
+      stock:     v.quantityAvailable ?? 0,
+      variantId: v.id,
+    };
+  });
 
   return {
     id:          node.handle,
@@ -43,7 +46,6 @@ const mapProducto = (node) => {
     variantes,
   };
 };
-// ──────────────────────────────────────────────────────
 
 // ── Trae TODOS los productos ───────────────────────────
 export const getProductos = async () => {
@@ -62,6 +64,7 @@ export const getProductos = async () => {
                   node {
                     id quantityAvailable
                     selectedOptions { name value }
+                    metafield(namespace: "custom", key: "color_hex") { value }
                   }
                 }
               }
@@ -92,6 +95,7 @@ export const getProductoById = async (handle) => {
               node {
                 id quantityAvailable
                 selectedOptions { name value }
+                metafield(namespace: "custom", key: "color_hex") { value }
               }
             }
           }
