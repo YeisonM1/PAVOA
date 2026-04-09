@@ -5,7 +5,7 @@ import { CartContext } from '../App';
 import CrossSelling from '../sections/CrossSelling';
 import { getProductoById } from '../services/productService';
 import SEO from '../components/SEO';
-import { productImage, thumbImage } from '../utils/imageUrl';
+import { productImage } from '../utils/imageUrl';
 
 export default function ProductPage() {
   const { id } = useParams();
@@ -13,8 +13,6 @@ export default function ProductPage() {
 
   const [producto, setProducto]                   = useState(null);
   const [loading, setLoading]                     = useState(true);
-  const [imagenActiva, setImagenActiva]           = useState(null);
-  const [fadeKey, setFadeKey]                     = useState(0);
   const [tallaSeleccionada, setTallaSeleccionada] = useState(null);
   const [colorSeleccionado, setColorSeleccionado] = useState(null);
   const [cantidad, setCantidad]                   = useState(1);
@@ -26,7 +24,6 @@ export default function ProductPage() {
       setLoading(true);
       const data = await getProductoById(id);
       setProducto(data);
-      if (data) setImagenActiva(data.imagen1);
       setLoading(false);
     };
     cargarProducto();
@@ -65,12 +62,6 @@ export default function ProductPage() {
 
   const esTallaUnica   = tallasDisponibles.length === 1 && tallasDisponibles[0] === 'ÚNICA';
   const tieneVariantes = variantes.length > 0;
-
-  const handleImageChange = (img) => {
-    if (img === imagenActiva) return;
-    setImagenActiva(img);
-    setFadeKey(k => k + 1);
-  };
 
   const handleColorSelect = (color) => {
     setColorSeleccionado(colorSeleccionado === color ? null : color);
@@ -136,75 +127,25 @@ export default function ProductPage() {
 
       <div className="flex flex-col lg:flex-row max-w-[1600px] mx-auto pt-[100px] md:pt-[120px]">
 
-        {/* ── GALERÍA ── */}
-        <div className="w-full lg:w-3/5 flex flex-row gap-3 lg:p-4">
-
-          {/* Thumbnails verticales — solo desktop */}
-          {imagenes.length > 1 && (
-            <div className="hidden lg:flex flex-col gap-3 w-[72px] flex-shrink-0">
-              {imagenes.map((img, i) => (
-                <button
-                  key={i}
-                  onClick={() => handleImageChange(img)}
-                  className={`w-full overflow-hidden border transition-all duration-300 ${
-                    imagenActiva === img
-                      ? 'border-stone-900 opacity-100'
-                      : 'border-transparent opacity-40 hover:opacity-80'
-                  }`}
-                  style={{ aspectRatio: '3/4' }}
-                >
-                  <img
-                    src={thumbImage(img)}
-                    alt={`${producto.nombre} vista ${i + 1}`}
-                    width={72} height={96}
-                    className="w-full h-full object-cover"
-                    loading="lazy"
-                  />
-                </button>
-              ))}
+        {/* ── GALERÍA — imágenes apiladas verticalmente ── */}
+        <div className="w-full lg:w-3/5 flex flex-col gap-2 lg:p-4 lg:pt-[36px]">
+          {imagenes.map((img, i) => (
+            <div key={i} className="w-full overflow-hidden">
+              <img
+                src={productImage(img)}
+                alt={`${producto.nombre} vista ${i + 1}`}
+                width={900}
+                height={1200}
+                className="w-full h-auto object-cover block"
+                loading={i === 0 ? 'eager' : 'lazy'}
+              />
             </div>
-          )}
-
-          {/* Imagen principal con fade */}
-          {/* ✏️ CAMBIO 1: bg-stone-100 → bg-[#f0ede9] (tono cálido sin gris frío) */}
-          {/* ✏️ CAMBIO 2: object-contain → object-cover (elimina bordes vacíos laterales) */}
-          <div className="flex-1 bg-[#f0ede9] overflow-hidden relative" style={{ aspectRatio: '3/4', maxHeight: '80vh' }}>
-            <img
-              key={fadeKey}
-              src={productImage(imagenActiva)}
-              alt={producto.nombre}
-              width={900} height={1200}
-              className="w-full h-full object-cover"
-              style={{ animation: 'fadeIn 0.4s ease', maxHeight: '80vh' }}
-            />
-            <style>{`@keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }`}</style>
-          </div>
-
-          {/* Thumbnails horizontales — solo mobile */}
-          {imagenes.length > 1 && (
-            <div className="lg:hidden flex gap-3 overflow-x-auto pb-2 mt-3 w-full px-1">
-              {imagenes.map((img, i) => (
-                <button
-                  key={i}
-                  onClick={() => handleImageChange(img)}
-                  className={`w-24 h-32 flex-shrink-0 overflow-hidden border transition-all duration-300 ${
-                    imagenActiva === img
-                      ? 'border-stone-900 opacity-100'
-                      : 'border-transparent opacity-40 hover:opacity-80'
-                  }`}
-                >
-                  <img src={thumbImage(img)} alt={`${producto.nombre} vista ${i + 1}`}
-                    width={96} height={128} className="w-full h-full object-cover" loading="lazy" />
-                </button>
-              ))}
-            </div>
-          )}
+          ))}
         </div>
 
         {/* ── INFO ── */}
         <div className="w-full lg:w-2/5 px-6 py-12 lg:px-16 lg:py-16 relative">
-          {/* ✏️ CAMBIO 3: eliminado lg:sticky lg:top-[120px] — el panel ahora fluye completo en laptops */}
-          <div>
+          <div className="lg:sticky lg:top-[160px]">
 
             {/* Breadcrumb */}
             <nav aria-label="Ruta de navegación" className="mb-8">
