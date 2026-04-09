@@ -170,14 +170,14 @@ export default function ProductPage() {
           )}
 
           {/* ✅ Imagen principal con fade */}
-          <div className="flex-1 bg-stone-100 overflow-hidden relative" style={{ aspectRatio: '2/3', maxHeight: '70vh' }}>
+          <div className="flex-1 bg-stone-100 overflow-hidden relative" style={{ maxHeight: '85vh' }}>
             <img
               key={fadeKey}
               src={productImage(imagenActiva)}
               alt={producto.nombre}
               width={900} height={1200}
-              className="w-full h-full object-cover"
-              style={{ animation: 'fadeIn 0.4s ease' }}
+              className="w-full h-full object-contain"
+              style={{ animation: 'fadeIn 0.4s ease', maxHeight: '85vh' }}
             />
             <style>{`@keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }`}</style>
           </div>
