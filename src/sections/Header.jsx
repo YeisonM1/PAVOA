@@ -152,7 +152,7 @@ const Header = () => {
   return (
     <>
       <header
-        className={`fixed top-0 left-0 w-full z-50 transition-all duration-500 border-b ${
+        className={`fixed top-9 left-0 w-full z-50 transition-all duration-500 border-b ${
           isScrolled ? 'border-white/10 py-2 shadow-lg' : 'border-transparent py-4'
         } backdrop-blur-md`}
         style={{
@@ -275,7 +275,7 @@ const Header = () => {
       {/* ── MEGA MENÚ DESKTOP ── */}
       <div 
         style={{
-          position: 'fixed', inset: 0, top: isScrolled ? '52px' : '68px', zIndex: 48,
+          position: 'fixed', inset: 0, top: isScrolled ? '88px' : '104px', zIndex: 48,
           backgroundColor: 'rgba(20, 15, 15, 0.4)', backdropFilter: 'blur(3px)',
           opacity: catalogoOpen ? 1 : 0, pointerEvents: catalogoOpen ? 'auto' : 'none',
           transition: 'opacity 0.4s ease, top 0.5s ease'
@@ -286,7 +286,7 @@ const Header = () => {
       <div
         ref={panelRef}
         style={{
-          position: 'fixed', left: 0, right: 0, top: isScrolled ? '52px' : '68px', zIndex: 49,
+          position: 'fixed', left: 0, right: 0, top: isScrolled ? '88px' : '104px', zIndex: 49,
           background: 'var(--color-bg)',
           borderTop: '1px solid var(--color-gold)', borderBottom: '1px solid var(--color-border)',
           overflow: 'hidden', maxHeight: catalogoOpen ? '650px' : '0px', opacity: catalogoOpen ? 1 : 0,

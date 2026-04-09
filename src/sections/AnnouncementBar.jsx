@@ -31,9 +31,10 @@ export default function AnnouncementBar() {
   }, [mensajes]);
 
   return (
+    // ✏️ FIX: eliminado "relative" que conflictuaba con "fixed"
     <div
       style={{ background: '#1C1410', height: 36 }}
-      className="w-full flex items-center justify-center relative overflow-hidden"
+      className="fixed top-0 left-0 w-full z-[48] flex items-center justify-center overflow-hidden"
     >
       <p
         className="text-[10px] font-medium tracking-[0.22em] uppercase text-center px-8 transition-all duration-500 ease-in-out select-none"
@@ -46,7 +47,6 @@ export default function AnnouncementBar() {
         {mensajes[current]}
       </p>
 
-      {/* Puntos indicadores */}
       {mensajes.length > 1 && (
         <div className="absolute right-4 flex items-center gap-1.5">
           {mensajes.map((_, i) => (
