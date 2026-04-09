@@ -41,12 +41,12 @@ const categoryImages = {
 const defaultImage = 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=800&q=80';
 
 // ✅ Estilo compartido para los títulos de sección (MUJER / HOMBRE)
-// Subimos de fontSize:9 → 12 y añadimos un toque más de peso visual
+// Subimos de fontSize:9 → 15 y añadimos un toque más de peso visual
 const sectionTitleStyle = {
-  fontSize: 12,
+  fontSize: 15,
   fontWeight: 700,
   letterSpacing: '0.32em',
-  color: 'var(--color-gold)',
+  color: '#5C3D2E',
   marginBottom: 24,
 };
 
@@ -189,7 +189,7 @@ const Header = () => {
                   aria-haspopup="true"
                   className="flex items-center gap-1.5 transition-opacity hover:opacity-70"
                   style={{
-                    fontSize: '12px', fontWeight: 500,
+                    fontSize: '13.5px', fontWeight: 500,
                     letterSpacing: '0.2em', color: '#3E2723', background: 'none',
                     border: 'none', cursor: 'pointer', padding: 0,
                   }}
@@ -307,6 +307,8 @@ const Header = () => {
                   {renderDesktopLink('Tops Deportivos', 'BEST SELLER')}
                   {renderDesktopLink('Buzos')}
                   {renderDesktopLink('Chaquetas')}
+                  {renderDesktopLink('Bodies', 'NUEVO')}   {/* ✅ NUEVO */}
+                  {renderDesktopLink('Enterizos', 'NUEVO')} {/* ✅ NUEVO */}
                 </ul>
               </div>
               <div>
@@ -325,8 +327,6 @@ const Header = () => {
                 <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 0 }}>
                   {renderDesktopLink('Sets', 'NUEVO')}
                   {renderDesktopLink('Vestidos')}
-                  {renderDesktopLink('Bodies', 'NUEVO')}   {/* ✅ NUEVO */}
-                  {renderDesktopLink('Enterizos', 'NUEVO')} {/* ✅ NUEVO */}
                   {renderDesktopLink('Accesorios')}
                 </ul>
               </div>
@@ -477,7 +477,7 @@ const Header = () => {
               <div>
                 <p style={{ fontSize: 8.5, fontWeight: 600, letterSpacing: '0.28em', color: 'var(--color-gold)', marginBottom: 8, paddingLeft: 8 }}>SUPERIOR</p>
                 <div className="flex flex-col gap-1">
-                  {['Camisetas', 'Tops Deportivos', 'Buzos', 'Chaquetas'].map(item => (
+                  {['Camisetas', 'Tops Deportivos', 'Buzos', 'Chaquetas', 'Bodies', 'Enterizos'].map(item => (
                     <Link key={item} to={`/categoria/${item.toLowerCase()}`} onClick={() => { setMenuOpen(false); window.scrollTo(0, 0); }} className="block py-3 px-2 rounded-lg text-[12px] font-medium tracking-[0.15em] text-stone-800 active:bg-stone-100/60 transition-colors">{item.toUpperCase()}</Link>
                   ))}
                 </div>
@@ -494,7 +494,7 @@ const Header = () => {
                 <p style={{ fontSize: 8.5, fontWeight: 600, letterSpacing: '0.28em', color: 'var(--color-gold)', marginBottom: 8, paddingLeft: 8 }}>OTROS</p>
                 <div className="flex flex-col gap-1">
                   {/* ✅ Bodies y Enterizos añadidos aquí también */}
-                  {['Sets', 'Vestidos', 'Bodies', 'Enterizos', 'Accesorios'].map(item => (
+                  {['Sets', 'Vestidos', 'Accesorios'].map(item => (
                     <Link key={item} to={`/categoria/${item.toLowerCase()}`} onClick={() => { setMenuOpen(false); window.scrollTo(0, 0); }} className="block py-3 px-2 rounded-lg text-[12px] font-medium tracking-[0.15em] text-stone-800 active:bg-stone-100/60 transition-colors">{item.toUpperCase()}</Link>
                   ))}
                 </div>
