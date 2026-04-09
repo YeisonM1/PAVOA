@@ -142,11 +142,13 @@ export const getCategoriaById = async (id) => {
 // ── Contacto sigue en Supabase ─────────────────────────
 export const enviarContacto = async ({ nombre, contacto, asunto, mensaje }) => {
   try {
-    const { error } = await supabase
-      .from('contactos')
-      .insert([{ nombre, contacto, asunto, mensaje }]);
-    if (error) throw error;
-    return true;
+    const res = await fetch('/api/contacto', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ nombre, contacto, asunto, mensaje }),
+    });
+    const data = await res.json();
+    return data.ok === true;
   } catch (err) {
     console.error('❌ Error enviarContacto:', err);
     return false;
