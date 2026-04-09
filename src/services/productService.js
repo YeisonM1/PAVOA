@@ -23,7 +23,7 @@ const shopifyFetch = async (query, variables = {}) => {
 const mapProducto = (node) => {
   const variantes = node.variants.edges.map(({ node: v }) => ({
     color:  v.selectedOptions.find(o => o.name === 'Color')?.value || '',
-    hex:    v.metafield?.value || '#888',
+    hex:    v.selectedOptions.find(o => o.name === 'Hex')?.value   || '#888',
     talla:  v.selectedOptions.find(o => o.name === 'Talla')?.value || 'ÚNICA',
     stock:  v.quantityAvailable ?? 0,
     variantId: v.id,
@@ -43,6 +43,7 @@ const mapProducto = (node) => {
     variantes,
   };
 };
+// ──────────────────────────────────────────────────────
 
 // ── Trae TODOS los productos ───────────────────────────
 export const getProductos = async () => {
@@ -59,12 +60,8 @@ export const getProductos = async () => {
               variants(first: 20) {
                 edges {
                   node {
-                    id
-                    quantityAvailable
+                    id quantityAvailable
                     selectedOptions { name value }
-                    metafield(namespace: "custom", key: "color_hex") {
-                      value
-                    }
                   }
                 }
               }
@@ -93,12 +90,8 @@ export const getProductoById = async (handle) => {
           variants(first: 20) {
             edges {
               node {
-                id
-                quantityAvailable
+                id quantityAvailable
                 selectedOptions { name value }
-                metafield(namespace: "custom", key: "color_hex") {
-                  value
-                }
               }
             }
           }
@@ -113,16 +106,29 @@ export const getProductoById = async (handle) => {
   }
 };
 
-// ── Trae info del banner de categoría (sigue en Supabase)
+// ── Trae info del banner de categoría desde Shopify ───
 export const getCategoriaById = async (id) => {
   try {
-    const { data, error } = await supabase
-      .from('categorias')
-      .select('*')
-      .eq('id', id)
-      .single();
-    if (error) throw error;
-    return data;
+    const data = await shopifyFetch(`
+      query($handle: String!) {
+        collection(handle: $handle) {
+          title
+          description
+          image { url }
+        }
+      }
+    `, { handle: id });
+
+    if (!data.collection) return null;
+
+    const c = data.collection;
+    return {
+      id,
+      titulo1: c.title,
+      titulo2: '',
+      desc:    c.description,
+      heroImage: c.image?.url || '',
+    };
   } catch (err) {
     console.error(`❌ Error getCategoriaById ${id}:`, err);
     return null;
