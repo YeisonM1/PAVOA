@@ -23,14 +23,22 @@ const getAccessToken = async () => {
 
 // ── Crea un Draft Order en Shopify ─────────────────────────────
 const crearDraftOrder = async (token, { form, cartItems, cartTotal }) => {
-  const lineItems = cartItems.map(item => ({
-    variant_id: item.producto.variantId
-      ? Number(item.producto.variantId.replace('gid://shopify/ProductVariant/', ''))
-      : null,
-    title:    item.producto.nombre,
-    quantity: item.cantidad,
-    price: String(item.producto.precioNumerico ?? parseInt(String(item.producto.precio).replace(/[$,.]/g, ''), 10) ?? 0),
-  }));
+  const lineItems = cartItems.map(item => {
+    // ✏️ FIX 3: extraer correctamente el variant_id numérico
+    const rawId = item.producto.variantId || '';
+    const variantId = rawId.includes('gid://')
+      ? Number(rawId.split('/').pop())
+      : Number(rawId) || null;
+
+    return {
+      variant_id: variantId,
+      quantity:   item.cantidad,
+      price:      String(
+        item.producto.precioNumerico ??
+        parseInt(String(item.producto.precio).replace(/[$,.]/g, ''), 10) ?? 0
+      ),
+    };
+  });
 
   const nota = [
     `Horario de entrega: ${form.horario}`,
@@ -38,18 +46,35 @@ const crearDraftOrder = async (token, { form, cartItems, cartTotal }) => {
     `Barrio: ${form.barrio}`,
   ].filter(Boolean).join(' | ');
 
+  // ✏️ FIX 1: separar nombre en first/last para Shopify
+  const [firstName, ...rest] = form.nombre.trim().split(' ');
+  const lastName = rest.join(' ') || '-';
+
   const body = {
     draft_order: {
       line_items: lineItems,
+      // ✏️ FIX 2: agregar email y teléfono como información de contacto
+      phone: `+57${form.telefono.replace(/\D/g, '')}`,
       shipping_address: {
-        first_name: form.nombre,
-        phone:      form.telefono,
+        first_name: firstName,
+        last_name:  lastName,
+        phone:      `+57${form.telefono.replace(/\D/g, '')}`,
         address1:   form.direccion,
+        address2:   form.barrio,
         city:       form.ciudad,
         country:    'CO',
       },
-      note:   nota,
-      tags:   'pavoa-web,whatsapp',
+      billing_address: {
+        first_name: firstName,
+        last_name:  lastName,
+        phone:      `+57${form.telefono.replace(/\D/g, '')}`,
+        address1:   form.direccion,
+        address2:   form.barrio,
+        city:       form.ciudad,
+        country:    'CO',
+      },
+      note:         nota,
+      tags:         'pavoa-web,whatsapp',
       send_receipt: false,
     },
   };
