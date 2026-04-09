@@ -14,7 +14,7 @@ export default function ProductPage() {
   const [producto, setProducto]                   = useState(null);
   const [loading, setLoading]                     = useState(true);
   const [imagenActiva, setImagenActiva]           = useState(null);
-  const [fadeKey, setFadeKey]                     = useState(0); // ✅ para fade
+  const [fadeKey, setFadeKey]                     = useState(0);
   const [tallaSeleccionada, setTallaSeleccionada] = useState(null);
   const [colorSeleccionado, setColorSeleccionado] = useState(null);
   const [cantidad, setCantidad]                   = useState(1);
@@ -33,7 +33,6 @@ export default function ProductPage() {
     window.scrollTo(0, 0);
   }, [id]);
 
-  // ── VARIANTES ──────────────────────────────────────────────
   const variantes = useMemo(() => {
     if (!producto?.variantes) return [];
     try {
@@ -66,9 +65,7 @@ export default function ProductPage() {
 
   const esTallaUnica   = tallasDisponibles.length === 1 && tallasDisponibles[0] === 'ÚNICA';
   const tieneVariantes = variantes.length > 0;
-  // ──────────────────────────────────────────────────────────
 
-  // ✅ Cambio de imagen con fade
   const handleImageChange = (img) => {
     if (img === imagenActiva) return;
     setImagenActiva(img);
@@ -137,13 +134,12 @@ export default function ProductPage() {
         url={`/producto/${id}`}
       />
 
-      {/* ✅ pt mayor para separar del header */}
       <div className="flex flex-col lg:flex-row max-w-[1600px] mx-auto pt-[100px] md:pt-[120px]">
 
         {/* ── GALERÍA ── */}
         <div className="w-full lg:w-3/5 flex flex-row gap-3 lg:p-4">
 
-          {/* ✅ Thumbnails verticales a la izquierda — solo desktop */}
+          {/* Thumbnails verticales — solo desktop */}
           {imagenes.length > 1 && (
             <div className="hidden lg:flex flex-col gap-3 w-[72px] flex-shrink-0">
               {imagenes.map((img, i) => (
@@ -169,20 +165,22 @@ export default function ProductPage() {
             </div>
           )}
 
-          {/* ✅ Imagen principal con fade */}
-          <div className="flex-1 bg-stone-100 overflow-hidden relative" style={{ maxHeight: '60vh' }}>
-            <img  
+          {/* Imagen principal con fade */}
+          {/* ✏️ CAMBIO 1: bg-stone-100 → bg-[#f0ede9] (tono cálido sin gris frío) */}
+          {/* ✏️ CAMBIO 2: object-contain → object-cover (elimina bordes vacíos laterales) */}
+          <div className="flex-1 bg-[#f0ede9] overflow-hidden relative" style={{ maxHeight: '80vh' }}>
+            <img
               key={fadeKey}
               src={productImage(imagenActiva)}
               alt={producto.nombre}
               width={900} height={1200}
-              className="w-full h-full object-contain"
-              style={{ animation: 'fadeIn 0.4s ease', maxHeight: '60vh' }}
+              className="w-full h-full object-cover object-top"
+              style={{ animation: 'fadeIn 0.4s ease', maxHeight: '80vh' }}
             />
             <style>{`@keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }`}</style>
           </div>
 
-          {/* ✅ Thumbnails horizontales móvil — solo mobile */}
+          {/* Thumbnails horizontales — solo mobile */}
           {imagenes.length > 1 && (
             <div className="lg:hidden flex gap-3 overflow-x-auto pb-2 mt-3 w-full px-1">
               {imagenes.map((img, i) => (
@@ -205,7 +203,8 @@ export default function ProductPage() {
 
         {/* ── INFO ── */}
         <div className="w-full lg:w-2/5 px-6 py-12 lg:px-16 lg:py-16 relative">
-          <div className="lg:sticky lg:top-[120px]">
+          {/* ✏️ CAMBIO 3: eliminado lg:sticky lg:top-[120px] — el panel ahora fluye completo en laptops */}
+          <div>
 
             {/* Breadcrumb */}
             <nav aria-label="Ruta de navegación" className="mb-8">
