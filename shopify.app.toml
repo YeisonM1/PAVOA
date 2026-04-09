@@ -1,0 +1,13 @@
+name = "PAVOA Frontend"
+client_id = "f0023916de4703ab2416ab8a79db9192"
+application_url = "https://pavoa.vercel.app"
+embedded = false
+
+[access_scopes]
+scopes = "write_draft_orders,read_draft_orders"
+
+[auth]
+redirect_urls = ["https://pavoa.vercel.app/api/auth/callback"]
+
+[webhooks]
+api_version = "2026-04"

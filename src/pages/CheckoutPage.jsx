@@ -68,54 +68,65 @@ export default function CheckoutPage() {
     return nuevosErrores;
   };
 
-  const handleConfirmar = () => {
-    const nuevosErrores = validar();
-    if (Object.keys(nuevosErrores).length > 0) {
-      setErrors(nuevosErrores);
-      // Scroll al primer error
-      const primerError = document.querySelector('.error-field');
-      if (primerError) primerError.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      return;
-    }
+  
+const handleConfirmar = async () => {
+  const nuevosErrores = validar();
+  if (Object.keys(nuevosErrores).length > 0) {
+    setErrors(nuevosErrores);
+    const primerError = document.querySelector('.error-field');
+    if (primerError) primerError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    return;
+  }
 
-    setEnviando(true);
+  setEnviando(true);
 
-    // Construir mensaje WhatsApp
-    let mensaje = `Hola PAVOA, me gustaría confirmar mi pedido 🛍️\n\n`;
-    mensaje += `*DATOS DE ENVÍO*\n`;
-    mensaje += `───────────────\n`;
-    mensaje += `👤 Nombre: ${form.nombre}\n`;
-    mensaje += `📞 Teléfono: ${form.telefono}\n`;
-    mensaje += `🏙️ Ciudad: ${form.ciudad}\n`;
-    mensaje += `📍 Dirección: ${form.direccion}, ${form.barrio}\n`;
-    if (form.referencia) mensaje += `📌 Referencia: ${form.referencia}\n`;
-    mensaje += `🕐 Horario: ${form.horario}\n\n`;
-    mensaje += `*DETALLE DEL PEDIDO*\n`;
-    mensaje += `───────────────\n`;
-
-    cartItems.forEach((item, i) => {
-      const color = item.producto.colorSeleccionado
-        ? ` · Color: ${item.producto.colorSeleccionado}` : '';
-      mensaje += `${i + 1}. ${item.producto.nombre}\n`;
-      mensaje += `   Talla: ${item.talla}${color}\n`;
-      mensaje += `   Cantidad: ${item.cantidad}\n`;
-      mensaje += `   Precio: ${item.producto.precio}\n\n`;
+  // ── 1. Crear Draft Order en Shopify (silencioso, no bloquea) ──
+  try {
+    await fetch('/api/pedido', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ form, cartItems, cartTotal }),
     });
+  } catch (err) {
+    console.warn('Draft order no creado:', err);
+    // No bloqueamos — el cliente igual va a WhatsApp
+  }
 
-    mensaje += `───────────────\n`;
-    mensaje += `*Total estimado: $${cartTotal.toLocaleString('es-CO')}*\n\n`;
-    mensaje += `Quedo atenta a los pasos para confirmar el pago.`;
+  // ── 2. Construir mensaje WhatsApp (igual que antes) ──────────
+  let mensaje = `Hola PAVOA, me gustaría confirmar mi pedido 🛍️\n\n`;
+  mensaje += `*DATOS DE ENVÍO*\n`;
+  mensaje += `───────────────\n`;
+  mensaje += `👤 Nombre: ${form.nombre}\n`;
+  mensaje += `📞 Teléfono: ${form.telefono}\n`;
+  mensaje += `🏙️ Ciudad: ${form.ciudad}\n`;
+  mensaje += `📍 Dirección: ${form.direccion}, ${form.barrio}\n`;
+  if (form.referencia) mensaje += `📌 Referencia: ${form.referencia}\n`;
+  mensaje += `🕐 Horario: ${form.horario}\n\n`;
+  mensaje += `*DETALLE DEL PEDIDO*\n`;
+  mensaje += `───────────────\n`;
 
-    setTimeout(() => {
-    console.log('Número WhatsApp:', NUMERO_WHATSAPP);
-      window.open(
-        `https://wa.me/${NUMERO_WHATSAPP}?text=${encodeURIComponent(mensaje)}`,
-        '_blank'
-      );
-      setEnviando(false);
-      navigate('/');
-    }, 600);
-  };
+  cartItems.forEach((item, i) => {
+    const color = item.producto.colorSeleccionado
+      ? ` · Color: ${item.producto.colorSeleccionado}` : '';
+    mensaje += `${i + 1}. ${item.producto.nombre}\n`;
+    mensaje += `   Talla: ${item.talla}${color}\n`;
+    mensaje += `   Cantidad: ${item.cantidad}\n`;
+    mensaje += `   Precio: ${item.producto.precio}\n\n`;
+  });
+
+  mensaje += `───────────────\n`;
+  mensaje += `*Total estimado: $${cartTotal.toLocaleString('es-CO')}*\n\n`;
+  mensaje += `Quedo atenta a los pasos para confirmar el pago.`;
+
+  setTimeout(() => {
+    window.open(
+      `https://wa.me/${NUMERO_WHATSAPP}?text=${encodeURIComponent(mensaje)}`,
+      '_blank'
+    );
+    setEnviando(false);
+    navigate('/');
+  }, 600);
+};
 
   return (
     <div className="min-h-screen bg-white pt-[88px] md:pt-[104px]">
