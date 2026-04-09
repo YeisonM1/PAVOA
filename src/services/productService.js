@@ -146,3 +146,40 @@ export const enviarContacto = async ({ nombre, contacto, asunto, mensaje }) => {
     return false;
   }
 };
+
+// ── Trae los slides del Hero desde Shopify Metaobjects ─
+export const getHeroSlides = async () => {
+  try {
+    const data = await shopifyFetch(`
+      query {
+        metaobjects(type: "hero_slide", first: 10) {
+          edges {
+            node {
+              id
+              fields {
+                key
+                value
+              }
+            }
+          }
+        }
+      }
+    `);
+
+    return data.metaobjects.edges.map(({ node }, index) => {
+      const get = (key) => node.fields.find(f => f.key === key)?.value || '';
+      return {
+        id:       index + 1,
+        image:    get('imagen'),
+        tag:      get('tag'),
+        headline: get('headline').split('|'),
+        sub:      get('subtitulo'),
+        cta:      get('cta_texto'),
+        href:     get('cta_link'),
+      };
+    });
+  } catch (err) {
+    console.error('❌ Error getHeroSlides:', err);
+    return [];
+  }
+};
