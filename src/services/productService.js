@@ -224,3 +224,39 @@ export const getCategoriasDestacadas = async () => {
     return {};
   }
 };
+
+// ── Trae el announcement bar desde Shopify Metaobjects ─
+export const getAnnouncementBar = async () => {
+  try {
+    const data = await shopifyFetch(`
+      query {
+        metaobjects(type: "announcement_bar", first: 1) {
+          edges {
+            node {
+              fields {
+                key
+                value
+              }
+            }
+          }
+        }
+      }
+    `);
+
+    const node = data.metaobjects.edges[0]?.node;
+    if (!node) return null;
+
+    const get = (key) => node.fields.find(f => f.key === key)?.value || '';
+    const activo = get('activo');
+    if (activo === 'false') return null;
+
+    return [
+      get('mensaje_1'),
+      get('mensaje_2'),
+      get('mensaje_3'),
+    ].filter(Boolean);
+  } catch (err) {
+    console.error('❌ Error getAnnouncementBar:', err);
+    return null;
+  }
+};

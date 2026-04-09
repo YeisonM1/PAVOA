@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { useEffect, Suspense, lazy, useState } from 'react';
 import { CartProvider, CartContext } from './context/CartContext';
+import AnnouncementBar from './sections/AnnouncementBar';
 
 import Header from './sections/Header';
 import Footer from './sections/Footer';
@@ -11,6 +12,7 @@ const ProductPage   = lazy(() => import('./pages/ProductPage'));
 const ContactPage   = lazy(() => import('./pages/ContactPage'));
 const CheckoutPage  = lazy(() => import('./pages/CheckoutPage'));
 const NotFoundPage  = lazy(() => import('./pages/NotFoundPage'));
+
 
 export { CartContext };
 
@@ -78,6 +80,7 @@ function AppShell() {
     <Router>
       <ScrollToTop />
       <div className="min-h-screen bg-white font-sans flex flex-col relative">
+        <AnnouncementBar />
         <Header />
 
         <div className="flex-grow">
