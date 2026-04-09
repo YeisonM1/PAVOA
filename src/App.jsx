@@ -10,6 +10,7 @@ const CategoriaPage = lazy(() => import('./pages/CategoriaPage'));
 const ProductPage   = lazy(() => import('./pages/ProductPage'));
 const ContactPage   = lazy(() => import('./pages/ContactPage'));
 const CheckoutPage  = lazy(() => import('./pages/CheckoutPage'));
+const NotFoundPage  = lazy(() => import('./pages/NotFoundPage'));
 
 export { CartContext };
 
@@ -94,6 +95,7 @@ function AppShell() {
               <Route path="/producto/:id"  element={<ProductPage />} />
               <Route path="/contacto"      element={<ContactPage />} />
               <Route path="/checkout"      element={<CheckoutPage />} />
+              <Route path="*" element={<NotFoundPage />} />
             </Routes>
           </Suspense>
         </div>
