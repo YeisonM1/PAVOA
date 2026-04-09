@@ -205,8 +205,8 @@ const Header = () => {
                   <span style={{
                     display: 'inline-block', width: 7, height: 7,
                     borderRight: '1.5px solid #3E2723', borderBottom: '1.5px solid #3E2723',
-                    transform: catalogoOpen ? 'rotate(-135deg)' : 'rotate(45deg)',
-                    marginTop: catalogoOpen ? '3px' : '-2px', transition: 'transform 0.3s ease, margin-top 0.3s ease',
+                    transform: catalogoOpen ? 'rotate(-135deg)' : 'rotate(45deg)', 
+                    transition: 'transform 0.3s ease',
                   }} />
                 </button>
               </div>
