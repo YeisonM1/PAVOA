@@ -24,8 +24,12 @@ const getAccessToken = async () => {
 // ── Crea un Draft Order en Shopify ─────────────────────────────
 const crearDraftOrder = async (token, { form, cartItems, cartTotal }) => {
   const lineItems = cartItems.map(item => {
-    // ✏️ FIX 3: extraer correctamente el variant_id numérico
-    const rawId = item.producto.variantId || '';
+    // ✏️ FIX imagen: buscar la variante correcta por talla + color
+    const matchingVariant = item.producto.variantes?.find(v =>
+      v.talla === item.talla &&
+      v.color === item.producto.colorSeleccionado
+    );
+    const rawId = matchingVariant?.variantId || '';
     const variantId = rawId.includes('gid://')
       ? Number(rawId.split('/').pop())
       : Number(rawId) || null;
@@ -51,15 +55,17 @@ const crearDraftOrder = async (token, { form, cartItems, cartTotal }) => {
   const [firstName, ...rest] = form.nombre.trim().split(' ');
   const lastName = rest.join(' ') || '-';
 
+  const telFormateado = `+57${form.telefono.replace(/\D/g, '')}`;
+
   const body = {
     draft_order: {
       line_items: lineItems,
-      // ✏️ FIX 2: agregar email y teléfono como información de contacto
-      phone: `+57${form.telefono.replace(/\D/g, '')}`,
+      // ✏️ FIX contacto: phone a nivel del draft order
+      phone:        telFormateado,
       shipping_address: {
         first_name: firstName,
         last_name:  lastName,
-        phone:      `+57${form.telefono.replace(/\D/g, '')}`,
+        phone:      telFormateado,
         address1:   form.direccion,
         address2:   form.barrio,
         city:       form.ciudad,
@@ -68,7 +74,7 @@ const crearDraftOrder = async (token, { form, cartItems, cartTotal }) => {
       billing_address: {
         first_name: firstName,
         last_name:  lastName,
-        phone:      `+57${form.telefono.replace(/\D/g, '')}`,
+        phone:      telFormateado,
         address1:   form.direccion,
         address2:   form.barrio,
         city:       form.ciudad,
