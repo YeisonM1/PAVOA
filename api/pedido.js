@@ -62,6 +62,7 @@ const crearDraftOrder = async (token, { form, cartItems, cartTotal }) => {
       line_items: lineItems,
       // ✏️ FIX contacto: phone a nivel del draft order
       phone:        telFormateado,
+      email:        form.email || undefined,
       shipping_address: {
         first_name: firstName,
         last_name:  lastName,
