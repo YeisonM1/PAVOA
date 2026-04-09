@@ -168,13 +168,13 @@ export default function ProductPage() {
           {/* Imagen principal con fade */}
           {/* ✏️ CAMBIO 1: bg-stone-100 → bg-[#f0ede9] (tono cálido sin gris frío) */}
           {/* ✏️ CAMBIO 2: object-contain → object-cover (elimina bordes vacíos laterales) */}
-          <div className="flex-1 bg-[#f0ede9] overflow-hidden relative" style={{ maxHeight: '80vh' }}>
+          <div className="flex-1 bg-[#f0ede9] overflow-hidden relative" style={{ aspectRatio: '3/4', maxHeight: '80vh' }}>
             <img
               key={fadeKey}
               src={productImage(imagenActiva)}
               alt={producto.nombre}
               width={900} height={1200}
-              className="w-full h-full object-cover object-top"
+              className="w-full h-full object-contain"
               style={{ animation: 'fadeIn 0.4s ease', maxHeight: '80vh' }}
             />
             <style>{`@keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }`}</style>
