@@ -31,7 +31,8 @@ const crearDraftOrder = async (token, { form, cartItems, cartTotal }) => {
       : Number(rawId) || null;
 
     return {
-      variant_id: variantId,
+      variant_id: variantId || undefined,
+      title:      item.producto.nombre,
       quantity:   item.cantidad,
       price:      String(
         item.producto.precioNumerico ??
