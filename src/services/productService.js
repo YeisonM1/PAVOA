@@ -38,6 +38,7 @@ const mapProducto = (node) => {
     nombre:      node.title,
     descripcion: node.description,
     precio:      `$${Number(node.priceRange.minVariantPrice.amount).toLocaleString('es-CO')}`,
+    precioNumerico: Number(node.priceRange.minVariantPrice.amount),
     imagen1:     node.images.edges[0]?.node.url || '',
     imagen2:     node.images.edges[1]?.node.url || '',
     categoria:   node.productType?.toLowerCase() || '',

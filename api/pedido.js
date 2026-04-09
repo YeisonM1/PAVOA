@@ -29,7 +29,7 @@ const crearDraftOrder = async (token, { form, cartItems, cartTotal }) => {
       : null,
     title:    item.producto.nombre,
     quantity: item.cantidad,
-    price:    String(item.producto.precioNumerico || 0),
+    price: String(item.producto.precioNumerico ?? parseInt(String(item.producto.precio).replace(/[$,.]/g, ''), 10) ?? 0),
   }));
 
   const nota = [
