@@ -1,36 +1,38 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { categoryImage } from '../utils/imageUrl';
+import { getCategoriasDestacadas } from '../services/productService';
 
-const categorias = {
+// ── Fallback hardcodeado por si Shopify falla ──────────
+const CATEGORIAS_FALLBACK = {
   protagonista: {
     id: 1,
     nombre: 'Sets Completos',
     desc: 'La colección definitiva',
-    href: '/categoria/sets-completos', // ── NUEVO: Ruta específica
-    image: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=500&q=70&fm=webp&auto=format', 
+    href: '/categoria/sets-completos',
+    image: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=500&q=70&fm=webp&auto=format',
   },
   superior: {
     id: 2,
     nombre: 'Tops & Superior',
     desc: 'Soporte y diseño',
-    href: '/categoria/superior', // ── NUEVO: Ruta específica
+    href: '/categoria/superior',
     image: 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=500&q=70&fm=webp&auto=format',
   },
   nicho1: {
     id: 3,
     nombre: 'Movimiento',
     desc: 'Libertad sin límites',
-    href: '/categoria/movimiento', // ── NUEVO: Ruta específica
+    href: '/categoria/movimiento',
     image: 'https://images.unsplash.com/photo-1538805060514-97d9cc17730c?w=400&q=70&fm=webp&auto=format',
   },
   nicho2: {
     id: 4,
     nombre: 'Accesorios',
     desc: 'El toque final',
-    href: '/categoria/accesorios', // ── NUEVO: Ruta específica
+    href: '/categoria/accesorios',
     image: 'https://images.unsplash.com/photo-1611085583191-a3b181a88401?w=400&q=70&fm=webp&auto=format',
-  }
+  },
 };
 
 const CategoriaCard = ({ cat, className, delay = 0 }) => {
@@ -41,19 +43,13 @@ const CategoriaCard = ({ cat, className, delay = 0 }) => {
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
-          setTimeout(() => {
-            setIsVisible(true);
-          }, delay);
-          observer.disconnect(); 
+          setTimeout(() => setIsVisible(true), delay);
+          observer.disconnect();
         }
       },
       { threshold: 0.15 }
     );
-
-    if (cardRef.current) {
-      observer.observe(cardRef.current);
-    }
-
+    if (cardRef.current) observer.observe(cardRef.current);
     return () => observer.disconnect();
   }, [delay]);
 
@@ -79,32 +75,26 @@ const CategoriaCard = ({ cat, className, delay = 0 }) => {
       <div className="absolute inset-0 bg-black/0 md:group-hover:bg-black/10 transition-colors duration-500" />
 
       <div className="absolute bottom-0 left-0 p-6 md:p-8 flex flex-col justify-end w-full z-20">
-        <p
-                   className={`text-[9px] font-medium text-white/80 uppercase tracking-[0.25em] mb-1 
-            ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}
-            md:transform md:translate-y-2 md:opacity-0 md:group-hover:translate-y-0 md:group-hover:opacity-100 
-            transition-all duration-700 delay-300 md:delay-0
-          `}
+        <p className={`text-[9px] font-medium text-white/80 uppercase tracking-[0.25em] mb-1 
+          ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}
+          md:transform md:translate-y-2 md:opacity-0 md:group-hover:translate-y-0 md:group-hover:opacity-100 
+          transition-all duration-700 delay-300 md:delay-0`}
         >
           {cat.desc}
         </p>
-        
         <div className="flex items-end justify-between">
-          <h3
-                       className={`text-lg md:text-xl font-medium text-white uppercase tracking-[0.15em]
-              ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}
-              md:!opacity-100 md:!translate-y-0
-              transition-all duration-700 delay-[400ms] md:delay-0
-            `}
+          <h3 className={`text-lg md:text-xl font-medium text-white uppercase tracking-[0.15em]
+            ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}
+            md:!opacity-100 md:!translate-y-0
+            transition-all duration-700 delay-[400ms] md:delay-0`}
           >
             {cat.nombre}
           </h3>
-          
           <span className={`text-white transform md:group-hover:translate-x-2
             ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4'}
             md:!opacity-100 md:!translate-x-0
-            transition-all duration-700 delay-[500ms] md:delay-0
-          `}>
+            transition-all duration-700 delay-[500ms] md:delay-0`}
+          >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
               <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
@@ -116,21 +106,26 @@ const CategoriaCard = ({ cat, className, delay = 0 }) => {
 };
 
 export default function Categorias() {
+  const [categorias, setCategorias] = useState(CATEGORIAS_FALLBACK);
+
+  useEffect(() => {
+    getCategoriasDestacadas().then(data => {
+      if (Object.keys(data).length > 0) setCategorias(data);
+    });
+  }, []);
+
   return (
     <section className="w-full bg-stone-50 py-20 md:py-24 px-6 md:px-12 lg:px-16 overflow-hidden">
       
       <div className="max-w-[1400px] mx-auto mb-10 md:mb-12 flex items-end justify-between border-b border-stone-200 pb-6">
         <div className="flex flex-col gap-1">
-          <span  className="text-[9px] text-stone-500 tracking-[0.3em] uppercase font-medium">
+          <span className="text-[9px] text-stone-500 tracking-[0.3em] uppercase font-medium">
             Descubre tu estilo
           </span>
-          <h2
-                       className="text-lg md:text-xl font-light text-stone-900 tracking-[0.2em] uppercase"
-          >
+          <h2 className="text-lg md:text-xl font-light text-stone-900 tracking-[0.2em] uppercase">
             DISEÑADO <strong className="font-bold">PARA TI</strong>
           </h2>
         </div>
-        
         <Link
           to="/categoria"
           onClick={() => window.scrollTo(0, 0)}
@@ -143,17 +138,13 @@ export default function Categorias() {
       </div>
 
       <div className="max-w-[1400px] mx-auto grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6">
-        
         <div className="h-[55vh] md:h-[75vh]">
           <CategoriaCard cat={categorias.protagonista} className="w-full h-full" delay={0} />
         </div>
-
         <div className="flex flex-col gap-4 lg:gap-6">
           <div className="h-[35vh] md:h-[calc(37.5vh-0.75rem)] w-full">
             <CategoriaCard cat={categorias.superior} className="w-full h-full" delay={0} />
           </div>
-
-          {/* El gap-6 que ajustamos para el celular */}
           <div className="h-[35vh] md:h-[calc(37.5vh-0.75rem)] w-full grid grid-cols-2 gap-6 lg:gap-6">
             <CategoriaCard cat={categorias.nicho1} className="w-full h-full" delay={0} />
             <CategoriaCard cat={categorias.nicho2} className="w-full h-full" delay={150} />

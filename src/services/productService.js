@@ -183,3 +183,44 @@ export const getHeroSlides = async () => {
     return [];
   }
 };
+
+// ── Trae las categorías destacadas desde Shopify Metaobjects ─
+export const getCategoriasDestacadas = async () => {
+  try {
+    const data = await shopifyFetch(`
+      query {
+        metaobjects(type: "categoria_destacada", first: 10) {
+          edges {
+            node {
+              id
+              fields {
+                key
+                value
+              }
+            }
+          }
+        }
+      }
+    `);
+
+    const result = {};
+    data.metaobjects.edges.forEach(({ node }, index) => {
+      const get = (key) => node.fields.find(f => f.key === key)?.value || '';
+      const posicion = get('posicion');
+      if (posicion) {
+        result[posicion] = {
+          id:     index + 1,
+          nombre: get('nombre'),
+          desc:   get('descripcion'),
+          href:   get('href'),
+          image:  get('imagen'),
+        };
+      }
+    });
+
+    return result;
+  } catch (err) {
+    console.error('❌ Error getCategoriasDestacadas:', err);
+    return {};
+  }
+};
