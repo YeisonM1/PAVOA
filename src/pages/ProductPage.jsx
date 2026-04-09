@@ -174,7 +174,7 @@ export default function ProductPage() {
               src={productImage(imagenActiva)}
               alt={producto.nombre}
               width={900} height={1200}
-              className="w-full h-full object-contain"
+              className="w-full h-full object-cover"
               style={{ animation: 'fadeIn 0.4s ease', maxHeight: '80vh' }}
             />
             <style>{`@keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }`}</style>
