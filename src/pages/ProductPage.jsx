@@ -122,7 +122,7 @@ export default function ProductPage() {
 
   const imagenes = [producto.imagen1, producto.imagen2].filter(Boolean);
   const detallesArray = producto.detalles
-    ? producto.detalles.split(',')
+    ? producto.detalles.split(';')
     : ['Diseño exclusivo PAVOA', 'Material de alta compresión'];
   const cuidadosTexto = producto.cuidados || null;
 
