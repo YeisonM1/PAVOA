@@ -78,7 +78,7 @@ export default function ContactPage() {
       />
 
       {/* ── HERO ── */}
-      <section className="w-full pt-[120px] md:pt-[140px] pb-8 md:pb-12 px-6 border-b border-stone-100"
+      <section className="w-full pt-[140px] md:pt-[160px] pb-8 md:pb-12 px-6 border-b border-stone-100"
         style={{ background: 'var(--color-ivory)' }}>
         <div className="max-w-[1400px] mx-auto">
           <nav className="mb-8">
