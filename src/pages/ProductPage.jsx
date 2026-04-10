@@ -18,6 +18,8 @@ export default function ProductPage() {
   const [cantidad, setCantidad]                   = useState(1);
   const [adding, setAdding]                       = useState(false);
   const [openAccordion, setOpenAccordion]         = useState('detalles');
+  const [selectedImage, setSelectedImage]         = useState(0);
+  const [isTransitioning, setIsTransitioning]     = useState(false);
 
   useEffect(() => {
     const cargarProducto = async () => {
@@ -28,6 +30,11 @@ export default function ProductPage() {
     };
     cargarProducto();
     window.scrollTo(0, 0);
+  }, [id]);
+
+  // Resetear imagen seleccionada al cambiar de producto
+  useEffect(() => {
+    setSelectedImage(0);
   }, [id]);
 
   const variantes = useMemo(() => {
@@ -90,6 +97,15 @@ export default function ProductPage() {
     }, 1000);
   };
 
+  const handleSelectImage = (i) => {
+    if (i === selectedImage) return;
+    setIsTransitioning(true);
+    setTimeout(() => {
+      setSelectedImage(i);
+      setIsTransitioning(false);
+    }, 300);
+  };
+
   const toggleAccordion = (s) => setOpenAccordion(openAccordion === s ? null : s);
   const incrementar = () => setCantidad(c => c + 1);
   const decrementar = () => setCantidad(c => Math.max(1, c - 1));
@@ -125,10 +141,67 @@ export default function ProductPage() {
         url={`/producto/${id}`}
       />
 
-      <div className="flex flex-col lg:flex-row max-w-[1600px] mx-auto pt-[100px] md:pt-[120px]">
+      <div className="flex flex-col lg:flex-row max-w-[1600px] mx-auto pt-[115px] md:pt-[120px]">
 
-        {/* ── GALERÍA — imágenes apiladas verticalmente ── */}
-        <div className="w-full lg:w-3/5 flex flex-col gap-2 lg:p-4 lg:pt-[36px]">
+        {/* ─────────────────────────────────────────
+            GALERÍA MOBILE  (lg:hidden)
+            Hero + strip de thumbnails
+        ───────────────────────────────────────── */}
+        <div className="lg:hidden w-full flex flex-col px-5 pt-6">
+
+          {/* Imagen principal */}
+          <div className="w-full">
+            <div className="w-full overflow-hidden rounded-sm" style={{ aspectRatio: '3/4' }}>
+              <img
+                key={selectedImage}
+                src={productImage(imagenes[selectedImage])}
+                alt={`${producto.nombre} vista ${selectedImage + 1}`}
+                width={900}
+                height={1200}
+                className="w-full h-full object-cover object-top block"
+                loading="eager"
+                style={{
+                  transition: 'opacity 0.4s ease, transform 0.4s ease',
+                  opacity: isTransitioning ? 0 : 1,
+                  transform: isTransitioning ? 'scale(1.03)' : 'scale(1)',
+                }}
+              />
+            </div>
+          </div>
+
+          {/* Strip de thumbnails — solo si hay más de 1 imagen */}
+          {imagenes.length > 1 && (
+            <div className="flex gap-3 pt-4 pb-2">
+              {imagenes.map((img, i) => (
+                <button
+                  key={i}
+                  onClick={() => handleSelectImage(i)}
+                  aria-label={`Ver imagen ${i + 1}`}
+                  className={`flex-shrink-0 w-[72px] h-[90px] overflow-hidden rounded-sm transition-all duration-200 ${
+                    selectedImage === i
+                      ? 'ring-1 ring-stone-900 ring-offset-2'
+                      : 'opacity-50 hover:opacity-80'
+                  }`}
+                >
+                  <img
+                    src={productImage(img)}
+                    alt={`${producto.nombre} miniatura ${i + 1}`}
+                    width={144}
+                    height={180}
+                    className="w-full h-full object-cover"
+                    loading="lazy"
+                  />
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* ─────────────────────────────────────────
+            GALERÍA DESKTOP  (hidden lg:flex)
+            Imágenes apiladas — sin cambios
+        ───────────────────────────────────────── */}
+        <div className="hidden lg:flex w-full lg:w-3/5 flex-col gap-2 lg:p-4 lg:pt-[36px]">
           {imagenes.map((img, i) => (
             <div key={i} className="w-full overflow-hidden">
               <img
@@ -143,7 +216,7 @@ export default function ProductPage() {
           ))}
         </div>
 
-        {/* ── INFO ── */}
+        {/* ── INFO — sin ningún cambio ── */}
         <div className="w-full lg:w-2/5 px-6 py-12 lg:px-16 lg:py-16 relative">
           <div className="lg:sticky lg:top-[160px]">
 

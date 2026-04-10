@@ -418,7 +418,7 @@ const Header = () => {
         }`}
       >
         {/* Panel principal */}
-        <div className={`absolute inset-0 pt-24 px-8 transition-transform duration-500 ease-[cubic-bezier(0.4,0,0.2,1)] ${mobileCatalogoOpen ? '-translate-x-full' : 'translate-x-0'}`}>
+        <div className={`absolute inset-0 pt-32 px-8 transition-transform duration-500 ease-[cubic-bezier(0.4,0,0.2,1)] ${mobileCatalogoOpen ? '-translate-x-full' : 'translate-x-0'}`}>
           <nav className="flex flex-col text-[13px] font-medium tracking-[0.2em] text-stone-900">
             <Link 
               to="/" 
@@ -451,7 +451,7 @@ const Header = () => {
 
         {/* Panel catálogo */}
         <div 
-          className={`absolute inset-0 pt-24 px-6 transition-transform duration-500 ease-[cubic-bezier(0.4,0,0.2,1)] overflow-y-auto pb-12 ${mobileCatalogoOpen ? 'translate-x-0' : 'translate-x-full'}`}
+          className={`absolute inset-0 pt-32 px-6 transition-transform duration-500 ease-[cubic-bezier(0.4,0,0.2,1)] overflow-y-auto pb-12 ${mobileCatalogoOpen ? 'translate-x-0' : 'translate-x-full'}`}
           style={{ background: 'var(--color-bg)' }}
         >
           <button 
