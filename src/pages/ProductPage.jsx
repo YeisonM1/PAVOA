@@ -1,25 +1,28 @@
-import React, { useState, useContext, useEffect, useMemo } from 'react';
+import React, { useState, useContext, useEffect, useMemo, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { Plus, Minus } from 'lucide-react';
+import { Plus, Minus, ChevronLeft, ChevronRight, X, Maximize2 } from 'lucide-react';
 import { CartContext } from '../App';
 import CrossSelling from '../sections/CrossSelling';
 import { getProductoById } from '../services/productService';
 import SEO from '../components/SEO';
-import { productImage } from '../utils/imageUrl';
+import { productImage, heroImage, thumbImage } from '../utils/imageUrl';
 
 export default function ProductPage() {
   const { id } = useParams();
   const { addToCart } = useContext(CartContext);
 
-  const [producto, setProducto]                   = useState(null);
-  const [loading, setLoading]                     = useState(true);
+  const [producto, setProducto]               = useState(null);
+  const [loading, setLoading]                 = useState(true);
   const [tallaSeleccionada, setTallaSeleccionada] = useState(null);
   const [colorSeleccionado, setColorSeleccionado] = useState(null);
-  const [cantidad, setCantidad]                   = useState(1);
-  const [adding, setAdding]                       = useState(false);
-  const [openAccordion, setOpenAccordion]         = useState('detalles');
-  const [selectedImage, setSelectedImage]         = useState(0);
-  const [isTransitioning, setIsTransitioning]     = useState(false);
+  const [cantidad, setCantidad]               = useState(1);
+  const [adding, setAdding]                   = useState(false);
+  const [openAccordion, setOpenAccordion]     = useState('detalles');
+  const [selectedImage, setSelectedImage]     = useState(0);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const [isLightboxOpen, setIsLightboxOpen]   = useState(false);
+  const [lbFading, setLbFading]               = useState(false);
+  const touchStartX                           = useRef(null);
 
   useEffect(() => {
     const cargarProducto = async () => {
@@ -34,7 +37,29 @@ export default function ProductPage() {
 
   useEffect(() => {
     setSelectedImage(0);
+    setIsLightboxOpen(false);
   }, [id]);
+
+  useEffect(() => {
+    if (!isLightboxOpen) return;
+    const total = imagenes.length;
+    const onKey = (e) => {
+      if (e.key === 'Escape')     setIsLightboxOpen(false);
+      if (e.key === 'ArrowRight') setSelectedImage(i => (i + 1) % total);
+      if (e.key === 'ArrowLeft')  setSelectedImage(i => (i - 1 + total) % total);
+    };
+    document.addEventListener('keydown', onKey);
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.removeEventListener('keydown', onKey);
+      document.body.style.overflow = '';
+    };
+  }, [isLightboxOpen]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const imagenes = useMemo(() => {
+    if (!producto) return [];
+    return [producto.imagen1, producto.imagen2, producto.imagen3, producto.imagen4].filter(Boolean);
+  }, [producto]);
 
   const variantes = useMemo(() => {
     if (!producto?.variantes) return [];
@@ -99,10 +124,29 @@ export default function ProductPage() {
   const handleSelectImage = (i) => {
     if (i === selectedImage) return;
     setIsTransitioning(true);
+    setTimeout(() => { setSelectedImage(i); setIsTransitioning(false); }, 300);
+  };
+
+  const lbNav = (dir) => {
+    setLbFading(true);
     setTimeout(() => {
-      setSelectedImage(i);
-      setIsTransitioning(false);
-    }, 300);
+      setSelectedImage(i => (i + dir + imagenes.length) % imagenes.length);
+      setLbFading(false);
+    }, 180);
+  };
+
+  const lbGoTo = (i) => {
+    if (i === selectedImage) return;
+    setLbFading(true);
+    setTimeout(() => { setSelectedImage(i); setLbFading(false); }, 180);
+  };
+
+  const handleTouchStart = (e) => { touchStartX.current = e.touches[0].clientX; };
+  const handleTouchEnd   = (e) => {
+    if (touchStartX.current === null) return;
+    const diff = touchStartX.current - e.changedTouches[0].clientX;
+    if (Math.abs(diff) > 50) lbNav(diff > 0 ? 1 : -1);
+    touchStartX.current = null;
   };
 
   const toggleAccordion = (s) => setOpenAccordion(openAccordion === s ? null : s);
@@ -126,11 +170,16 @@ export default function ProductPage() {
     );
   }
 
-  const imagenes = [producto.imagen1, producto.imagen2, producto.imagen3, producto.imagen4].filter(Boolean);
   const detallesArray = producto.detalles
     ? producto.detalles.split(';')
     : ['Diseño exclusivo PAVOA', 'Material de alta compresión'];
   const cuidadosTexto = producto.cuidados || null;
+
+  const mainImgStyle = {
+    transition: 'opacity 0.4s ease, transform 0.4s ease',
+    opacity:   isTransitioning ? 0 : 1,
+    transform: isTransitioning ? 'scale(1.03)' : 'scale(1)',
+  };
 
   return (
     <div className="min-h-screen bg-white">
@@ -140,34 +189,30 @@ export default function ProductPage() {
         url={`/producto/${id}`}
       />
 
-      <div className="flex flex-col lg:flex-row max-w-[1600px] mx-auto pt-[115px] md:pt-[120px]">
+      <div className="flex flex-col md:flex-row max-w-[1600px] mx-auto pt-[115px] md:pt-[120px]">
 
-        {/* ─────────────────────────────────────────
-            GALERÍA MOBILE  (lg:hidden)
-            Hero + strip de thumbnails
-        ───────────────────────────────────────── */}
-        <div className="lg:hidden w-full flex flex-col px-5 pt-6">
-
-          {/* Imagen principal */}
-          <div className="w-full">
+        {/* ── GALERÍA MOBILE ── */}
+        <div className="md:hidden w-full flex flex-col px-5 pt-6">
+          <div
+            className="w-full relative group cursor-zoom-in"
+            onClick={() => setIsLightboxOpen(true)}
+          >
             <div className="w-full overflow-hidden rounded-sm" style={{ aspectRatio: '3/4' }}>
               <img
-                src={productImage(imagenes[selectedImage])}
+                src={heroImage(imagenes[selectedImage])}
                 alt={`${producto.nombre} vista ${selectedImage + 1}`}
-                width={900}
-                height={1200}
+                width={900} height={1200}
                 className="w-full h-full object-cover object-top block"
                 loading="eager"
-                style={{
-                  transition: 'opacity 0.4s ease, transform 0.4s ease',
-                  opacity: isTransitioning ? 0 : 1,
-                  transform: isTransitioning ? 'scale(1.03)' : 'scale(1)',
-                }}
+                style={mainImgStyle}
               />
+            </div>
+            <div className="absolute bottom-3 right-3 flex items-center gap-1 bg-black/40 px-2 py-1 pointer-events-none">
+              <Maximize2 size={9} className="text-white/70" />
+              <span className="text-[7.5px] tracking-[0.18em] text-white/70 font-medium">AMPLIAR</span>
             </div>
           </div>
 
-          {/* Strip de thumbnails — solo si hay más de 1 imagen */}
           {imagenes.length > 1 && (
             <div className="flex gap-3 pt-4 pb-2">
               {imagenes.map((img, i) => (
@@ -176,16 +221,13 @@ export default function ProductPage() {
                   onClick={() => handleSelectImage(i)}
                   aria-label={`Ver imagen ${i + 1}`}
                   className={`flex-shrink-0 w-[72px] h-[90px] overflow-hidden rounded-sm transition-all duration-200 ${
-                    selectedImage === i
-                      ? 'ring-1 ring-stone-900 ring-offset-2'
-                      : 'opacity-40 hover:opacity-70'
+                    selectedImage === i ? 'ring-1 ring-stone-900 ring-offset-2' : 'opacity-40 hover:opacity-70'
                   }`}
                 >
                   <img
                     src={productImage(img)}
                     alt={`${producto.nombre} miniatura ${i + 1}`}
-                    width={144}
-                    height={180}
+                    width={144} height={180}
                     className="w-full h-full object-cover object-top"
                     loading="lazy"
                   />
@@ -195,34 +237,27 @@ export default function ProductPage() {
           )}
         </div>
 
-        {/* ─────────────────────────────────────────
-            GALERÍA DESKTOP  (hidden lg:flex)
-            Thumbnails verticales izquierda + imagen principal
-        ───────────────────────────────────────── */}
+        {/* ── GALERÍA DESKTOP ── */}
         <div
-          className="hidden lg:flex lg:w-3/5 gap-3 self-start"
-          style={{ position: 'sticky', top: '120px', padding: '40px 20px 40px 40px' }}
+          className="hidden md:flex md:w-3/5 gap-3 self-start"
+          style={{ position: 'sticky', top: '120px', padding: '40px 20px 60px 40px' }}
         >
-          {/* Columna de thumbnails — solo si hay más de 1 imagen */}
           {imagenes.length > 1 && (
-            <div className="flex flex-col gap-2 flex-shrink-0" style={{ width: 72 }}>
+            <div className="flex flex-col gap-2 flex-shrink-0" style={{ width: 88 }}>
               {imagenes.map((img, i) => (
                 <button
                   key={i}
                   onClick={() => handleSelectImage(i)}
                   aria-label={`Ver imagen ${i + 1}`}
-                  style={{ aspectRatio: '3/4', width: 72 }}
+                  style={{ aspectRatio: '3/4', width: 88 }}
                   className={`overflow-hidden rounded-sm flex-shrink-0 transition-all duration-200 ${
-                    selectedImage === i
-                      ? 'ring-1 ring-stone-900 ring-offset-1 opacity-100'
-                      : 'opacity-35 hover:opacity-70'
+                    selectedImage === i ? 'ring-1 ring-stone-900 ring-offset-1 opacity-100' : 'opacity-35 hover:opacity-70'
                   }`}
                 >
                   <img
-                    src={productImage(img)}
+                    src={thumbImage(img)}
                     alt={`${producto.nombre} miniatura ${i + 1}`}
-                    width={144}
-                    height={192}
+                    width={264} height={352}
                     className="w-full h-full object-cover object-top"
                     loading="lazy"
                   />
@@ -231,35 +266,31 @@ export default function ProductPage() {
             </div>
           )}
 
-          {/* Imagen principal */}
           <div
-            className="flex-1 overflow-hidden rounded-sm"
+            className="relative flex-1 overflow-hidden rounded-sm group cursor-zoom-in"
             style={{ maxHeight: '78vh' }}
+            onClick={() => setIsLightboxOpen(true)}
           >
             <img
-              src={productImage(imagenes[selectedImage])}
+              src={heroImage(imagenes[selectedImage])}
               alt={`${producto.nombre} vista ${selectedImage + 1}`}
-              width={900}
-              height={1200}
+              width={900} height={1200}
               className="w-full h-full object-cover object-top block"
               loading="eager"
-              style={{
-                transition: 'opacity 0.4s ease, transform 0.4s ease',
-                opacity: isTransitioning ? 0 : 1,
-                transform: isTransitioning ? 'scale(1.03)' : 'scale(1)',
-              }}
+              style={mainImgStyle}
             />
+            <div className="absolute bottom-4 right-4 flex items-center gap-1.5 bg-black/40 px-2.5 py-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
+              <Maximize2 size={10} className="text-white/75" />
+              <span className="text-[8px] tracking-[0.2em] text-white/75 font-medium">AMPLIAR</span>
+            </div>
           </div>
         </div>
 
-        {/* ─────────────────────────────────────────
-            INFO — sin ningún cambio
-        ───────────────────────────────────────── */}
-        <div className="w-full lg:w-2/5 px-6 py-12 lg:px-16 lg:py-16 relative">
-          <div className="lg:sticky lg:top-[160px]">
+        {/* ── INFO ── */}
+        <div className="w-full md:w-2/5 px-6 py-8 md:px-10 md:py-6 xl:px-16 xl:py-16 relative">
+          <div className="md:sticky md:top-[120px] xl:top-[160px]">
 
-            {/* Breadcrumb */}
-            <nav aria-label="Ruta de navegación" className="mb-8">
+            <nav aria-label="Ruta de navegación" className="mb-5 md:mb-8">
               <span className="text-[10px] tracking-[0.2em] text-stone-500 uppercase flex flex-wrap items-center">
                 <Link to="/" className="hover:text-stone-900 transition-colors">Inicio</Link>
                 <span className="mx-2">/</span>
@@ -277,20 +308,19 @@ export default function ProductPage() {
               </span>
             </nav>
 
-            <h1 className="text-2xl md:text-3xl font-light text-stone-900 tracking-[0.15em] uppercase mb-4">
+            <h1 className="text-2xl md:text-3xl font-light text-stone-900 tracking-[0.15em] uppercase mb-3 md:mb-4">
               {producto.nombre}
             </h1>
-            <p className="text-sm md:text-base font-medium text-stone-600 tracking-[0.1em] mb-10">
+            <p className="text-sm md:text-base font-medium text-stone-600 tracking-[0.1em] mb-6 md:mb-10">
               {producto.precio}
             </p>
-            <div className="text-[12px] md:text-[13px] text-stone-600 tracking-[0.1em] leading-loose mb-12 uppercase flex flex-col gap-3">
+            <div className="text-[12px] md:text-[13px] text-stone-600 tracking-[0.1em] leading-loose mb-6 md:mb-12 uppercase flex flex-col gap-3">
               {producto.descripcion?.split('.').filter(s => s.trim()).map((oracion, i) => (
                 <p key={i}>{oracion.trim()}.</p>
               ))}
             </div>
 
-            {/* ── CANTIDAD ── */}
-            <div className="mb-8">
+            <div className="mb-5 md:mb-8">
               <span className="text-[10px] font-bold tracking-[0.2em] text-stone-900 uppercase block mb-4">Cantidad</span>
               <div className="inline-flex items-center border border-stone-200">
                 <button onClick={decrementar} disabled={cantidad <= 1} aria-label="Disminuir cantidad"
@@ -307,9 +337,8 @@ export default function ProductPage() {
               </div>
             </div>
 
-            {/* ── SELECTOR DE COLOR ── */}
             {tieneVariantes && (
-              <div id="color-selector" className="mb-8">
+              <div id="color-selector" className="mb-5 md:mb-8">
                 <div className="flex justify-between items-end mb-4">
                   <span className="text-[10px] font-bold tracking-[0.2em] text-stone-900 uppercase">Color</span>
                   {colorSeleccionado && (
@@ -336,7 +365,6 @@ export default function ProductPage() {
               </div>
             )}
 
-            {/* ── SELECTOR DE TALLAS ── */}
             {colorSeleccionado && (
               <div id="talla-selector" className="mb-10">
                 <div className="flex justify-between items-end mb-4">
@@ -375,7 +403,6 @@ export default function ProductPage() {
               </div>
             )}
 
-            {/* ── BOTÓN AÑADIR ── */}
             <button onClick={handleAddToCart}
               className={`w-full h-14 text-[10px] font-bold tracking-[0.25em] uppercase transition-all duration-300 flex items-center justify-center gap-3
                 ${adding ? 'bg-stone-800 text-white scale-[0.98]' : 'bg-stone-900 text-white hover:bg-stone-800'}`}>
@@ -384,7 +411,6 @@ export default function ProductPage() {
 
             <div className="w-full h-[1px] bg-stone-200 my-12" />
 
-            {/* ── ACORDEONES ── */}
             <div className="flex flex-col">
               <div className="border-b border-stone-200">
                 <button onClick={() => toggleAccordion('detalles')} className="w-full py-6 flex items-center justify-between text-left">
@@ -418,6 +444,69 @@ export default function ProductPage() {
       </div>
 
       <CrossSelling currentProductId={producto.id} />
+
+      {/* ── LIGHTBOX ── */}
+      {isLightboxOpen && (
+        <div
+          className="fixed inset-0 z-[200] flex flex-col"
+          style={{ background: 'rgba(8, 6, 6, 0.96)' }}
+          role="dialog" aria-modal="true" aria-label="Visor de imágenes"
+        >
+          <div className="flex items-center justify-between px-6 py-5 flex-shrink-0">
+            <span className="text-[9px] tracking-[0.3em] text-white/30 font-medium select-none">
+              {selectedImage + 1} / {imagenes.length}
+            </span>
+            <button
+              onClick={() => setIsLightboxOpen(false)}
+              className="text-white/50 hover:text-white transition-colors p-2 -mr-2"
+              aria-label="Cerrar visor"
+            >
+              <X size={18} strokeWidth={1.5} />
+            </button>
+          </div>
+
+          <div
+            className="flex-1 flex items-center justify-center px-12 md:px-20 relative overflow-hidden"
+            onTouchStart={handleTouchStart}
+            onTouchEnd={handleTouchEnd}
+          >
+            {imagenes.length > 1 && (
+              <button onClick={() => lbNav(-1)} className="absolute left-3 md:left-5 text-white/30 hover:text-white/80 transition-colors p-2" aria-label="Imagen anterior">
+                <ChevronLeft size={26} strokeWidth={1.2} />
+              </button>
+            )}
+            <img
+              src={heroImage(imagenes[selectedImage])}
+              alt={`${producto.nombre} vista ${selectedImage + 1}`}
+              className="max-h-[80vh] max-w-full object-contain select-none"
+              style={{ transition: 'opacity 0.2s ease', opacity: lbFading ? 0 : 1 }}
+              draggable={false}
+            />
+            {imagenes.length > 1 && (
+              <button onClick={() => lbNav(1)} className="absolute right-3 md:right-5 text-white/30 hover:text-white/80 transition-colors p-2" aria-label="Siguiente imagen">
+                <ChevronRight size={26} strokeWidth={1.2} />
+              </button>
+            )}
+          </div>
+
+          {imagenes.length > 1 && (
+            <div className="flex justify-center gap-2.5 px-6 py-5 flex-shrink-0">
+              {imagenes.map((img, i) => (
+                <button
+                  key={i}
+                  onClick={() => lbGoTo(i)}
+                  aria-label={`Ver imagen ${i + 1}`}
+                  className={`w-12 h-[60px] overflow-hidden rounded-sm flex-shrink-0 transition-all duration-200 ${
+                    selectedImage === i ? 'ring-1 ring-white/70 ring-offset-1 ring-offset-transparent opacity-100' : 'opacity-25 hover:opacity-55'
+                  }`}
+                >
+                  <img src={thumbImage(img)} alt="" aria-hidden="true" className="w-full h-full object-cover object-top" />
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
