@@ -32,7 +32,6 @@ export default function ProductPage() {
     window.scrollTo(0, 0);
   }, [id]);
 
-  // Resetear imagen seleccionada al cambiar de producto
   useEffect(() => {
     setSelectedImage(0);
   }, [id]);
@@ -127,7 +126,7 @@ export default function ProductPage() {
     );
   }
 
-  const imagenes = [producto.imagen1, producto.imagen2].filter(Boolean);
+  const imagenes = [producto.imagen1, producto.imagen2, producto.imagen3, producto.imagen4].filter(Boolean);
   const detallesArray = producto.detalles
     ? producto.detalles.split(';')
     : ['Diseño exclusivo PAVOA', 'Material de alta compresión'];
@@ -153,7 +152,6 @@ export default function ProductPage() {
           <div className="w-full">
             <div className="w-full overflow-hidden rounded-sm" style={{ aspectRatio: '3/4' }}>
               <img
-                key={selectedImage}
                 src={productImage(imagenes[selectedImage])}
                 alt={`${producto.nombre} vista ${selectedImage + 1}`}
                 width={900}
@@ -180,7 +178,7 @@ export default function ProductPage() {
                   className={`flex-shrink-0 w-[72px] h-[90px] overflow-hidden rounded-sm transition-all duration-200 ${
                     selectedImage === i
                       ? 'ring-1 ring-stone-900 ring-offset-2'
-                      : 'opacity-50 hover:opacity-80'
+                      : 'opacity-40 hover:opacity-70'
                   }`}
                 >
                   <img
@@ -188,7 +186,7 @@ export default function ProductPage() {
                     alt={`${producto.nombre} miniatura ${i + 1}`}
                     width={144}
                     height={180}
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-cover object-top"
                     loading="lazy"
                   />
                 </button>
@@ -199,24 +197,64 @@ export default function ProductPage() {
 
         {/* ─────────────────────────────────────────
             GALERÍA DESKTOP  (hidden lg:flex)
-            Imágenes apiladas — sin cambios
+            Thumbnails verticales izquierda + imagen principal
         ───────────────────────────────────────── */}
-        <div className="hidden lg:flex w-full lg:w-3/5 flex-col gap-2 lg:p-4 lg:pt-[36px]">
-          {imagenes.map((img, i) => (
-            <div key={i} className="w-full overflow-hidden">
-              <img
-                src={productImage(img)}
-                alt={`${producto.nombre} vista ${i + 1}`}
-                width={900}
-                height={1200}
-                className="w-full h-auto object-cover block"
-                loading={i === 0 ? 'eager' : 'lazy'}
-              />
+        <div
+          className="hidden lg:flex lg:w-3/5 gap-3 self-start"
+          style={{ position: 'sticky', top: '120px', padding: '40px 20px 40px 40px' }}
+        >
+          {/* Columna de thumbnails — solo si hay más de 1 imagen */}
+          {imagenes.length > 1 && (
+            <div className="flex flex-col gap-2 flex-shrink-0" style={{ width: 72 }}>
+              {imagenes.map((img, i) => (
+                <button
+                  key={i}
+                  onClick={() => handleSelectImage(i)}
+                  aria-label={`Ver imagen ${i + 1}`}
+                  style={{ aspectRatio: '3/4', width: 72 }}
+                  className={`overflow-hidden rounded-sm flex-shrink-0 transition-all duration-200 ${
+                    selectedImage === i
+                      ? 'ring-1 ring-stone-900 ring-offset-1 opacity-100'
+                      : 'opacity-35 hover:opacity-70'
+                  }`}
+                >
+                  <img
+                    src={productImage(img)}
+                    alt={`${producto.nombre} miniatura ${i + 1}`}
+                    width={144}
+                    height={192}
+                    className="w-full h-full object-cover object-top"
+                    loading="lazy"
+                  />
+                </button>
+              ))}
             </div>
-          ))}
+          )}
+
+          {/* Imagen principal */}
+          <div
+            className="flex-1 overflow-hidden rounded-sm"
+            style={{ maxHeight: '78vh' }}
+          >
+            <img
+              src={productImage(imagenes[selectedImage])}
+              alt={`${producto.nombre} vista ${selectedImage + 1}`}
+              width={900}
+              height={1200}
+              className="w-full h-full object-cover object-top block"
+              loading="eager"
+              style={{
+                transition: 'opacity 0.4s ease, transform 0.4s ease',
+                opacity: isTransitioning ? 0 : 1,
+                transform: isTransitioning ? 'scale(1.03)' : 'scale(1)',
+              }}
+            />
+          </div>
         </div>
 
-        {/* ── INFO — sin ningún cambio ── */}
+        {/* ─────────────────────────────────────────
+            INFO — sin ningún cambio
+        ───────────────────────────────────────── */}
         <div className="w-full lg:w-2/5 px-6 py-12 lg:px-16 lg:py-16 relative">
           <div className="lg:sticky lg:top-[160px]">
 
