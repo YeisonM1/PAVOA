@@ -8,7 +8,7 @@ const supabase = createClient(
   process.env.VITE_SUPABASE_ANON_KEY
 );
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const resend  = new Resend(process.env.RESEND_API_KEY);
 const APP_URL = process.env.VITE_APP_URL || 'https://pavoa.vercel.app';
 
 export default async function handler(req, res) {
@@ -40,16 +40,16 @@ export default async function handler(req, res) {
     const password_hash = await bcrypt.hash(password, 12);
 
     // 3. Generar token de verificación
-    const verify_token = crypto.randomBytes(32).toString('hex');
+    const verify_token   = crypto.randomBytes(32).toString('hex');
     const verify_expires = Date.now() + 24 * 60 * 60 * 1000; // 24 horas
 
     // 4. Guardar usuario en Supabase
     const { error: insertError } = await supabase
       .from('usuarios')
       .insert({
-        first_name: firstName,
-        last_name: lastName || '',
-        email: email.toLowerCase(),
+        first_name:     firstName,
+        last_name:      lastName || '',
+        email:          email.toLowerCase(),
         password_hash,
         verify_token,
         verify_expires,
@@ -62,8 +62,8 @@ export default async function handler(req, res) {
     const verifyLink = `${APP_URL}/verify?token=${verify_token}&email=${encodeURIComponent(email)}`;
 
     await resend.emails.send({
-      from: 'PAVOA <onboarding@resend.dev>',
-      to: email,
+      from:    'PAVOA <onboarding@resend.dev>',
+      to:      email,
       subject: 'Verifica tu correo — PAVOA',
       html: `
         <!DOCTYPE html>
@@ -122,6 +122,34 @@ export default async function handler(req, res) {
         </html>
       `,
     });
+
+    // 6. Crear cliente en Shopify silenciosamente
+    const SHOPIFY_DOMAIN = process.env.VITE_SHOPIFY_DOMAIN;
+    const SHOPIFY_TOKEN  = process.env.VITE_SHOPIFY_TOKEN;
+
+    await fetch(`https://${SHOPIFY_DOMAIN}/api/2026-04/graphql.json`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Shopify-Storefront-Access-Token': SHOPIFY_TOKEN,
+      },
+      body: JSON.stringify({
+        query: `
+          mutation {
+            customerCreate(input: {
+              firstName: "${firstName}",
+              lastName: "${lastName || ''}",
+              email: "${email.toLowerCase()}",
+              password: "${password}",
+              acceptsMarketing: false
+            }) {
+              customer { id }
+              customerUserErrors { message }
+            }
+          }
+        `
+      }),
+    }).catch(() => {}); // Si falla no bloqueamos el registro
 
     return res.status(200).json({ ok: true });
 

@@ -54,7 +54,7 @@ export default function AccountPage() {
     <div className="min-h-screen bg-white">
       <SEO title="Mi Cuenta" description="Gestiona tu cuenta PAVOA" url="/cuenta" />
 
-      <div className="max-w-[1200px] mx-auto px-6 md:px-12 pt-[120px] pb-24">
+      <div className="max-w-[1200px] mx-auto px-6 md:px-12 pt-[160px] pb-24">
 
         {/* Header */}
         <div className="flex items-end justify-between mb-12 border-b border-stone-200 pb-6">
