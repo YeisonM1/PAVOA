@@ -15,6 +15,7 @@ const AccountPage     = lazy(() => import('./pages/AccountPage'));
 const LoginPage       = lazy(() => import('./pages/LoginPage'));
 const RegisterPage    = lazy(() => import('./pages/RegisterPage'));
 const VerifyEmailPage = lazy(() => import('./pages/VerifyEmailPage'));
+const VerifyPage = lazy(() => import('./pages/VerifyPage'));
 
 export { CartContext };
 
@@ -70,7 +71,7 @@ function WhatsAppButton() {
   );
 }
 
-const RUTAS_LIMPIAS = ['/login', '/register', '/verify-email'];
+const RUTAS_LIMPIAS = ['/login', '/register', '/verify-email', '/verify'];
 
 function AppShell() {
   const { pathname } = useLocation();
@@ -110,6 +111,7 @@ function AppShell() {
               <Route path="/register"      element={<RegisterPage />} />
               <Route path="/verify-email"  element={<VerifyEmailPage />} />
               <Route path="*"              element={<NotFoundPage />} />
+              <Route path="/verify" element={<VerifyPage />} />
             </Routes>
           </Suspense>
         </div>

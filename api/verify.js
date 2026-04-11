@@ -13,7 +13,7 @@ export default async function handler(req, res) {
   const { token, email } = req.query;
 
   if (!token || !email) {
-    return res.redirect(`${APP_URL}/login?error=invalid`);
+    return res.status(400).json({ error: 'invalid' });
   }
 
   try {
@@ -31,7 +31,7 @@ export default async function handler(req, res) {
 
     // 2. Verificar que el token no haya expirado
     if (Date.now() > usuario.verify_expires) {
-      return res.redirect(`${APP_URL}/login?error=expired`);
+      return res.status(400).json({ error: 'expired' });
     }
 
     // 3. Marcar email como verificado
@@ -45,10 +45,10 @@ export default async function handler(req, res) {
       .eq('id', usuario.id);
 
     // 4. Redirigir al login con éxito
-    return res.redirect(`${APP_URL}/login?verified=true`);
+    return res.status(200).json({ ok: true });
 
   } catch (err) {
     console.error('Error verify:', err);
-    return res.redirect(`${APP_URL}/login?error=server`);
+    return res.status(500).json({ error: 'server' });
   }
 }
