@@ -22,6 +22,7 @@ export default function ProductPage() {
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [isLightboxOpen, setIsLightboxOpen]   = useState(false);
   const [lbFading, setLbFading]               = useState(false);
+  const [showCantidadHint, setShowCantidadHint] = useState(false);
   const touchStartX                           = useRef(null);
 
   useEffect(() => {
@@ -40,15 +41,14 @@ export default function ProductPage() {
     return [producto.imagen1, producto.imagen2, producto.imagen3, producto.imagen4].filter(Boolean);
   }, [producto]);
 
-  // ✅ AGREGAR AQUÍ:
-useEffect(() => {
-  if (!producto || imagenes.length <= 1) return; // ← agregar !producto
-  imagenes.forEach((img, i) => {
-    if (i === 0) return;
-    const image = new Image();
-    image.src = heroImage(img);
-  });
-}, [imagenes]);
+  useEffect(() => {
+    if (!producto || imagenes.length <= 1) return;
+    imagenes.forEach((img, i) => {
+      if (i === 0) return;
+      const image = new Image();
+      image.src = heroImage(img);
+    });
+  }, [imagenes]);
 
   useEffect(() => {
     setSelectedImage(0);
@@ -91,11 +91,11 @@ useEffect(() => {
   }, [variantes]);
 
   const tallasDisponibles = useMemo(() => {
-  if (!colorSeleccionado) return [];
-  return variantes
-    .filter(v => v.color === colorSeleccionado)
-    .map(v => ({ talla: v.talla, stock: v.stock ?? 0 }));
-}, [variantes, colorSeleccionado]);
+    if (!colorSeleccionado) return [];
+    return variantes
+      .filter(v => v.color === colorSeleccionado)
+      .map(v => ({ talla: v.talla, stock: v.stock ?? 0 }));
+  }, [variantes, colorSeleccionado]);
 
   const stockActual = useMemo(() => {
     if (!colorSeleccionado || !tallaSeleccionada) return null;
@@ -103,18 +103,28 @@ useEffect(() => {
     return v?.stock ?? 0;
   }, [variantes, colorSeleccionado, tallaSeleccionada]);
 
-  const esTallaUnica = tallasDisponibles.length === 1 && tallasDisponibles[0]?.talla === 'ÚNICA';
+  const esTallaUnica   = tallasDisponibles.length === 1 && tallasDisponibles[0]?.talla === 'ÚNICA';
   const tieneVariantes = variantes.length > 0;
 
   useEffect(() => {
-  if (esTallaUnica && colorSeleccionado) {
-    setTallaSeleccionada('ÚNICA');
-  }
-}, [esTallaUnica, colorSeleccionado]);
+    if (esTallaUnica && colorSeleccionado) {
+      setTallaSeleccionada('ÚNICA');
+    }
+  }, [esTallaUnica, colorSeleccionado]);
+
+  const puedeSeleccionarCantidad = tieneVariantes
+    ? (colorSeleccionado && (esTallaUnica || tallaSeleccionada))
+    : true;
+
+  const handleCantidadBloqueada = () => {
+    setShowCantidadHint(true);
+    setTimeout(() => setShowCantidadHint(false), 2500);
+  };
 
   const handleColorSelect = (color) => {
     setColorSeleccionado(colorSeleccionado === color ? null : color);
     setTallaSeleccionada(null);
+    setCantidad(1);
   };
 
   const handleAddToCart = () => {
@@ -168,8 +178,14 @@ useEffect(() => {
   };
 
   const toggleAccordion = (s) => setOpenAccordion(openAccordion === s ? null : s);
-  const incrementar = () => setCantidad(c => stockActual !== null ? Math.min(c + 1, stockActual) : c + 1);
-  const decrementar = () => setCantidad(c => Math.max(1, c - 1));
+  const incrementar = () => {
+    if (!puedeSeleccionarCantidad) { handleCantidadBloqueada(); return; }
+    setCantidad(c => stockActual !== null ? Math.min(c + 1, stockActual) : c + 1);
+  };
+  const decrementar = () => {
+    if (!puedeSeleccionarCantidad) return;
+    setCantidad(c => Math.max(1, c - 1));
+  };
 
   if (loading) {
     return (
@@ -372,23 +388,61 @@ useEffect(() => {
               ))}
             </div>
 
+            {/* ── CANTIDAD ── */}
             <div className="mb-5 md:mb-8">
               <span className="text-[10px] font-bold tracking-[0.2em] text-stone-900 uppercase block mb-4">Cantidad</span>
-              <div className="inline-flex items-center border border-stone-200">
-                <button onClick={decrementar} disabled={cantidad <= 1} aria-label="Disminuir cantidad"
-                  className="w-11 h-11 flex items-center justify-center text-stone-600 hover:text-stone-900 hover:bg-stone-50 disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
-                  <Minus size={13} strokeWidth={2} />
-                </button>
-                <span className="w-12 h-11 flex items-center justify-center text-[13px] font-medium text-stone-900 border-x border-stone-200 select-none" aria-live="polite">
-                  {cantidad}
-                </span>
-                <button onClick={incrementar} aria-label="Aumentar cantidad"
-                  className="w-11 h-11 flex items-center justify-center text-stone-600 hover:text-stone-900 hover:bg-stone-50 transition-colors">
-                  <Plus size={13} strokeWidth={2} />
-                </button>
+              <div className="relative inline-block">
+                <div
+                  className={`inline-flex items-center border transition-colors duration-300 ${
+                    !puedeSeleccionarCantidad ? 'border-stone-100' : 'border-stone-200'
+                  }`}
+                  onClick={!puedeSeleccionarCantidad ? handleCantidadBloqueada : undefined}
+                >
+                  <button
+                    onClick={puedeSeleccionarCantidad ? decrementar : undefined}
+                    disabled={!puedeSeleccionarCantidad || cantidad <= 1}
+                    aria-label="Disminuir cantidad"
+                    className={`w-11 h-11 flex items-center justify-center transition-colors
+                      ${!puedeSeleccionarCantidad
+                        ? 'text-stone-200 cursor-not-allowed'
+                        : 'text-stone-600 hover:text-stone-900 hover:bg-stone-50 disabled:opacity-30 disabled:cursor-not-allowed'
+                      }`}
+                  >
+                    <Minus size={13} strokeWidth={2} />
+                  </button>
+                  <span
+                    className={`w-12 h-11 flex items-center justify-center text-[13px] font-medium border-x select-none transition-colors ${
+                      !puedeSeleccionarCantidad ? 'text-stone-200 border-stone-100' : 'text-stone-900 border-stone-200'
+                    }`}
+                    aria-live="polite"
+                  >
+                    {cantidad}
+                  </span>
+                  <button
+                    onClick={puedeSeleccionarCantidad ? incrementar : handleCantidadBloqueada}
+                    aria-label="Aumentar cantidad"
+                    className={`w-11 h-11 flex items-center justify-center transition-colors
+                      ${!puedeSeleccionarCantidad
+                        ? 'text-stone-200 cursor-not-allowed'
+                        : 'text-stone-600 hover:text-stone-900 hover:bg-stone-50'
+                      }`}
+                  >
+                    <Plus size={13} strokeWidth={2} />
+                  </button>
+                </div>
+
+                {/* Tooltip premium */}
+                <div className={`absolute left-0 -bottom-8 transition-all duration-300 ease-out pointer-events-none ${
+                  showCantidadHint ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-1'
+                }`}>
+                  <p style={{ letterSpacing: '0.15em' }} className="text-[9px] text-stone-400 uppercase whitespace-nowrap">
+                    ✦ Selecciona primero color y talla
+                  </p>
+                </div>
               </div>
             </div>
 
+            {/* ── COLORES ── */}
             {tieneVariantes && (
               <div id="color-selector" className="mb-5 md:mb-8">
                 <div className="flex justify-between items-end mb-4">
@@ -417,6 +471,7 @@ useEffect(() => {
               </div>
             )}
 
+            {/* ── TALLAS ── */}
             {colorSeleccionado && (
               <div id="talla-selector" className="mb-10">
                 <div className="flex justify-between items-end mb-4">
@@ -438,29 +493,29 @@ useEffect(() => {
                   </div>
                 ) : (
                   <div className="grid gap-3" style={{ gridTemplateColumns: `repeat(${Math.min(tallasDisponibles.length, 4)}, minmax(0, 1fr))` }}>
-                      {tallasDisponibles.map(({ talla, stock }) => {
-                        const agotado = stock === 0;
-                        const activo = tallaSeleccionada === talla;
-                        return (
-                          <button
-                            key={talla}
-                            onClick={() => !agotado && setTallaSeleccionada(talla)}
-                            disabled={agotado}
-                            className={`h-12 border flex items-center justify-center text-[11px] font-medium tracking-[0.05em] transition-colors uppercase relative
-                              ${agotado ? 'border-stone-100 text-stone-300 cursor-not-allowed' :
-                                activo ? 'border-stone-900 bg-stone-900 text-white' :
-                                'border-stone-200 text-stone-600 hover:border-stone-900'}`}
-                          >
-                            {talla}
-                            {agotado && (
-                              <span className="absolute inset-0 flex items-center justify-center">
-                                <span className="absolute w-full h-[1px] bg-stone-200 rotate-[-20deg]" />
-                              </span>
-                            )}
-                          </button>
-                        );
-                      })}
-                    </div>
+                    {tallasDisponibles.map(({ talla, stock }) => {
+                      const agotado = stock === 0;
+                      const activo = tallaSeleccionada === talla;
+                      return (
+                        <button
+                          key={talla}
+                          onClick={() => !agotado && setTallaSeleccionada(talla)}
+                          disabled={agotado}
+                          className={`h-12 border flex items-center justify-center text-[11px] font-medium tracking-[0.05em] transition-colors uppercase relative
+                            ${agotado ? 'border-stone-100 text-stone-300 cursor-not-allowed' :
+                              activo ? 'border-stone-900 bg-stone-900 text-white' :
+                              'border-stone-200 text-stone-600 hover:border-stone-900'}`}
+                        >
+                          {talla}
+                          {agotado && (
+                            <span className="absolute inset-0 flex items-center justify-center">
+                              <span className="absolute w-full h-[1px] bg-stone-200 rotate-[-20deg]" />
+                            </span>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
                 )}
                 {stockActual !== null && stockActual <= 3 && stockActual > 0 && (
                   <p className="text-[9px] tracking-[0.15em] text-amber-700 uppercase mt-3">
@@ -470,16 +525,17 @@ useEffect(() => {
               </div>
             )}
 
+            {/* ── BOTÓN AGREGAR ── */}
             <button
-                onClick={handleAddToCart}
-                disabled={stockActual === 0}
-                className={`w-full h-14 text-[10px] font-bold tracking-[0.25em] uppercase transition-all duration-300 flex items-center justify-center gap-3
-                  ${stockActual === 0 ? 'bg-stone-200 text-stone-400 cursor-not-allowed' :
-                    adding ? 'bg-stone-800 text-white scale-[0.98]' :
-                    'bg-stone-900 text-white hover:bg-stone-800'}`}
-              >
-                {stockActual === 0 ? 'Agotado' : adding ? 'Agregado ✔' : 'Añadir a la bolsa'}
-              </button>
+              onClick={handleAddToCart}
+              disabled={stockActual === 0}
+              className={`w-full h-14 text-[10px] font-bold tracking-[0.25em] uppercase transition-all duration-300 flex items-center justify-center gap-3
+                ${stockActual === 0 ? 'bg-stone-200 text-stone-400 cursor-not-allowed' :
+                  adding ? 'bg-stone-800 text-white scale-[0.98]' :
+                  'bg-stone-900 text-white hover:bg-stone-800'}`}
+            >
+              {stockActual === 0 ? 'Agotado' : adding ? 'Agregado ✔' : 'Añadir a la bolsa'}
+            </button>
 
             <div className="w-full h-[1px] bg-stone-200 my-12" />
 
