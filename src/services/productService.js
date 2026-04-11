@@ -406,7 +406,7 @@ export const getInstagramPosts = () => {
 
         return {
           id:     node.id,
-          image:  getImage('imagen'),
+          image:  getImage('image'),
           orden:  Number(get('orden')) || 0,
         };
       });
