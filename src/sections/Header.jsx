@@ -66,15 +66,6 @@ const Header = () => {
   const panelRef = useRef(null); 
 
   useEffect(() => {
-    Object.values(categoryImages).forEach((url) => {
-      const img = new Image();
-      img.src = url;
-    });
-    const defaultImg = new Image();
-    defaultImg.src = defaultImage;
-  }, []);
-
-  useEffect(() => {
     let ticking = false;
     const onScroll = () => {
       if (!ticking) {
