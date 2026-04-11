@@ -5,15 +5,16 @@ import AnnouncementBar from './sections/AnnouncementBar';
 import Header from './sections/Header';
 import Footer from './sections/Footer';
 
-const HomePage      = lazy(() => import('./pages/HomePage'));
-const CategoriaPage = lazy(() => import('./pages/CategoriaPage'));
-const ProductPage   = lazy(() => import('./pages/ProductPage'));
-const ContactPage   = lazy(() => import('./pages/ContactPage'));
-const CheckoutPage  = lazy(() => import('./pages/CheckoutPage'));
-const NotFoundPage  = lazy(() => import('./pages/NotFoundPage'));
-const AccountPage   = lazy(() => import('./pages/AccountPage'));
-const LoginPage     = lazy(() => import('./pages/LoginPage'));
-const RegisterPage  = lazy(() => import('./pages/RegisterPage'));
+const HomePage        = lazy(() => import('./pages/HomePage'));
+const CategoriaPage   = lazy(() => import('./pages/CategoriaPage'));
+const ProductPage     = lazy(() => import('./pages/ProductPage'));
+const ContactPage     = lazy(() => import('./pages/ContactPage'));
+const CheckoutPage    = lazy(() => import('./pages/CheckoutPage'));
+const NotFoundPage    = lazy(() => import('./pages/NotFoundPage'));
+const AccountPage     = lazy(() => import('./pages/AccountPage'));
+const LoginPage       = lazy(() => import('./pages/LoginPage'));
+const RegisterPage    = lazy(() => import('./pages/RegisterPage'));
+const VerifyEmailPage = lazy(() => import('./pages/VerifyEmailPage'));
 
 export { CartContext };
 
@@ -30,7 +31,7 @@ function WhatsAppButton() {
   const [visible, setVisible] = useState(false);
   const [tooltip, setTooltip] = useState(false);
 
-  const ocultar = pathname === '/checkout' || pathname === '/login' || pathname === '/register';
+  const ocultar = ['/checkout', '/login', '/register', '/verify-email'].includes(pathname);
 
   useEffect(() => {
     const t = setTimeout(() => setVisible(true), 2000);
@@ -69,8 +70,7 @@ function WhatsAppButton() {
   );
 }
 
-// Páginas sin Header/Footer (login, register)
-const RUTAS_LIMPIAS = ['/login', '/register'];
+const RUTAS_LIMPIAS = ['/login', '/register', '/verify-email'];
 
 function AppShell() {
   const { pathname } = useLocation();
@@ -108,6 +108,7 @@ function AppShell() {
               <Route path="/cuenta"        element={<AccountPage />} />
               <Route path="/login"         element={<LoginPage />} />
               <Route path="/register"      element={<RegisterPage />} />
+              <Route path="/verify-email"  element={<VerifyEmailPage />} />
               <Route path="*"              element={<NotFoundPage />} />
             </Routes>
           </Suspense>
