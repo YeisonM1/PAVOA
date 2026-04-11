@@ -207,6 +207,7 @@ export const enviarContacto = async ({ nombre, contacto, asunto, mensaje }) => {
   }
 };
 
+
 // ── Trae los slides del Hero desde Shopify Metaobjects ─
 export const getHeroSlides = () => {
   const cached = getCached('hero-slides');
@@ -223,6 +224,15 @@ export const getHeroSlides = () => {
                 fields {
                   key
                   value
+                  reference {
+                    ... on MediaImage {
+                      image {
+                        url
+                        width
+                        height
+                      }
+                    }
+                  }
                 }
               }
             }
@@ -231,10 +241,12 @@ export const getHeroSlides = () => {
       `);
 
       return data.metaobjects.edges.map(({ node }, index) => {
-        const get = (key) => node.fields.find(f => f.key === key)?.value || '';
+        const get      = (key) => node.fields.find(f => f.key === key)?.value || '';
+        const getImage = (key) => node.fields.find(f => f.key === key)?.reference?.image?.url || '';
+
         return {
           id:       index + 1,
-          image:    get('imagen'),
+          image:    getImage('imagen'),   // ← ahora lee desde reference
           tag:      get('tag'),
           headline: get('headline').split('|'),
           sub:      get('subtitulo'),
@@ -251,7 +263,6 @@ export const getHeroSlides = () => {
   setCache('hero-slides', promise);
   return promise;
 };
-
 // ── Trae las categorías destacadas desde Shopify Metaobjects ─
 export const getCategoriasDestacadas = () => {
   const cached = getCached('categorias-destacadas');
@@ -268,6 +279,15 @@ export const getCategoriasDestacadas = () => {
                 fields {
                   key
                   value
+                  reference {
+                    ... on MediaImage {
+                      image {
+                        url
+                        width
+                        height
+                      }
+                    }
+                  }
                 }
               }
             }
@@ -275,9 +295,13 @@ export const getCategoriasDestacadas = () => {
         }
       `);
 
+      console.log('RAW categorias:', JSON.stringify(data.metaobjects.edges, null, 2));
+
       const result = {};
       data.metaobjects.edges.forEach(({ node }, index) => {
-        const get = (key) => node.fields.find(f => f.key === key)?.value || '';
+        const get      = (key) => node.fields.find(f => f.key === key)?.value || '';
+        const getImage = (key) => node.fields.find(f => f.key === key)?.reference?.image?.url || '';
+
         const posicion = get('posicion');
         if (posicion) {
           result[posicion] = {
@@ -285,7 +309,7 @@ export const getCategoriasDestacadas = () => {
             nombre: get('nombre'),
             desc:   get('descripcion'),
             href:   get('href'),
-            image:  get('imagen'),
+            image:  getImage('imagen'),   // ← ahora lee desde reference
           };
         }
       });
