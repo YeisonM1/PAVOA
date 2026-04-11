@@ -11,11 +11,11 @@ export const productImage = (url) => {
   if (!url) return url;
   if (isUnsplash(url)) {
     const base = url.split('?')[0];
-    return `${base}?w=600&q=65&fm=webp&auto=format`;
+    return `${base}?w=400&q=65&fm=webp&auto=format`;
   }
   if (isShopify(url)) {
     const base = url.split('?')[0];
-    return `${base}?width=600`;
+    return `${base}?width=400&format=webp`; // ← width reducido + forzar WebP
   }
   return url;
 };
@@ -29,7 +29,7 @@ export const heroImage = (url) => {
   }
   if (isShopify(url)) {
     const base = url.split('?')[0];
-    return `${base}?width=1400`;
+    return `${base}?width=1400&format=webp`; // ← forzar WebP
   }
   return url;
 };
@@ -43,7 +43,7 @@ export const thumbImage = (url) => {
   }
   if (isShopify(url)) {
     const base = url.split('?')[0];
-    return `${base}?width=150&height=200&crop=center`;
+    return `${base}?width=150&height=200&crop=center&format=webp`; // ← forzar WebP
   }
   return url;
 };
@@ -57,7 +57,7 @@ export const categoryImage = (url) => {
   }
   if (isShopify(url)) {
     const base = url.split('?')[0];
-    return `${base}?width=800`;
+    return `${base}?width=800&format=webp`; // ← forzar WebP
   }
   return url;
 };

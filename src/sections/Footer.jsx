@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import logo from '../assets/LOGO PAVOA.png';
+import logo from '../assets/LOGO-PAVOA.svg';
 import { InstagramIcon, FacebookIcon, WhatsAppIcon } from '../components/Icons';
 
 export default function Footer() {
