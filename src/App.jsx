@@ -91,12 +91,12 @@ function AppShell() {
 
         <div className="flex-grow" id="main-content">
           <Suspense fallback={
-            <div className="min-h-[60vh] flex items-center justify-center bg-white">
-              <span className="text-[10px] font-bold tracking-[0.3em] uppercase text-stone-500 animate-pulse">
-                Cargando...
-              </span>
-            </div>
-          }>
+              <div className="min-h-screen flex items-center justify-center bg-white">
+                <span className="text-[10px] font-bold tracking-[0.3em] uppercase text-stone-500 animate-pulse">
+                  Cargando...
+                </span>
+              </div>
+            }>
             <Routes>
               <Route path="/"              element={<HomePage />} />
               <Route path="/categoria"     element={<CategoriaPage />} />
