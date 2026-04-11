@@ -3,10 +3,12 @@ import { heroImage } from '../utils/imageUrl';
 import { useCarousel } from '../hooks/useCarousel';
 import { getHeroSlides } from '../services/productService';
 
+const CACHE_KEY = 'pavoa_hero_slides';
+
 const SLIDES_FALLBACK = [
   {
     id: 1,
-    image: null, // ← sin imagen hasta que Shopify responda
+    image: null,
     tag: 'Nueva Colección',
     headline: ['El lujo de', 'sentirte', 'tú.'],
     sub: 'Descubre nuestra nueva colección diseñada para mujeres que buscan estilo, rendimiento y exclusividad.',
@@ -34,11 +36,23 @@ const SLIDES_FALLBACK = [
 ];
 
 export default function HeroFullscreen() {
-  const [slides, setSlides] = useState(SLIDES_FALLBACK);
+  // ── Intentar cargar desde localStorage primero ────────
+  const cached = (() => {
+    try {
+      const raw = localStorage.getItem(CACHE_KEY);
+      return raw ? JSON.parse(raw) : null;
+    } catch { return null; }
+  })();
+
+  const [slides, setSlides] = useState(cached || SLIDES_FALLBACK);
 
   useEffect(() => {
     getHeroSlides().then(data => {
-      if (data.length > 0) setSlides(data);
+      if (data.length > 0) {
+        setSlides(data);
+        // Guardar en localStorage para la próxima visita
+        try { localStorage.setItem(CACHE_KEY, JSON.stringify(data)); } catch {}
+      }
     });
   }, []);
 
@@ -48,7 +62,6 @@ export default function HeroFullscreen() {
   return (
     <section className="relative w-full h-screen overflow-hidden bg-black" role="region" aria-roledescription="carrusel" aria-label="Banner principal">
       
-      {/* ── IMÁGENES CON EFECTO KEN BURNS ── */}
       {slides.map((slide, index) => (
         <div
           key={slide.id}
@@ -74,11 +87,9 @@ export default function HeroFullscreen() {
         Slide {current + 1} de {slides.length}
       </span>
 
-      {/* ── GRADIENTE ── */}
       <div className="absolute inset-0 z-10 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none" />
       <div className="absolute inset-0 z-10 bg-black/10 pointer-events-none" />
 
-      {/* ── CONTENIDO ── */}
       <div className="absolute inset-0 z-20 flex flex-col justify-end pb-16 md:pb-20 lg:pb-24 px-8 sm:px-12 md:px-16 lg:px-24">
         <div
           key={s.id + '-text'}
@@ -119,7 +130,6 @@ export default function HeroFullscreen() {
         </div>
       </div>
 
-      {/* ── CONTROLES ── */}
       <div className="absolute bottom-10 right-8 md:right-16 z-20 flex items-center gap-8">
         <div className="text-white/90 text-[11px] tracking-[0.3em] font-medium hidden sm:block">
           {String(current + 1).padStart(2, '0')} — {String(slides.length).padStart(2, '0')}
