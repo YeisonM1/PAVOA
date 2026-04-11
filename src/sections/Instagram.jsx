@@ -1,4 +1,8 @@
-const posts = [
+import { useState, useEffect } from 'react';
+import { getInstagramPosts } from '../services/productService';
+
+// ── Fallback mientras carga o si Shopify falla ──────────
+const POSTS_FALLBACK = [
   { id: 1, image: 'https://images.unsplash.com/photo-1509631179647-0177331693ae?w=300&q=70&fm=webp&auto=format' },
   { id: 2, image: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=300&q=70&fm=webp&auto=format' },
   { id: 3, image: 'https://images.unsplash.com/photo-1483985988355-763728e1935b?w=300&q=70&fm=webp&auto=format' },
@@ -16,6 +20,14 @@ const InstagramIcon = () => (
 );
 
 export default function Instagram() {
+  const [posts, setPosts] = useState(POSTS_FALLBACK);
+
+  useEffect(() => {
+    getInstagramPosts().then(data => {
+      if (data.length > 0) setPosts(data);
+    });
+  }, []);
+
   return (
     <section className="w-full bg-white py-20">
 
@@ -49,6 +61,7 @@ export default function Instagram() {
             <img
               src={post.image}
               alt="PAVOA Instagram"
+              loading="lazy"
               className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
             />
             {/* Overlay con ícono */}

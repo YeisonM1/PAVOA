@@ -366,3 +366,60 @@ export const getAnnouncementBar = () => {
   setCache('announcement-bar', promise);
   return promise;
 };
+
+
+// ── Trae los posts de Instagram desde Shopify Metaobjects ─
+export const getInstagramPosts = () => {
+  const cached = getCached('instagram-posts');
+  if (cached) return cached;
+
+  const promise = (async () => {
+    try {
+      const data = await shopifyFetch(`
+        query {
+          metaobjects(type: "instagram_post", first: 6) {
+            edges {
+              node {
+                id
+                fields {
+                  key
+                  value
+                  reference {
+                    ... on MediaImage {
+                      image {
+                        url
+                        width
+                        height
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      `);
+
+      const posts = data.metaobjects.edges.map(({ node }) => {
+        const get      = (key) => node.fields.find(f => f.key === key)?.value || '';
+        const getImage = (key) => node.fields.find(f => f.key === key)?.reference?.image?.url || '';
+
+        return {
+          id:     node.id,
+          image:  getImage('imagen'),
+          orden:  Number(get('orden')) || 0,
+        };
+      });
+
+      // Ordenar por campo "orden"
+      return posts.sort((a, b) => a.orden - b.orden);
+
+    } catch (err) {
+      console.error('Error getInstagramPosts:', err);
+      return [];
+    }
+  })();
+
+  setCache('instagram-posts', promise);
+  return promise;
+};
