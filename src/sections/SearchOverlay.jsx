@@ -8,8 +8,25 @@ export default function SearchOverlay({ isSearchOpen, setIsSearchOpen }) {
   const [resultados, setResultados] = useState([]);
   const [productos, setProductos]   = useState([]);
   const inputRef                    = useRef(null);
+  const panelRef                    = useRef(null);
 
-  // Cargar productos de Supabase al abrir
+  // Focus trap
+  useEffect(() => {
+    if (!isSearchOpen || !panelRef.current) return;
+    const focusable = panelRef.current.querySelectorAll('button, [href], input, [tabindex]:not([tabindex="-1"])');
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    const trap = (e) => {
+      if (e.key === 'Escape') { setIsSearchOpen(false); return; }
+      if (e.key !== 'Tab') return;
+      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last?.focus(); }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first?.focus(); }
+    };
+    document.addEventListener('keydown', trap);
+    return () => document.removeEventListener('keydown', trap);
+  }, [isSearchOpen, setIsSearchOpen, resultados]);
+
+  // Cargar productos al abrir
   useEffect(() => {
     if (isSearchOpen && productos.length === 0) {
       getProductos().then(data => setProductos(data));
@@ -54,7 +71,12 @@ export default function SearchOverlay({ isSearchOpen, setIsSearchOpen }) {
       />
 
       {/* ── Panel lateral derecho ── */}
-      <div className={`fixed top-0 right-0 h-full w-full max-w-[480px] z-[80] bg-white flex flex-col
+      <div
+        ref={panelRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Buscador"
+        className={`fixed top-0 right-0 h-full w-full max-w-[480px] z-[80] bg-white flex flex-col
         transition-transform duration-500 ease-[cubic-bezier(0.25,1,0.5,1)]
         ${isSearchOpen ? 'translate-x-0' : 'translate-x-full'}`}
       >

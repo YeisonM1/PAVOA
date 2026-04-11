@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { productImage } from '../utils/imageUrl';
 
-export default function ProductCard({ producto }) {
+function ProductCard({ producto }) {
   const [showMobileSizes, setShowMobileSizes] = useState(false);
 
   // ── Leer variantes ──────────────────────────────────────
@@ -39,6 +39,7 @@ export default function ProductCard({ producto }) {
         <img
           src={productImage(producto.imagen1)}
           alt={producto.nombre}
+          width={600} height={800}
           loading="lazy"
           className="absolute inset-0 w-full h-full object-cover transition-all duration-[800ms] ease-[cubic-bezier(0.25,1,0.5,1)] md:group-hover:scale-105"
         />
@@ -46,6 +47,7 @@ export default function ProductCard({ producto }) {
           <img
             src={productImage(producto.imagen2)}
             alt={producto.nombre}
+            width={600} height={800}
             loading="lazy"
             className="absolute inset-0 w-full h-full object-cover transition-all duration-[800ms] ease-[cubic-bezier(0.25,1,0.5,1)] opacity-0 md:group-hover:opacity-100 md:group-hover:scale-105"
           />
@@ -122,3 +124,5 @@ export default function ProductCard({ producto }) {
     </Link>
   );
 }
+
+export default React.memo(ProductCard);

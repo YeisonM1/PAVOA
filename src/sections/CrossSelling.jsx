@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { getProductos } from '../services/productService'; // Conexión a Supabase
+import { getProductos } from '../services/productService';
+import { productImage } from '../utils/imageUrl';
 
 export default function CrossSelling({ currentProductId }) {
   const [productosSugeridos, setProductosSugeridos] = useState([]);
@@ -40,9 +41,9 @@ export default function CrossSelling({ currentProductId }) {
           {productosSugeridos.map((producto) => (
             <Link key={producto.id} to={`/producto/${producto.id}`} className="group cursor-pointer flex flex-col gap-4 relative block">
               <div className="relative overflow-hidden bg-stone-100" style={{ aspectRatio: '3/4' }}>
-                <img src={producto.imagen1} alt={producto.nombre} className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                <img src={productImage(producto.imagen1)} alt={producto.nombre} width={600} height={800} loading="lazy" className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
                 {producto.imagen2 && (
-                  <img src={producto.imagen2} alt={producto.nombre} className="absolute inset-0 w-full h-full object-cover opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+                  <img src={productImage(producto.imagen2)} alt={producto.nombre} width={600} height={800} loading="lazy" className="absolute inset-0 w-full h-full object-cover opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
                 )}
               </div>
               <div className="text-center mt-4">

@@ -3,6 +3,7 @@ import { parsePrice } from '../utils/price';
 import { useParams, Link } from 'react-router-dom';
 import FilterDrawer from '../sections/FilterDrawer';
 import ProductCard from '../components/ProductCard';
+import SkeletonCard from '../components/SkeletonCard';
 import { getProductos, getCategoriaById } from '../services/productService';
 import SEO from '../components/SEO';
 
@@ -13,21 +14,6 @@ const parseVariantes = (raw) => {
   catch { return []; }
 };
 
-// ── SKELETON ────────────────────────────────────────────
-function SkeletonCard() {
-  return (
-    <div className="flex flex-col gap-4 animate-pulse">
-      <div className="bg-stone-200 w-full relative overflow-hidden" style={{ aspectRatio: '3/4' }}>
-        <div className="absolute inset-0 -translate-x-full animate-[shimmer_1.5s_infinite] bg-gradient-to-r from-stone-200 via-stone-100 to-stone-200" />
-      </div>
-      <div className="flex flex-col items-center gap-2">
-        <div className="h-2.5 w-24 bg-stone-200 rounded" />
-        <div className="h-3 w-16 bg-stone-100 rounded" />
-      </div>
-    </div>
-  );
-}
-
 function SkeletonHero() {
   return (
     <div className="relative w-full h-[60vh] md:h-[70vh] bg-stone-200 animate-pulse">
@@ -35,7 +21,6 @@ function SkeletonHero() {
     </div>
   );
 }
-// ────────────────────────────────────────────────────────
 
 export default function CategoriaPage() {
   const { id } = useParams();
@@ -150,6 +135,7 @@ export default function CategoriaPage() {
         title={`${dataHeader.titulo1}${dataHeader.titulo2}`}
         description={dataHeader.desc}
         url={id ? `/categoria/${id}` : '/categoria'}
+        image={dataHeader.heroImage}
       />
 
       {/* ── HERO ── */}

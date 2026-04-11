@@ -40,6 +40,11 @@ export default function ProductPage() {
     setIsLightboxOpen(false);
   }, [id]);
 
+  const imagenes = useMemo(() => {
+    if (!producto) return [];
+    return [producto.imagen1, producto.imagen2, producto.imagen3, producto.imagen4].filter(Boolean);
+  }, [producto]);
+
   useEffect(() => {
     if (!isLightboxOpen) return;
     const total = imagenes.length;
@@ -54,12 +59,7 @@ export default function ProductPage() {
       document.removeEventListener('keydown', onKey);
       document.body.style.overflow = '';
     };
-  }, [isLightboxOpen]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const imagenes = useMemo(() => {
-    if (!producto) return [];
-    return [producto.imagen1, producto.imagen2, producto.imagen3, producto.imagen4].filter(Boolean);
-  }, [producto]);
+  }, [isLightboxOpen, imagenes]);
 
   const variantes = useMemo(() => {
     if (!producto?.variantes) return [];
@@ -181,12 +181,46 @@ export default function ProductPage() {
     transform: isTransitioning ? 'scale(1.03)' : 'scale(1)',
   };
 
+  const productJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    name: producto.nombre,
+    description: producto.descripcion,
+    image: producto.imagen1,
+    url: `https://pavoa.vercel.app/producto/${id}`,
+    brand: { '@type': 'Brand', name: 'PAVOA' },
+    offers: {
+      '@type': 'Offer',
+      url: `https://pavoa.vercel.app/producto/${id}`,
+      priceCurrency: 'COP',
+      price: producto.precioNumerico,
+      availability: 'https://schema.org/InStock',
+      seller: { '@type': 'Organization', name: 'PAVOA' },
+    },
+  };
+
+  const breadcrumbJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Inicio', item: 'https://pavoa.vercel.app/' },
+      { '@type': 'ListItem', position: 2, name: 'Catálogo', item: 'https://pavoa.vercel.app/categoria' },
+      ...(producto.categoria
+        ? [{ '@type': 'ListItem', position: 3, name: producto.categoria, item: `https://pavoa.vercel.app/categoria/${producto.categoria.toLowerCase()}` }]
+        : []),
+      { '@type': 'ListItem', position: producto.categoria ? 4 : 3, name: producto.nombre, item: `https://pavoa.vercel.app/producto/${id}` },
+    ],
+  };
+
   return (
     <div className="min-h-screen bg-white">
       <SEO
         title={producto.nombre}
         description={producto.descripcion || `Compra ${producto.nombre} en PAVOA. Alta calidad deportiva con envío a toda Colombia.`}
         url={`/producto/${id}`}
+        image={producto.imagen1}
+        type="product"
+        jsonLd={[productJsonLd, breadcrumbJsonLd]}
       />
 
       <div className="flex flex-col md:flex-row max-w-[1600px] mx-auto pt-[115px] md:pt-[120px]">

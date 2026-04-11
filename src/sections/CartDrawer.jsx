@@ -1,39 +1,29 @@
-import React, { useContext } from 'react';
+import React, { useContext, useEffect, useRef } from 'react';
 import { X, ShoppingBag } from 'lucide-react';
 import { CartContext } from '../App';
 import { useNavigate } from 'react-router-dom';
-
-const NUMERO_WHATSAPP = import.meta.env.VITE_WHATSAPP_NUMBER;
+import { thumbImage } from '../utils/imageUrl';
 
 export default function CartDrawer({ cartOpen, setCartOpen }) {
   const navigate = useNavigate();
   const { cartItems, cartCount, cartTotal, removeFromCart, updateQuantity } = useContext(CartContext);
-  const [modalOpen, setModalOpen] = React.useState(false); // ✅ NUEVO
+  const [modalOpen, setModalOpen] = React.useState(false);
+  const drawerRef = useRef(null);
 
-  const handleWhatsAppCheckout = () => {
-    let mensaje = "Hola PAVOA, me gustaria concretar mi pedido:\n\n";
-    mensaje += "DETALLE DEL PEDIDO\n";
-    mensaje += "-------------------\n";
-
-    cartItems.forEach((item, i) => {
-      const color = item.producto.colorSeleccionado
-        ? `, Color: ${item.producto.colorSeleccionado}`
-        : '';
-      mensaje += `${i + 1}. ${item.producto.nombre}\n`;
-      mensaje += `   Talla: ${item.talla}${color}\n`;
-      mensaje += `   Cantidad: ${item.cantidad}\n`;
-      mensaje += `   Precio: ${item.producto.precio}\n\n`;
-    });
-
-    mensaje += "-------------------\n";
-    mensaje += `Total estimado: ${cartTotal.toLocaleString('es-CO')}\n\n`;
-    mensaje += "Quedo atenta a los pasos para confirmar el pago.";
-
-    window.open(
-      `https://wa.me/${NUMERO_WHATSAPP}?text=${encodeURIComponent(mensaje)}`,
-      '_blank'
-    );
-  };
+  useEffect(() => {
+    if (!cartOpen || !drawerRef.current) return;
+    const focusable = drawerRef.current.querySelectorAll('button, [href], input, [tabindex]:not([tabindex="-1"])');
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    first?.focus();
+    const trap = (e) => {
+      if (e.key !== 'Tab') return;
+      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last?.focus(); }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first?.focus(); }
+    };
+    document.addEventListener('keydown', trap);
+    return () => document.removeEventListener('keydown', trap);
+  }, [cartOpen]);
 
   return (
     <>
@@ -44,7 +34,11 @@ export default function CartDrawer({ cartOpen, setCartOpen }) {
         }`} 
       />
 
-      <div 
+      <div
+        ref={drawerRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Carrito de compras"
         className={`fixed top-0 right-0 h-full w-full sm:w-[400px] z-[70] flex flex-col transition-transform duration-500 ease-[cubic-bezier(0.25,1,0.5,1)] ${
           cartOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
@@ -75,9 +69,11 @@ export default function CartDrawer({ cartOpen, setCartOpen }) {
                 <div key={`${item.producto.id}-${item.talla}`} className="flex gap-5 group">
                   <div className="w-24 h-[126px] bg-stone-100 overflow-hidden relative flex-shrink-0">
                     <img
-                      src={item.producto.imagen1}
+                      src={thumbImage(item.producto.imagen1)}
                       alt={item.producto.nombre}
+                      width={96} height={126}
                       className="w-full h-full object-cover"
+                      loading="lazy"
                     />
                   </div>
                   <div className="flex flex-col justify-center flex-grow py-1">
@@ -193,9 +189,11 @@ export default function CartDrawer({ cartOpen, setCartOpen }) {
               <div key={`modal-${item.producto.id}-${item.talla}`} className="flex gap-4">
                 <div className="w-16 h-20 bg-stone-100 overflow-hidden flex-shrink-0">
                   <img
-                    src={item.producto.imagen1}
+                    src={thumbImage(item.producto.imagen1)}
                     alt={item.producto.nombre}
+                    width={64} height={80}
                     className="w-full h-full object-cover"
+                    loading="lazy"
                   />
                 </div>
                 <div className="flex flex-col justify-center gap-1 flex-grow">

@@ -19,9 +19,6 @@ export default defineConfig({
           if (id.includes('lucide-react') || id.includes('react-icons')) {
             return 'vendor-icons';
           }
-          if (id.includes('@supabase')) {
-            return 'vendor-db';
-          }
         },
       }
     },

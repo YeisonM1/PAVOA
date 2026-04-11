@@ -80,10 +80,16 @@ function AppShell() {
     <Router>
       <ScrollToTop />
       <div className="min-h-screen bg-white font-sans flex flex-col relative">
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[999] focus:bg-stone-900 focus:text-white focus:px-4 focus:py-2 focus:text-[11px] focus:tracking-[0.2em] focus:uppercase"
+        >
+          Saltar al contenido principal
+        </a>
         <AnnouncementBar />
         <Header />
 
-        <div className="flex-grow">
+        <div className="flex-grow" id="main-content">
           <Suspense fallback={
             <div className="min-h-[60vh] flex items-center justify-center bg-white">
               <span className="text-[10px] font-bold tracking-[0.3em] uppercase text-stone-500 animate-pulse">

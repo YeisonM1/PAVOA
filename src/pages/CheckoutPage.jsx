@@ -2,6 +2,7 @@ import React, { useState, useContext } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { CartContext } from '../App';
 import SEO from '../components/SEO';
+import { thumbImage } from '../utils/imageUrl';
 
 const NUMERO_WHATSAPP = import.meta.env.VITE_WHATSAPP_NUMBER;
 
@@ -253,7 +254,8 @@ export default function CheckoutPage() {
                 {cartItems.map(item => (
                   <div key={`${item.producto.id}-${item.talla}`} className="flex gap-4">
                     <div className="w-16 h-20 bg-stone-100 overflow-hidden flex-shrink-0 relative">
-                      <img src={item.producto.imagen1} alt={item.producto.nombre}
+                      <img src={thumbImage(item.producto.imagen1)} alt={item.producto.nombre}
+                        width={64} height={80}
                         className="w-full h-full object-cover" loading="lazy" />
                       <span className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-stone-900 text-white text-[9px] rounded-full flex items-center justify-center font-bold">
                         {item.cantidad}
