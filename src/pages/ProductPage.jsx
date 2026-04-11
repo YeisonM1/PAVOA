@@ -510,6 +510,7 @@ export default function ProductPage() {
               </button>
             )}
             <img
+              key={selectedImage}
               src={heroImage(imagenes[selectedImage])}
               alt={`${producto.nombre} vista ${selectedImage + 1}`}
               className="max-h-[80vh] max-w-full object-contain select-none"
