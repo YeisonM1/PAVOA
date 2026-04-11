@@ -11,13 +11,12 @@ export default defineConfig({
   build: {
     rollupOptions: {
       output: {
-        // ✅ Vite 8 (rolldown) requiere función, no objeto
         manualChunks: (id) => {
           if (id.includes('react') || id.includes('react-dom') || id.includes('react-router-dom')) {
             return 'vendor-react';
           }
-          if (id.includes('lucide-react') || id.includes('react-icons')) {
-            return 'vendor-icons';
+          if (id.includes('lucide-react')) {
+            return 'vendor-icons'; // ← eliminado react-icons
           }
         },
       }
@@ -26,14 +25,12 @@ export default defineConfig({
     sourcemap: false,
   },
 
-  // ✅ Vite 8 usa oxc por defecto — eliminamos console.log en producción
   oxc: {
     transform: {
       drop: ['console', 'debugger'],
     }
   },
 
-  // ✅ Alias para imports más limpios
   resolve: {
     alias: {
       '@': '/src',
