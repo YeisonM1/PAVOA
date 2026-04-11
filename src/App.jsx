@@ -1,9 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
-import { useEffect, Suspense, lazy, useState } from 'react';
+import { useEffect, Suspense, lazy, useState, useContext } from 'react';
 import { CartProvider, CartContext } from './context/CartContext';
 import AnnouncementBar from './sections/AnnouncementBar';
-
-
 import Header from './sections/Header';
 import Footer from './sections/Footer';
 
@@ -13,9 +11,9 @@ const ProductPage   = lazy(() => import('./pages/ProductPage'));
 const ContactPage   = lazy(() => import('./pages/ContactPage'));
 const CheckoutPage  = lazy(() => import('./pages/CheckoutPage'));
 const NotFoundPage  = lazy(() => import('./pages/NotFoundPage'));
-const CallbackPage = lazy(() => import('./pages/CallbackPage'));
-const AccountPage  = lazy(() => import('./pages/AccountPage'));
-
+const AccountPage   = lazy(() => import('./pages/AccountPage'));
+const LoginPage     = lazy(() => import('./pages/LoginPage'));
+const RegisterPage  = lazy(() => import('./pages/RegisterPage'));
 
 export { CartContext };
 
@@ -27,16 +25,13 @@ function ScrollToTop() {
   return null;
 }
 
-// ── Botón flotante de WhatsApp ──────────────────────────
 function WhatsAppButton() {
   const { pathname } = useLocation();
   const [visible, setVisible] = useState(false);
   const [tooltip, setTooltip] = useState(false);
 
-  // No mostrar en checkout
-  const ocultar = pathname === '/checkout';
+  const ocultar = pathname === '/checkout' || pathname === '/login' || pathname === '/register';
 
-  // Aparece después de 2 segundos
   useEffect(() => {
     const t = setTimeout(() => setVisible(true), 2000);
     return () => clearTimeout(t);
@@ -53,14 +48,11 @@ function WhatsAppButton() {
     <div className={`fixed bottom-6 right-6 z-[90] flex items-center gap-3 transition-all duration-700 ease-out ${
       visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'
     }`}>
-      {/* Tooltip */}
       <div className={`transition-all duration-300 ${tooltip ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-2 pointer-events-none'}`}>
         <div className="bg-stone-900 text-white text-[10px] tracking-[0.15em] uppercase px-4 py-2.5 whitespace-nowrap shadow-lg">
           ¿Tienes dudas?
         </div>
       </div>
-
-      {/* Botón */}
       <button
         onClick={handleClick}
         onMouseEnter={() => setTooltip(true)}
@@ -76,11 +68,16 @@ function WhatsAppButton() {
     </div>
   );
 }
-// ────────────────────────────────────────────────────────
+
+// Páginas sin Header/Footer (login, register)
+const RUTAS_LIMPIAS = ['/login', '/register'];
 
 function AppShell() {
+  const { pathname } = useLocation();
+  const esRutaLimpia = RUTAS_LIMPIAS.includes(pathname);
+
   return (
-    <Router>
+    <>
       <ScrollToTop />
       <div className="min-h-screen bg-white font-sans flex flex-col relative">
         <a
@@ -89,17 +86,18 @@ function AppShell() {
         >
           Saltar al contenido principal
         </a>
-        <AnnouncementBar />
-        <Header />
+
+        {!esRutaLimpia && <AnnouncementBar />}
+        {!esRutaLimpia && <Header />}
 
         <div className="flex-grow" id="main-content">
           <Suspense fallback={
-              <div className="min-h-screen flex items-center justify-center bg-white">
-                <span className="text-[10px] font-bold tracking-[0.3em] uppercase text-stone-500 animate-pulse">
-                  Cargando...
-                </span>
-              </div>
-            }>
+            <div className="min-h-screen flex items-center justify-center bg-white">
+              <span className="text-[10px] font-bold tracking-[0.3em] uppercase text-stone-500 animate-pulse">
+                Cargando...
+              </span>
+            </div>
+          }>
             <Routes>
               <Route path="/"              element={<HomePage />} />
               <Route path="/categoria"     element={<CategoriaPage />} />
@@ -107,22 +105,21 @@ function AppShell() {
               <Route path="/producto/:id"  element={<ProductPage />} />
               <Route path="/contacto"      element={<ContactPage />} />
               <Route path="/checkout"      element={<CheckoutPage />} />
-              <Route path="/cuenta"          element={<AccountPage />} />
-              <Route path="/cuenta/callback" element={<CallbackPage />} />
+              <Route path="/cuenta"        element={<AccountPage />} />
+              <Route path="/login"         element={<LoginPage />} />
+              <Route path="/register"      element={<RegisterPage />} />
               <Route path="*"              element={<NotFoundPage />} />
             </Routes>
           </Suspense>
         </div>
 
-        <Footer />
+        {!esRutaLimpia && <Footer />}
         <WhatsAppButton />
         <Toast />
       </div>
-    </Router>
+    </>
   );
 }
-
-import { useContext } from 'react';
 
 function Toast() {
   const { showToast } = useContext(CartContext);
@@ -145,7 +142,9 @@ function Toast() {
 function App() {
   return (
     <CartProvider>
-      <AppShell />
+      <Router>
+        <AppShell />
+      </Router>
     </CartProvider>
   );
 }

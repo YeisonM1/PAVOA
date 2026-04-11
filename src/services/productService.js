@@ -22,7 +22,7 @@ const setCache = (key, promise) => {
 };
 // ──────────────────────────────────────────────────────
 
-const shopifyFetch = async (query, variables = {}) => {
+export const shopifyFetch = async (query, variables = {}) => {
   const res = await fetch(SHOPIFY_ENDPOINT, {
     method: 'POST',
     headers: {
