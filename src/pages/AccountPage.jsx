@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { estaAutenticado, getCliente, getPedidos, cerrarSesion, iniciarLogin } from '../services/authService';
+import { estaAutenticado, getCliente, getPedidos, cerrarSesion } from '../services/authService';
 import SEO from '../components/SEO';
 
 const formatFecha = (iso) => new Date(iso).toLocaleDateString('es-CO', {
@@ -11,28 +11,31 @@ const formatPrecio = (amount, currency) =>
   `$${Number(amount).toLocaleString('es-CO')} ${currency}`;
 
 const estadoLabel = (status) => ({
-  PAID:       { label: 'Pagado',     color: 'text-emerald-600' },
-  PENDING:    { label: 'Pendiente',  color: 'text-amber-600'   },
-  REFUNDED:   { label: 'Reembolsado', color: 'text-stone-500'  },
-  FULFILLED:  { label: 'Enviado',    color: 'text-emerald-600' },
-  UNFULFILLED:{ label: 'En proceso', color: 'text-amber-600'   },
+  PAID:        { label: 'Pagado',      color: 'text-emerald-600' },
+  PENDING:     { label: 'Pendiente',   color: 'text-amber-600'   },
+  REFUNDED:    { label: 'Reembolsado', color: 'text-stone-500'   },
+  FULFILLED:   { label: 'Enviado',     color: 'text-emerald-600' },
+  UNFULFILLED: { label: 'En proceso',  color: 'text-amber-600'   },
 }[status] || { label: status, color: 'text-stone-500' });
 
 export default function AccountPage() {
   const navigate = useNavigate();
-  const [cliente, setCliente]   = useState(null);
-  const [pedidos, setPedidos]   = useState([]);
-  const [loading, setLoading]   = useState(true);
+  const [cliente, setCliente]     = useState(null);
+  const [pedidos, setPedidos]     = useState([]);
+  const [loading, setLoading]     = useState(true);
   const [activeTab, setActiveTab] = useState('pedidos');
 
   useEffect(() => {
     if (!estaAutenticado()) {
-      iniciarLogin();
+      navigate('/login', { replace: true }); // ← corregido
       return;
     }
     Promise.all([getCliente(), getPedidos()])
       .then(([c, p]) => { setCliente(c); setPedidos(p); })
-      .catch(() => cerrarSesion())
+      .catch(() => {
+        cerrarSesion();
+        navigate('/login', { replace: true });
+      })
       .finally(() => setLoading(false));
   }, []);
 
@@ -62,11 +65,11 @@ export default function AccountPage() {
               {cliente?.firstName} <strong className="font-bold">{cliente?.lastName}</strong>
             </h1>
             <p className="text-[11px] text-stone-400 mt-1 tracking-[0.1em]">
-              {cliente?.emailAddress?.emailAddress}
+              {cliente?.email} {/* ← corregido */}
             </p>
           </div>
           <button
-            onClick={cerrarSesion}
+            onClick={async () => { await cerrarSesion(); navigate('/'); }}
             style={{ letterSpacing: '0.15em' }}
             className="text-[10px] font-bold text-stone-400 hover:text-stone-900 uppercase transition-colors border-b border-stone-200 pb-0.5"
           >
@@ -90,8 +93,8 @@ export default function AccountPage() {
               <span
                 className="absolute bottom-0 left-0 w-full h-[1.5px] transition-all duration-300"
                 style={{
-                  background: activeTab === tab.value ? 'var(--color-gold)' : 'transparent',
-                  transform:  activeTab === tab.value ? 'scaleX(1)' : 'scaleX(0)',
+                  background:      activeTab === tab.value ? 'var(--color-gold)' : 'transparent',
+                  transform:       activeTab === tab.value ? 'scaleX(1)' : 'scaleX(0)',
                   transformOrigin: 'left',
                 }}
               />
@@ -143,13 +146,12 @@ export default function AccountPage() {
                       </div>
                     </div>
 
-                    {/* Productos */}
                     <div className="flex gap-3 mb-4 overflow-x-auto pb-1">
                       {pedido.lineItems.edges.map(({ node: item }, i) => (
                         <div key={i} className="flex-shrink-0 flex items-center gap-3">
-                          {item.image && (
+                          {item.variant?.image && (
                             <img
-                              src={item.image.url}
+                              src={item.variant.image.url}
                               alt={item.title}
                               className="w-12 h-16 object-cover object-top flex-shrink-0"
                             />
@@ -183,8 +185,8 @@ export default function AccountPage() {
           <div className="max-w-md flex flex-col gap-6">
             {[
               { label: 'Nombre',   value: `${cliente?.firstName} ${cliente?.lastName}` },
-              { label: 'Correo',   value: cliente?.emailAddress?.emailAddress },
-              { label: 'Teléfono', value: cliente?.phoneNumber?.phoneNumber || '—' },
+              { label: 'Correo',   value: cliente?.email },
+              { label: 'Teléfono', value: cliente?.phone || '—' },
             ].map(({ label, value }) => (
               <div key={label} className="border-b border-stone-100 pb-4">
                 <p style={{ letterSpacing: '0.25em' }} className="text-[9px] font-bold text-stone-400 uppercase mb-1">
