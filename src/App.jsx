@@ -107,9 +107,9 @@ function AppShell() {
               <Route path="/producto/:id"  element={<ProductPage />} />
               <Route path="/contacto"      element={<ContactPage />} />
               <Route path="/checkout"      element={<CheckoutPage />} />
-              <Route path="*" element={<NotFoundPage />} />
               <Route path="/cuenta"          element={<AccountPage />} />
               <Route path="/cuenta/callback" element={<CallbackPage />} />
+              <Route path="*"              element={<NotFoundPage />} />
             </Routes>
           </Suspense>
         </div>
