@@ -37,7 +37,7 @@ export default function ProductPage() {
 
   // ✅ AGREGAR AQUÍ:
 useEffect(() => {
-  if (imagenes.length <= 1) return;
+  if (!producto || imagenes.length <= 1) return; // ← agregar !producto
   imagenes.forEach((img, i) => {
     if (i === 0) return;
     const image = new Image();
