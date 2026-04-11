@@ -106,6 +106,12 @@ useEffect(() => {
   const esTallaUnica = tallasDisponibles.length === 1 && tallasDisponibles[0]?.talla === 'ÚNICA';
   const tieneVariantes = variantes.length > 0;
 
+  useEffect(() => {
+  if (esTallaUnica && colorSeleccionado) {
+    setTallaSeleccionada('ÚNICA');
+  }
+}, [esTallaUnica, colorSeleccionado]);
+
   const handleColorSelect = (color) => {
     setColorSeleccionado(colorSeleccionado === color ? null : color);
     setTallaSeleccionada(null);
@@ -162,7 +168,7 @@ useEffect(() => {
   };
 
   const toggleAccordion = (s) => setOpenAccordion(openAccordion === s ? null : s);
-  const incrementar = () => setCantidad(c => c + 1);
+  const incrementar = () => setCantidad(c => stockActual !== null ? Math.min(c + 1, stockActual) : c + 1);
   const decrementar = () => setCantidad(c => Math.max(1, c - 1));
 
   if (loading) {
