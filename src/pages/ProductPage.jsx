@@ -35,6 +35,16 @@ export default function ProductPage() {
     window.scrollTo(0, 0);
   }, [id]);
 
+  // ✅ AGREGAR AQUÍ:
+useEffect(() => {
+  if (imagenes.length <= 1) return;
+  imagenes.forEach((img, i) => {
+    if (i === 0) return;
+    const image = new Image();
+    image.src = heroImage(img);
+  });
+}, [imagenes]);
+
   useEffect(() => {
     setSelectedImage(0);
     setIsLightboxOpen(false);
