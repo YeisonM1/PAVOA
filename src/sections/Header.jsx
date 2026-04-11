@@ -6,6 +6,7 @@ import { CartContext } from '../App';
 import CartDrawer from './CartDrawer';
 import SearchOverlay from './SearchOverlay';
 import { InstagramIcon, FacebookIcon } from '../components/Icons';
+import { estaAutenticado, getCliente } from '../services/authService';
 
 const mujerItems = [
   'Camisetas', 'Tops Deportivos', 'Sets', 'Buzos', 'Chaquetas',
@@ -65,6 +66,8 @@ const Header = () => {
   const megaRef  = useRef(null);
   const panelRef = useRef(null); 
   const navigate = useNavigate();
+  const [autenticado, setAutenticado] = useState(estaAutenticado());
+  const usuario = getCliente();
 
   useEffect(() => {
     let ticking = false;
@@ -238,9 +241,22 @@ const Header = () => {
             <button onClick={() => setIsSearchOpen(true)} className="hover:text-stone-900 transition-colors" aria-label="Abrir búsqueda">
               <Search size={20} strokeWidth={1.8} aria-hidden="true" />
             </button>
-            <button onClick={() => navigate('/cuenta')} className="hover:text-stone-900 transition-colors" aria-label="Ir a mi cuenta">
-              <User size={20} strokeWidth={1.8} aria-hidden="true" />
-            </button>
+            <button
+                  onClick={() => navigate(autenticado ? '/cuenta' : '/login')}
+                  className="hover:text-stone-900 transition-colors relative"
+                  aria-label={autenticado ? 'Ir a mi cuenta' : 'Iniciar sesión'}
+                >
+                  {autenticado && usuario ? (
+                    <div
+                      className="w-7 h-7 rounded-full flex items-center justify-center text-white text-[10px] font-bold"
+                      style={{ backgroundColor: '#DFCDB4' }}
+                    >
+                      {usuario.firstName?.[0]?.toUpperCase()}{usuario.lastName?.[0]?.toUpperCase()}
+                    </div>
+                  ) : (
+                    <User size={20} strokeWidth={1.8} aria-hidden="true" />
+                  )}
+                </button>
             <button 
               onClick={() => setCartOpen(true)}
               className="hover:text-stone-900 transition-colors relative"
