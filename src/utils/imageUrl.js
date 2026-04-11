@@ -57,7 +57,7 @@ export const categoryImage = (url) => {
   }
   if (isShopify(url)) {
     const base = url.split('?')[0];
-    return `${base}?width=800&format=webp`; // ← forzar WebP
+    return `${base}?width=500&format=webp`; // ← forzar WebP
   }
   return url;
 };
