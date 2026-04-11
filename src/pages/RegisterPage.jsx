@@ -21,7 +21,7 @@ export default function RegisterPage() {
     setLoading(true);
     try {
       await register(form);
-      navigate('/cuenta', { replace: true });
+      navigate('/verify-email', { replace: true, state: { email: form.email } });
     } catch (err) {
       setError(err.message || 'Error al crear la cuenta.');
     } finally {

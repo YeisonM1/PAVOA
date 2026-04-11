@@ -1,68 +1,34 @@
-import { shopifyFetch } from './productService';
-
-// ── Login ─────────────────────────────────────────────
+// ── Login — llama a nuestra API serverless ────────────
 export const login = async (email, password) => {
-  const data = await shopifyFetch(`
-    mutation {
-      customerAccessTokenCreate(input: {
-        email: "${email}",
-        password: "${password}"
-      }) {
-        customerAccessToken {
-          accessToken
-          expiresAt
-        }
-        customerUserErrors {
-          code
-          message
-        }
-      }
-    }
-  `);
+  const res = await fetch('/api/login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password }),
+  });
 
-  const { customerAccessToken, customerUserErrors } = data.customerAccessTokenCreate;
+  const data = await res.json();
 
-  if (customerUserErrors.length > 0) {
-    throw new Error(customerUserErrors[0].message);
-  }
+  if (!res.ok) throw new Error(data.error || 'Error al iniciar sesión.');
 
-  localStorage.setItem('pavoa_access_token', customerAccessToken.accessToken);
-  localStorage.setItem('pavoa_token_expires', new Date(customerAccessToken.expiresAt).getTime());
+  localStorage.setItem('pavoa_access_token', data.accessToken);
+  localStorage.setItem('pavoa_token_expires', new Date(data.expiresAt).getTime());
 
-  return customerAccessToken.accessToken;
+  return data.accessToken;
 };
 
-// ── Register ──────────────────────────────────────────
+// ── Register — llama a nuestra API serverless ─────────
 export const register = async ({ firstName, lastName, email, password }) => {
-  const data = await shopifyFetch(`
-    mutation {
-      customerCreate(input: {
-        firstName: "${firstName}",
-        lastName: "${lastName}",
-        email: "${email}",
-        password: "${password}"
-      }) {
-        customer {
-          id
-          email
-        }
-        customerUserErrors {
-          code
-          message
-        }
-      }
-    }
-  `);
+  const res = await fetch('/api/register', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ firstName, lastName, email, password }),
+  });
 
-  const { customer, customerUserErrors } = data.customerCreate;
+  const data = await res.json();
 
-  if (customerUserErrors.length > 0) {
-    throw new Error(customerUserErrors[0].message);
-  }
+  if (!res.ok) throw new Error(data.error || 'Error al crear la cuenta.');
 
-  // Auto login después de registrarse
-  await login(email, password);
-  return customer;
+  return data;
 };
 
 // ── Cerrar sesión ─────────────────────────────────────
@@ -70,14 +36,11 @@ export const cerrarSesion = async () => {
   const token = localStorage.getItem('pavoa_access_token');
 
   if (token) {
-    await shopifyFetch(`
-      mutation {
-        customerAccessTokenDelete(customerAccessToken: "${token}") {
-          deletedAccessToken
-          userErrors { message }
-        }
-      }
-    `).catch(() => {});
+    await fetch('/api/login', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token }),
+    }).catch(() => {});
   }
 
   localStorage.removeItem('pavoa_access_token');
@@ -100,18 +63,28 @@ export const getCliente = async () => {
   const token = getToken();
   if (!token) throw new Error('No autenticado');
 
-  const data = await shopifyFetch(`
-    query {
-      customer(customerAccessToken: "${token}") {
-        id
-        firstName
-        lastName
-        email
-        phone
-      }
-    }
-  `);
+  const res = await fetch(`https://${import.meta.env.VITE_SHOPIFY_DOMAIN}/api/2026-04/graphql.json`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Shopify-Storefront-Access-Token': import.meta.env.VITE_SHOPIFY_TOKEN,
+    },
+    body: JSON.stringify({
+      query: `
+        query {
+          customer(customerAccessToken: "${token}") {
+            id
+            firstName
+            lastName
+            email
+            phone
+          }
+        }
+      `
+    }),
+  });
 
+  const { data } = await res.json();
   return data.customer;
 };
 
@@ -120,25 +93,34 @@ export const getPedidos = async () => {
   const token = getToken();
   if (!token) throw new Error('No autenticado');
 
-  const data = await shopifyFetch(`
-    query {
-      customer(customerAccessToken: "${token}") {
-        orders(first: 20) {
-          edges {
-            node {
-              id
-              name
-              processedAt
-              financialStatus
-              fulfillmentStatus
-              totalPrice { amount currencyCode }
-              lineItems(first: 5) {
-                edges {
-                  node {
-                    title
-                    quantity
-                    variant {
-                      image { url }
+  const res = await fetch(`https://${import.meta.env.VITE_SHOPIFY_DOMAIN}/api/2026-04/graphql.json`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Shopify-Storefront-Access-Token': import.meta.env.VITE_SHOPIFY_TOKEN,
+    },
+    body: JSON.stringify({
+      query: `
+        query {
+          customer(customerAccessToken: "${token}") {
+            orders(first: 20) {
+              edges {
+                node {
+                  id
+                  name
+                  processedAt
+                  financialStatus
+                  fulfillmentStatus
+                  totalPrice { amount currencyCode }
+                  lineItems(first: 5) {
+                    edges {
+                      node {
+                        title
+                        quantity
+                        variant {
+                          image { url }
+                        }
+                      }
                     }
                   }
                 }
@@ -146,9 +128,10 @@ export const getPedidos = async () => {
             }
           }
         }
-      }
-    }
-  `);
+      `
+    }),
+  });
 
+  const { data } = await res.json();
   return data.customer.orders.edges.map(({ node }) => node);
 };
