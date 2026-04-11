@@ -3,11 +3,10 @@ import { heroImage } from '../utils/imageUrl';
 import { useCarousel } from '../hooks/useCarousel';
 import { getHeroSlides } from '../services/productService';
 
-// ── Fallback hardcodeado por si Shopify falla ──────────
 const SLIDES_FALLBACK = [
   {
     id: 1,
-    image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=1200&q=70&fm=webp&auto=format',
+    image: null, // ← sin imagen hasta que Shopify responda
     tag: 'Nueva Colección',
     headline: ['El lujo de', 'sentirte', 'tú.'],
     sub: 'Descubre nuestra nueva colección diseñada para mujeres que buscan estilo, rendimiento y exclusividad.',
@@ -16,7 +15,7 @@ const SLIDES_FALLBACK = [
   },
   {
     id: 2,
-    image: 'https://images.unsplash.com/photo-1518611012118-696072aa579a?w=1200&q=70&fm=webp&auto=format',
+    image: null,
     tag: 'Temporada 2026',
     headline: ['Fuerza &', 'Elegancia', 'pura.'],
     sub: 'Cada prenda diseñada para mujeres que no se detienen en su día a día.',
@@ -25,7 +24,7 @@ const SLIDES_FALLBACK = [
   },
   {
     id: 3,
-    image: 'https://images.unsplash.com/photo-1541534741688-6078c6bfb5c5?w=600&q=70&fm=webp&auto=format',
+    image: null,
     tag: 'Best Sellers',
     headline: ['Descubre', 'tu mejor', 'versión.'],
     sub: 'Las piezas favoritas de nuestra comunidad. Ediciones estrictamente limitadas.',
@@ -57,15 +56,17 @@ export default function HeroFullscreen() {
             index === current ? 'opacity-100 z-10' : 'opacity-0 z-0'
           }`}
         >
-          <img
-            src={heroImage(slide.image)}
-            alt={slide.tag}
-            fetchpriority={index === current ? 'high' : 'auto'}
-            loading={index === 0 ? 'eager' : 'lazy'}
-            className={`w-full h-full object-cover origin-center transition-transform duration-[6000ms] ease-linear ${
-              index === current ? 'scale-105' : 'scale-100'
-            }`}
-          />
+          {slide.image && (
+            <img
+              src={heroImage(slide.image)}
+              alt={slide.tag}
+              fetchpriority={index === current ? 'high' : 'auto'}
+              loading={index === 0 ? 'eager' : 'lazy'}
+              className={`w-full h-full object-cover origin-center transition-transform duration-[6000ms] ease-linear ${
+                index === current ? 'scale-105' : 'scale-100'
+              }`}
+            />
+          )}
         </div>
       ))}
 

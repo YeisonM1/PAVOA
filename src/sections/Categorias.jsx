@@ -106,13 +106,36 @@ const CategoriaCard = ({ cat, className, delay = 0 }) => {
 };
 
 export default function Categorias() {
-  const [categorias, setCategorias] = useState(CATEGORIAS_FALLBACK);
+  const [categorias, setCategorias] = useState(null); // ← null en lugar de FALLBACK
 
   useEffect(() => {
     getCategoriasDestacadas().then(data => {
       if (Object.keys(data).length > 0) setCategorias(data);
     });
   }, []);
+
+  if (!categorias) {
+    return (
+      <section className="w-full bg-stone-50 py-20 md:py-24 px-6 md:px-12 lg:px-16 overflow-hidden">
+        <div className="max-w-[1400px] mx-auto mb-10 md:mb-12 flex items-end justify-between border-b border-stone-200 pb-6">
+          <div className="flex flex-col gap-2">
+            <div className="h-2 w-20 bg-stone-200 animate-pulse" />
+            <div className="h-5 w-40 bg-stone-200 animate-pulse" />
+          </div>
+        </div>
+        <div className="max-w-[1400px] mx-auto grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6">
+          <div className="h-[55vh] md:h-[75vh] bg-stone-200 animate-pulse" />
+          <div className="flex flex-col gap-4 lg:gap-6">
+            <div className="h-[35vh] md:h-[calc(37.5vh-0.75rem)] bg-stone-200 animate-pulse" />
+            <div className="h-[35vh] md:h-[calc(37.5vh-0.75rem)] grid grid-cols-2 gap-6">
+              <div className="bg-stone-200 animate-pulse" />
+              <div className="bg-stone-200 animate-pulse" />
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="w-full bg-stone-50 py-20 md:py-24 px-6 md:px-12 lg:px-16 overflow-hidden">
