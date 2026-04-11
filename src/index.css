@@ -44,4 +44,10 @@
     background-color: var(--color-gold);
     color: var(--color-black);
   }
+
+  /* Indicador de foco para navegación por teclado */
+  *:focus-visible {
+    outline: 2px solid var(--color-gold);
+    outline-offset: 2px;
+  }
 }

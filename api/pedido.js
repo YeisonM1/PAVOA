@@ -112,6 +112,13 @@ export default async function handler(req, res) {
 
   const { form, cartItems, cartTotal } = req.body;
 
+  if (!form?.nombre?.trim() || !form?.telefono?.trim()) {
+    return res.status(400).json({ error: 'Nombre y teléfono son requeridos' });
+  }
+  if (!Array.isArray(cartItems) || cartItems.length === 0) {
+    return res.status(400).json({ error: 'El carrito está vacío' });
+  }
+
   try {
     const token     = await getAccessToken();
     const draftOrder = await crearDraftOrder(token, { form, cartItems, cartTotal });

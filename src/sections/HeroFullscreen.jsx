@@ -47,7 +47,7 @@ export default function HeroFullscreen() {
   const s = slides[current];
 
   return (
-    <section className="relative w-full h-screen overflow-hidden bg-black">
+    <section className="relative w-full h-screen overflow-hidden bg-black" role="region" aria-roledescription="carrusel" aria-label="Banner principal">
       
       {/* ── IMÁGENES CON EFECTO KEN BURNS ── */}
       {slides.map((slide, index) => (
@@ -60,12 +60,18 @@ export default function HeroFullscreen() {
           <img
             src={heroImage(slide.image)}
             alt={slide.tag}
+            fetchpriority={index === current ? 'high' : 'auto'}
+            loading={index === 0 ? 'eager' : 'lazy'}
             className={`w-full h-full object-cover origin-center transition-transform duration-[6000ms] ease-linear ${
               index === current ? 'scale-105' : 'scale-100'
             }`}
           />
         </div>
       ))}
+
+      <span className="sr-only" aria-live="polite">
+        Slide {current + 1} de {slides.length}
+      </span>
 
       {/* ── GRADIENTE ── */}
       <div className="absolute inset-0 z-10 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none" />
