@@ -295,8 +295,6 @@ export const getCategoriasDestacadas = () => {
         }
       `);
 
-      console.log('RAW categorias:', JSON.stringify(data.metaobjects.edges, null, 2));
-
       const result = {};
       data.metaobjects.edges.forEach(({ node }, index) => {
         const get      = (key) => node.fields.find(f => f.key === key)?.value || '';
