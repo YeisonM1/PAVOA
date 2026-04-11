@@ -35,6 +35,11 @@ export default function ProductPage() {
     window.scrollTo(0, 0);
   }, [id]);
 
+  const imagenes = useMemo(() => {
+    if (!producto) return [];
+    return [producto.imagen1, producto.imagen2, producto.imagen3, producto.imagen4].filter(Boolean);
+  }, [producto]);
+
   // ✅ AGREGAR AQUÍ:
 useEffect(() => {
   if (!producto || imagenes.length <= 1) return; // ← agregar !producto
@@ -49,11 +54,6 @@ useEffect(() => {
     setSelectedImage(0);
     setIsLightboxOpen(false);
   }, [id]);
-
-  const imagenes = useMemo(() => {
-    if (!producto) return [];
-    return [producto.imagen1, producto.imagen2, producto.imagen3, producto.imagen4].filter(Boolean);
-  }, [producto]);
 
   useEffect(() => {
     if (!isLightboxOpen) return;
