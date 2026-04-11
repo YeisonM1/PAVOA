@@ -3,6 +3,7 @@ import { useEffect, Suspense, lazy, useState } from 'react';
 import { CartProvider, CartContext } from './context/CartContext';
 import AnnouncementBar from './sections/AnnouncementBar';
 
+
 import Header from './sections/Header';
 import Footer from './sections/Footer';
 
@@ -12,6 +13,8 @@ const ProductPage   = lazy(() => import('./pages/ProductPage'));
 const ContactPage   = lazy(() => import('./pages/ContactPage'));
 const CheckoutPage  = lazy(() => import('./pages/CheckoutPage'));
 const NotFoundPage  = lazy(() => import('./pages/NotFoundPage'));
+const CallbackPage = lazy(() => import('./pages/CallbackPage'));
+const AccountPage  = lazy(() => import('./pages/AccountPage'));
 
 
 export { CartContext };
@@ -105,6 +108,8 @@ function AppShell() {
               <Route path="/contacto"      element={<ContactPage />} />
               <Route path="/checkout"      element={<CheckoutPage />} />
               <Route path="*" element={<NotFoundPage />} />
+              <Route path="/cuenta"          element={<AccountPage />} />
+              <Route path="/cuenta/callback" element={<CallbackPage />} />
             </Routes>
           </Suspense>
         </div>

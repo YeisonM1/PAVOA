@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useContext } from 'react';
 import { Menu, User, ShoppingBag, X, Search } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import logo from '../assets/LOGO-PAVOA.svg';
 import { CartContext } from '../App';
 import CartDrawer from './CartDrawer';
@@ -64,6 +64,7 @@ const Header = () => {
   
   const megaRef  = useRef(null);
   const panelRef = useRef(null); 
+  const navigate = useNavigate();
 
   useEffect(() => {
     let ticking = false;
@@ -237,7 +238,7 @@ const Header = () => {
             <button onClick={() => setIsSearchOpen(true)} className="hover:text-stone-900 transition-colors" aria-label="Abrir búsqueda">
               <Search size={20} strokeWidth={1.8} aria-hidden="true" />
             </button>
-            <button className="hover:text-stone-900 transition-colors" aria-label="Ir a mi cuenta">
+            <button onClick={() => navigate('/cuenta')} className="..." aria-label="Ir a mi cuenta">
               <User size={20} strokeWidth={1.8} aria-hidden="true" />
             </button>
             <button 
