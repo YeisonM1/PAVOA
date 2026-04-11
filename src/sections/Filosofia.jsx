@@ -47,7 +47,7 @@ export default function Filosofia() {
       {/* DERECHA — Imagen */}
       <div className="w-full md:w-1/2 relative overflow-hidden min-h-[50vh] md:min-h-full">
         <img
-          src="https://cdn.shopify.com/s/files/1/0752/0436/2380/files/Filosofia.jpg?v=1775926800"
+          src="https://cdn.shopify.com/s/files/1/0752/0436/2380/files/Filosofia.jpg?width=600&format=webp"
           alt="PAVOA Filosofía"
           className="w-full h-full object-cover absolute inset-0 hover:scale-105 transition-transform duration-700 ease-out"
         />
