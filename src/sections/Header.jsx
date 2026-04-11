@@ -238,7 +238,7 @@ const Header = () => {
             <button onClick={() => setIsSearchOpen(true)} className="hover:text-stone-900 transition-colors" aria-label="Abrir búsqueda">
               <Search size={20} strokeWidth={1.8} aria-hidden="true" />
             </button>
-            <button onClick={() => navigate('/cuenta')} className="..." aria-label="Ir a mi cuenta">
+            <button onClick={() => navigate('/cuenta')} className="hover:text-stone-900 transition-colors" aria-label="Ir a mi cuenta">
               <User size={20} strokeWidth={1.8} aria-hidden="true" />
             </button>
             <button 
