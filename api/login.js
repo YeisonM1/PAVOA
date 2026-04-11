@@ -1,20 +1,13 @@
-const SHOPIFY_DOMAIN   = process.env.VITE_SHOPIFY_DOMAIN;
-const SHOPIFY_TOKEN    = process.env.VITE_SHOPIFY_TOKEN;
-const SHOPIFY_ENDPOINT = `https://${SHOPIFY_DOMAIN}/api/2026-04/graphql.json`;
+import { createClient } from '@supabase/supabase-js';
+import bcrypt from 'bcryptjs';
+import crypto from 'crypto';
 
-const shopifyFetch = async (query) => {
-  const res = await fetch(SHOPIFY_ENDPOINT, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-Shopify-Storefront-Access-Token': SHOPIFY_TOKEN,
-    },
-    body: JSON.stringify({ query }),
-  });
-  const { data, errors } = await res.json();
-  if (errors) throw new Error(errors[0].message);
-  return data;
-};
+const supabase = createClient(
+  process.env.VITE_SUPABASE_URL,
+  process.env.VITE_SUPABASE_ANON_KEY
+);
+
+const JWT_SECRET = process.env.JWT_SECRET || 'pavoa_secret_2026';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
@@ -26,34 +19,42 @@ export default async function handler(req, res) {
   }
 
   try {
-    const data = await shopifyFetch(`
-      mutation {
-        customerAccessTokenCreate(input: {
-          email: "${email}",
-          password: "${password}"
-        }) {
-          customerAccessToken {
-            accessToken
-            expiresAt
-          }
-          customerUserErrors {
-            code
-            message
-          }
-        }
-      }
-    `);
+    // 1. Buscar usuario en Supabase
+    const { data: usuario, error } = await supabase
+      .from('usuarios')
+      .select('*')
+      .eq('email', email.toLowerCase())
+      .single();
 
-    const { customerAccessToken, customerUserErrors } = data.customerAccessTokenCreate;
-
-    if (customerUserErrors.length > 0) {
+    if (error || !usuario) {
       return res.status(401).json({ error: 'Correo o contraseña incorrectos.' });
     }
 
+    // 2. Verificar que el email esté verificado
+    if (!usuario.email_verified) {
+      return res.status(401).json({ error: 'Debes verificar tu correo antes de iniciar sesión.' });
+    }
+
+    // 3. Verificar contraseña
+    const passwordValida = await bcrypt.compare(password, usuario.password_hash);
+    if (!passwordValida) {
+      return res.status(401).json({ error: 'Correo o contraseña incorrectos.' });
+    }
+
+    // 4. Generar token de sesión
+    const sessionToken = crypto.randomBytes(32).toString('hex');
+    const expiresAt = Date.now() + 30 * 24 * 60 * 60 * 1000; // 30 días
+
     return res.status(200).json({
       ok: true,
-      accessToken: customerAccessToken.accessToken,
-      expiresAt: customerAccessToken.expiresAt,
+      token: sessionToken,
+      expiresAt,
+      usuario: {
+        id:         usuario.id,
+        firstName:  usuario.first_name,
+        lastName:   usuario.last_name,
+        email:      usuario.email,
+      },
     });
 
   } catch (err) {
