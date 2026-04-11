@@ -91,9 +91,11 @@ useEffect(() => {
   }, [variantes]);
 
   const tallasDisponibles = useMemo(() => {
-    if (!colorSeleccionado) return [];
-    return variantes.filter(v => v.color === colorSeleccionado).map(v => v.talla);
-  }, [variantes, colorSeleccionado]);
+  if (!colorSeleccionado) return [];
+  return variantes
+    .filter(v => v.color === colorSeleccionado)
+    .map(v => ({ talla: v.talla, stock: v.stock ?? 0 }));
+}, [variantes, colorSeleccionado]);
 
   const stockActual = useMemo(() => {
     if (!colorSeleccionado || !tallaSeleccionada) return null;
@@ -101,7 +103,7 @@ useEffect(() => {
     return v?.stock ?? 0;
   }, [variantes, colorSeleccionado, tallaSeleccionada]);
 
-  const esTallaUnica   = tallasDisponibles.length === 1 && tallasDisponibles[0] === 'ÚNICA';
+  const esTallaUnica = tallasDisponibles.length === 1 && tallasDisponibles[0]?.talla === 'ÚNICA';
   const tieneVariantes = variantes.length > 0;
 
   const handleColorSelect = (color) => {
@@ -430,14 +432,29 @@ useEffect(() => {
                   </div>
                 ) : (
                   <div className="grid gap-3" style={{ gridTemplateColumns: `repeat(${Math.min(tallasDisponibles.length, 4)}, minmax(0, 1fr))` }}>
-                    {tallasDisponibles.map(talla => (
-                      <button key={talla} onClick={() => setTallaSeleccionada(talla)}
-                        className={`h-12 border flex items-center justify-center text-[11px] font-medium tracking-[0.05em] transition-colors uppercase
-                          ${tallaSeleccionada === talla ? 'border-stone-900 bg-stone-900 text-white' : 'border-stone-200 text-stone-600 hover:border-stone-900'}`}>
-                        {talla}
-                      </button>
-                    ))}
-                  </div>
+                      {tallasDisponibles.map(({ talla, stock }) => {
+                        const agotado = stock === 0;
+                        const activo = tallaSeleccionada === talla;
+                        return (
+                          <button
+                            key={talla}
+                            onClick={() => !agotado && setTallaSeleccionada(talla)}
+                            disabled={agotado}
+                            className={`h-12 border flex items-center justify-center text-[11px] font-medium tracking-[0.05em] transition-colors uppercase relative
+                              ${agotado ? 'border-stone-100 text-stone-300 cursor-not-allowed' :
+                                activo ? 'border-stone-900 bg-stone-900 text-white' :
+                                'border-stone-200 text-stone-600 hover:border-stone-900'}`}
+                          >
+                            {talla}
+                            {agotado && (
+                              <span className="absolute inset-0 flex items-center justify-center">
+                                <span className="absolute w-full h-[1px] bg-stone-200 rotate-[-20deg]" />
+                              </span>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
                 )}
                 {stockActual !== null && stockActual <= 3 && stockActual > 0 && (
                   <p className="text-[9px] tracking-[0.15em] text-amber-700 uppercase mt-3">
@@ -447,11 +464,16 @@ useEffect(() => {
               </div>
             )}
 
-            <button onClick={handleAddToCart}
-              className={`w-full h-14 text-[10px] font-bold tracking-[0.25em] uppercase transition-all duration-300 flex items-center justify-center gap-3
-                ${adding ? 'bg-stone-800 text-white scale-[0.98]' : 'bg-stone-900 text-white hover:bg-stone-800'}`}>
-              {adding ? 'Agregado ✔' : 'Añadir a la bolsa'}
-            </button>
+            <button
+                onClick={handleAddToCart}
+                disabled={stockActual === 0}
+                className={`w-full h-14 text-[10px] font-bold tracking-[0.25em] uppercase transition-all duration-300 flex items-center justify-center gap-3
+                  ${stockActual === 0 ? 'bg-stone-200 text-stone-400 cursor-not-allowed' :
+                    adding ? 'bg-stone-800 text-white scale-[0.98]' :
+                    'bg-stone-900 text-white hover:bg-stone-800'}`}
+              >
+                {stockActual === 0 ? 'Agotado' : adding ? 'Agregado ✔' : 'Añadir a la bolsa'}
+              </button>
 
             <div className="w-full h-[1px] bg-stone-200 my-12" />
 
