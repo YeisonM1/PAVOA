@@ -26,18 +26,19 @@ export default function AccountPage() {
   const [activeTab, setActiveTab] = useState('pedidos');
 
   useEffect(() => {
-    if (!estaAutenticado()) {
-      navigate('/login', { replace: true }); // ← corregido
-      return;
-    }
-    Promise.all([getCliente(), getPedidos()])
-      .then(([c, p]) => { setCliente(c); setPedidos(p); })
-      .catch(() => {
-        cerrarSesion();
-        navigate('/login', { replace: true });
-      })
-      .finally(() => setLoading(false));
-  }, []);
+  if (!estaAutenticado()) {
+    navigate('/login', { replace: true });
+    return;
+  }
+
+  const c = getCliente();
+  setCliente(c);
+
+  getPedidos()
+    .then(p => setPedidos(p))
+    .catch(() => {})
+    .finally(() => setLoading(false));
+}, []);
 
   if (loading) {
     return (

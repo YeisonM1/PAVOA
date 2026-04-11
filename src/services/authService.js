@@ -7,13 +7,13 @@ export const login = async (email, password) => {
   });
 
   const data = await res.json();
-
   if (!res.ok) throw new Error(data.error || 'Error al iniciar sesión.');
 
-  localStorage.setItem('pavoa_access_token', data.accessToken);
-  localStorage.setItem('pavoa_token_expires', new Date(data.expiresAt).getTime());
+  localStorage.setItem('pavoa_token', data.token);
+  localStorage.setItem('pavoa_token_expires', data.expiresAt);
+  localStorage.setItem('pavoa_usuario', JSON.stringify(data.usuario));
 
-  return data.accessToken;
+  return data;
 };
 
 // ── Register — llama a nuestra API serverless ─────────
@@ -25,31 +25,21 @@ export const register = async ({ firstName, lastName, email, password }) => {
   });
 
   const data = await res.json();
-
   if (!res.ok) throw new Error(data.error || 'Error al crear la cuenta.');
 
   return data;
 };
 
 // ── Cerrar sesión ─────────────────────────────────────
-export const cerrarSesion = async () => {
-  const token = localStorage.getItem('pavoa_access_token');
-
-  if (token) {
-    await fetch('/api/login', {
-      method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ token }),
-    }).catch(() => {});
-  }
-
-  localStorage.removeItem('pavoa_access_token');
+export const cerrarSesion = () => {
+  localStorage.removeItem('pavoa_token');
   localStorage.removeItem('pavoa_token_expires');
+  localStorage.removeItem('pavoa_usuario');
 };
 
 // ── Obtener token activo ──────────────────────────────
 export const getToken = () => {
-  const token   = localStorage.getItem('pavoa_access_token');
+  const token   = localStorage.getItem('pavoa_token');
   const expires = localStorage.getItem('pavoa_token_expires');
   if (!token || Date.now() > Number(expires)) return null;
   return token;
@@ -58,41 +48,18 @@ export const getToken = () => {
 // ── Verificar si está autenticado ─────────────────────
 export const estaAutenticado = () => !!getToken();
 
-// ── Obtener perfil del cliente ────────────────────────
-export const getCliente = async () => {
-  const token = getToken();
-  if (!token) throw new Error('No autenticado');
-
-  const res = await fetch(`https://${import.meta.env.VITE_SHOPIFY_DOMAIN}/api/2026-04/graphql.json`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-Shopify-Storefront-Access-Token': import.meta.env.VITE_SHOPIFY_TOKEN,
-    },
-    body: JSON.stringify({
-      query: `
-        query {
-          customer(customerAccessToken: "${token}") {
-            id
-            firstName
-            lastName
-            email
-            phone
-          }
-        }
-      `
-    }),
-  });
-
-  const { data } = await res.json();
-  return data.customer;
+// ── Obtener perfil del cliente (desde localStorage) ───
+export const getCliente = () => {
+  const usuario = localStorage.getItem('pavoa_usuario');
+  return usuario ? JSON.parse(usuario) : null;
 };
 
-// ── Obtener pedidos del cliente ───────────────────────
+// ── Obtener pedidos del cliente desde Shopify ─────────
 export const getPedidos = async () => {
-  const token = getToken();
-  if (!token) throw new Error('No autenticado');
+  const usuario = getCliente();
+  if (!usuario) throw new Error('No autenticado');
 
+  // Buscar cliente en Shopify por email
   const res = await fetch(`https://${import.meta.env.VITE_SHOPIFY_DOMAIN}/api/2026-04/graphql.json`, {
     method: 'POST',
     headers: {
@@ -102,23 +69,25 @@ export const getPedidos = async () => {
     body: JSON.stringify({
       query: `
         query {
-          customer(customerAccessToken: "${token}") {
-            orders(first: 20) {
-              edges {
-                node {
-                  id
-                  name
-                  processedAt
-                  financialStatus
-                  fulfillmentStatus
-                  totalPrice { amount currencyCode }
-                  lineItems(first: 5) {
-                    edges {
-                      node {
-                        title
-                        quantity
-                        variant {
-                          image { url }
+          customers(first: 1, query: "email:${usuario.email}") {
+            edges {
+              node {
+                orders(first: 20) {
+                  edges {
+                    node {
+                      id
+                      name
+                      processedAt
+                      financialStatus
+                      fulfillmentStatus
+                      totalPrice { amount currencyCode }
+                      lineItems(first: 5) {
+                        edges {
+                          node {
+                            title
+                            quantity
+                            variant { image { url } }
+                          }
                         }
                       }
                     }
@@ -133,5 +102,7 @@ export const getPedidos = async () => {
   });
 
   const { data } = await res.json();
-  return data.customer.orders.edges.map(({ node }) => node);
+  const cliente = data?.customers?.edges[0]?.node;
+  if (!cliente) return [];
+  return cliente.orders.edges.map(({ node }) => node);
 };
