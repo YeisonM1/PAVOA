@@ -139,8 +139,9 @@ export default function ProductPage() {
       return;
     }
     setAdding(true);
-    const tallaFinal = esTallaUnica ? 'ÚNICA' : tallaSeleccionada;
-    addToCart({ ...producto, colorSeleccionado }, tallaFinal, cantidad);
+    const tallaFinal    = esTallaUnica ? 'ÚNICA' : tallaSeleccionada;
+    const varianteElegida = variantes.find(v => v.color === colorSeleccionado && v.talla === tallaFinal);
+    addToCart({ ...producto, colorSeleccionado, selectedVariantId: varianteElegida?.variantId || null }, tallaFinal, cantidad);
     setTimeout(() => {
       setAdding(false);
       setTallaSeleccionada(null);

@@ -8,11 +8,7 @@ const getShopifyToken = () => {
 
 const crearDraftOrder = async (token, { form, cartItems }) => {
   const lineItems = cartItems.map(item => {
-    const matchingVariant = item.producto.variantes?.find(v =>
-      v.talla === item.talla &&
-      v.color === item.producto.colorSeleccionado
-    );
-    const rawId = matchingVariant?.variantId || '';
+    const rawId     = item.producto.selectedVariantId || '';
     const variantId = rawId.includes('gid://')
       ? Number(rawId.split('/').pop())
       : Number(rawId) || null;
