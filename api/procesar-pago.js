@@ -22,23 +22,6 @@ export default async function handler(req, res) {
   }
 
   // ── DIAGNÓSTICO TEMPORAL — eliminar después de confirmar que funciona ──
-  // Extraer el user_id del access token para comparar con el payer
-  // Formato del token: TEST-{app_id}-{fecha}-{random}-{user_id}
-  const tokenParts     = (process.env.MP_ACCESS_TOKEN || '').split('-');
-  const sellerUserId   = tokenParts[tokenParts.length - 1] || 'UNKNOWN';
-
-  console.log('🔍 [procesar-pago] REQUEST:', JSON.stringify({
-    token:              token ? `${token.slice(0, 8)}...` : 'UNDEFINED',
-    payment_method_id:  payment_method_id || 'UNDEFINED',
-    installments,
-    draftOrderId:       draftOrderId || 'UNDEFINED',
-    transaction_amount: transaction_amount || 'UNDEFINED',
-    payer_email:        payer?.email || 'UNDEFINED',
-    payer_id_type:      payer?.identification?.type || 'UNDEFINED',
-    mp_token_prefix:    process.env.MP_ACCESS_TOKEN?.slice(0, 15) || 'UNDEFINED',
-    seller_user_id:     sellerUserId,   // ← ID del vendedor extraído del token
-  }));
-
   try {
     const paymentClient = new mercadopago.Payment(client);
 
@@ -56,11 +39,6 @@ export default async function handler(req, res) {
       external_reference:  String(draftOrderId),
       notification_url:    `${process.env.VITE_APP_URL}/api/webhook-mercadopago`,
     };
-
-    console.log('🔍 [procesar-pago] BODY enviado a MP:', JSON.stringify({
-      ...body,
-      token: `${body.token?.slice(0, 8)}...`,
-    }));
 
     const result = await paymentClient.create({ body });
 
