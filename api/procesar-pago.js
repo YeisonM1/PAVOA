@@ -26,7 +26,6 @@ export default async function handler(req, res) {
 
     const body = {
       transaction_amount: Number(transaction_amount),
-      currency_id:        'COP',
       token,
       description:        'PAVOA - Pedido online',
       installments:       Number(installments) || 1,
