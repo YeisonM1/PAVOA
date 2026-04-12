@@ -50,10 +50,10 @@ export default function CheckoutPage() {
   const [enviando, setEnviando]           = useState(false);
   const [pagandoOnline, setPagandoOnline] = useState(false);
   const [errors, setErrors]               = useState({});
-  const [draftOrderId, setDraftOrderId]       = useState(null);
   const [mostrarFormPago, setMostrarFormPago] = useState(false);
   const [resultadoPago, setResultadoPago]     = useState(null); // { status, status_detail, payment_id }
   const [errorBrick, setErrorBrick]           = useState(!MP_PUBLIC_KEY);
+  const [errorPago, setErrorPago]             = useState(null); // mensaje de error visible al usuario
 
   if (cartCount === 0 && !resultadoPago) {
     return (
@@ -136,8 +136,10 @@ export default function CheckoutPage() {
     }, 600);
   };
 
-  // ── FUNCIÓN 2: PREPARAR PAGO ONLINE — crea el draft order y muestra el formulario de tarjeta ──
-  const handleMercadoPago = async () => {
+  // ── FUNCIÓN 2: MOSTRAR FORMULARIO DE TARJETA ──
+  // Solo valida el formulario de envío y muestra el CardPayment.
+  // El pedido en Shopify se crea DESPUÉS de confirmar el pago — no antes.
+  const handleMercadoPago = () => {
     const nuevosErrores = validar();
     if (Object.keys(nuevosErrores).length > 0) {
       setErrors(nuevosErrores);
@@ -145,81 +147,92 @@ export default function CheckoutPage() {
       if (primerError) primerError.scrollIntoView({ behavior: 'smooth', block: 'center' });
       return;
     }
+    setMostrarFormPago(true);
+    setTimeout(() => {
+      document.getElementById('seccion-pago')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 100);
+  };
 
-    setPagandoOnline(true);
+  // ── FUNCIÓN 3: PROCESAR PAGO CON TARJETA — callback de CardPayment ──
+  // 1. Crea el draft order en Shopify
+  // 2. Procesa el pago con el token recibido del Brick
+  // El pedido solo queda registrado si el pago resulta aprobado o pendiente.
+  const handlePagarConTarjeta = async (formData) => {
+    setErrorPago(null);
 
     try {
+      // Paso 1 — Crear draft order en Shopify
       const resPedido = await fetch('/api/pedido', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ form, cartItems, cartTotal }),
       });
+
       const dataPedido = await resPedido.json();
 
-      if (!dataPedido.ok || !dataPedido.draftOrderId) {
-        throw new Error('Error al generar el pedido.');
+      if (!resPedido.ok || !dataPedido.ok || !dataPedido.draftOrderId) {
+        const msg = dataPedido?.error || `Error ${resPedido.status} al registrar el pedido`;
+        setErrorPago(`Error al crear el pedido: ${msg}`);
+        throw new Error(msg);
       }
 
-      setDraftOrderId(dataPedido.draftOrderId);
-      setMostrarFormPago(true);
+      // Paso 2 — Procesar pago en Mercado Pago
+      const resPago = await fetch('/api/procesar-pago', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          token:              formData.token,
+          payment_method_id:  formData.payment_method_id,
+          installments:       formData.installments,
+          issuer_id:          formData.issuer_id,
+          draftOrderId:       dataPedido.draftOrderId,
+          transaction_amount: cartTotal,
+          payer: {
+            email:          form.email || 'cliente@pavoa.com',
+            identification: formData.payer?.identification,
+          },
+        }),
+      });
 
-      setTimeout(() => {
-        document.getElementById('seccion-pago')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }, 100);
+      const data = await resPago.json();
+
+      if (!resPago.ok) {
+        const msg = data?.error || `Error ${resPago.status} al procesar el pago`;
+        setErrorPago(`Error al procesar el pago: ${msg}`);
+        throw new Error(msg);
+      }
+
+      if (data.status === 'approved') {
+        setResultadoPago(data);
+        clearCart();
+        setTimeout(() => navigate('/'), 3000);
+        return;
+      }
+
+      if (data.status === 'pending') {
+        setResultadoPago(data);
+        return;
+      }
+
+      // rejected / cancelled — mostramos el detalle y dejamos que CardPayment permita reintentar
+      const motivoRechazo = data.status_detail || 'cc_rejected_other_reason';
+      setErrorPago(`Pago rechazado (${motivoRechazo}). Verifica los datos de tu tarjeta e intenta de nuevo.`);
+      throw new Error(motivoRechazo);
+
     } catch (err) {
-      console.error('Error preparando pago:', err);
-      alert('Ocurrió un error al preparar el pago. Intenta de nuevo o usa WhatsApp.');
-    } finally {
-      setPagandoOnline(false);
+      // Si errorPago ya fue seteado arriba lo mantenemos; si no, es un error de red
+      if (!errorPago) {
+        setErrorPago('Error de conexión. Verifica tu internet e intenta de nuevo.');
+      }
+      throw err; // Re-lanzamos para que CardPayment resetee su estado interno
     }
-  };
-
-  // ── FUNCIÓN 3: PROCESAR PAGO CON TARJETA — callback de CardPayment ──
-  // Debe retornar una Promise. Si rechaza, CardPayment muestra el error y permite reintentar.
-  const handlePagarConTarjeta = async (formData) => {
-    const res = await fetch('/api/procesar-pago', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        token:              formData.token,
-        payment_method_id:  formData.payment_method_id,
-        installments:       formData.installments,
-        issuer_id:          formData.issuer_id,
-        draftOrderId,
-        transaction_amount: cartTotal,
-        payer: {
-          email:          form.email || 'cliente@pavoa.com',
-          identification: formData.payer?.identification,
-        },
-      }),
-    });
-
-    if (!res.ok) {
-      throw new Error('Error del servidor al procesar el pago');
-    }
-
-    const data = await res.json();
-
-    if (data.status === 'approved') {
-      setResultadoPago(data);
-      clearCart();
-      setTimeout(() => navigate('/'), 3000);
-      return;
-    }
-
-    if (data.status === 'pending') {
-      setResultadoPago(data);
-      return;
-    }
-
-    // rejected / cancelled — el CardPayment Brick maneja el display del error y permite reintentar
-    throw new Error(data.status_detail || 'Pago rechazado');
   };
 
   const handleCambiarMetodo = () => {
     setMostrarFormPago(false);
-    setDraftOrderId(null);
     setResultadoPago(null);
+    setErrorPago(null);
+    setErrorBrick(!MP_PUBLIC_KEY);
   };
 
   return (
@@ -333,6 +346,18 @@ export default function CheckoutPage() {
                     Cambiar método
                   </button>
                 </div>
+
+                {/* Error visible al usuario (fallo de API o pago rechazado) */}
+                {errorPago && (
+                  <div className="mb-6 p-4 border border-red-200 bg-red-50">
+                    <p className="text-[11px] font-bold tracking-[0.15em] text-red-700 uppercase mb-1">
+                      Error al procesar el pago
+                    </p>
+                    <p className="text-[10px] text-red-500 tracking-[0.08em]">
+                      {errorPago}
+                    </p>
+                  </div>
+                )}
 
                 {/* Mensaje de pago aprobado */}
                 {resultadoPago?.status === 'approved' && (
