@@ -408,15 +408,12 @@ export default function CheckoutPage() {
 
                 {!resultadoPago && !errorBrick && (
                   <Payment
-                    initialization={{ amount: cartTotal, payer: { email: form.email } }}
+                    initialization={{ amount: cartTotal }}
                     customization={{
                       paymentMethods: {
                         creditCard:   'all',
                         debitCard:    'all',
                         bankTransfer: ['pse'],
-                        ticket:       'none',
-                        atm:          'none',
-                        onlineTransfer: 'none',
                       },
                     }}
                     onSubmit={handlePagar}
