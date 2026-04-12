@@ -33,7 +33,7 @@ export default async function handler(req, res) {
         payment_method_id,
         issuer_id,
         payer: {
-          email:          payer?.email || 'cliente@pavoa.com',
+          email:          payer?.email,
           identification: payer?.identification,
         },
         external_reference:  String(draftOrderId),

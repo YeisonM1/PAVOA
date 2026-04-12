@@ -74,6 +74,7 @@ export default function CheckoutPage() {
   const validar = () => {
     const nuevosErrores = {};
     if (!form.nombre.trim())    nuevosErrores.nombre    = 'Requerido';
+    if (!form.email.trim())     nuevosErrores.email     = 'Requerido';
     if (!form.telefono.trim())  nuevosErrores.telefono  = 'Requerido';
     if (!form.ciudad.trim())    nuevosErrores.ciudad    = 'Requerido';
     if (!form.direccion.trim()) nuevosErrores.direccion = 'Requerido';
@@ -200,7 +201,7 @@ export default function CheckoutPage() {
             draftOrderId:       dataPedido.draftOrderId,
             transaction_amount: cartTotal,
             payer: {
-              email:          form.email || 'cliente@pavoa.com',
+              email:          form.email,
               identification: formData.payer?.identification,
             },
           }),
@@ -276,7 +277,10 @@ export default function CheckoutPage() {
                 {errors.nombre && <p className="text-[10px] text-red-400 mt-1 tracking-[0.1em]">{errors.nombre}</p>}
               </div>
 
-              <CAMPO label="Correo electrónico" name="email" value={form.email} onChange={handleChange} placeholder="tu@correo.com" type="email" required={false} />
+              <div className={errors.email ? 'error-field' : ''}>
+                <CAMPO label="Correo electrónico" name="email" value={form.email} onChange={handleChange} placeholder="tu@correo.com" type="email" required={true} />
+                {errors.email && <p className="text-[10px] text-red-400 mt-1 tracking-[0.1em]">{errors.email}</p>}
+              </div>
 
               <div className={errors.telefono ? 'error-field' : ''}>
                 <CAMPO label="Teléfono / WhatsApp" name="telefono" value={form.telefono} onChange={handleChange} placeholder="3XX XXX XXXX" type="tel" />
