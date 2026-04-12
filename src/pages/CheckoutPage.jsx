@@ -40,6 +40,7 @@ export default function CheckoutPage() {
     horario: '',
   });
   const [enviando, setEnviando] = useState(false);
+  const [pagandoOnline, setPagandoOnline] = useState(false);
   const [errors, setErrors]     = useState({});
 
   if (cartCount === 0) {
@@ -77,6 +78,57 @@ export default function CheckoutPage() {
       if (primerError) primerError.scrollIntoView({ behavior: 'smooth', block: 'center' });
       return;
     }
+
+  const handleMercadoPago = async () => {
+  const nuevosErrores = validar();
+  if (Object.keys(nuevosErrores).length > 0) {
+    setErrors(nuevosErrores);
+    const primerError = document.querySelector('.error-field');
+    if (primerError) primerError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    return;
+  }
+
+  setPagandoOnline(true);
+
+  try {
+    // 1. Llamamos a tu API de pedido existente para crear el Draft Order
+    const resPedido = await fetch('/api/pedido', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ form, cartItems, cartTotal }),
+    });
+    const dataPedido = await resPedido.json();
+    
+    if (!dataPedido.ok || !dataPedido.draftOrderId) {
+      throw new Error('Error al generar el pedido previo.');
+    }
+
+    // 2. Creamos la preferencia en Mercado Pago
+    const resPreferencia = await fetch('/api/crear-preferencia', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ 
+        draftOrderId: dataPedido.draftOrderId,
+        cartItems,
+        form
+      }),
+    });
+    
+    const dataPreferencia = await resPreferencia.json();
+    
+    if (dataPreferencia.init_point) {
+      // 3. Redirigimos al Checkout Pro de Mercado Pago
+      window.location.href = dataPreferencia.init_point;
+    } else {
+      throw new Error('No se pudo iniciar el pago.');
+    }
+
+  } catch (err) {
+    console.error(err);
+    alert('Ocurrió un error al iniciar el pago. Intenta de nuevo o usa WhatsApp.');
+    setPagandoOnline(false);
+  }
+};
 
     setEnviando(true);
 
@@ -225,21 +277,38 @@ export default function CheckoutPage() {
 
             {/* Botón confirmar */}
             <button
-              onClick={handleConfirmar}
-              disabled={enviando}
-              className={`mt-12 w-full h-14 text-[10px] font-bold tracking-[0.25em] uppercase transition-all duration-300 flex items-center justify-center gap-3
-                ${enviando ? 'bg-stone-700 text-white scale-[0.98]' : 'bg-stone-900 text-white hover:bg-stone-800'}`}
-            >
-              {enviando ? 'Redirigiendo a WhatsApp...' : 'Confirmar pedido por WhatsApp'}
-              {!enviando && (
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M5 12h14M12 5l7 7-7 7"/>
-                </svg>
-              )}
+                onClick={handleConfirmar}
+                disabled={enviando || pagandoOnline} // 👈 Ahora se deshabilita si está pagando online
+                className={`mt-12 w-full h-14 text-[10px] font-bold tracking-[0.25em] uppercase transition-all duration-300 flex items-center justify-center gap-3
+                  ${enviando ? 'bg-stone-700 text-white scale-[0.98]' : 'bg-stone-900 text-white hover:bg-stone-800'}`}
+              >
+                {enviando ? 'Redirigiendo a WhatsApp...' : 'Confirmar pedido por WhatsApp'}
+                {!enviando && (
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M5 12h14M12 5l7 7-7 7"/>
+                  </svg>
+                )}
             </button>
 
-            <p className="text-[10px] text-stone-400 tracking-[0.1em] uppercase text-center mt-4">
-              Serás redirigido a WhatsApp para confirmar tu pedido
+            {/* ── SEPARADOR VISUAL ── */}
+            <div className="flex items-center gap-4 my-6">
+              <div className="flex-1 h-[1px] bg-stone-100" />
+              <span className="text-[9px] tracking-[0.2em] text-stone-300 uppercase">o</span>
+              <div className="flex-1 h-[1px] bg-stone-100" />
+            </div>
+
+            {/* ── NUEVO BOTÓN MERCADO PAGO ── */}
+            <button
+              onClick={handleMercadoPago}
+              disabled={enviando || pagandoOnline}
+              className={`w-full h-14 text-[10px] font-bold tracking-[0.25em] uppercase transition-all duration-300 flex items-center justify-center gap-3 border border-stone-900
+                ${pagandoOnline ? 'bg-stone-100 text-stone-400 border-stone-200' : 'bg-white text-stone-900 hover:bg-stone-50'}`}
+            >
+              {pagandoOnline ? 'Procesando pago...' : 'Pagar en línea ahora'}
+            </button>
+
+            <p className="text-[10px] text-stone-400 tracking-[0.1em] uppercase text-center mt-4 italic">
+              Selecciona tu método de preferencia para finalizar
             </p>
           </div>
 
