@@ -1,30 +1,13 @@
-const SHOPIFY_DOMAIN   = process.env.SHOPIFY_DOMAIN;
-const CLIENT_ID        = process.env.SHOPIFY_CLIENT_ID;
-const CLIENT_SECRET    = process.env.SHOPIFY_CLIENT_SECRET;
+const SHOPIFY_DOMAIN = process.env.SHOPIFY_DOMAIN;
 
-// ── Obtiene un token de acceso usando Client Credentials Grant ──
-const getAccessToken = async () => {
-  const res = await fetch(
-    `https://${SHOPIFY_DOMAIN}/admin/oauth/access_token`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({
-        client_id:     CLIENT_ID,
-        client_secret: CLIENT_SECRET,
-        grant_type:    'client_credentials',
-      }).toString(),
-    }
-  );
-  const data = await res.json();
-  if (!data.access_token) throw new Error('No se pudo obtener el token de Shopify');
-  return data.access_token;
+const getShopifyToken = () => {
+  const token = process.env.SHOPIFY_ADMIN_TOKEN;
+  if (!token) throw new Error('SHOPIFY_ADMIN_TOKEN no configurado');
+  return token;
 };
 
-// ── Crea un Draft Order en Shopify ─────────────────────────────
-const crearDraftOrder = async (token, { form, cartItems, cartTotal }) => {
+const crearDraftOrder = async (token, { form, cartItems }) => {
   const lineItems = cartItems.map(item => {
-    // ✏️ FIX imagen: buscar la variante correcta por talla + color
     const matchingVariant = item.producto.variantes?.find(v =>
       v.talla === item.talla &&
       v.color === item.producto.colorSeleccionado
@@ -51,16 +34,13 @@ const crearDraftOrder = async (token, { form, cartItems, cartTotal }) => {
     `Barrio: ${form.barrio}`,
   ].filter(Boolean).join(' | ');
 
-  // ✏️ FIX 1: separar nombre en first/last para Shopify
   const [firstName, ...rest] = form.nombre.trim().split(' ');
   const lastName = rest.join(' ') || '-';
-
   const telFormateado = `+57${form.telefono.replace(/\D/g, '')}`;
 
   const body = {
     draft_order: {
       line_items: lineItems,
-      // ✏️ FIX contacto: phone a nivel del draft order
       phone:        telFormateado,
       email:        form.email || undefined,
       shipping_address: {
@@ -82,7 +62,7 @@ const crearDraftOrder = async (token, { form, cartItems, cartTotal }) => {
         country:    'CO',
       },
       note:         nota,
-      tags:         'pavoa-web,whatsapp',
+      tags:         'pavoa-web,mercadopago',
       send_receipt: false,
     },
   };
@@ -92,7 +72,7 @@ const crearDraftOrder = async (token, { form, cartItems, cartTotal }) => {
     {
       method: 'POST',
       headers: {
-        'Content-Type':          'application/json',
+        'Content-Type':           'application/json',
         'X-Shopify-Access-Token': token,
       },
       body: JSON.stringify(body),
@@ -104,7 +84,6 @@ const crearDraftOrder = async (token, { form, cartItems, cartTotal }) => {
   return data.draft_order;
 };
 
-// ── Handler principal ──────────────────────────────────────────
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Método no permitido' });
@@ -120,13 +99,13 @@ export default async function handler(req, res) {
   }
 
   try {
-    const token     = await getAccessToken();
+    const token      = getShopifyToken();
     const draftOrder = await crearDraftOrder(token, { form, cartItems, cartTotal });
 
     console.log(`✅ Draft Order creado: ${draftOrder.name} — ${draftOrder.id}`);
     return res.status(200).json({ ok: true, draftOrderId: draftOrder.id, name: draftOrder.name });
   } catch (err) {
-    console.error('❌ Error creando draft order:', err);
+    console.error('❌ Error creando draft order:', err.message);
     return res.status(500).json({ error: 'Error al crear el pedido en Shopify' });
   }
 }

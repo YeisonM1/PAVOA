@@ -59,11 +59,13 @@ export function CartProvider({ children }) {
     [cartItems]
   );
 
+  const clearCart = useCallback(() => setCartItems([]), [setCartItems]);
+
   const value = useMemo(() => ({
     cartItems, cartCount, cartTotal,
-    addToCart, removeFromCart, updateQuantity,
+    addToCart, removeFromCart, updateQuantity, clearCart,
     isCartAnimating, showToast,
-  }), [cartItems, cartCount, cartTotal, addToCart, removeFromCart, updateQuantity, isCartAnimating, showToast]);
+  }), [cartItems, cartCount, cartTotal, addToCart, removeFromCart, updateQuantity, clearCart, isCartAnimating, showToast]);
 
   return (
     <CartContext.Provider value={value}>

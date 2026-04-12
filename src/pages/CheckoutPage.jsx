@@ -3,6 +3,9 @@ import { useNavigate, Link } from 'react-router-dom';
 import { CartContext } from '../App';
 import SEO from '../components/SEO';
 import { thumbImage } from '../utils/imageUrl';
+import { initMercadoPago, CardPayment } from '@mercadopago/sdk-react';
+
+initMercadoPago(import.meta.env.VITE_MP_PUBLIC_KEY, { locale: 'es-CO' });
 
 const NUMERO_WHATSAPP = import.meta.env.VITE_WHATSAPP_NUMBER;
 
@@ -26,7 +29,7 @@ const CAMPO = ({ label, name, value, onChange, placeholder, type = 'text', requi
 );
 
 export default function CheckoutPage() {
-  const { cartItems, cartTotal, cartCount } = useContext(CartContext);
+  const { cartItems, cartTotal, cartCount, clearCart } = useContext(CartContext);
   const navigate = useNavigate();
 
   const [form, setForm] = useState({
@@ -39,11 +42,14 @@ export default function CheckoutPage() {
     referencia: '',
     horario: '',
   });
-  const [enviando, setEnviando] = useState(false);
+  const [enviando, setEnviando]           = useState(false);
   const [pagandoOnline, setPagandoOnline] = useState(false);
-  const [errors, setErrors]     = useState({});
+  const [errors, setErrors]               = useState({});
+  const [draftOrderId, setDraftOrderId]   = useState(null);
+  const [mostrarFormPago, setMostrarFormPago] = useState(false);
+  const [resultadoPago, setResultadoPago] = useState(null); // { status, status_detail, payment_id }
 
-  if (cartCount === 0) {
+  if (cartCount === 0 && !resultadoPago) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-6 bg-white">
         <p className="text-[11px] tracking-[0.2em] uppercase text-stone-500">Tu bolsa está vacía</p>
@@ -124,7 +130,7 @@ export default function CheckoutPage() {
     }, 600);
   };
 
-  // ── FUNCIÓN 2: PAGO ONLINE (MERCADO PAGO) ──
+  // ── FUNCIÓN 2: PREPARAR PAGO ONLINE — crea el draft order y muestra el formulario de tarjeta ──
   const handleMercadoPago = async () => {
     const nuevosErrores = validar();
     if (Object.keys(nuevosErrores).length > 0) {
@@ -143,34 +149,71 @@ export default function CheckoutPage() {
         body: JSON.stringify({ form, cartItems, cartTotal }),
       });
       const dataPedido = await resPedido.json();
-      
+
       if (!dataPedido.ok || !dataPedido.draftOrderId) {
-        throw new Error('Error al generar el pedido previo.');
+        throw new Error('Error al generar el pedido.');
       }
 
-      const resPreferencia = await fetch('/api/crear-preferencia', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          draftOrderId: dataPedido.draftOrderId,
-          cartItems,
-          form
-        }),
-      });
-      
-      const dataPreferencia = await resPreferencia.json();
-      
-      if (dataPreferencia.init_point) {
-        window.location.href = dataPreferencia.init_point;
-      } else {
-        throw new Error('No se pudo iniciar el pago.');
-      }
+      setDraftOrderId(dataPedido.draftOrderId);
+      setMostrarFormPago(true);
 
+      setTimeout(() => {
+        document.getElementById('seccion-pago')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 100);
     } catch (err) {
-      console.error(err);
-      alert('Ocurrió un error al iniciar el pago. Intenta de nuevo o usa WhatsApp.');
+      console.error('Error preparando pago:', err);
+      alert('Ocurrió un error al preparar el pago. Intenta de nuevo o usa WhatsApp.');
+    } finally {
       setPagandoOnline(false);
     }
+  };
+
+  // ── FUNCIÓN 3: PROCESAR PAGO CON TARJETA — callback de CardPayment ──
+  // Debe retornar una Promise. Si rechaza, CardPayment muestra el error y permite reintentar.
+  const handlePagarConTarjeta = async (formData) => {
+    const res = await fetch('/api/procesar-pago', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        token:              formData.token,
+        payment_method_id:  formData.payment_method_id,
+        installments:       formData.installments,
+        issuer_id:          formData.issuer_id,
+        draftOrderId,
+        transaction_amount: cartTotal,
+        payer: {
+          email:          form.email || 'cliente@pavoa.com',
+          identification: formData.payer?.identification,
+        },
+      }),
+    });
+
+    if (!res.ok) {
+      throw new Error('Error del servidor al procesar el pago');
+    }
+
+    const data = await res.json();
+
+    if (data.status === 'approved') {
+      setResultadoPago(data);
+      clearCart();
+      setTimeout(() => navigate('/'), 3000);
+      return;
+    }
+
+    if (data.status === 'pending') {
+      setResultadoPago(data);
+      return;
+    }
+
+    // rejected / cancelled — el CardPayment Brick maneja el display del error y permite reintentar
+    throw new Error(data.status_detail || 'Pago rechazado');
+  };
+
+  const handleCambiarMetodo = () => {
+    setMostrarFormPago(false);
+    setDraftOrderId(null);
+    setResultadoPago(null);
   };
 
   return (
@@ -246,26 +289,83 @@ export default function CheckoutPage() {
               </div>
             </div>
 
-            <button onClick={handleConfirmar} disabled={enviando || pagandoOnline} className={`mt-12 w-full h-14 text-[10px] font-bold tracking-[0.25em] uppercase transition-all duration-300 flex items-center justify-center gap-3 ${enviando ? 'bg-stone-700 text-white scale-[0.98]' : 'bg-stone-900 text-white hover:bg-stone-800'}`}>
-              {enviando ? 'Redirigiendo a WhatsApp...' : 'Confirmar pedido por WhatsApp'}
-              {!enviando && <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>}
-            </button>
+            {/* ── BOTONES DE PAGO (se ocultan cuando aparece el formulario de tarjeta) ── */}
+            {!mostrarFormPago && (
+              <>
+                <button onClick={handleConfirmar} disabled={enviando || pagandoOnline} className={`mt-12 w-full h-14 text-[10px] font-bold tracking-[0.25em] uppercase transition-all duration-300 flex items-center justify-center gap-3 ${enviando ? 'bg-stone-700 text-white scale-[0.98]' : 'bg-stone-900 text-white hover:bg-stone-800'}`}>
+                  {enviando ? 'Redirigiendo a WhatsApp...' : 'Confirmar pedido por WhatsApp'}
+                  {!enviando && <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>}
+                </button>
 
-            <div className="flex items-center gap-4 my-6">
-              <div className="flex-1 h-[1px] bg-stone-100" />
-              <span className="text-[9px] tracking-[0.2em] text-stone-300 uppercase">o</span>
-              <div className="flex-1 h-[1px] bg-stone-100" />
-            </div>
+                <div className="flex items-center gap-4 my-6">
+                  <div className="flex-1 h-[1px] bg-stone-100" />
+                  <span className="text-[9px] tracking-[0.2em] text-stone-300 uppercase">o</span>
+                  <div className="flex-1 h-[1px] bg-stone-100" />
+                </div>
 
-            <button onClick={handleMercadoPago} disabled={enviando || pagandoOnline} className={`w-full h-14 text-[10px] font-bold tracking-[0.25em] uppercase transition-all duration-300 flex items-center justify-center gap-3 border border-stone-900 ${pagandoOnline ? 'bg-stone-100 text-stone-400 border-stone-200' : 'bg-white text-stone-900 hover:bg-stone-50'}`}>
-              {pagandoOnline ? 'Procesando pago...' : 'Pagar en línea ahora'}
-            </button>
+                <button onClick={handleMercadoPago} disabled={enviando || pagandoOnline} className={`w-full h-14 text-[10px] font-bold tracking-[0.25em] uppercase transition-all duration-300 flex items-center justify-center gap-3 border border-stone-900 ${pagandoOnline ? 'bg-stone-100 text-stone-400 border-stone-200' : 'bg-white text-stone-900 hover:bg-stone-50'}`}>
+                  {pagandoOnline ? 'Preparando pago...' : 'Pagar en línea ahora'}
+                </button>
 
-            <p className="text-[10px] text-stone-400 tracking-[0.1em] uppercase text-center mt-4 italic">
-              Selecciona tu método de preferencia para finalizar
-            </p>
+                <p className="text-[10px] text-stone-400 tracking-[0.1em] uppercase text-center mt-4 italic">
+                  Selecciona tu método de preferencia para finalizar
+                </p>
+              </>
+            )}
+
+            {/* ── FORMULARIO DE TARJETA (Checkout API) ── */}
+            {mostrarFormPago && (
+              <div id="seccion-pago" className="mt-12">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-[10px] font-bold tracking-[0.2em] text-stone-900 uppercase">
+                    Datos de pago
+                  </h2>
+                  <button
+                    onClick={handleCambiarMetodo}
+                    className="text-[10px] tracking-[0.1em] text-stone-400 uppercase border-b border-stone-200 hover:border-stone-900 hover:text-stone-900 transition-colors"
+                  >
+                    Cambiar método
+                  </button>
+                </div>
+
+                {/* Mensaje de pago aprobado */}
+                {resultadoPago?.status === 'approved' && (
+                  <div className="mb-6 p-4 border border-stone-900 bg-stone-50">
+                    <p className="text-[11px] font-bold tracking-[0.15em] text-stone-900 uppercase">
+                      Pago aprobado
+                    </p>
+                    <p className="text-[10px] text-stone-500 tracking-[0.08em] mt-1">
+                      Tu pedido fue confirmado. Redirigiendo...
+                    </p>
+                  </div>
+                )}
+
+                {/* Mensaje de pago pendiente (PSE / Efecty) */}
+                {resultadoPago?.status === 'pending' && (
+                  <div className="mb-6 p-4 border border-stone-300 bg-stone-50">
+                    <p className="text-[11px] font-bold tracking-[0.15em] text-stone-700 uppercase">
+                      Pago en proceso
+                    </p>
+                    <p className="text-[10px] text-stone-500 tracking-[0.08em] mt-1">
+                      Tu pago está siendo procesado. Recibirás confirmación por correo cuando esté aprobado.
+                    </p>
+                  </div>
+                )}
+
+                {!resultadoPago && (
+                  <CardPayment
+                    initialization={{ amount: cartTotal }}
+                    onSubmit={handlePagarConTarjeta}
+                    onError={(error) => {
+                      console.error('CardPayment error:', error);
+                    }}
+                  />
+                )}
+              </div>
+            )}
           </div>
 
+          {/* ── RESUMEN DEL PEDIDO ── */}
           <div className="w-full lg:w-[360px] flex-shrink-0">
             <div className="lg:sticky lg:top-[120px]">
               <h2 className="text-[10px] font-bold tracking-[0.2em] text-stone-900 uppercase mb-6">Resumen del pedido</h2>
