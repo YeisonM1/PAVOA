@@ -21,14 +21,12 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Datos incompletos para procesar el pago' });
   }
 
-  // LOG TEMPORAL — eliminar tras confirmar el flujo
-  console.log('💰 transaction_amount recibido:', transaction_amount, '| tipo:', typeof transaction_amount, '| Number():', Number(transaction_amount));
-
   try {
     const paymentClient = new mercadopago.Payment(client);
 
     const body = {
       transaction_amount: Number(transaction_amount),
+      currency_id:        'COP',
       token,
       description:        'PAVOA - Pedido online',
       installments:       Number(installments) || 1,
