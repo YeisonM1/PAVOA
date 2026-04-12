@@ -226,13 +226,13 @@ export default function CheckoutPage() {
         return;
       }
 
-      if (data.status === 'pending') {
+      if (data.status === 'pending' || data.status === 'in_process') {
         // PSE: redirigir al banco
         if (data.redirect_url) {
           window.location.href = data.redirect_url;
           return;
         }
-        // Nequi / Efecty: mostrar mensaje de pendiente
+        // Nequi / revisión manual: mostrar mensaje de pendiente
         setResultadoPago(data);
         return;
       }
@@ -394,14 +394,16 @@ export default function CheckoutPage() {
                   </div>
                 )}
 
-                {/* Mensaje de pago pendiente (PSE / Efecty) */}
-                {resultadoPago?.status === 'pending' && (
+                {/* Mensaje de pago pendiente (PSE / revisión manual) */}
+                {(resultadoPago?.status === 'pending' || resultadoPago?.status === 'in_process') && (
                   <div className="mb-6 p-4 border border-stone-300 bg-stone-50">
                     <p className="text-[11px] font-bold tracking-[0.15em] text-stone-700 uppercase">
                       Pago en proceso
                     </p>
                     <p className="text-[10px] text-stone-500 tracking-[0.08em] mt-1">
-                      Tu pago está siendo procesado. Recibirás confirmación por correo cuando esté aprobado.
+                      {resultadoPago?.status_detail === 'pending_review_manual'
+                        ? 'Tu pago está siendo revisado por Mercado Pago. Recibirás confirmación por correo en las próximas horas.'
+                        : 'Tu pago está siendo procesado. Recibirás confirmación por correo cuando esté aprobado.'}
                     </p>
                   </div>
                 )}
