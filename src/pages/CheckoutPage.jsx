@@ -208,7 +208,7 @@ export default function CheckoutPage() {
         });
         data = await resPago.json();
         if (!resPago.ok) {
-          fallar(`Error del servidor al procesar el pago: ${data?.error || `HTTP ${resPago.status}`}`);
+          fallar(data?.detalle || data?.error || `Error HTTP ${resPago.status} al procesar el pago`);
         }
       } catch (e) {
         if (errorLocal) throw e;

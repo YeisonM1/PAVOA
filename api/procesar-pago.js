@@ -21,7 +21,9 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Datos incompletos para procesar el pago' });
   }
 
-  // ── DIAGNÓSTICO TEMPORAL — eliminar después de confirmar que funciona ──
+  // LOG TEMPORAL — eliminar tras confirmar el flujo
+  console.log('💰 transaction_amount recibido:', transaction_amount, '| tipo:', typeof transaction_amount, '| Number():', Number(transaction_amount));
+
   try {
     const paymentClient = new mercadopago.Payment(client);
 
@@ -50,11 +52,15 @@ export default async function handler(req, res) {
       payment_id:    result.id,
     });
   } catch (error) {
-    console.error('❌ Error procesando pago MP:', JSON.stringify({
+    const detalle = {
       message: error?.message,
       status:  error?.status,
       cause:   error?.cause,
-    }));
-    return res.status(500).json({ error: 'Error al procesar el pago' });
+    };
+    console.error('❌ Error procesando pago MP:', JSON.stringify(detalle));
+    return res.status(500).json({
+      error:   error?.message || 'Error al procesar el pago',
+      detalle: detalle.cause?.[0]?.description || null,
+    });
   }
 }
