@@ -159,47 +159,59 @@ export default function CheckoutPage() {
   // El pedido solo queda registrado si el pago resulta aprobado o pendiente.
   const handlePagarConTarjeta = async (formData) => {
     setErrorPago(null);
+    // Variable local — no depende del ciclo de render de React
+    let errorLocal = null;
+
+    const fallar = (mensaje) => {
+      errorLocal = mensaje;
+      setErrorPago(mensaje);
+      throw new Error(mensaje);
+    };
 
     try {
       // Paso 1 — Crear draft order en Shopify
-      const resPedido = await fetch('/api/pedido', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ form, cartItems, cartTotal }),
-      });
-
-      const dataPedido = await resPedido.json();
-
-      if (!resPedido.ok || !dataPedido.ok || !dataPedido.draftOrderId) {
-        const msg = dataPedido?.error || `Error ${resPedido.status} al registrar el pedido`;
-        setErrorPago(`Error al crear el pedido: ${msg}`);
-        throw new Error(msg);
+      let dataPedido;
+      try {
+        const resPedido = await fetch('/api/pedido', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ form, cartItems, cartTotal }),
+        });
+        dataPedido = await resPedido.json();
+        if (!resPedido.ok || !dataPedido.ok || !dataPedido.draftOrderId) {
+          fallar(`No se pudo registrar el pedido: ${dataPedido?.error || `HTTP ${resPedido.status}`}`);
+        }
+      } catch (e) {
+        if (errorLocal) throw e;
+        fallar('No se pudo conectar con el servidor para registrar el pedido.');
       }
 
       // Paso 2 — Procesar pago en Mercado Pago
-      const resPago = await fetch('/api/procesar-pago', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          token:              formData.token,
-          payment_method_id:  formData.payment_method_id,
-          installments:       formData.installments,
-          issuer_id:          formData.issuer_id,
-          draftOrderId:       dataPedido.draftOrderId,
-          transaction_amount: cartTotal,
-          payer: {
-            email:          form.email || 'cliente@pavoa.com',
-            identification: formData.payer?.identification,
-          },
-        }),
-      });
-
-      const data = await resPago.json();
-
-      if (!resPago.ok) {
-        const msg = data?.error || `Error ${resPago.status} al procesar el pago`;
-        setErrorPago(`Error al procesar el pago: ${msg}`);
-        throw new Error(msg);
+      let data;
+      try {
+        const resPago = await fetch('/api/procesar-pago', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            token:              formData.token,
+            payment_method_id:  formData.payment_method_id,
+            installments:       formData.installments,
+            issuer_id:          formData.issuer_id,
+            draftOrderId:       dataPedido.draftOrderId,
+            transaction_amount: cartTotal,
+            payer: {
+              email:          form.email || 'cliente@pavoa.com',
+              identification: formData.payer?.identification,
+            },
+          }),
+        });
+        data = await resPago.json();
+        if (!resPago.ok) {
+          fallar(`Error del servidor al procesar el pago: ${data?.error || `HTTP ${resPago.status}`}`);
+        }
+      } catch (e) {
+        if (errorLocal) throw e;
+        fallar('No se pudo conectar con el servidor para procesar el pago.');
       }
 
       if (data.status === 'approved') {
@@ -214,17 +226,14 @@ export default function CheckoutPage() {
         return;
       }
 
-      // rejected / cancelled — mostramos el detalle y dejamos que CardPayment permita reintentar
-      const motivoRechazo = data.status_detail || 'cc_rejected_other_reason';
-      setErrorPago(`Pago rechazado (${motivoRechazo}). Verifica los datos de tu tarjeta e intenta de nuevo.`);
-      throw new Error(motivoRechazo);
+      // rejected / cancelled
+      fallar(`Pago rechazado (${data.status_detail || 'motivo desconocido'}). Verifica los datos de tu tarjeta.`);
 
     } catch (err) {
-      // Si errorPago ya fue seteado arriba lo mantenemos; si no, es un error de red
-      if (!errorPago) {
-        setErrorPago('Error de conexión. Verifica tu internet e intenta de nuevo.');
+      if (!errorLocal) {
+        setErrorPago('Error inesperado. Intenta de nuevo o usa WhatsApp.');
       }
-      throw err; // Re-lanzamos para que CardPayment resetee su estado interno
+      throw err;
     }
   };
 
