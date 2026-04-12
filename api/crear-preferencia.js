@@ -1,7 +1,8 @@
-import { MercadoPagoConfig, Preference } from 'mercadopago';
+import mercadopago from 'mercadopago';
 
-const client = new MercadoPagoConfig({ accessToken: process.env.MP_ACCESS_TOKEN });
-const APP_URL = process.env.VITE_APP_URL || 'https://tu-dominio.com'; // Cambia en producción
+// Usamos la importación global para evitar que Vercel rompa el constructor
+const client = new mercadopago.MercadoPagoConfig({ accessToken: process.env.MP_ACCESS_TOKEN });
+const APP_URL = process.env.VITE_APP_URL || 'https://pavoa.vercel.app';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
@@ -9,7 +10,6 @@ export default async function handler(req, res) {
   const { draftOrderId, cartItems, form } = req.body;
 
   try {
-    // Transformar productos del carrito al formato de Mercado Pago
     const items = cartItems.map(item => ({
       id: String(item.producto.id),
       title: `${item.producto.nombre} - Talla: ${item.talla}`,
@@ -20,21 +20,22 @@ export default async function handler(req, res) {
 
     const body = {
       items,
-      external_reference: String(draftOrderId), // CLAVE: Conectamos MP con Shopify
+      external_reference: String(draftOrderId), 
       payer: {
         name: form.nombre,
-        email: form.email || 'cliente@sin-correo.com',
+        email: form.email || 'cliente@pavoa.com',
         phone: { area_code: '57', number: form.telefono.replace(/\D/g, '') },
       },
       back_urls: {
-        success: `${APP_URL}/checkout/success`,
+        success: `${APP_URL}/`, 
         failure: `${APP_URL}/checkout`,
         pending: `${APP_URL}/checkout`,
       },
       auto_return: 'approved',
     };
 
-    const preference = new Preference(client);
+    // Llamamos a Preference desde el objeto global
+    const preference = new mercadopago.Preference(client);
     const result = await preference.create({ body });
 
     return res.status(200).json({ init_point: result.init_point });

@@ -31,7 +31,7 @@ export default function CheckoutPage() {
 
   const [form, setForm] = useState({
     nombre: '',
-    email: '',       // ✏️ NUEVO
+    email: '',
     telefono: '',
     ciudad: '',
     direccion: '',
@@ -70,6 +70,7 @@ export default function CheckoutPage() {
     return nuevosErrores;
   };
 
+  // ── FUNCIÓN 1: PAGO POR WHATSAPP ──
   const handleConfirmar = async () => {
     const nuevosErrores = validar();
     if (Object.keys(nuevosErrores).length > 0) {
@@ -79,60 +80,8 @@ export default function CheckoutPage() {
       return;
     }
 
-  const handleMercadoPago = async () => {
-  const nuevosErrores = validar();
-  if (Object.keys(nuevosErrores).length > 0) {
-    setErrors(nuevosErrores);
-    const primerError = document.querySelector('.error-field');
-    if (primerError) primerError.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    return;
-  }
-
-  setPagandoOnline(true);
-
-  try {
-    // 1. Llamamos a tu API de pedido existente para crear el Draft Order
-    const resPedido = await fetch('/api/pedido', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ form, cartItems, cartTotal }),
-    });
-    const dataPedido = await resPedido.json();
-    
-    if (!dataPedido.ok || !dataPedido.draftOrderId) {
-      throw new Error('Error al generar el pedido previo.');
-    }
-
-    // 2. Creamos la preferencia en Mercado Pago
-    const resPreferencia = await fetch('/api/crear-preferencia', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ 
-        draftOrderId: dataPedido.draftOrderId,
-        cartItems,
-        form
-      }),
-    });
-    
-    const dataPreferencia = await resPreferencia.json();
-    
-    if (dataPreferencia.init_point) {
-      // 3. Redirigimos al Checkout Pro de Mercado Pago
-      window.location.href = dataPreferencia.init_point;
-    } else {
-      throw new Error('No se pudo iniciar el pago.');
-    }
-
-  } catch (err) {
-    console.error(err);
-    alert('Ocurrió un error al iniciar el pago. Intenta de nuevo o usa WhatsApp.');
-    setPagandoOnline(false);
-  }
-};
-
     setEnviando(true);
 
-    // ── 1. Crear Draft Order en Shopify ──
     try {
       await fetch('/api/pedido', {
         method: 'POST',
@@ -143,7 +92,6 @@ export default function CheckoutPage() {
       console.warn('Draft order no creado:', err);
     }
 
-    // ── 2. Construir mensaje WhatsApp ──
     let mensaje = `Hola PAVOA, me gustaría confirmar mi pedido 🛍️\n\n`;
     mensaje += `*DATOS DE ENVÍO*\n`;
     mensaje += `───────────────\n`;
@@ -158,8 +106,7 @@ export default function CheckoutPage() {
     mensaje += `───────────────\n`;
 
     cartItems.forEach((item, i) => {
-      const color = item.producto.colorSeleccionado
-        ? ` · Color: ${item.producto.colorSeleccionado}` : '';
+      const color = item.producto.colorSeleccionado ? ` · Color: ${item.producto.colorSeleccionado}` : '';
       mensaje += `${i + 1}. ${item.producto.nombre}\n`;
       mensaje += `   Talla: ${item.talla}${color}\n`;
       mensaje += `   Cantidad: ${item.cantidad}\n`;
@@ -171,13 +118,59 @@ export default function CheckoutPage() {
     mensaje += `Quedo atenta a los pasos para confirmar el pago.`;
 
     setTimeout(() => {
-      window.open(
-        `https://wa.me/${NUMERO_WHATSAPP}?text=${encodeURIComponent(mensaje)}`,
-        '_blank'
-      );
+      window.open(`https://wa.me/${NUMERO_WHATSAPP}?text=${encodeURIComponent(mensaje)}`, '_blank');
       setEnviando(false);
       navigate('/');
     }, 600);
+  };
+
+  // ── FUNCIÓN 2: PAGO ONLINE (MERCADO PAGO) ──
+  const handleMercadoPago = async () => {
+    const nuevosErrores = validar();
+    if (Object.keys(nuevosErrores).length > 0) {
+      setErrors(nuevosErrores);
+      const primerError = document.querySelector('.error-field');
+      if (primerError) primerError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return;
+    }
+
+    setPagandoOnline(true);
+
+    try {
+      const resPedido = await fetch('/api/pedido', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ form, cartItems, cartTotal }),
+      });
+      const dataPedido = await resPedido.json();
+      
+      if (!dataPedido.ok || !dataPedido.draftOrderId) {
+        throw new Error('Error al generar el pedido previo.');
+      }
+
+      const resPreferencia = await fetch('/api/crear-preferencia', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          draftOrderId: dataPedido.draftOrderId,
+          cartItems,
+          form
+        }),
+      });
+      
+      const dataPreferencia = await resPreferencia.json();
+      
+      if (dataPreferencia.init_point) {
+        window.location.href = dataPreferencia.init_point;
+      } else {
+        throw new Error('No se pudo iniciar el pago.');
+      }
+
+    } catch (err) {
+      console.error(err);
+      alert('Ocurrió un error al iniciar el pago. Intenta de nuevo o usa WhatsApp.');
+      setPagandoOnline(false);
+    }
   };
 
   return (
@@ -186,7 +179,6 @@ export default function CheckoutPage() {
 
       <div className="max-w-[1100px] mx-auto px-6 md:px-12 py-12 md:py-20">
 
-        {/* Breadcrumb */}
         <nav className="mb-10">
           <span className="text-[10px] tracking-[0.2em] text-stone-400 uppercase flex items-center gap-2">
             <Link to="/" className="hover:text-stone-900 transition-colors">Inicio</Link>
@@ -199,7 +191,6 @@ export default function CheckoutPage() {
 
         <div className="flex flex-col lg:flex-row gap-12 lg:gap-20">
 
-          {/* ── FORMULARIO ── */}
           <div className="flex-1">
             <h1 className="text-2xl md:text-3xl font-light text-stone-900 tracking-[0.15em] uppercase mb-2">
               Datos de <strong className="font-bold">Envío</strong>
@@ -209,51 +200,36 @@ export default function CheckoutPage() {
             </p>
 
             <div className="flex flex-col gap-8">
-
-              {/* Nombre */}
               <div className={errors.nombre ? 'error-field' : ''}>
-                <CAMPO label="Nombre completo" name="nombre" value={form.nombre}
-                  onChange={handleChange} placeholder="Tu nombre y apellido" />
+                <CAMPO label="Nombre completo" name="nombre" value={form.nombre} onChange={handleChange} placeholder="Tu nombre y apellido" />
                 {errors.nombre && <p className="text-[10px] text-red-400 mt-1 tracking-[0.1em]">{errors.nombre}</p>}
               </div>
 
-              {/* ✏️ NUEVO — Email opcional */}
-              <CAMPO label="Correo electrónico" name="email" value={form.email}
-                onChange={handleChange} placeholder="tu@correo.com" type="email" required={false} />
+              <CAMPO label="Correo electrónico" name="email" value={form.email} onChange={handleChange} placeholder="tu@correo.com" type="email" required={false} />
 
-              {/* Teléfono */}
               <div className={errors.telefono ? 'error-field' : ''}>
-                <CAMPO label="Teléfono / WhatsApp" name="telefono" value={form.telefono}
-                  onChange={handleChange} placeholder="3XX XXX XXXX" type="tel" />
+                <CAMPO label="Teléfono / WhatsApp" name="telefono" value={form.telefono} onChange={handleChange} placeholder="3XX XXX XXXX" type="tel" />
                 {errors.telefono && <p className="text-[10px] text-red-400 mt-1 tracking-[0.1em]">{errors.telefono}</p>}
               </div>
 
-              {/* Ciudad */}
               <div className={errors.ciudad ? 'error-field' : ''}>
-                <CAMPO label="Ciudad" name="ciudad" value={form.ciudad}
-                  onChange={handleChange} placeholder="Ej: Medellín" />
+                <CAMPO label="Ciudad" name="ciudad" value={form.ciudad} onChange={handleChange} placeholder="Ej: Medellín" />
                 {errors.ciudad && <p className="text-[10px] text-red-400 mt-1 tracking-[0.1em]">{errors.ciudad}</p>}
               </div>
 
-              {/* Dirección + Barrio */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div className={errors.direccion ? 'error-field' : ''}>
-                  <CAMPO label="Dirección" name="direccion" value={form.direccion}
-                    onChange={handleChange} placeholder="Calle, Carrera, Av..." />
+                  <CAMPO label="Dirección" name="direccion" value={form.direccion} onChange={handleChange} placeholder="Calle, Carrera, Av..." />
                   {errors.direccion && <p className="text-[10px] text-red-400 mt-1 tracking-[0.1em]">{errors.direccion}</p>}
                 </div>
                 <div className={errors.barrio ? 'error-field' : ''}>
-                  <CAMPO label="Barrio" name="barrio" value={form.barrio}
-                    onChange={handleChange} placeholder="Nombre del barrio" />
+                  <CAMPO label="Barrio" name="barrio" value={form.barrio} onChange={handleChange} placeholder="Nombre del barrio" />
                   {errors.barrio && <p className="text-[10px] text-red-400 mt-1 tracking-[0.1em]">{errors.barrio}</p>}
                 </div>
               </div>
 
-              {/* Referencia */}
-              <CAMPO label="Punto de referencia" name="referencia" value={form.referencia}
-                onChange={handleChange} placeholder="Ej: Frente al parque, casa azul..." required={false} />
+              <CAMPO label="Punto de referencia" name="referencia" value={form.referencia} onChange={handleChange} placeholder="Ej: Frente al parque, casa azul..." required={false} />
 
-              {/* Horario */}
               <div className={errors.horario ? 'error-field' : ''}>
                 <label className="text-[10px] font-bold tracking-[0.2em] text-stone-900 uppercase block mb-4">
                   Horario de entrega <span className="text-stone-400">*</span>
@@ -261,49 +237,27 @@ export default function CheckoutPage() {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                   {HORARIOS.map(h => (
                     <button key={h} type="button" onClick={() => { setForm(p => ({ ...p, horario: h })); setErrors(p => ({ ...p, horario: '' })); }}
-                      className={`py-3 px-4 border text-[10px] tracking-[0.1em] uppercase transition-all duration-200
-                        ${form.horario === h
-                          ? 'border-stone-900 bg-stone-900 text-white'
-                          : 'border-stone-200 text-stone-600 hover:border-stone-900'
-                        }`}>
+                      className={`py-3 px-4 border text-[10px] tracking-[0.1em] uppercase transition-all duration-200 ${form.horario === h ? 'border-stone-900 bg-stone-900 text-white' : 'border-stone-200 text-stone-600 hover:border-stone-900'}`}>
                       {h}
                     </button>
                   ))}
                 </div>
                 {errors.horario && <p className="text-[10px] text-red-400 mt-2 tracking-[0.1em]">{errors.horario}</p>}
               </div>
-
             </div>
 
-            {/* Botón confirmar */}
-            <button
-                onClick={handleConfirmar}
-                disabled={enviando || pagandoOnline} // 👈 Ahora se deshabilita si está pagando online
-                className={`mt-12 w-full h-14 text-[10px] font-bold tracking-[0.25em] uppercase transition-all duration-300 flex items-center justify-center gap-3
-                  ${enviando ? 'bg-stone-700 text-white scale-[0.98]' : 'bg-stone-900 text-white hover:bg-stone-800'}`}
-              >
-                {enviando ? 'Redirigiendo a WhatsApp...' : 'Confirmar pedido por WhatsApp'}
-                {!enviando && (
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M5 12h14M12 5l7 7-7 7"/>
-                  </svg>
-                )}
+            <button onClick={handleConfirmar} disabled={enviando || pagandoOnline} className={`mt-12 w-full h-14 text-[10px] font-bold tracking-[0.25em] uppercase transition-all duration-300 flex items-center justify-center gap-3 ${enviando ? 'bg-stone-700 text-white scale-[0.98]' : 'bg-stone-900 text-white hover:bg-stone-800'}`}>
+              {enviando ? 'Redirigiendo a WhatsApp...' : 'Confirmar pedido por WhatsApp'}
+              {!enviando && <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>}
             </button>
 
-            {/* ── SEPARADOR VISUAL ── */}
             <div className="flex items-center gap-4 my-6">
               <div className="flex-1 h-[1px] bg-stone-100" />
               <span className="text-[9px] tracking-[0.2em] text-stone-300 uppercase">o</span>
               <div className="flex-1 h-[1px] bg-stone-100" />
             </div>
 
-            {/* ── NUEVO BOTÓN MERCADO PAGO ── */}
-            <button
-              onClick={handleMercadoPago}
-              disabled={enviando || pagandoOnline}
-              className={`w-full h-14 text-[10px] font-bold tracking-[0.25em] uppercase transition-all duration-300 flex items-center justify-center gap-3 border border-stone-900
-                ${pagandoOnline ? 'bg-stone-100 text-stone-400 border-stone-200' : 'bg-white text-stone-900 hover:bg-stone-50'}`}
-            >
+            <button onClick={handleMercadoPago} disabled={enviando || pagandoOnline} className={`w-full h-14 text-[10px] font-bold tracking-[0.25em] uppercase transition-all duration-300 flex items-center justify-center gap-3 border border-stone-900 ${pagandoOnline ? 'bg-stone-100 text-stone-400 border-stone-200' : 'bg-white text-stone-900 hover:bg-stone-50'}`}>
               {pagandoOnline ? 'Procesando pago...' : 'Pagar en línea ahora'}
             </button>
 
@@ -312,40 +266,24 @@ export default function CheckoutPage() {
             </p>
           </div>
 
-          {/* ── RESUMEN DEL PEDIDO ── */}
           <div className="w-full lg:w-[360px] flex-shrink-0">
             <div className="lg:sticky lg:top-[120px]">
-              <h2 className="text-[10px] font-bold tracking-[0.2em] text-stone-900 uppercase mb-6">
-                Resumen del pedido
-              </h2>
-
+              <h2 className="text-[10px] font-bold tracking-[0.2em] text-stone-900 uppercase mb-6">Resumen del pedido</h2>
               <div className="flex flex-col gap-5 mb-8">
                 {cartItems.map(item => (
                   <div key={`${item.producto.id}-${item.talla}`} className="flex gap-4">
                     <div className="w-16 h-20 bg-stone-100 overflow-hidden flex-shrink-0 relative">
-                      <img src={thumbImage(item.producto.imagen1)} alt={item.producto.nombre}
-                        width={64} height={80}
-                        className="w-full h-full object-cover" loading="lazy" />
-                      <span className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-stone-900 text-white text-[9px] rounded-full flex items-center justify-center font-bold">
-                        {item.cantidad}
-                      </span>
+                      <img src={thumbImage(item.producto.imagen1)} alt={item.producto.nombre} width={64} height={80} className="w-full h-full object-cover" loading="lazy" />
+                      <span className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-stone-900 text-white text-[9px] rounded-full flex items-center justify-center font-bold">{item.cantidad}</span>
                     </div>
                     <div className="flex flex-col justify-center gap-1 flex-grow">
-                      <p className="text-[11px] font-bold tracking-[0.12em] text-stone-900 uppercase">
-                        {item.producto.nombre}
-                      </p>
-                      <p className="text-[10px] text-stone-400 tracking-[0.08em] uppercase">
-                        Talla: {item.talla}
-                        {item.producto.colorSeleccionado && ` · ${item.producto.colorSeleccionado}`}
-                      </p>
-                      <p className="text-[12px] font-semibold text-stone-900 mt-1">
-                        {item.producto.precio}
-                      </p>
+                      <p className="text-[11px] font-bold tracking-[0.12em] text-stone-900 uppercase">{item.producto.nombre}</p>
+                      <p className="text-[10px] text-stone-400 tracking-[0.08em] uppercase">Talla: {item.talla} {item.producto.colorSeleccionado && ` · ${item.producto.colorSeleccionado}`}</p>
+                      <p className="text-[12px] font-semibold text-stone-900 mt-1">{item.producto.precio}</p>
                     </div>
                   </div>
                 ))}
               </div>
-
               <div className="border-t border-stone-100 pt-6 flex flex-col gap-3">
                 <div className="flex justify-between items-center">
                   <span className="text-[10px] tracking-[0.15em] text-stone-500 uppercase">Subtotal</span>
