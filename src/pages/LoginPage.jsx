@@ -96,13 +96,13 @@ export default function LoginPage() {
                 <label style={{ letterSpacing: '0.25em' }} className="text-[9px] font-bold text-stone-500 uppercase">
                   Contraseña
                 </label>
-                <button
-                  type="button"
-                  style={{ letterSpacing: '0.15em' }}
-                  className="text-[9px] text-stone-400 uppercase hover:text-stone-900 transition-colors"
-                >
-                  ¿Olvidaste tu contraseña?
-                </button>
+                <Link
+                    to="/forgot-password"
+                    style={{ letterSpacing: '0.15em' }}
+                    className="text-[9px] text-stone-400 uppercase hover:text-stone-900 transition-colors"
+                    >
+                    ¿Olvidaste tu contraseña?
+                </Link>
               </div>
               <input
                 type="password"

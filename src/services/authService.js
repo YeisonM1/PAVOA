@@ -106,3 +106,29 @@ export const getPedidos = async () => {
   if (!cliente) return [];
   return cliente.orders.edges.map(({ node }) => node);
 };
+
+// ── Recuperar contraseña ─────────────────────────────
+export const forgotPassword = async (email) => {
+  const res = await fetch('/api/forgot-password', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email }),
+  });
+
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Error al procesar la solicitud.');
+  return data;
+};
+
+// ── Restablecer contraseña ───────────────────────────
+export const resetPassword = async (email, token, newPassword) => {
+  const res = await fetch('/api/reset-password', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, token, newPassword }),
+  });
+
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Error al restablecer la contraseña.');
+  return data;
+};

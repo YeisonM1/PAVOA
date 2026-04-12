@@ -16,6 +16,8 @@ const LoginPage       = lazy(() => import('./pages/LoginPage'));
 const RegisterPage    = lazy(() => import('./pages/RegisterPage'));
 const VerifyEmailPage = lazy(() => import('./pages/VerifyEmailPage'));
 const VerifyPage = lazy(() => import('./pages/VerifyPage'));
+const ForgotPasswordPage = lazy(() => import('./pages/ForgotPasswordPage'));
+const ResetPasswordPage  = lazy(() => import('./pages/ResetPasswordPage'));
 
 export { CartContext };
 
@@ -71,7 +73,7 @@ function WhatsAppButton() {
   );
 }
 
-const RUTAS_LIMPIAS = ['/login', '/register', '/verify-email', '/verify'];
+const RUTAS_LIMPIAS = ['/login', '/register', '/verify-email', '/verify', '/forgot-password', '/reset-password'];
 
 function AppShell() {
   const { pathname } = useLocation();
@@ -110,8 +112,10 @@ function AppShell() {
               <Route path="/login"         element={<LoginPage />} />
               <Route path="/register"      element={<RegisterPage />} />
               <Route path="/verify-email"  element={<VerifyEmailPage />} />
-              <Route path="*"              element={<NotFoundPage />} />
               <Route path="/verify" element={<VerifyPage />} />
+              <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+              <Route path="/reset-password"  element={<ResetPasswordPage />} /> 
+              <Route path="*"              element={<NotFoundPage />} />
             </Routes>
           </Suspense>
         </div>
