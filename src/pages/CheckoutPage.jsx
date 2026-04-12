@@ -411,9 +411,12 @@ export default function CheckoutPage() {
                     initialization={{ amount: cartTotal, payer: { email: form.email } }}
                     customization={{
                       paymentMethods: {
-                        creditCard: 'all',
-                        debitCard:  'all',
+                        creditCard:   'all',
+                        debitCard:    'all',
                         bankTransfer: ['pse'],
+                        ticket:       'none',
+                        atm:          'none',
+                        onlineTransfer: 'none',
                       },
                     }}
                     onSubmit={handlePagar}
