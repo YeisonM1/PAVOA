@@ -30,9 +30,10 @@ export default async function handler(req, res) {
     draftOrderId,
     transaction_amount,
     payer,
+    transaction_details,
   } = req.body;
 
-  if (!token || !payment_method_id || !draftOrderId || !transaction_amount) {
+  if (!payment_method_id || !draftOrderId || !transaction_amount) {
     return res.status(400).json({ error: 'Datos incompletos para procesar el pago' });
   }
 
@@ -41,22 +42,37 @@ export default async function handler(req, res) {
 
     const body = {
       transaction_amount: Number(transaction_amount),
-      token,
       description:        'PAVOA - Pedido online',
-      installments:       Number(installments) || 1,
       payment_method_id,
-      issuer_id,
       payer: {
         email:          payer?.email,
-        identification: payer?.identification,
+        ...(payer?.identification && { identification: payer.identification }),
+        ...(payer?.entity_type   && { entity_type:   payer.entity_type   }),
+        ...(payer?.first_name    && { first_name:    payer.first_name    }),
+        ...(payer?.last_name     && { last_name:     payer.last_name     }),
       },
-      external_reference:  String(draftOrderId),
-      notification_url:    `${process.env.VITE_APP_URL}/api/webhook-mercadopago`,
+      external_reference: String(draftOrderId),
+      notification_url:   `${process.env.VITE_APP_URL}/api/webhook-mercadopago`,
     };
+
+    if (token) {
+      // Pago con tarjeta
+      body.token        = token;
+      body.installments = Number(installments) || 1;
+      body.issuer_id    = issuer_id;
+    } else {
+      // PSE, Nequi, Efecty u otros métodos sin token
+      if (transaction_details?.financial_institution) {
+        body.transaction_details = {
+          financial_institution: transaction_details.financial_institution,
+        };
+      }
+      body.callback_url = process.env.VITE_APP_URL;
+    }
 
     const result = await paymentClient.create({ body });
 
-    console.log(`✅ Pago procesado: ${result.id} | estado: ${result.status} | draft: ${draftOrderId}`);
+    console.log(`✅ Pago: ${result.id} | método: ${payment_method_id} | estado: ${result.status} | draft: ${draftOrderId}`);
 
     if (result.status === 'rejected' || result.status === 'cancelled') {
       await eliminarDraftOrder(draftOrderId);
@@ -66,6 +82,7 @@ export default async function handler(req, res) {
       status:        result.status,
       status_detail: result.status_detail,
       payment_id:    result.id,
+      redirect_url:  result.transaction_details?.external_resource_url || null,
     });
   } catch (error) {
     const detalle = {

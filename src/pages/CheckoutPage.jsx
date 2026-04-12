@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { CartContext } from '../App';
 import SEO from '../components/SEO';
 import { thumbImage } from '../utils/imageUrl';
-import { initMercadoPago, CardPayment } from '@mercadopago/sdk-react';
+import { initMercadoPago, Payment } from '@mercadopago/sdk-react';
 
 const MP_PUBLIC_KEY = import.meta.env.VITE_MP_PUBLIC_KEY;
 if (MP_PUBLIC_KEY) {
@@ -154,13 +154,13 @@ export default function CheckoutPage() {
     }, 100);
   };
 
-  // ── FUNCIÓN 3: PROCESAR PAGO CON TARJETA — callback de CardPayment ──
+  // ── FUNCIÓN 3: PROCESAR PAGO — callback del Payment Brick ──
+  // Soporta tarjetas, PSE, Nequi y otros métodos disponibles en Colombia.
   // 1. Crea el draft order en Shopify
-  // 2. Procesa el pago con el token recibido del Brick
+  // 2. Procesa el pago con los datos recibidos del Brick
   // El pedido solo queda registrado si el pago resulta aprobado o pendiente.
-  const handlePagarConTarjeta = async (formData) => {
+  const handlePagar = async ({ formData }) => {
     setErrorPago(null);
-    // Variable local — no depende del ciclo de render de React
     let errorLocal = null;
 
     const fallar = (mensaje) => {
@@ -194,15 +194,19 @@ export default function CheckoutPage() {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            token:              formData.token,
-            payment_method_id:  formData.payment_method_id,
-            installments:       formData.installments,
-            issuer_id:          formData.issuer_id,
-            draftOrderId:       dataPedido.draftOrderId,
-            transaction_amount: cartTotal,
+            token:                formData.token,
+            payment_method_id:    formData.payment_method_id,
+            installments:         formData.installments,
+            issuer_id:            formData.issuer_id,
+            transaction_details:  formData.transaction_details,
+            draftOrderId:         dataPedido.draftOrderId,
+            transaction_amount:   cartTotal,
             payer: {
               email:          form.email,
               identification: formData.payer?.identification,
+              entity_type:    formData.payer?.entity_type,
+              first_name:     formData.payer?.first_name,
+              last_name:      formData.payer?.last_name,
             },
           }),
         });
@@ -223,12 +227,18 @@ export default function CheckoutPage() {
       }
 
       if (data.status === 'pending') {
+        // PSE: redirigir al banco
+        if (data.redirect_url) {
+          window.location.href = data.redirect_url;
+          return;
+        }
+        // Nequi / Efecty: mostrar mensaje de pendiente
         setResultadoPago(data);
         return;
       }
 
       // rejected / cancelled
-      fallar(`Pago rechazado (${data.status_detail || 'motivo desconocido'}). Verifica los datos de tu tarjeta.`);
+      fallar(`Pago rechazado (${data.status_detail || 'motivo desconocido'}). Verifica los datos e intenta de nuevo.`);
 
     } catch (err) {
       if (!errorLocal) {
@@ -397,9 +407,9 @@ export default function CheckoutPage() {
                 )}
 
                 {!resultadoPago && !errorBrick && (
-                  <CardPayment
-                    initialization={{ amount: cartTotal }}
-                    onSubmit={handlePagarConTarjeta}
+                  <Payment
+                    initialization={{ amount: cartTotal, payer: { email: form.email } }}
+                    onSubmit={handlePagar}
                     onError={() => setErrorBrick(true)}
                   />
                 )}
