@@ -38,7 +38,7 @@ export default async function handler(req, res) {
     const preference = new mercadopago.Preference(client);
     const result = await preference.create({ body });
 
-    return res.status(200).json({ init_point: result.init_point });
+    return res.status(200).json({ init_point: result.sandbox_init_point });
   } catch (error) {
     console.error('Error creando preferencia MP:', error);
     return res.status(500).json({ error: 'Error al generar el pago' });
