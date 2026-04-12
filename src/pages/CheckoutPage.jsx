@@ -5,7 +5,12 @@ import SEO from '../components/SEO';
 import { thumbImage } from '../utils/imageUrl';
 import { initMercadoPago, CardPayment } from '@mercadopago/sdk-react';
 
-initMercadoPago(import.meta.env.VITE_MP_PUBLIC_KEY, { locale: 'es-CO' });
+const MP_PUBLIC_KEY = import.meta.env.VITE_MP_PUBLIC_KEY;
+if (MP_PUBLIC_KEY) {
+  initMercadoPago(MP_PUBLIC_KEY, { locale: 'es-CO' });
+} else {
+  console.error('[PAVOA] VITE_MP_PUBLIC_KEY no está definida. El formulario de pago no cargará.');
+}
 
 const NUMERO_WHATSAPP = import.meta.env.VITE_WHATSAPP_NUMBER;
 
@@ -45,9 +50,10 @@ export default function CheckoutPage() {
   const [enviando, setEnviando]           = useState(false);
   const [pagandoOnline, setPagandoOnline] = useState(false);
   const [errors, setErrors]               = useState({});
-  const [draftOrderId, setDraftOrderId]   = useState(null);
+  const [draftOrderId, setDraftOrderId]       = useState(null);
   const [mostrarFormPago, setMostrarFormPago] = useState(false);
-  const [resultadoPago, setResultadoPago] = useState(null); // { status, status_detail, payment_id }
+  const [resultadoPago, setResultadoPago]     = useState(null); // { status, status_detail, payment_id }
+  const [errorBrick, setErrorBrick]           = useState(!MP_PUBLIC_KEY);
 
   if (cartCount === 0 && !resultadoPago) {
     return (
@@ -352,14 +358,29 @@ export default function CheckoutPage() {
                   </div>
                 )}
 
-                {!resultadoPago && (
+                {!resultadoPago && !errorBrick && (
                   <CardPayment
                     initialization={{ amount: cartTotal }}
                     onSubmit={handlePagarConTarjeta}
-                    onError={(error) => {
-                      console.error('CardPayment error:', error);
-                    }}
+                    onError={() => setErrorBrick(true)}
                   />
+                )}
+
+                {!resultadoPago && errorBrick && (
+                  <div className="p-5 border border-stone-200 bg-stone-50">
+                    <p className="text-[11px] font-bold tracking-[0.15em] text-stone-700 uppercase mb-2">
+                      No se pudo cargar el formulario de pago
+                    </p>
+                    <p className="text-[10px] text-stone-500 tracking-[0.08em] mb-4">
+                      Hubo un problema al inicializar el sistema de pago. Puedes intentarlo de nuevo o completar tu pedido por WhatsApp.
+                    </p>
+                    <button
+                      onClick={() => { setErrorBrick(false); setMostrarFormPago(false); setDraftOrderId(null); }}
+                      className="text-[10px] font-bold tracking-[0.15em] uppercase border-b border-stone-900 pb-0.5 hover:text-stone-600 transition-colors"
+                    >
+                      Volver a intentar
+                    </button>
+                  </div>
                 )}
               </div>
             )}
