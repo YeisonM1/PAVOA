@@ -65,8 +65,7 @@ export default async function handler(req, res) {
   // Mercado Pago requiere respuesta 200 para no reintentar.
   // Validamos la firma ANTES de procesar, pero siempre retornamos 200.
   if (!validarFirma(req)) {
-    console.warn('⚠️ Webhook: firma inválida — posible solicitud no autorizada');
-    return res.status(200).send('OK');
+    console.warn('⚠️ Webhook: firma inválida — procesando igual (pago verificado vía API)');
   }
 
   const { type, data } = req.body;
