@@ -409,8 +409,15 @@ export default function CheckoutPage() {
                 {!resultadoPago && !errorBrick && (
                   <Payment
                     initialization={{ amount: cartTotal, payer: { email: form.email } }}
+                    customization={{
+                      paymentMethods: {
+                        creditCard: 'all',
+                        debitCard:  'all',
+                        bankTransfer: ['pse'],
+                      },
+                    }}
                     onSubmit={handlePagar}
-                    onError={() => setErrorBrick(true)}
+                    onError={(err) => { console.error('[MP Payment Brick error]', err); setErrorBrick(true); }}
                   />
                 )}
 
