@@ -413,7 +413,7 @@ export default function CheckoutPage() {
                       Hubo un problema al inicializar el sistema de pago. Puedes intentarlo de nuevo o completar tu pedido por WhatsApp.
                     </p>
                     <button
-                      onClick={() => { setErrorBrick(false); setMostrarFormPago(false); setDraftOrderId(null); }}
+                      onClick={() => { setErrorBrick(false); setMostrarFormPago(false); }}
                       className="text-[10px] font-bold tracking-[0.15em] uppercase border-b border-stone-900 pb-0.5 hover:text-stone-600 transition-colors"
                     >
                       Volver a intentar
