@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { CartContext } from '../App';
 import SEO from '../components/SEO';
 import { thumbImage } from '../utils/imageUrl';
+import { verificarStock } from '../services/productService';
 import { initMercadoPago, Payment } from '@mercadopago/sdk-react';
 
 const MP_PUBLIC_KEY = import.meta.env.VITE_MP_PUBLIC_KEY;
@@ -160,7 +161,13 @@ export default function CheckoutPage() {
     };
 
     try {
-      // Paso 1 — Crear draft order en Shopify
+      // Paso 1 — Verificar stock antes de cobrar
+      const erroresStock = await verificarStock(cartItems);
+      if (erroresStock.length > 0) {
+        fallar(erroresStock.join(' '));
+      }
+
+      // Paso 2 — Crear draft order en Shopify
       let dataPedido;
       try {
         const resPedido = await fetch('/api/pedido', {
@@ -177,7 +184,7 @@ export default function CheckoutPage() {
         fallar('No se pudo conectar con el servidor para registrar el pedido.');
       }
 
-      // Paso 2 — Procesar pago en Mercado Pago
+      // Paso 3 — Procesar pago en Mercado Pago
       let data;
       try {
         const resPago = await fetch('/api/procesar-pago', {

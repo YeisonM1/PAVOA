@@ -431,3 +431,44 @@ export const getInstagramPosts = () => {
   setCache('instagram-posts', promise);
   return promise;
 };
+
+// ── Verifica stock de los items del carrito antes del pago ─
+// Recibe array de { selectedVariantId, cantidad, nombre }
+// Devuelve array de errores (vacío = todo OK)
+export const verificarStock = async (cartItems) => {
+  const itemsConVariante = cartItems.filter(i => i.producto?.selectedVariantId);
+  if (itemsConVariante.length === 0) return [];
+
+  const ids = itemsConVariante.map(i => i.producto.selectedVariantId);
+
+  try {
+    const data = await shopifyFetch(`
+      query($ids: [ID!]!) {
+        nodes(ids: $ids) {
+          ... on ProductVariant {
+            id
+            quantityAvailable
+          }
+        }
+      }
+    `, { ids });
+
+    const errores = [];
+    (data.nodes || []).forEach((node) => {
+      if (!node) return;
+      const item = itemsConVariante.find(i => i.producto.selectedVariantId === node.id);
+      if (!item) return;
+      if (node.quantityAvailable < item.cantidad) {
+        errores.push(
+          node.quantityAvailable === 0
+            ? `"${item.producto.nombre}" ya no tiene stock disponible.`
+            : `"${item.producto.nombre}" solo tiene ${node.quantityAvailable} unidad${node.quantityAvailable === 1 ? '' : 'es'} disponible${node.quantityAvailable === 1 ? '' : 's'}.`
+        );
+      }
+    });
+    return errores;
+  } catch (err) {
+    console.error('Error verificarStock:', err);
+    return []; // Si falla la consulta, dejamos pasar (no bloqueamos el pago)
+  }
+};
