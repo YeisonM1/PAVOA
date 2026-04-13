@@ -50,24 +50,15 @@ const restockRefund = async (refund) => {
   const locationId = await getPrimaryLocationId();
 
   for (const rli of itemsParaRestock) {
-    const variantId = rli.line_item?.variant_id;
-    const cantidad  = rli.quantity;
+    const variantId       = rli.line_item?.variant_id;
+    const cantidad        = rli.quantity;
+    // El payload del webhook ya incluye inventory_item_id — no necesitamos
+    // llamar al endpoint de variantes (que falla con 403 por permisos).
+    const inventoryItemId = rli.line_item?.inventory_item_id;
 
-    if (!variantId || !cantidad) continue;
-
-    // Obtener inventory_item_id desde la variante
-    const resVariant = await fetch(
-      `https://${SHOPIFY_DOMAIN}/admin/api/2026-04/variants/${variantId}.json`,
-      { headers: { 'X-Shopify-Access-Token': SHOPIFY_ADMIN_TOKEN } }
-    );
-    if (!resVariant.ok) {
-      console.error(`⚠️ No se pudo obtener variante ${variantId}: ${resVariant.status}`);
-      continue;
-    }
-    const { variant } = await resVariant.json();
-    const inventoryItemId = variant?.inventory_item_id;
+    if (!cantidad) continue;
     if (!inventoryItemId) {
-      console.warn(`⚠️ Variante ${variantId} sin inventory_item_id`);
+      console.warn(`⚠️ Variante ${variantId} sin inventory_item_id en payload`);
       continue;
     }
 
