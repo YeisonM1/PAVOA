@@ -50,21 +50,52 @@ const eliminarDraftOrder = async (draftOrderId) => {
 };
 
 const completarDraftOrder = async (draftOrderId) => {
+  const token = getShopifyToken();
+  const base  = `https://${SHOPIFY_DOMAIN}/admin/api/2026-04`;
+
+  // 1. Quitar el email del draft order antes de completar
+  //    para que Shopify no tenga a quién enviar su notificación automática.
+  //    Guardamos el email antes de borrarlo para usarlo en nuestro correo de Resend.
+  const resDraft = await fetch(`${base}/draft_orders/${draftOrderId}.json`, {
+    headers: { 'X-Shopify-Access-Token': token },
+  });
+  const { draft_order: draft } = await resDraft.json();
+  const emailCliente = draft?.email || null;
+
+  if (emailCliente) {
+    await fetch(`${base}/draft_orders/${draftOrderId}.json`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'X-Shopify-Access-Token': token },
+      body: JSON.stringify({ draft_order: { id: draftOrderId, email: '' } }),
+    });
+  }
+
+  // 2. Completar el draft order (sin email → Shopify no envía nada)
   const res = await fetch(
-    `https://${SHOPIFY_DOMAIN}/admin/api/2026-04/draft_orders/${draftOrderId}/complete.json?payment_pending=false`,
+    `${base}/draft_orders/${draftOrderId}/complete.json?payment_pending=false`,
     {
       method: 'PUT',
-      headers: {
-        'Content-Type':           'application/json',
-        'X-Shopify-Access-Token': getShopifyToken(),
-      },
+      headers: { 'Content-Type': 'application/json', 'X-Shopify-Access-Token': token },
     }
   );
   if (!res.ok) {
     const err = await res.text();
     throw new Error(`Shopify ${res.status}: ${err}`);
   }
-  return await res.json();
+  const data  = await res.json();
+  const order = data.draft_order || data.order;
+
+  // 3. Restaurar el email en la orden completada para que quede en el historial
+  if (emailCliente && order?.id) {
+    await fetch(`${base}/orders/${order.id}.json`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'X-Shopify-Access-Token': token },
+      body: JSON.stringify({ order: { id: order.id, email: emailCliente } }),
+    }).catch(() => {});
+  }
+
+  // Devolvemos el order con el email restaurado para el correo de Resend
+  return { ...data, _emailCliente: emailCliente };
 };
 
 const enviarEmailConfirmacion = async (order, paymentId) => {
@@ -245,11 +276,13 @@ export default async function handler(req, res) {
     if (pagoInfo.status === 'approved') {
       const shopifyResponse = await completarDraftOrder(draftOrderId);
       const order           = shopifyResponse.draft_order || shopifyResponse.order;
+      const emailCliente    = shopifyResponse._emailCliente;
       console.log(`✅ Orden completada en Shopify: ${draftOrderId}`);
 
-      // Enviar email de confirmación
+      // Enviar nuestro email de confirmación con Resend
       try {
-        await enviarEmailConfirmacion(order, pagoInfo.id);
+        const orderConEmail = { ...order, email: emailCliente || order?.email };
+        await enviarEmailConfirmacion(orderConEmail, pagoInfo.id);
       } catch (emailErr) {
         console.error('⚠️ Email no enviado (no bloquea el flujo):', emailErr.message);
       }
