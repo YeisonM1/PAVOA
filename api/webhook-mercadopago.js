@@ -72,7 +72,7 @@ const completarDraftOrder = async (draftOrderId) => {
 
   // 2. Completar el draft order (sin email → Shopify no envía nada)
   const res = await fetch(
-    `${base}/draft_orders/${draftOrderId}/complete.json?payment_pending=false`,
+    `${base}/draft_orders/${draftOrderId}/complete.json?payment_pending=false&send_receipt=false`,
     {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json', 'X-Shopify-Access-Token': token },
