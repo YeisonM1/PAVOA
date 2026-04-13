@@ -53,26 +53,18 @@ const completarDraftOrder = async (draftOrderId) => {
   const token = getShopifyToken();
   const base  = `https://${SHOPIFY_DOMAIN}/admin/api/2026-04`;
 
-  // 1. Quitar el email del draft order antes de completar
-  //    para que Shopify no tenga a quién enviar su notificación automática.
-  //    Guardamos el email antes de borrarlo para usarlo en nuestro correo de Resend.
+  // 1. Leer el email desde note_attributes (nunca está en el campo email
+  //    del draft order — lo guardamos ahí desde pedido.js para que Shopify
+  //    no tenga a quién enviar su notificación automática).
   const resDraft = await fetch(`${base}/draft_orders/${draftOrderId}.json`, {
     headers: { 'X-Shopify-Access-Token': token },
   });
   const { draft_order: draft } = await resDraft.json();
-  const emailCliente = draft?.email || null;
+  const emailCliente = draft?.note_attributes?.find(a => a.name === 'customer_email')?.value || null;
 
-  if (emailCliente) {
-    await fetch(`${base}/draft_orders/${draftOrderId}.json`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json', 'X-Shopify-Access-Token': token },
-      body: JSON.stringify({ draft_order: { id: draftOrderId, email: '' } }),
-    });
-  }
-
-  // 2. Completar el draft order (sin email → Shopify no envía nada)
+  // 2. Completar el draft order (sin email → Shopify no puede notificar)
   const res = await fetch(
-    `${base}/draft_orders/${draftOrderId}/complete.json?payment_pending=false&send_receipt=false`,
+    `${base}/draft_orders/${draftOrderId}/complete.json?payment_pending=false`,
     {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json', 'X-Shopify-Access-Token': token },
@@ -85,21 +77,6 @@ const completarDraftOrder = async (draftOrderId) => {
   const data  = await res.json();
   const order = data.draft_order || data.order;
 
-  // 3. Guardar el email en note_attributes (sin disparar notificación de Shopify)
-  if (emailCliente && order?.id) {
-    await fetch(`${base}/orders/${order.id}.json`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json', 'X-Shopify-Access-Token': token },
-      body: JSON.stringify({
-        order: {
-          id: order.id,
-          note_attributes: [{ name: 'customer_email', value: emailCliente }],
-        },
-      }),
-    }).catch(() => {});
-  }
-
-  // Devolvemos el order con el email restaurado para el correo de Resend
   return { ...data, _emailCliente: emailCliente };
 };
 

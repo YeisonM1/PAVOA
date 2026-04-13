@@ -38,7 +38,6 @@ const crearDraftOrder = async (token, { form, cartItems }) => {
     draft_order: {
       line_items: lineItems,
       phone:        telFormateado,
-      email:        form.email || undefined,
       shipping_address: {
         first_name: firstName,
         last_name:  lastName,
@@ -60,6 +59,9 @@ const crearDraftOrder = async (token, { form, cartItems }) => {
       note:         nota,
       tags:         'pavoa-web,mercadopago',
       send_receipt: false,
+      note_attributes: [
+        { name: 'customer_email', value: form.email || '' },
+      ],
     },
   };
 
