@@ -37,13 +37,15 @@ const getPrimaryLocationId = async () => {
 
 const restockRefund = async (refund) => {
   const itemsParaRestock = (refund.refund_line_items || []).filter(
-    rli => rli.restock_type === 'return' || rli.restock_type === 'cancel'
+    rli => rli.quantity > 0
   );
 
   if (itemsParaRestock.length === 0) {
-    console.log(`ℹ️ Refund ${refund.id} — sin items marcados para restock`);
+    console.log(`ℹ️ Refund ${refund.id} — sin items con cantidad para restock`);
     return;
   }
+
+  console.log(`🔄 Refund ${refund.id} — restock types: ${itemsParaRestock.map(r => r.restock_type).join(', ')}`);
 
   const locationId = await getPrimaryLocationId();
 
