@@ -4,7 +4,7 @@ const SHOPIFY_ENDPOINT = `https://${SHOPIFY_DOMAIN}/api/2026-04/graphql.json`;
 
 // ── Caché en memoria con TTL ──────────────────────────
 const _cache = new Map();
-const CACHE_TTL = 5 * 60 * 1000; // 5 minutos
+const CACHE_TTL = 60 * 1000; // 60 segundos
 
 const getCached = (key) => {
   const entry = _cache.get(key);
@@ -20,6 +20,14 @@ const setCache = (key, promise) => {
   _cache.set(key, { promise, ts: Date.now() });
   promise.catch(() => _cache.delete(key));
 };
+
+// Limpiar caché cuando el usuario vuelve a la pestaña
+// para que el stock se actualice al regresar
+if (typeof document !== 'undefined') {
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') _cache.clear();
+  });
+}
 // ──────────────────────────────────────────────────────
 
 export const shopifyFetch = async (query, variables = {}) => {
