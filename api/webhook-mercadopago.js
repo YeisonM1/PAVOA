@@ -85,12 +85,17 @@ const completarDraftOrder = async (draftOrderId) => {
   const data  = await res.json();
   const order = data.draft_order || data.order;
 
-  // 3. Restaurar el email en la orden completada para que quede en el historial
+  // 3. Guardar el email en note_attributes (sin disparar notificación de Shopify)
   if (emailCliente && order?.id) {
     await fetch(`${base}/orders/${order.id}.json`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json', 'X-Shopify-Access-Token': token },
-      body: JSON.stringify({ order: { id: order.id, email: emailCliente } }),
+      body: JSON.stringify({
+        order: {
+          id: order.id,
+          note_attributes: [{ name: 'customer_email', value: emailCliente }],
+        },
+      }),
     }).catch(() => {});
   }
 
