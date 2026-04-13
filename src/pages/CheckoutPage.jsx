@@ -208,6 +208,21 @@ export default function CheckoutPage() {
               first_name:     formData.payer?.first_name,
               last_name:      formData.payer?.last_name,
             },
+            items: cartItems.map(item => ({
+              id:          String(item.producto.id),
+              title:       item.producto.nombre,
+              quantity:    item.cantidad,
+              unit_price:  item.producto.precioNumerico,
+            })),
+            buyer: {
+              first_name: form.nombre.split(' ')[0],
+              last_name:  form.nombre.split(' ').slice(1).join(' ') || '-',
+              phone:      form.telefono.replace(/\D/g, ''),
+            },
+            shipment: {
+              street_name: form.direccion,
+              city_name:   form.ciudad,
+            },
           }),
         });
         data = await resPago.json();

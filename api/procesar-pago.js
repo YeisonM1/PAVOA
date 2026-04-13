@@ -31,6 +31,9 @@ export default async function handler(req, res) {
     transaction_amount,
     payer,
     transaction_details,
+    items,
+    buyer,
+    shipment,
   } = req.body;
 
   if (!payment_method_id || !draftOrderId || !transaction_amount) {
@@ -50,7 +53,36 @@ export default async function handler(req, res) {
       transaction_amount: Number(transaction_amount),
       description:        'PAVOA - Pedido online',
       payment_method_id,
-      additional_info: { ip_address: ip },
+      additional_info: {
+        ip_address: ip,
+        items: (items || []).map(item => ({
+          id:          String(item.id),
+          title:       item.title,
+          description: item.title,
+          quantity:    Number(item.quantity),
+          unit_price:  Number(item.unit_price),
+        })),
+        payer: {
+          first_name:        buyer?.first_name || payer?.first_name || '',
+          last_name:         buyer?.last_name  || payer?.last_name  || '',
+          registration_date: new Date().toISOString(),
+          phone: {
+            area_code: '57',
+            number:    (buyer?.phone || '').replace(/\D/g, '').slice(0, 10),
+          },
+          address: {
+            street_name: shipment?.street_name || '',
+            zip_code:    '000000',
+          },
+        },
+        shipments: {
+          receiver_address: {
+            street_name: shipment?.street_name || '',
+            city_name:   shipment?.city_name   || '',
+            zip_code:    '000000',
+          },
+        },
+      },
       payer: {
         email:          payer?.email,
         ...(payer?.identification && { identification: payer.identification }),
