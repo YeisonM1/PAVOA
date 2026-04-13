@@ -17,7 +17,8 @@ const RegisterPage    = lazy(() => import('./pages/RegisterPage'));
 const VerifyEmailPage = lazy(() => import('./pages/VerifyEmailPage'));
 const VerifyPage = lazy(() => import('./pages/VerifyPage'));
 const ForgotPasswordPage = lazy(() => import('./pages/ForgotPasswordPage'));
-const ResetPasswordPage  = lazy(() => import('./pages/ResetPasswordPage'));
+const ResetPasswordPage      = lazy(() => import('./pages/ResetPasswordPage'));
+const OrdenConfirmadaPage    = lazy(() => import('./pages/OrdenConfirmadaPage'));
 
 export { CartContext };
 
@@ -114,7 +115,8 @@ function AppShell() {
               <Route path="/verify-email"  element={<VerifyEmailPage />} />
               <Route path="/verify" element={<VerifyPage />} />
               <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-              <Route path="/reset-password"  element={<ResetPasswordPage />} /> 
+              <Route path="/reset-password"   element={<ResetPasswordPage />} />
+              <Route path="/orden-confirmada" element={<OrdenConfirmadaPage />} />
               <Route path="*"              element={<NotFoundPage />} />
             </Routes>
           </Suspense>

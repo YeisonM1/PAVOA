@@ -235,9 +235,22 @@ export default function CheckoutPage() {
       }
 
       if (data.status === 'approved') {
-        setResultadoPago(data);
+        const orderData = {
+          paymentId: data.payment_id,
+          email:     form.email,
+          nombre:    form.nombre,
+          total:     cartTotal,
+          items:     cartItems.map(item => ({
+            nombre:  item.producto.nombre,
+            talla:   item.talla,
+            color:   item.producto.colorSeleccionado || '',
+            cantidad: item.cantidad,
+            precio:  item.producto.precio,
+            imagen:  item.producto.imagen1,
+          })),
+        };
         clearCart();
-        setTimeout(() => navigate('/'), 3000);
+        navigate('/orden-confirmada', { state: orderData });
         return;
       }
 
