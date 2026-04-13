@@ -95,16 +95,6 @@ export default function CheckoutPage() {
 
     setEnviando(true);
 
-    try {
-      await fetch('/api/pedido', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ form, cartItems, cartTotal }),
-      });
-    } catch (err) {
-      console.warn('Draft order no creado:', err);
-    }
-
     let mensaje = `Hola PAVOA, me gustaría confirmar mi pedido 🛍️\n\n`;
     mensaje += `*DATOS DE ENVÍO*\n`;
     mensaje += `───────────────\n`;
