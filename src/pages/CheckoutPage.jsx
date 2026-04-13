@@ -4,6 +4,7 @@ import { CartContext } from '../App';
 import SEO from '../components/SEO';
 import { thumbImage } from '../utils/imageUrl';
 import { verificarStock } from '../services/productService';
+import { estaAutenticado, getCliente } from '../services/authService';
 import { initMercadoPago, Payment } from '@mercadopago/sdk-react';
 
 const MP_PUBLIC_KEY = import.meta.env.VITE_MP_PUBLIC_KEY;
@@ -48,6 +49,20 @@ export default function CheckoutPage() {
     referencia: '',
     horario: '',
   });
+  // Pre-rellenar con datos del usuario logueado
+  React.useEffect(() => {
+    if (estaAutenticado()) {
+      const cliente = getCliente();
+      if (cliente) {
+        setForm(prev => ({
+          ...prev,
+          nombre: prev.nombre || `${cliente.firstName} ${cliente.lastName}`.trim(),
+          email:  prev.email  || cliente.email || '',
+        }));
+      }
+    }
+  }, []);
+
   const [enviando, setEnviando]           = useState(false);
   const [pagandoOnline, setPagandoOnline] = useState(false);
   const [errors, setErrors]               = useState({});
