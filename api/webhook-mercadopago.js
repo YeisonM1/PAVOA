@@ -1,12 +1,14 @@
 import mercadopago from 'mercadopago';
 import crypto from 'crypto';
 import { Resend } from 'resend';
+import { createClient } from '@supabase/supabase-js';
 
 const client        = new mercadopago.MercadoPagoConfig({ accessToken: process.env.MP_ACCESS_TOKEN });
 const SHOPIFY_DOMAIN = process.env.SHOPIFY_DOMAIN;
 const resend        = new Resend(process.env.RESEND_API_KEY);
 const APP_URL       = process.env.VITE_APP_URL || 'https://pavoa.vercel.app';
 const LOGO_URL      = `${APP_URL}/logo-pavoa.png`;
+const supabase      = createClient(process.env.VITE_SUPABASE_URL, process.env.VITE_SUPABASE_ANON_KEY);
 
 const getShopifyToken = () => {
   const token = process.env.SHOPIFY_ADMIN_TOKEN;
@@ -261,6 +263,26 @@ export default async function handler(req, res) {
       const order           = shopifyResponse.draft_order || shopifyResponse.order;
       const emailCliente    = shopifyResponse._emailCliente;
       console.log(`✅ Orden completada en Shopify: ${draftOrderId}`);
+
+      // Guardar pedido en Supabase para "Mis Pedidos"
+      if (emailCliente) {
+        const { error: sbError } = await supabase.from('pedidos').insert({
+          email:               emailCliente.toLowerCase(),
+          payment_id:          String(pagoInfo.id),
+          shopify_order_name:  order?.name,
+          shopify_order_id:    String(order?.id || ''),
+          total:               Number(order?.total_price || 0),
+          status:              'approved',
+          nombre:              `${order?.shipping_address?.first_name || ''} ${order?.shipping_address?.last_name || ''}`.trim(),
+          items:               (order?.line_items || []).map(item => ({
+            nombre:   item.title,
+            cantidad: item.quantity,
+            precio:   item.price,
+          })),
+        });
+        if (sbError) console.error('⚠️ Error guardando pedido en Supabase:', sbError.message);
+        else console.log(`💾 Pedido guardado en Supabase para: ${emailCliente}`);
+      }
 
       // Enviar nuestro email de confirmación con Resend
       try {
