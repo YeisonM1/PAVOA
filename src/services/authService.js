@@ -54,57 +54,33 @@ export const getCliente = () => {
   return usuario ? JSON.parse(usuario) : null;
 };
 
-// ── Obtener pedidos del cliente desde Shopify ─────────
+// ── Obtener pedidos del cliente desde Supabase ────────
 export const getPedidos = async () => {
   const usuario = getCliente();
   if (!usuario) throw new Error('No autenticado');
 
-  // Buscar cliente en Shopify por email
-  const res = await fetch(`https://${import.meta.env.VITE_SHOPIFY_DOMAIN}/api/2026-04/graphql.json`, {
+  const res = await fetch('/api/mis-pedidos', {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-Shopify-Storefront-Access-Token': import.meta.env.VITE_SHOPIFY_TOKEN,
-    },
-    body: JSON.stringify({
-      query: `
-        query {
-          customers(first: 1, query: "email:${usuario.email}") {
-            edges {
-              node {
-                orders(first: 20) {
-                  edges {
-                    node {
-                      id
-                      name
-                      processedAt
-                      financialStatus
-                      fulfillmentStatus
-                      totalPrice { amount currencyCode }
-                      lineItems(first: 5) {
-                        edges {
-                          node {
-                            title
-                            quantity
-                            variant { image { url } }
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      `
-    }),
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email: usuario.email }),
   });
 
-  const { data } = await res.json();
-  const cliente = data?.customers?.edges[0]?.node;
-  if (!cliente) return [];
-  return cliente.orders.edges.map(({ node }) => node);
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Error al obtener pedidos');
+
+  return (data.pedidos || []).map(p => ({
+    id:                p.id,
+    name:              p.shopify_order_name || `#${p.id.slice(0, 6).toUpperCase()}`,
+    processedAt:       p.created_at,
+    financialStatus:   'PAID',
+    fulfillmentStatus: 'UNFULFILLED',
+    totalPrice:        { amount: p.total, currencyCode: 'COP' },
+    lineItems: {
+      edges: (p.items || []).map(item => ({
+        node: { title: item.nombre, quantity: item.cantidad, variant: null },
+      })),
+    },
+  }));
 };
 
 // ── Recuperar contraseña ─────────────────────────────
