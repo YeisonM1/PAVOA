@@ -34,6 +34,21 @@ const validarFirma = (req) => {
   }
 };
 
+const eliminarDraftOrder = async (draftOrderId) => {
+  try {
+    await fetch(
+      `https://${SHOPIFY_DOMAIN}/admin/api/2026-04/draft_orders/${draftOrderId}.json`,
+      {
+        method: 'DELETE',
+        headers: { 'X-Shopify-Access-Token': getShopifyToken() },
+      }
+    );
+    console.log(`🗑️ Draft order eliminado: ${draftOrderId}`);
+  } catch (err) {
+    console.error(`⚠️ No se pudo eliminar draft order ${draftOrderId}:`, err.message);
+  }
+};
+
 const completarDraftOrder = async (draftOrderId) => {
   const res = await fetch(
     `https://${SHOPIFY_DOMAIN}/admin/api/2026-04/draft_orders/${draftOrderId}/complete.json?payment_pending=false`,
@@ -241,6 +256,7 @@ export default async function handler(req, res) {
 
     } else if (pagoInfo.status === 'rejected' || pagoInfo.status === 'cancelled') {
       console.log(`❌ Pago ${pagoInfo.status} | ID: ${data.id} | Draft: ${draftOrderId}`);
+      await eliminarDraftOrder(draftOrderId);
     } else {
       console.log(`⏳ Pago ${pagoInfo.status} | ID: ${data.id} | Draft: ${draftOrderId}`);
     }
