@@ -9,7 +9,7 @@ export default function Filosofia() {
 
         {/* Logo Champan — arriba derecha del panel */}
         <div className="absolute top-8 right-8 md:top-10 md:right-10 pointer-events-none">
-          <img src={logoChampan} alt="PAVOA" className="h-8 md:h-10 w-auto object-contain" />
+          <img src={logoChampan} alt="PAVOA" className="h-12 md:h-14 w-auto object-contain" />
         </div>
 
         {/* Tag */}
