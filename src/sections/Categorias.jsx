@@ -67,7 +67,7 @@ const CategoriaCard = ({ cat, className, delay = 0 }) => {
       <img
         src={categoryImage(cat.image)}
         alt={cat.nombre}
-        className="w-full h-full object-cover transition-transform duration-[2000ms] ease-out md:group-hover:scale-105 scale-110"
+        className="w-full h-full object-cover transition-transform duration-[2000ms] ease-out scale-100 md:group-hover:scale-110"
         style={{ transformOrigin: 'center center' }}
       />
 

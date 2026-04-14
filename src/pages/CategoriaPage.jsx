@@ -36,6 +36,7 @@ export default function CategoriaPage() {
 
   const [tallasFiltro, setTallasFiltro]   = useState([]);
   const [coloresFiltro, setColoresFiltro] = useState([]);
+  const [visibles, setVisibles]           = useState(12);
 
   useEffect(() => {
     let cancelled = false;
@@ -113,6 +114,8 @@ export default function CategoriaPage() {
   }, [productosDB, tallasFiltro, coloresFiltro, sortOption]);
 
   const hayFiltrosActivos = tallasFiltro.length > 0 || coloresFiltro.length > 0;
+
+  useEffect(() => { setVisibles(12); }, [productosFiltrados]);
 
   // ── SKELETON LOADING ────────────────────────────────
   if (loading) {
@@ -238,13 +241,18 @@ export default function CategoriaPage() {
             {productosFiltrados.length > 0 ? (
               <>
                 <div className="grid grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-12 md:gap-x-8 md:gap-y-16">
-                  {productosFiltrados.map(p => <ProductCard key={p.id} producto={p} />)}
+                  {productosFiltrados.slice(0, visibles).map(p => <ProductCard key={p.id} producto={p} />)}
                 </div>
-                <div className="mt-20 flex justify-center">
-                  <button className="text-[11px] font-bold text-stone-900 tracking-[0.2em] uppercase border-b border-stone-900 pb-1 hover:text-stone-500 hover:border-stone-500 transition-colors">
-                    Cargar más piezas
-                  </button>
-                </div>
+                {visibles < productosFiltrados.length && (
+                  <div className="mt-20 flex justify-center">
+                    <button
+                      onClick={() => setVisibles(v => v + 12)}
+                      className="text-[11px] font-bold text-stone-900 tracking-[0.2em] uppercase border-b border-stone-900 pb-1 hover:text-stone-500 hover:border-stone-500 transition-colors"
+                    >
+                      Cargar más piezas
+                    </button>
+                  </div>
+                )}
               </>
             ) : (
               <div className="flex flex-col items-center justify-center py-32 gap-4">
