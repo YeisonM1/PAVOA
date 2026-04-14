@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { register } from '../services/authService';
 import logo from '../assets/LOGO-PAVOA.svg';
+import SEO from '../components/SEO';
 
 export default function RegisterPage() {
   const navigate = useNavigate();
@@ -36,6 +37,7 @@ export default function RegisterPage() {
 
   return (
     <div className="min-h-screen flex" style={{ backgroundColor: '#F2E4E1' }}>
+      <SEO title="Crear cuenta" url="/register" noIndex />
 
       {/* ── LADO IZQUIERDO — decorativo (solo desktop) ── */}
       <div

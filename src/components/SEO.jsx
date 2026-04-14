@@ -1,8 +1,8 @@
 import { Helmet } from 'react-helmet-async'
 
-const DEFAULT_OG_IMAGE = 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=1200&h=630&q=80&fm=jpg&fit=crop'
+const DEFAULT_OG_IMAGE = 'https://pavoa.vercel.app/logo-pavoa.png'
 
-export default function SEO({ title, description, url, image, type = 'website', jsonLd }) {
+export default function SEO({ title, description, url, image, type = 'website', jsonLd, noIndex = false }) {
   const fullTitle = title ? `${title} | PAVOA` : 'PAVOA | Tienda Deportiva Online'
   const fullUrl = `https://pavoa.vercel.app${url || ''}`
   const ogImage = image || DEFAULT_OG_IMAGE
@@ -15,6 +15,7 @@ export default function SEO({ title, description, url, image, type = 'website', 
     <Helmet>
       <title>{fullTitle}</title>
       <meta name="description" content={description} />
+      {noIndex && <meta name="robots" content="noindex, nofollow" />}
       <link rel="canonical" href={fullUrl} />
 
       <meta property="og:title" content={fullTitle} />

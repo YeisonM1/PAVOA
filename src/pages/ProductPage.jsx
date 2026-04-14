@@ -237,7 +237,9 @@ export default function ProductPage() {
       url: `https://pavoa.vercel.app/producto/${id}`,
       priceCurrency: 'COP',
       price: producto.precioNumerico,
-      availability: 'https://schema.org/InStock',
+      availability: variantes.some(v => (v.stock ?? 0) > 0)
+        ? 'https://schema.org/InStock'
+        : 'https://schema.org/OutOfStock',
       seller: { '@type': 'Organization', name: 'PAVOA' },
     },
   };

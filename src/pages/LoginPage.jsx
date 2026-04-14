@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { login } from '../services/authService';
 import logo from '../assets/LOGO-PAVOA.svg';
+import SEO from '../components/SEO';
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -31,6 +32,7 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex" style={{ backgroundColor: '#F2E4E1' }}>
+      <SEO title="Iniciar sesión" url="/login" noIndex />
 
       {/* ── LADO IZQUIERDO — decorativo (solo desktop) ── */}
       <div
