@@ -182,7 +182,7 @@ export default function ProductPage() {
   const handleTouchEnd   = (e) => {
     if (touchStartX.current === null) return;
     const diff = touchStartX.current - e.changedTouches[0].clientX;
-    if (Math.abs(diff) > 50) lbNav(diff > 0 ? 1 : -1);
+    if (Math.abs(diff) > 80) lbNav(diff > 0 ? 1 : -1);
     touchStartX.current = null;
   };
 

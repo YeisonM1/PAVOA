@@ -58,7 +58,7 @@ function ProductCard({ producto }) {
         {tieneTallas && !esTallaUnica && (
           <button
             onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowMobileSizes(true); }}
-            className="lg:hidden absolute bottom-3 right-3 w-9 h-9 bg-white/90 backdrop-blur-md rounded-full flex items-center justify-center shadow-lg z-30 text-stone-900"
+            className="lg:hidden absolute bottom-3 right-3 w-11 h-11 bg-white/90 backdrop-blur-md rounded-full flex items-center justify-center shadow-lg z-30 text-stone-900"
             aria-label="Ver tallas disponibles"
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">

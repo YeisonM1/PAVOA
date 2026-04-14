@@ -104,9 +104,9 @@ export default function CartDrawer({ cartOpen, setCartOpen }) {
 
                     <div className="flex justify-between items-end mt-auto">
                       <div className="flex items-center border border-stone-200/80">
-                        <button 
+                        <button
                           onClick={() => updateQuantity(item.producto.id, item.talla, -1)}
-                          className="w-6 h-6 flex items-center justify-center text-stone-500 hover:text-stone-900 hover:bg-stone-50 transition-colors"
+                          className="w-11 h-11 flex items-center justify-center text-stone-500 hover:text-stone-900 hover:bg-stone-50 transition-colors"
                           aria-label={`Reducir cantidad de ${item.producto.nombre}`}
                         >-</button>
                         <span
@@ -115,9 +115,9 @@ export default function CartDrawer({ cartOpen, setCartOpen }) {
                         >
                           {item.cantidad}
                         </span>
-                        <button 
+                        <button
                           onClick={() => updateQuantity(item.producto.id, item.talla, 1)}
-                          className="w-6 h-6 flex items-center justify-center text-stone-500 hover:text-stone-900 hover:bg-stone-50 transition-colors"
+                          className="w-11 h-11 flex items-center justify-center text-stone-500 hover:text-stone-900 hover:bg-stone-50 transition-colors"
                           aria-label={`Aumentar cantidad de ${item.producto.nombre}`}
                         >+</button>
                       </div>

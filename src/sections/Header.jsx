@@ -56,6 +56,9 @@ const Header = () => {
   const [cartOpen, setCartOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
 
+  const HEADER_H_DEFAULT  = '104px';
+  const HEADER_H_SCROLLED = '88px';
+
   const [isScrolled, setIsScrolled]                 = useState(false);
   const [menuOpen, setMenuOpen]                     = useState(false);
   const [catalogoOpen, setCatalogoOpen]             = useState(false);
@@ -283,7 +286,7 @@ const Header = () => {
       {/* ── MEGA MENÚ DESKTOP ── */}
       <div 
         style={{
-          position: 'fixed', inset: 0, top: isScrolled ? '88px' : '104px', zIndex: 48,
+          position: 'fixed', inset: 0, top: isScrolled ? HEADER_H_SCROLLED : HEADER_H_DEFAULT, zIndex: 48,
           backgroundColor: 'rgba(20, 15, 15, 0.4)', backdropFilter: 'blur(3px)',
           opacity: catalogoOpen ? 1 : 0, pointerEvents: catalogoOpen ? 'auto' : 'none',
           transition: 'opacity 0.4s ease, top 0.5s ease'
@@ -294,7 +297,7 @@ const Header = () => {
       <div
         ref={panelRef}
         style={{
-          position: 'fixed', left: 0, right: 0, top: isScrolled ? '88px' : '104px', zIndex: 49,
+          position: 'fixed', left: 0, right: 0, top: isScrolled ? HEADER_H_SCROLLED : HEADER_H_DEFAULT, zIndex: 49,
           background: 'var(--color-bg)',
           borderTop: '1px solid var(--color-gold)', borderBottom: '1px solid var(--color-border)',
           overflow: 'hidden', maxHeight: catalogoOpen ? '650px' : '0px', opacity: catalogoOpen ? 1 : 0,
