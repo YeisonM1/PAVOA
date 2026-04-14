@@ -7,6 +7,7 @@ import { getProductoById } from '../services/productService';
 import SEO from '../components/SEO';
 import { productImage, heroImage, thumbImage } from '../utils/imageUrl';
 import { trackViewItem } from '../lib/analytics';
+import GuiaTallasModal from '../components/GuiaTallasModal';
 
 export default function ProductPage() {
   const { id } = useParams();
@@ -24,6 +25,7 @@ export default function ProductPage() {
   const [isLightboxOpen, setIsLightboxOpen]   = useState(false);
   const [lbFading, setLbFading]               = useState(false);
   const [showCantidadHint, setShowCantidadHint] = useState(false);
+  const [showGuiaTallas, setShowGuiaTallas]   = useState(false);
   const touchStartX                           = useRef(null);
 
   useEffect(() => {
@@ -490,7 +492,10 @@ export default function ProductPage() {
                 <div className="flex justify-between items-end mb-4">
                   <span className="text-[10px] font-bold tracking-[0.2em] text-stone-900 uppercase">Talla</span>
                   {!esTallaUnica && (
-                    <button className="text-[9px] font-bold tracking-[0.15em] text-stone-400 hover:text-stone-900 uppercase underline transition-colors">
+                    <button
+                      onClick={() => setShowGuiaTallas(true)}
+                      className="text-[9px] font-bold tracking-[0.15em] text-stone-400 hover:text-stone-900 uppercase underline transition-colors"
+                    >
                       Guía de tallas
                     </button>
                   )}
@@ -650,6 +655,8 @@ export default function ProductPage() {
           )}
         </div>
       )}
+
+      {showGuiaTallas && <GuiaTallasModal onClose={() => setShowGuiaTallas(false)} />}
     </div>
   );
 }
