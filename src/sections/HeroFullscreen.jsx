@@ -92,7 +92,7 @@ export default function HeroFullscreen() {
       <div className="absolute inset-0 z-10 bg-black/10 pointer-events-none" />
 
       {/* Logo Champan — arriba derecha, debajo del header */}
-      <div className="absolute top-[120px] right-8 md:top-[128px] md:right-12 lg:right-16 z-20 pointer-events-none">
+      <div className="absolute top-[160px] right-4 md:top-[168px] md:right-6 z-20 pointer-events-none">
         <img src={logoChampan} alt="PAVOA" className="h-14 md:h-16 w-auto object-contain" />
       </div>
 
