@@ -55,11 +55,18 @@ export default function ContactPage() {
       return;
     }
     setEstado('loading');
-    const ok = await enviarContacto(form);
-    if (ok) {
-      setEstado('success');
-      setForm({ nombre: '', contacto: '', asunto: 'Selecciona un asunto', mensaje: '' });
-    } else {
+    try {
+      const timeout = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('timeout')), 10000)
+      );
+      const ok = await Promise.race([enviarContacto(form), timeout]);
+      if (ok) {
+        setEstado('success');
+        setForm({ nombre: '', contacto: '', asunto: 'Selecciona un asunto', mensaje: '' });
+      } else {
+        setEstado('error');
+      }
+    } catch {
       setEstado('error');
     }
   };

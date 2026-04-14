@@ -26,14 +26,22 @@ export default function ProductPage() {
   const touchStartX                           = useRef(null);
 
   useEffect(() => {
+    let cancelled = false;
     const cargarProducto = async () => {
       setLoading(true);
-      const data = await getProductoById(id);
-      setProducto(data);
-      setLoading(false);
+      try {
+        const data = await getProductoById(id);
+        if (!cancelled) {
+          setProducto(data);
+          setLoading(false);
+        }
+      } catch {
+        if (!cancelled) setLoading(false);
+      }
     };
     cargarProducto();
     window.scrollTo(0, 0);
+    return () => { cancelled = true; };
   }, [id]);
 
   const imagenes = useMemo(() => {
@@ -529,13 +537,14 @@ export default function ProductPage() {
             {/* ── BOTÓN AGREGAR ── */}
             <button
               onClick={handleAddToCart}
-              disabled={stockActual === 0}
+              disabled={stockActual === 0 || stockActual === null}
               className={`w-full h-14 text-[10px] font-bold tracking-[0.25em] uppercase transition-all duration-300 flex items-center justify-center gap-3
                 ${stockActual === 0 ? 'bg-stone-200 text-stone-400 cursor-not-allowed' :
+                  stockActual === null ? 'bg-stone-300 text-stone-500 cursor-not-allowed' :
                   adding ? 'bg-stone-800 text-white scale-[0.98]' :
                   'bg-stone-900 text-white hover:bg-stone-800'}`}
             >
-              {stockActual === 0 ? 'Agotado' : adding ? 'Agregado ✔' : 'Añadir a la bolsa'}
+              {stockActual === 0 ? 'Agotado' : stockActual === null ? 'Selecciona color y talla' : adding ? 'Agregado ✔' : 'Añadir a la bolsa'}
             </button>
 
             <div className="w-full h-[1px] bg-stone-200 my-12" />

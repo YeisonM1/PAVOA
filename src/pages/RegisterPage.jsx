@@ -20,10 +20,15 @@ export default function RegisterPage() {
     }
     setLoading(true);
     try {
-      await register(form);
+      const timeout = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('timeout')), 10000)
+      );
+      await Promise.race([register(form), timeout]);
       navigate('/verify-email', { replace: true, state: { email: form.email } });
     } catch (err) {
-      setError(err.message || 'Error al crear la cuenta.');
+      setError(err.message === 'timeout'
+        ? 'La solicitud tardó demasiado. Intenta de nuevo.'
+        : err.message || 'Error al crear la cuenta.');
     } finally {
       setLoading(false);
     }

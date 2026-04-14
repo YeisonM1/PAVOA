@@ -15,10 +15,15 @@ export default function LoginPage() {
     setError('');
     setLoading(true);
     try {
-      await login(email, password);
+      const timeout = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('timeout')), 10000)
+      );
+      await Promise.race([login(email, password), timeout]);
       navigate('/cuenta', { replace: true });
     } catch (err) {
-      setError('Correo o contraseña incorrectos.');
+      setError(err.message === 'timeout'
+        ? 'La solicitud tardó demasiado. Intenta de nuevo.'
+        : 'Correo o contraseña incorrectos.');
     } finally {
       setLoading(false);
     }

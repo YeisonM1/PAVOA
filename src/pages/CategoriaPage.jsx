@@ -38,28 +38,37 @@ export default function CategoriaPage() {
   const [coloresFiltro, setColoresFiltro] = useState([]);
 
   useEffect(() => {
+    let cancelled = false;
     const cargarTodo = async () => {
       setLoading(true);
       setTallasFiltro([]);
       setColoresFiltro([]);
 
-      const todosLosProductos = await getProductos();
-      const filtrados = id && id !== 'default'
-        ? todosLosProductos.filter(p => p.categoria?.toLowerCase() === id.toLowerCase())
-        : todosLosProductos;
-      setProductosDB(filtrados);
+      try {
+        const todosLosProductos = await getProductos();
+        if (cancelled) return;
+        const filtrados = id && id !== 'default'
+          ? todosLosProductos.filter(p => p.categoria?.toLowerCase() === id.toLowerCase())
+          : todosLosProductos;
+        setProductosDB(filtrados);
 
-      const categoriaIdBusqueda = id?.toLowerCase().trim() || 'default';
-      let infoCategoria = await getCategoriaById(categoriaIdBusqueda);
-      if (!infoCategoria) infoCategoria = await getCategoriaById('default');
-      setDataHeader(infoCategoria || {
-        titulo1: 'Cole', titulo2: 'cciones',
-        desc: 'Descubre nuestra línea completa.',
-        heroImage: 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=1600&q=80'
-      });
-      setLoading(false);
+        const categoriaIdBusqueda = id?.toLowerCase().trim() || 'default';
+        let infoCategoria = await getCategoriaById(categoriaIdBusqueda);
+        if (cancelled) return;
+        if (!infoCategoria) infoCategoria = await getCategoriaById('default');
+        setDataHeader(infoCategoria || {
+          titulo1: 'Cole', titulo2: 'cciones',
+          desc: 'Descubre nuestra línea completa.',
+          heroImage: 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=1600&q=80'
+        });
+      } catch {
+        if (!cancelled) setProductosDB([]);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
     };
     cargarTodo();
+    return () => { cancelled = true; };
   }, [id]);
 
   useEffect(() => {
