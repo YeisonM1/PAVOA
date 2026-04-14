@@ -1,9 +1,16 @@
+import logoChampan from '../assets/Logo Champan.png';
+
 export default function Filosofia() {
   return (
     <section className="w-full flex flex-col md:flex-row min-h-[80vh]">
 
       {/* IZQUIERDA — Texto */}
-      <div className="w-full md:w-1/2 bg-stone-900 flex flex-col justify-center px-10 md:px-16 lg:px-24 py-20">
+      <div className="w-full md:w-1/2 bg-stone-900 flex flex-col justify-center px-10 md:px-16 lg:px-24 py-20 relative">
+
+        {/* Logo Champan — arriba derecha del panel */}
+        <div className="absolute top-8 right-8 md:top-10 md:right-10 pointer-events-none">
+          <img src={logoChampan} alt="PAVOA" className="h-8 md:h-10 w-auto object-contain" />
+        </div>
 
         {/* Tag */}
         <p
