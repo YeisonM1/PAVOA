@@ -1,6 +1,8 @@
+import { useEffect } from 'react';
 import { useLocation, useNavigate, Link } from 'react-router-dom';
 import SEO from '../components/SEO';
 import { thumbImage } from '../utils/imageUrl';
+import { trackPurchase } from '../lib/analytics';
 
 export default function OrdenConfirmadaPage() {
   const { state } = useLocation();
@@ -19,6 +21,10 @@ export default function OrdenConfirmadaPage() {
   }
 
   const { paymentId, items = [], total, email, nombre } = state;
+
+  useEffect(() => {
+    trackPurchase({ paymentId, items, total });
+  }, []);
   const firstName = nombre?.split(' ')[0] || 'Cliente';
 
   return (

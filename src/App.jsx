@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { useEffect, Suspense, lazy, useState, useContext } from 'react';
+import { trackPageView } from './lib/analytics';
 import { CartProvider, CartContext } from './context/CartContext';
 import AnnouncementBar from './sections/AnnouncementBar';
 import Header from './sections/Header';
@@ -27,6 +28,12 @@ const NUMERO_WHATSAPP = import.meta.env.VITE_WHATSAPP_NUMBER;
 function ScrollToTop() {
   const { pathname } = useLocation();
   useEffect(() => { window.scrollTo(0, 0); }, [pathname]);
+  return null;
+}
+
+function Analytics() {
+  const { pathname } = useLocation();
+  useEffect(() => { trackPageView(pathname); }, [pathname]);
   return null;
 }
 
@@ -83,6 +90,7 @@ function AppShell() {
   return (
     <>
       <ScrollToTop />
+      <Analytics />
       <div className="min-h-screen bg-white font-sans flex flex-col relative">
         <a
           href="#main-content"

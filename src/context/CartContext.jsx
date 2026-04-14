@@ -1,6 +1,7 @@
 import { useState, createContext, useMemo, useCallback } from 'react';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { parsePrice } from '../utils/price';
+import { trackAddToCart } from '../lib/analytics';
 
 export const CartContext = createContext();
 
@@ -24,6 +25,7 @@ export function CartProvider({ children }) {
       return [...prev, { producto, talla, cantidad }];
     });
 
+    trackAddToCart(producto, talla, cantidad);
     setIsCartAnimating(true);
     setShowToast(`${producto.nombre} añadido`);
     setTimeout(() => setIsCartAnimating(false), 300);

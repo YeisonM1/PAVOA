@@ -1,6 +1,7 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { CartContext } from '../App';
+import { trackBeginCheckout } from '../lib/analytics';
 import SEO from '../components/SEO';
 import { thumbImage } from '../utils/imageUrl';
 import { verificarStock } from '../services/productService';
@@ -38,6 +39,10 @@ const CAMPO = ({ label, name, value, onChange, placeholder, type = 'text', requi
 export default function CheckoutPage() {
   const { cartItems, cartTotal, cartCount, clearCart } = useContext(CartContext);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (cartItems.length > 0) trackBeginCheckout(cartItems, cartTotal);
+  }, []);
 
   const [form, setForm] = useState({
     nombre: '',

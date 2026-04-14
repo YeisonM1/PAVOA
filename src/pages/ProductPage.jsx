@@ -6,6 +6,7 @@ import CrossSelling from '../sections/CrossSelling';
 import { getProductoById } from '../services/productService';
 import SEO from '../components/SEO';
 import { productImage, heroImage, thumbImage } from '../utils/imageUrl';
+import { trackViewItem } from '../lib/analytics';
 
 export default function ProductPage() {
   const { id } = useParams();
@@ -34,6 +35,7 @@ export default function ProductPage() {
         if (!cancelled) {
           setProducto(data);
           setLoading(false);
+          if (data) trackViewItem(data);
         }
       } catch {
         if (!cancelled) setLoading(false);
