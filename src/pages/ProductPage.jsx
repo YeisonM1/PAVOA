@@ -506,7 +506,7 @@ export default function ProductPage() {
                       <span className="text-[11px] font-medium text-stone-400 tracking-[0.15em] uppercase">Talla Única</span>
                     </div>
                     <p className="text-[9px] tracking-[0.15em] text-stone-400 uppercase text-center">
-                      Tecnología de adaptación multidireccional - Se adapta a tu cuerpo desde la xs hasta la L
+                      Tecnología de adaptación multidireccional · Se adapta a tu cuerpo desde la talla xs hasta la L
                     </p>
                   </div>
                 ) : (
