@@ -61,10 +61,13 @@ export default function LoginPage() {
       <div className="w-full lg:w-1/2 flex flex-col justify-center px-8 md:px-16 lg:px-20 py-16">
 
         {/* Logo mobile */}
-        <div className="flex justify-center mb-12 lg:hidden">
+        <div className="flex flex-col items-center mb-12 lg:hidden gap-3">
           <Link to="/">
-            <img src={logo} alt="PAVOA" className="h-8 w-auto object-contain" />
+            <img src={logo} alt="PAVOA" className="h-14 w-auto object-contain" />
           </Link>
+          <p style={{ letterSpacing: '0.45em' }} className="text-[11px] font-light text-stone-400 uppercase">
+            Tu identidad. Tu seguridad.
+          </p>
         </div>
 
         <div className="max-w-sm w-full mx-auto">

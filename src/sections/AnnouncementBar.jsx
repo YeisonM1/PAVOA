@@ -2,9 +2,9 @@ import { useState, useEffect } from 'react';
 import { getAnnouncementBar } from '../services/productService';
 
 const FALLBACK = [
-  '✦ Envío gratis en compras mayores a $150.000 · Colombia ✦',
+  '✦ Descubre tu mejor versión · PAVOA ✦',
   '✦ Nueva colección disponible · Piezas limitadas ✦',
-  '✦ Envíos a todo el país · 3 a 5 días hábiles ✦',
+  '✦ Siéntete segura · Envíos a todo el país ✦',
 ];
 
 export default function AnnouncementBar() {

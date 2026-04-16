@@ -56,8 +56,8 @@ const Header = () => {
   const [cartOpen, setCartOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
 
-  const HEADER_H_DEFAULT  = '104px';
-  const HEADER_H_SCROLLED = '88px';
+  const HEADER_H_DEFAULT  = '80px';
+  const HEADER_H_SCROLLED = '64px';
 
   const [isScrolled, setIsScrolled]                 = useState(false);
   const [menuOpen, setMenuOpen]                     = useState(false);
@@ -151,7 +151,7 @@ const Header = () => {
     <>
       <header
         className={`fixed top-9 left-0 w-full z-50 transition-all duration-500 border-b ${
-          isScrolled ? 'border-white/10 py-2 shadow-lg' : 'border-transparent py-4'
+          isScrolled ? 'border-white/10 py-1 md:py-2 shadow-lg' : 'border-transparent py-2 md:py-4'
         } backdrop-blur-md`}
         style={{
           background: isScrolled ? 'rgba(242, 228, 225, 0.98)' : 'rgba(242, 228, 225, 0.92)',

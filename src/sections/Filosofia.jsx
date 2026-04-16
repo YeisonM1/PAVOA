@@ -23,11 +23,11 @@ export default function Filosofia() {
         {/* Frase principal */}
         <h2
           style={{ fontFamily: 'Montserrat, sans-serif' }}
-          className="text-4xl md:text-5xl lg:text-6xl font-light text-white leading-tight mb-6"
+          className="text-4xl md:text-5xl lg:text-6xl font-thin text-white leading-tight mb-6"
         >
           No es ropa.
           <br />
-          <span className="font-semibold">Es armadura.</span>
+          <span className="font-light">Es armadura.</span>
         </h2>
 
         {/* Línea decorativa */}

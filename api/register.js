@@ -123,34 +123,6 @@ export default async function handler(req, res) {
       `,
     });
 
-    // 6. Crear cliente en Shopify silenciosamente
-    const SHOPIFY_DOMAIN = process.env.VITE_SHOPIFY_DOMAIN;
-    const SHOPIFY_TOKEN  = process.env.VITE_SHOPIFY_TOKEN;
-
-    await fetch(`https://${SHOPIFY_DOMAIN}/api/2026-04/graphql.json`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Shopify-Storefront-Access-Token': SHOPIFY_TOKEN,
-      },
-      body: JSON.stringify({
-        query: `
-          mutation {
-            customerCreate(input: {
-              firstName: "${firstName}",
-              lastName: "${lastName || ''}",
-              email: "${email.toLowerCase()}",
-              password: "${password}",
-              acceptsMarketing: false
-            }) {
-              customer { id }
-              customerUserErrors { message }
-            }
-          }
-        `
-      }),
-    }).catch(() => {}); // Si falla no bloqueamos el registro
-
     return res.status(200).json({ ok: true });
 
   } catch (err) {

@@ -58,6 +58,8 @@ const mapProducto = (node) => {
     };
   });
 
+  const imgs = node.images.edges.map(e => e.node.url);
+
   return {
     id:          node.handle,
     shopifyId:   node.id,
@@ -65,8 +67,11 @@ const mapProducto = (node) => {
     descripcion: node.description,
     precio:      `$${Number(node.priceRange.minVariantPrice.amount).toLocaleString('es-CO')}`,
     precioNumerico: Number(node.priceRange.minVariantPrice.amount),
-    imagen1:     node.images.edges[0]?.node.url || '',
-    imagen2:     node.images.edges[1]?.node.url || '',
+    imagen1:     imgs[0] || '',
+    imagen2:     imgs[1] || '',
+    imagen3:     imgs[2] || '',
+    imagen4:     imgs[3] || '',
+    imagen5:     imgs[4] || '',
     categoria:   node.productType?.toLowerCase() || '',
     tag:         node.tags[0] || '',
     detalles:    node.detallesField?.value || '',
@@ -79,7 +84,7 @@ const mapProducto = (node) => {
 const PRODUCT_FIELDS = `
   id handle title description productType tags
   priceRange { minVariantPrice { amount } }
-  images(first: 2) { edges { node { url } } }
+  images(first: 10) { edges { node { url } } }
   detallesField: metafield(namespace: "pavoa", key: "detalles") { value }
   cuidadosField: metafield(namespace: "pavoa", key: "cuidados") { value }
   variants(first: 20) {

@@ -50,7 +50,10 @@ export default function ProductPage() {
 
   const imagenes = useMemo(() => {
     if (!producto) return [];
-    return [producto.imagen1, producto.imagen2, producto.imagen3, producto.imagen4].filter(Boolean);
+    return [
+      producto.imagen1, producto.imagen2, producto.imagen3,
+      producto.imagen4, producto.imagen5,
+    ].filter(Boolean);
   }, [producto]);
 
   useEffect(() => {
@@ -280,12 +283,12 @@ export default function ProductPage() {
             className="w-full relative group cursor-zoom-in"
             onClick={() => setIsLightboxOpen(true)}
           >
-            <div className="w-full overflow-hidden rounded-sm" style={{ aspectRatio: '3/4' }}>
+            <div className="w-full overflow-hidden rounded-sm bg-stone-50" style={{ aspectRatio: '3/4' }}>
               <img
                 src={heroImage(imagenes[selectedImage])}
                 alt={`${producto.nombre} vista ${selectedImage + 1}`}
                 width={900} height={1200}
-                className="w-full h-full object-cover object-top block"
+                className="w-full h-full object-contain block"
                 loading="eager"
                 style={mainImgStyle}
               />
@@ -350,7 +353,7 @@ export default function ProductPage() {
           )}
 
           <div
-            className="relative flex-1 overflow-hidden rounded-sm group cursor-zoom-in"
+            className="relative flex-1 overflow-hidden rounded-sm group cursor-zoom-in bg-stone-50"
             style={{ maxHeight: '78vh' }}
             onClick={() => setIsLightboxOpen(true)}
           >
@@ -358,7 +361,7 @@ export default function ProductPage() {
               src={heroImage(imagenes[selectedImage])}
               alt={`${producto.nombre} vista ${selectedImage + 1}`}
               width={900} height={1200}
-              className="w-full h-full object-cover object-top block"
+              className="w-full h-full object-contain block"
               loading="eager"
               style={mainImgStyle}
             />

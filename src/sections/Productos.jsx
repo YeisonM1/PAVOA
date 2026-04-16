@@ -27,10 +27,10 @@ export default function Productos() {
     cargarProductos();
   }, []);
 
-  // Filtrar por tab activo
-  const productosFiltrados = productos.filter(
-    (p) => p.tag?.toLowerCase() === activeTab
-  );
+  // Filtrar por tab activo — máximo 2 productos
+  const productosFiltrados = productos
+    .filter((p) => p.tag?.toLowerCase() === activeTab)
+    .slice(0, 2);
 
   // Skeleton
   if (loading) {
