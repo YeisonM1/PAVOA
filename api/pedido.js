@@ -1,9 +1,39 @@
 const SHOPIFY_DOMAIN = process.env.SHOPIFY_DOMAIN;
 
-const getShopifyToken = () => {
-  const token = process.env.SHOPIFY_ADMIN_TOKEN;
-  if (!token) throw new Error('SHOPIFY_ADMIN_TOKEN no configurado');
-  return token;
+// Cache del token en memoria
+let _tokenCache = { token: null, expiresAt: 0 };
+
+const getShopifyToken = async () => {
+  const now = Date.now();
+  // Si el token existe y le quedan más de 2 minutos de vida, lo reutiliza
+  if (_tokenCache.token && _tokenCache.expiresAt - now > 120_000) {
+    return _tokenCache.token;
+  }
+
+  const clientId     = process.env.SHOPIFY_CLIENT_ID;
+  const clientSecret = process.env.SHOPIFY_CLIENT_SECRET;
+  if (!clientId || !clientSecret) {
+    throw new Error('SHOPIFY_CLIENT_ID o SHOPIFY_CLIENT_SECRET no configurados');
+  }
+
+  const res = await fetch(
+    `https://${SHOPIFY_DOMAIN}/admin/oauth/access_token?grant_type=client_credentials&client_id=${clientId}&client_secret=${clientSecret}`,
+    { method: 'POST' }
+  );
+
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`Error obteniendo token de Shopify: ${err}`);
+  }
+
+  const data = await res.json();
+  // Shopify devuelve expires_in en segundos (normalmente 3600 = 1 hora)
+  _tokenCache = {
+    token:     data.access_token,
+    expiresAt: now + (data.expires_in ?? 3600) * 1000,
+  };
+
+  return _tokenCache.token;
 };
 
 const crearDraftOrder = async (token, { form, cartItems }) => {
@@ -97,7 +127,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const token      = getShopifyToken();
+    const token      = await getShopifyToken(); // ahora es async
     const draftOrder = await crearDraftOrder(token, { form, cartItems, cartTotal });
 
     console.log(`✅ Draft Order creado: ${draftOrder.name} — ${draftOrder.id}`);
