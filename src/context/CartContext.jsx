@@ -57,7 +57,7 @@ export function CartProvider({ children }) {
   );
 
   const cartTotal = useMemo(
-    () => cartItems.reduce((total, item) => total + (parsePrice(item.producto.precio) * item.cantidad), 0),
+    () => cartItems.reduce((total, item) => total + (parsePrice(item.producto?.precio) * item.cantidad), 0),
     [cartItems]
   );
 

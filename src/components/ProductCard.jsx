@@ -41,6 +41,7 @@ function ProductCard({ producto }) {
           alt={producto.nombre}
           width={600} height={800}
           loading="lazy"
+          onError={(e) => { e.target.style.display = 'none'; }}
           className="absolute inset-0 w-full h-full object-cover transition-all duration-[800ms] ease-[cubic-bezier(0.25,1,0.5,1)] md:group-hover:scale-105"
         />
         {producto.imagen2 && (
@@ -49,6 +50,7 @@ function ProductCard({ producto }) {
             alt={producto.nombre}
             width={600} height={800}
             loading="lazy"
+            onError={(e) => { e.target.style.display = 'none'; }}
             className="absolute inset-0 w-full h-full object-cover transition-all duration-[800ms] ease-[cubic-bezier(0.25,1,0.5,1)] opacity-0 md:group-hover:opacity-100 md:group-hover:scale-105"
           />
         )}
