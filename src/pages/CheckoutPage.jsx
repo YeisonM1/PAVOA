@@ -274,6 +274,13 @@ export default function CheckoutPage() {
       if (data.status === 'pending' || data.status === 'in_process') {
         // PSE: redirigir al banco
         if (data.redirect_url) {
+          const url = new URL(data.redirect_url);
+          const dominiosPermitidos = ['mercadopago.com', 'mercadolibre.com', 'mlstatic.com'];
+          const dominioValido = dominiosPermitidos.some(d => url.hostname === d || url.hostname.endsWith(`.${d}`));
+          if (!dominioValido) {
+            fallar('URL de redirección inválida. Contacta soporte.');
+            return;
+          }
           window.location.href = data.redirect_url;
           return;
         }

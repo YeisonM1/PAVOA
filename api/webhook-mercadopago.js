@@ -236,8 +236,8 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).send('Method not allowed');
 
   if (!validarFirma(req)) {
-    // Firma no verificada — procesamos igual porque el pago
-    // se verifica directamente contra la API de Mercado Pago.
+    console.warn('⚠️ Webhook: firma inválida — descartando request');
+    return res.status(200).send('OK');
   }
 
   const { type, data } = req.body;
