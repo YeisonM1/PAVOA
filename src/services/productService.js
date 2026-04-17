@@ -39,6 +39,7 @@ export const shopifyFetch = async (query, variables = {}) => {
     },
     body: JSON.stringify({ query, variables }),
   });
+  if (!res.ok) throw new Error(`Shopify HTTP ${res.status}`);
   const { data, errors } = await res.json();
   if (errors) throw new Error(errors[0].message);
   return data;

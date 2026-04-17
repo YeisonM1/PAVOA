@@ -51,7 +51,13 @@ export const estaAutenticado = () => !!getToken();
 // ── Obtener perfil del cliente (desde localStorage) ───
 export const getCliente = () => {
   const usuario = localStorage.getItem('pavoa_usuario');
-  return usuario ? JSON.parse(usuario) : null;
+  if (!usuario) return null;
+  try {
+    return JSON.parse(usuario);
+  } catch {
+    localStorage.removeItem('pavoa_usuario');
+    return null;
+  }
 };
 
 // ── Obtener pedidos del cliente desde Supabase ────────

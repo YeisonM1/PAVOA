@@ -23,9 +23,9 @@ export default function Instagram() {
   const [posts, setPosts] = useState(POSTS_FALLBACK);
 
   useEffect(() => {
-    getInstagramPosts().then(data => {
-      if (data.length > 0) setPosts(data);
-    });
+    getInstagramPosts()
+      .then(data => { if (data.length > 0) setPosts(data); })
+      .catch(() => {});
   }, []);
 
   return (
