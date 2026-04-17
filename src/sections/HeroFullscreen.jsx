@@ -61,7 +61,7 @@ export default function HeroFullscreen() {
   const s = slides[current];
 
   return (
-    <section className="relative w-full h-screen overflow-hidden bg-black" role="region" aria-roledescription="carrusel" aria-label="Banner principal">
+    <section className="relative w-full h-[100dvh] overflow-hidden bg-black" role="region" aria-roledescription="carrusel" aria-label="Banner principal">
       
       {slides.map((slide, index) => (
         <div
@@ -91,8 +91,8 @@ export default function HeroFullscreen() {
       <div className="absolute inset-0 z-10 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none" />
       <div className="absolute inset-0 z-10 bg-black/10 pointer-events-none" />
 
-      {/* Logo Champan — arriba derecha, debajo del header */}
-      <div className="absolute top-[160px] right-4 md:top-[168px] md:right-6 z-20 pointer-events-none">
+      {/* Logo Champan — arriba izquierda, debajo del header */}
+      <div className="absolute top-[160px] left-4 md:top-[168px] md:left-6 z-20 pointer-events-none">
         <img src={logoChampan} alt="PAVOA" className="h-14 md:h-16 w-auto object-contain" />
       </div>
 
