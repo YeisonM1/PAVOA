@@ -237,8 +237,8 @@ const Header = () => {
 
           <div className="flex-1 flex items-center justify-end gap-5 text-stone-900">
             <div className="hidden sm:flex items-center gap-4">
-              <a href="#" className="hover:text-stone-900 transition-colors"><InstagramIcon /></a>
-              <a href="#" className="hover:text-stone-900 transition-colors"><FacebookIcon /></a>
+              <a href="#" className="hover:text-stone-900 transition-colors" aria-label="Síguenos en Instagram"><InstagramIcon /></a>
+              <a href="#" className="hover:text-stone-900 transition-colors" aria-label="Síguenos en Facebook"><FacebookIcon /></a>
             </div>
             <div className="w-[1px] h-4 bg-stone-200 hidden sm:block" />
             <button onClick={() => setIsSearchOpen(true)} className="hover:text-stone-900 transition-colors" aria-label="Abrir búsqueda">
@@ -455,8 +455,8 @@ const Header = () => {
             </Link>
           </nav>
           <div className="flex items-center gap-5 mt-10" style={{ color: 'var(--color-charcoal)' }}>
-            <a href="#" style={{ color: 'var(--color-charcoal)' }}><InstagramIcon /></a>
-            <a href="#" style={{ color: 'var(--color-charcoal)' }}><FacebookIcon /></a>
+            <a href="#" style={{ color: 'var(--color-charcoal)' }} aria-label="Síguenos en Instagram"><InstagramIcon /></a>
+            <a href="#" style={{ color: 'var(--color-charcoal)' }} aria-label="Síguenos en Facebook"><FacebookIcon /></a>
           </div>
         </div>
 

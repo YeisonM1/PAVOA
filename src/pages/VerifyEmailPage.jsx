@@ -1,5 +1,6 @@
 import { Link, useLocation } from 'react-router-dom';
 import logo from '../assets/LOGO-PAVOA.svg';
+import SEO from '../components/SEO';
 
 export default function VerifyEmailPage() {
   const { state } = useLocation();
@@ -7,6 +8,7 @@ export default function VerifyEmailPage() {
 
   return (
     <div className="min-h-screen flex" style={{ backgroundColor: '#F2E4E1' }}>
+      <SEO title="Verifica tu correo — PAVOA" url="/verify-email" noIndex />
 
       {/* ── LADO IZQUIERDO — decorativo (solo desktop) ── */}
       <div
