@@ -71,15 +71,20 @@ export default function HeroFullscreen() {
           }`}
         >
           {slide.image && (
-            <img
-              src={heroImage(slide.image)}
-              alt={slide.tag}
-              fetchpriority={index === current ? 'high' : 'auto'}
-              loading={index === 0 ? 'eager' : 'lazy'}
-              className={`w-full h-full object-cover origin-center transition-transform duration-[6000ms] ease-linear ${
-                index === current ? 'scale-105' : 'scale-100'
-              }`}
-            />
+            <picture>
+              {slide.imageMobile && (
+                <source media="(max-width: 767px)" srcSet={heroImage(slide.imageMobile)} />
+              )}
+              <img
+                src={heroImage(slide.image)}
+                alt={slide.tag}
+                fetchpriority={index === current ? 'high' : 'auto'}
+                loading={index === 0 ? 'eager' : 'lazy'}
+                className={`w-full h-full object-cover origin-center transition-transform duration-[6000ms] ease-linear ${
+                  index === current ? 'scale-105' : 'scale-100'
+                }`}
+              />
+            </picture>
           )}
         </div>
       ))}

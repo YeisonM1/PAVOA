@@ -260,7 +260,8 @@ export const getHeroSlides = () => {
 
         return {
           id:       index + 1,
-          image:    getImage('imagen'),   // ← ahora lee desde reference
+          image:    getImage('imagen'),
+          imageMobile: getImage('imagen_mobile'),
           tag:      get('tag'),
           headline: get('headline').split('|'),
           sub:      get('subtitulo'),
