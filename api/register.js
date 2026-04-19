@@ -34,40 +34,46 @@ export default async function handler(req, res) {
     // 1. Verificar si el email ya existe
     const { data: existing } = await supabase
       .from('usuarios')
-      .select('id')
+      .select('id, email_verified')
       .eq('email', email.toLowerCase())
       .single();
 
-    if (existing) {
+    if (existing?.email_verified) {
       return res.status(400).json({ error: 'Este correo ya está registrado.' });
     }
 
-    // 2. Hashear contraseña
-    const password_hash = await bcrypt.hash(password, 12);
-
-    // 3. Generar token de verificación
+    // 2. Generar token de verificación
     const verify_token   = crypto.randomBytes(32).toString('hex');
-    const verify_expires = Date.now() + 24 * 60 * 60 * 1000; // 24 horas
+    const verify_expires = Date.now() + 24 * 60 * 60 * 1000;
 
-    // 4. Guardar usuario en Supabase
-    const { error: insertError } = await supabase
-      .from('usuarios')
-      .insert({
-        first_name:     firstName,
-        last_name:      lastName || '',
-        email:          email.toLowerCase(),
-        password_hash,
-        verify_token,
-        verify_expires,
-        email_verified: false,
-      });
+    if (existing && !existing.email_verified) {
+      // Cuenta existe pero no verificada — actualizar token y reenviar correo
+      await supabase
+        .from('usuarios')
+        .update({ verify_token, verify_expires })
+        .eq('email', email.toLowerCase());
+    } else {
+      // 3. Hashear contraseña e insertar usuario nuevo
+      const password_hash = await bcrypt.hash(password, 12);
+      const { error: insertError } = await supabase
+        .from('usuarios')
+        .insert({
+          first_name:     firstName,
+          last_name:      lastName || '',
+          email:          email.toLowerCase(),
+          password_hash,
+          verify_token,
+          verify_expires,
+          email_verified: false,
+        });
+      if (insertError) throw insertError;
+    }
 
-    if (insertError) throw insertError;
-
-    // 5. Enviar email de verificación con Resend
+    // 4. Enviar email de verificación
     const verifyLink = `${APP_URL}/verify?token=${verify_token}&email=${encodeURIComponent(email)}`;
 
-    await transporter.sendMail({
+    try {
+      await transporter.sendMail({
       from:    `PAVOA <${process.env.GMAIL_USER}>`,
       to:      email,
       subject: 'Verifica tu correo — PAVOA',
@@ -127,7 +133,10 @@ export default async function handler(req, res) {
         </body>
         </html>
       `,
-    });
+      });
+    } catch (emailErr) {
+      console.error('⚠️ Email de verificación no enviado:', emailErr.message);
+    }
 
     return res.status(200).json({ ok: true });
 
