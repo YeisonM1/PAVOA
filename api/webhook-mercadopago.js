@@ -1,11 +1,17 @@
 import mercadopago from 'mercadopago';
 import crypto from 'crypto';
-import { Resend } from 'resend';
+import nodemailer from 'nodemailer';
 import { createClient } from '@supabase/supabase-js';
 
 const client        = new mercadopago.MercadoPagoConfig({ accessToken: process.env.MP_ACCESS_TOKEN });
 const SHOPIFY_DOMAIN = process.env.SHOPIFY_DOMAIN;
-const resend        = new Resend(process.env.RESEND_API_KEY);
+const transporter   = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: process.env.GMAIL_USER,
+    pass: process.env.GMAIL_APP_PASSWORD,
+  },
+});
 const APP_URL       = process.env.VITE_APP_URL || 'https://pavoa.vercel.app';
 const LOGO_URL      = `${APP_URL}/logo-pavoa.png`;
 const supabase      = createClient(process.env.VITE_SUPABASE_URL, process.env.VITE_SUPABASE_ANON_KEY);
@@ -111,8 +117,8 @@ const enviarEmailConfirmacion = async (order, paymentId) => {
     ? `${order.shipping_address.address1}, ${order.shipping_address.address2 || ''} — ${order.shipping_address.city}`
     : '';
 
-  await resend.emails.send({
-    from:    'PAVOA <onboarding@resend.dev>',
+  await transporter.sendMail({
+    from:    `PAVOA <${process.env.GMAIL_USER}>`,
     to:      email,
     subject: `Pedido confirmado ${orderName} — PAVOA`,
     html: `
