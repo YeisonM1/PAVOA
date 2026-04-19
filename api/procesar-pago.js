@@ -52,19 +52,7 @@ export default async function handler(req, res) {
     const preference = await preferenceClient.create({
       body: {
         items: itemsMapped,
-        payer: {
-          name:    form.nombre.split(' ')[0],
-          surname: form.nombre.split(' ').slice(1).join(' ') || '-',
-          email:   form.email,
-          phone: {
-            area_code: '57',
-            number:    form.telefono.replace(/\D/g, '').slice(0, 10),
-          },
-          address: {
-            street_name: form.direccion,
-            city:        form.ciudad,
-          },
-        },
+        payer: { email: form.email },
         back_urls: {
           success: `${APP_URL}/orden-confirmada`,
           failure: `${APP_URL}/checkout`,
