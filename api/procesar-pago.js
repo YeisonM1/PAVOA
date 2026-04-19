@@ -6,6 +6,12 @@ const client = new mercadopago.MercadoPagoConfig({
 
 const APP_URL = process.env.VITE_APP_URL || 'https://pavoa.vercel.app';
 
+const parsePrecio = (precioNumerico, precioStr) => {
+  if (typeof precioNumerico === 'number' && precioNumerico > 0) return Math.round(precioNumerico);
+  if (typeof precioStr === 'string') return Number(precioStr.replace(/[^0-9]/g, '')) || 0;
+  return 0;
+};
+
 const eliminarDraftOrder = async (draftOrderId) => {
   try {
     await fetch(
@@ -39,7 +45,7 @@ export default async function handler(req, res) {
           id:          String(item.producto.id),
           title:       item.producto.nombre,
           quantity:    Number(item.cantidad),
-          unit_price:  Math.round(Number(item.producto.precioNumerico)),
+          unit_price:  parsePrecio(item.producto.precioNumerico, item.producto.precio),
           currency_id: 'COP',
         })),
         payer: {
