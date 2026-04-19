@@ -109,7 +109,7 @@ const PRODUCT_FIELDS_LIGHT = `
       node {
         id quantityAvailable
         selectedOptions { name value }
-        metafield(namespace: "custom", key: "color_hex") { value }
+        metafield(namespace: "custom", key: "hex_color") { value }
       }
     }
   }
