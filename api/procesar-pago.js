@@ -52,16 +52,12 @@ export default async function handler(req, res) {
     const preference = await preferenceClient.create({
       body: {
         items: itemsMapped,
-        payer: { email: form.email },
         back_urls: {
           success: `${APP_URL}/orden-confirmada`,
           failure: `${APP_URL}/checkout`,
           pending: `${APP_URL}/orden-confirmada`,
         },
-        auto_return:          'approved',
-        external_reference:   String(draftOrderId),
-        notification_url:     `${APP_URL}/api/webhook-mercadopago`,
-        statement_descriptor: 'PAVOA',
+        external_reference: String(draftOrderId),
       },
     });
 
