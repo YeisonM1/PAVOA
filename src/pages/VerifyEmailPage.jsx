@@ -16,7 +16,7 @@ export default function VerifyEmailPage() {
         style={{ backgroundColor: '#0B0B0B' }}
       >
         <Link to="/">
-          <img src={logo} alt="PAVOA" className="h-8 w-auto object-contain brightness-0 invert" />
+          <img src={logo} alt="PAVOA" className="h-16 w-auto object-contain brightness-0 invert" />
         </Link>
         <div>
           <p style={{ letterSpacing: '0.3em' }} className="text-[9px] text-white/40 uppercase font-medium mb-4">
@@ -39,7 +39,7 @@ export default function VerifyEmailPage() {
         {/* Logo mobile */}
         <div className="flex justify-center mb-12 lg:hidden">
           <Link to="/">
-            <img src={logo} alt="PAVOA" className="h-8 w-auto object-contain" />
+            <img src={logo} alt="PAVOA" className="h-14 w-auto object-contain" />
           </Link>
         </div>
 
