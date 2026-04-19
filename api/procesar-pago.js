@@ -39,15 +39,19 @@ export default async function handler(req, res) {
   try {
     const preferenceClient = new mercadopago.Preference(client);
 
+    const itemsMapped = cartItems.map(item => ({
+      id:          String(item.producto.id),
+      title:       item.producto.nombre,
+      quantity:    Number(item.cantidad),
+      unit_price:  parsePrecio(item.producto.precioNumerico, item.producto.precio),
+      currency_id: 'COP',
+    }));
+    console.log('📦 Items:', JSON.stringify(itemsMapped));
+    console.log('💰 cartTotal recibido:', cartTotal);
+
     const preference = await preferenceClient.create({
       body: {
-        items: cartItems.map(item => ({
-          id:          String(item.producto.id),
-          title:       item.producto.nombre,
-          quantity:    Number(item.cantidad),
-          unit_price:  parsePrecio(item.producto.precioNumerico, item.producto.precio),
-          currency_id: 'COP',
-        })),
+        items: itemsMapped,
         payer: {
           name:    form.nombre.split(' ')[0],
           surname: form.nombre.split(' ').slice(1).join(' ') || '-',
@@ -73,14 +77,7 @@ export default async function handler(req, res) {
       },
     });
 
-    const itemsLog = cartItems.map(item => ({
-      nombre:          item.producto.nombre,
-      precioNumerico:  item.producto.precioNumerico,
-      precio:          item.producto.precio,
-      unit_price_enviado: parsePrecio(item.producto.precioNumerico, item.producto.precio),
-    }));
-    console.log('📦 Items enviados a MP:', JSON.stringify(itemsLog));
-    console.log(`✅ Preferencia MP creada: ${preference.id} | init_point: ${preference.init_point} | draft: ${draftOrderId}`);
+    console.log(`✅ Preferencia MP creada: ${preference.id} | init_point: ${preference.init_point} | sandbox: ${preference.sandbox_init_point} | draft: ${draftOrderId}`);
 
     return res.status(200).json({ ok: true, init_point: preference.init_point });
 
