@@ -181,7 +181,7 @@ export default function CategoriaPage() {
         <div className="max-w-[1400px] mx-auto px-6 md:px-12 lg:px-16 h-16 md:h-20 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <button onClick={() => setIsFilterOpen(true)}
-              className="text-xs font-medium text-stone-900 tracking-[0.15em] uppercase flex items-center gap-2 hover:opacity-70 transition-opacity">
+              className="lg:hidden text-xs font-medium text-stone-900 tracking-[0.15em] uppercase flex items-center gap-2 hover:opacity-70 transition-opacity">
               Filtros
               {hayFiltrosActivos && (
                 <span className="w-4 h-4 rounded-full bg-stone-900 text-white text-[8px] flex items-center justify-center">
