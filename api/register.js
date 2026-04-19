@@ -1,6 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import bcrypt from 'bcryptjs';
-import nodemailer from 'nodemailer';
+import { Resend } from 'resend';
 import crypto from 'crypto';
 
 const supabase = createClient(
@@ -8,13 +8,7 @@ const supabase = createClient(
   process.env.VITE_SUPABASE_ANON_KEY
 );
 
-const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  auth: {
-    user: process.env.GMAIL_USER,
-    pass: process.env.GMAIL_APP_PASSWORD,
-  },
-});
+const resend  = new Resend(process.env.RESEND_API_KEY);
 const APP_URL = process.env.VITE_APP_URL || 'https://pavoa.vercel.app';
 
 export default async function handler(req, res) {
@@ -73,8 +67,8 @@ export default async function handler(req, res) {
     const verifyLink = `${APP_URL}/verify?token=${verify_token}&email=${encodeURIComponent(email)}`;
 
     try {
-      await transporter.sendMail({
-      from:    `PAVOA <${process.env.GMAIL_USER}>`,
+      await resend.emails.send({
+      from:    'PAVOA <onboarding@resend.dev>',
       to:      email,
       subject: 'Verifica tu correo — PAVOA',
       html: `
