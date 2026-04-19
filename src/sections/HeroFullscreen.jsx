@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { heroImage } from '../utils/imageUrl';
 import { useCarousel } from '../hooks/useCarousel';
 import { getHeroSlides } from '../services/productService';
-import logoChampan from '../assets/Logo Champan.png';
+import logoNegro from '../assets/Logo Negro.png';
 
 const CACHE_KEY = 'pavoa_hero_slides';
 
@@ -98,7 +98,7 @@ export default function HeroFullscreen() {
 
       {/* Logo Champan — arriba izquierda, debajo del header */}
       <div className="absolute top-[160px] left-4 md:top-[168px] md:left-6 z-20 pointer-events-none">
-        <img src={logoChampan} alt="PAVOA" className="h-14 md:h-16 w-auto object-contain" />
+        <img src={logoNegro} alt="PAVOA" className="h-14 md:h-16 w-auto object-contain" />
       </div>
 
       <div className="absolute inset-0 z-20 flex flex-col justify-end pb-16 md:pb-20 lg:pb-24 px-8 sm:px-12 md:px-16 lg:px-24">

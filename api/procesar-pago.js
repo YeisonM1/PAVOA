@@ -4,6 +4,8 @@ const client = new mercadopago.MercadoPagoConfig({
   accessToken: process.env.MP_ACCESS_TOKEN,
 });
 
+const APP_URL = process.env.VITE_APP_URL || 'https://pavoa.vercel.app';
+
 const eliminarDraftOrder = async (draftOrderId) => {
   try {
     await fetch(
@@ -22,119 +24,56 @@ const eliminarDraftOrder = async (draftOrderId) => {
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  const {
-    token,
-    payment_method_id,
-    installments,
-    issuer_id,
-    draftOrderId,
-    transaction_amount,
-    payer,
-    transaction_details,
-    items,
-    buyer,
-    shipment,
-  } = req.body;
+  const { form, cartItems, cartTotal, draftOrderId } = req.body;
 
-  if (!payment_method_id || !draftOrderId || !transaction_amount) {
-    return res.status(400).json({ error: 'Datos incompletos para procesar el pago' });
+  if (!form || !cartItems?.length || !draftOrderId || !cartTotal) {
+    return res.status(400).json({ error: 'Datos incompletos' });
   }
 
-  const isPSE  = payment_method_id === 'pse';
-  const isCard = !!token;
-  const ip     = req.headers['x-forwarded-for']?.split(',')[0]?.trim()
-               || req.socket?.remoteAddress
-               || '0.0.0.0';
-
   try {
-    const paymentClient = new mercadopago.Payment(client);
+    const preferenceClient = new mercadopago.Preference(client);
 
-    const body = {
-      transaction_amount: Number(transaction_amount),
-      description:        'PAVOA - Pedido online',
-      payment_method_id,
-      additional_info: {
-        ip_address: ip,
-        items: (items || []).map(item => ({
-          id:          String(item.id),
-          title:       item.title,
-          description: item.title,
-          quantity:    Number(item.quantity),
-          unit_price:  Number(item.unit_price),
+    const preference = await preferenceClient.create({
+      body: {
+        items: cartItems.map(item => ({
+          id:          String(item.producto.id),
+          title:       item.producto.nombre,
+          quantity:    Number(item.cantidad),
+          unit_price:  Math.round(Number(item.producto.precioNumerico)),
+          currency_id: 'COP',
         })),
         payer: {
-          first_name:        buyer?.first_name || payer?.first_name || '',
-          last_name:         buyer?.last_name  || payer?.last_name  || '',
-          registration_date: new Date().toISOString(),
+          name:    form.nombre.split(' ')[0],
+          surname: form.nombre.split(' ').slice(1).join(' ') || '-',
+          email:   form.email,
           phone: {
             area_code: '57',
-            number:    (buyer?.phone || '').replace(/\D/g, '').slice(0, 10),
+            number:    form.telefono.replace(/\D/g, '').slice(0, 10),
           },
           address: {
-            street_name: shipment?.street_name || '',
-            zip_code:    '000000',
+            street_name: form.direccion,
+            city:        form.ciudad,
           },
         },
-        shipments: {
-          receiver_address: {
-            street_name: shipment?.street_name || '',
-            city_name:   shipment?.city_name   || '',
-            zip_code:    '000000',
-          },
+        back_urls: {
+          success: `${APP_URL}/orden-confirmada`,
+          failure: `${APP_URL}/checkout`,
+          pending: `${APP_URL}/orden-confirmada`,
         },
+        auto_return:          'approved',
+        external_reference:   String(draftOrderId),
+        notification_url:     `${APP_URL}/api/webhook-mercadopago`,
+        statement_descriptor: 'PAVOA',
       },
-      payer: {
-        email:          payer?.email,
-        ...(payer?.identification && { identification: payer.identification }),
-        ...(payer?.first_name     && { first_name:    payer.first_name    }),
-        ...(payer?.last_name      && { last_name:     payer.last_name     }),
-        // entity_type solo aplica para PSE
-        ...(isPSE && payer?.entity_type && { entity_type: payer.entity_type }),
-      },
-      external_reference: String(draftOrderId),
-      notification_url:   `${process.env.VITE_APP_URL}/api/webhook-mercadopago`,
-    };
-
-    if (isCard) {
-      // Pago con tarjeta
-      body.token        = token;
-      body.installments = Number(installments) || 1;
-      body.issuer_id    = issuer_id;
-    } else {
-      // PSE, Nequi, Efecty u otros métodos sin token
-      if (isPSE && transaction_details?.financial_institution) {
-        body.transaction_details = {
-          financial_institution: transaction_details.financial_institution,
-        };
-      }
-      body.callback_url = process.env.VITE_APP_URL;
-    }
-
-    const result = await paymentClient.create({ body });
-
-    console.log(`✅ Pago: ${result.id} | método: ${payment_method_id} | estado: ${result.status} | draft: ${draftOrderId}`);
-
-    if (result.status === 'rejected' || result.status === 'cancelled') {
-      await eliminarDraftOrder(draftOrderId);
-    }
-
-    return res.status(200).json({
-      status:        result.status,
-      status_detail: result.status_detail,
-      payment_id:    result.id,
-      redirect_url:  result.transaction_details?.external_resource_url || null,
     });
+
+    console.log(`✅ Preferencia MP creada: ${preference.id} | draft: ${draftOrderId}`);
+
+    return res.status(200).json({ ok: true, init_point: preference.init_point });
+
   } catch (error) {
-    const detalle = {
-      message: error?.message,
-      status:  error?.status,
-      cause:   error?.cause,
-    };
-    console.error('❌ Error procesando pago MP:', JSON.stringify(detalle));
+    console.error('❌ Error creando preferencia MP:', error?.message);
     await eliminarDraftOrder(draftOrderId);
-    return res.status(500).json({
-      error:   error?.message || 'Error al procesar el pago',
-      detalle: detalle.cause?.[0]?.description || null,
-    });
+    return res.status(500).json({ error: error?.message || 'Error al crear la preferencia de pago' });
   }
 }

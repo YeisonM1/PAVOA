@@ -1,15 +1,58 @@
-import { useEffect } from 'react';
-import { useLocation, useNavigate, Link } from 'react-router-dom';
+import { useEffect, useContext } from 'react';
+import { useLocation, useNavigate, useSearchParams, Link } from 'react-router-dom';
+import { CartContext } from '../App';
 import SEO from '../components/SEO';
 import { thumbImage } from '../utils/imageUrl';
 import { trackPurchase } from '../lib/analytics';
 
 export default function OrdenConfirmadaPage() {
   const { state } = useLocation();
-  const navigate  = useNavigate();
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const { clearCart } = useContext(CartContext);
 
-  // Si alguien entra directo sin datos, va al inicio
-  if (!state?.paymentId) {
+  const paymentIdParam  = searchParams.get('payment_id');
+  const statusParam     = searchParams.get('status');
+
+  // Leer datos del pedido guardados antes de redirigir a MP
+  const savedOrder = (() => {
+    if (!paymentIdParam) return null;
+    try {
+      const raw = sessionStorage.getItem('pavoa-pending-order');
+      if (raw) {
+        sessionStorage.removeItem('pavoa-pending-order');
+        return JSON.parse(raw);
+      }
+    } catch {}
+    return null;
+  })();
+
+  const paymentId = paymentIdParam || state?.paymentId;
+  const orderData = savedOrder || state;
+  const { items = [], total, email, nombre } = orderData || {};
+
+  // Limpiar carrito al confirmar pago
+  useEffect(() => {
+    if (paymentIdParam && (statusParam === 'approved' || statusParam === 'pending')) {
+      clearCart();
+    }
+  }, []);
+
+  // Analytics
+  useEffect(() => {
+    if (paymentId && items.length > 0) {
+      trackPurchase({ paymentId, items, total });
+    }
+  }, []);
+
+  // Redirigir al checkout si el pago falló
+  useEffect(() => {
+    if (statusParam === 'failure' || statusParam === 'rejected') {
+      navigate('/checkout', { replace: true });
+    }
+  }, [statusParam]);
+
+  if (!paymentId || statusParam === 'failure' || statusParam === 'rejected') {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-6 bg-white">
         <p className="text-[11px] tracking-[0.2em] uppercase text-stone-500">No hay información de pedido</p>
@@ -20,12 +63,8 @@ export default function OrdenConfirmadaPage() {
     );
   }
 
-  const { paymentId, items = [], total, email, nombre } = state;
-
-  useEffect(() => {
-    trackPurchase({ paymentId, items, total });
-  }, []);
-  const firstName = nombre?.split(' ')[0] || 'Cliente';
+  const isPending  = statusParam === 'pending';
+  const firstName  = nombre?.split(' ')[0] || 'Cliente';
 
   return (
     <div className="min-h-screen bg-white pt-[88px] md:pt-[104px]">
@@ -33,24 +72,34 @@ export default function OrdenConfirmadaPage() {
 
       <div className="max-w-[640px] mx-auto px-6 md:px-12 py-16 md:py-24">
 
-        {/* Icono check */}
+        {/* Icono check / reloj */}
         <div className="flex justify-center mb-10">
           <div className="w-16 h-16 border border-stone-200 rounded-full flex items-center justify-center">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-stone-900">
-              <polyline points="20 6 9 17 4 12" />
-            </svg>
+            {isPending ? (
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-stone-900">
+                <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+              </svg>
+            ) : (
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-stone-900">
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+            )}
           </div>
         </div>
 
         {/* Título */}
         <div className="text-center mb-12">
-          <p className="text-[10px] tracking-[0.3em] text-stone-400 uppercase mb-3">Pago aprobado</p>
+          <p className="text-[10px] tracking-[0.3em] text-stone-400 uppercase mb-3">
+            {isPending ? 'Pago en proceso' : 'Pago aprobado'}
+          </p>
           <h1 className="text-2xl md:text-3xl font-light text-stone-900 tracking-[0.15em] uppercase mb-4">
             Gracias, <strong className="font-bold">{firstName}</strong>
           </h1>
           <div className="w-8 h-[1px] bg-[var(--color-gold,#DFCDB4)] mx-auto mb-5" />
           <p className="text-[13px] text-stone-500 leading-relaxed tracking-[0.05em]">
-            Tu pedido fue confirmado. Pronto nos pondremos en contacto para coordinar la entrega.
+            {isPending
+              ? 'Tu pago está siendo procesado. Recibirás confirmación por correo cuando sea aprobado.'
+              : 'Tu pedido fue confirmado. Pronto nos pondremos en contacto para coordinar la entrega.'}
           </p>
         </div>
 
@@ -97,24 +146,30 @@ export default function OrdenConfirmadaPage() {
               ))}
             </div>
 
-            <div className="flex justify-between items-center pt-5">
-              <span className="text-[10px] font-bold tracking-[0.2em] text-stone-900 uppercase">Total pagado</span>
-              <span className="text-[18px] font-bold text-stone-900">
-                ${Number(total).toLocaleString('es-CO')}
-              </span>
-            </div>
+            {total && (
+              <div className="flex justify-between items-center pt-5">
+                <span className="text-[10px] font-bold tracking-[0.2em] text-stone-900 uppercase">Total pagado</span>
+                <span className="text-[18px] font-bold text-stone-900">
+                  ${Number(total).toLocaleString('es-CO')}
+                </span>
+              </div>
+            )}
           </div>
         )}
 
-        {/* Mensaje siguiente paso */}
+        {/* Siguiente paso */}
         <div className="border border-stone-100 p-6 mb-10">
           <p className="text-[9px] font-bold tracking-[0.3em] text-stone-400 uppercase mb-3">¿Qué sigue?</p>
           <ul className="flex flex-col gap-2">
-            {[
+            {(isPending ? [
+              'Tu pago será confirmado por MercadoPago en las próximas horas.',
+              'Recibirás un correo de confirmación cuando el pago sea aprobado.',
+              'Una vez confirmado, coordinaremos la entrega contigo.',
+            ] : [
               'Recibirás un correo de confirmación con los detalles.',
               'Nos pondremos en contacto por WhatsApp para coordinar la entrega.',
               'Tu pedido será preparado y enviado según el horario acordado.',
-            ].map((paso, i) => (
+            ]).map((paso, i) => (
               <li key={i} className="flex items-start gap-3">
                 <span className="text-[9px] font-bold text-stone-300 mt-0.5 flex-shrink-0">{i + 1}.</span>
                 <span className="text-[12px] text-stone-500 leading-relaxed tracking-[0.04em]">{paso}</span>

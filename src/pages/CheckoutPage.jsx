@@ -6,14 +6,6 @@ import SEO from '../components/SEO';
 import { thumbImage } from '../utils/imageUrl';
 import { verificarStock } from '../services/productService';
 import { estaAutenticado, getCliente } from '../services/authService';
-import { initMercadoPago, Payment } from '@mercadopago/sdk-react';
-
-const MP_PUBLIC_KEY = import.meta.env.VITE_MP_PUBLIC_KEY;
-if (MP_PUBLIC_KEY) {
-  initMercadoPago(MP_PUBLIC_KEY, { locale: 'es-CO' });
-} else {
-  console.error('[PAVOA] VITE_MP_PUBLIC_KEY no está definida. El formulario de pago no cargará.');
-}
 
 const NUMERO_WHATSAPP = import.meta.env.VITE_WHATSAPP_NUMBER;
 
@@ -68,15 +60,11 @@ export default function CheckoutPage() {
     }
   }, []);
 
-  const [enviando, setEnviando]           = useState(false);
-  const [pagandoOnline, setPagandoOnline] = useState(false);
-  const [errors, setErrors]               = useState({});
-  const [mostrarFormPago, setMostrarFormPago] = useState(false);
-  const [resultadoPago, setResultadoPago]     = useState(null); // { status, status_detail, payment_id }
-  const [errorBrick, setErrorBrick]           = useState(!MP_PUBLIC_KEY);
-  const [errorPago, setErrorPago]             = useState(null); // mensaje de error visible al usuario
+  const [enviando, setEnviando]       = useState(false);
+  const [cargandoPago, setCargandoPago] = useState(false);
+  const [errors, setErrors]           = useState({});
 
-  if (cartCount === 0 && !resultadoPago) {
+  if (cartCount === 0) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-6 bg-white">
         <p className="text-[11px] tracking-[0.2em] uppercase text-stone-500">Tu bolsa está vacía</p>
@@ -148,10 +136,8 @@ export default function CheckoutPage() {
     }, 600);
   };
 
-  // ── FUNCIÓN 2: MOSTRAR FORMULARIO DE TARJETA ──
-  // Solo valida el formulario de envío y muestra el CardPayment.
-  // El pedido en Shopify se crea DESPUÉS de confirmar el pago — no antes.
-  const handleMercadoPago = () => {
+  // ── FUNCIÓN 2: PAGO EN LÍNEA (Checkout Pro) ──
+  const handlePagarOnline = async () => {
     const nuevosErrores = validar();
     if (Object.keys(nuevosErrores).length > 0) {
       setErrors(nuevosErrores);
@@ -159,152 +145,67 @@ export default function CheckoutPage() {
       if (primerError) primerError.scrollIntoView({ behavior: 'smooth', block: 'center' });
       return;
     }
-    setMostrarFormPago(true);
-    setTimeout(() => {
-      document.getElementById('seccion-pago')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }, 100);
-  };
 
-  // ── FUNCIÓN 3: PROCESAR PAGO — callback del Payment Brick ──
-  // Soporta tarjetas, PSE, Nequi y otros métodos disponibles en Colombia.
-  // 1. Crea el draft order en Shopify
-  // 2. Procesa el pago con los datos recibidos del Brick
-  // El pedido solo queda registrado si el pago resulta aprobado o pendiente.
-  const handlePagar = async ({ formData }) => {
-    setErrorPago(null);
-    let errorLocal = null;
-
-    const fallar = (mensaje) => {
-      errorLocal = mensaje;
-      setErrorPago(mensaje);
-      throw new Error(mensaje);
-    };
+    setCargandoPago(true);
 
     try {
-      // Paso 1 — Verificar stock antes de cobrar
+      // Paso 1 — Verificar stock
       const erroresStock = await verificarStock(cartItems);
       if (erroresStock.length > 0) {
-        fallar(erroresStock.join(' '));
+        setErrors({ general: erroresStock.join(' ') });
+        setCargandoPago(false);
+        return;
       }
 
       // Paso 2 — Crear draft order en Shopify
-      let dataPedido;
-      try {
-        const resPedido = await fetch('/api/pedido', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ form, cartItems, cartTotal }),
-        });
-        dataPedido = await resPedido.json();
-        if (!resPedido.ok || !dataPedido.ok || !dataPedido.draftOrderId) {
-          fallar(`No se pudo registrar el pedido: ${dataPedido?.error || `HTTP ${resPedido.status}`}`);
-        }
-      } catch (e) {
-        if (errorLocal) throw e;
-        fallar('No se pudo conectar con el servidor para registrar el pedido.');
-      }
-
-      // Paso 3 — Procesar pago en Mercado Pago
-      let data;
-      try {
-        const resPago = await fetch('/api/procesar-pago', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            token:                formData.token,
-            payment_method_id:    formData.payment_method_id,
-            installments:         formData.installments,
-            issuer_id:            formData.issuer_id,
-            transaction_details:  formData.transaction_details,
-            draftOrderId:         dataPedido.draftOrderId,
-            transaction_amount:   cartTotal,
-            payer: {
-              email:          form.email,
-              identification: formData.payer?.identification,
-              entity_type:    formData.payer?.entity_type,
-              first_name:     formData.payer?.first_name,
-              last_name:      formData.payer?.last_name,
-            },
-            items: cartItems.map(item => ({
-              id:          String(item.producto.id),
-              title:       item.producto.nombre,
-              quantity:    item.cantidad,
-              unit_price:  item.producto.precioNumerico,
-            })),
-            buyer: {
-              first_name: form.nombre.split(' ')[0],
-              last_name:  form.nombre.split(' ').slice(1).join(' ') || '-',
-              phone:      form.telefono.replace(/\D/g, ''),
-            },
-            shipment: {
-              street_name: form.direccion,
-              city_name:   form.ciudad,
-            },
-          }),
-        });
-        data = await resPago.json();
-        if (!resPago.ok) {
-          fallar(data?.detalle || data?.error || `Error HTTP ${resPago.status} al procesar el pago`);
-        }
-      } catch (e) {
-        if (errorLocal) throw e;
-        fallar('No se pudo conectar con el servidor para procesar el pago.');
-      }
-
-      if (data.status === 'approved') {
-        const orderData = {
-          paymentId: data.payment_id,
-          email:     form.email,
-          nombre:    form.nombre,
-          total:     cartTotal,
-          items:     cartItems.map(item => ({
-            nombre:  item.producto.nombre,
-            talla:   item.talla,
-            color:   item.producto.colorSeleccionado || '',
-            cantidad: item.cantidad,
-            precio:  item.producto.precio,
-            imagen:  item.producto.imagen1,
-          })),
-        };
-        clearCart();
-        navigate('/orden-confirmada', { state: orderData });
+      const resPedido = await fetch('/api/pedido', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ form, cartItems, cartTotal }),
+      });
+      const dataPedido = await resPedido.json();
+      if (!resPedido.ok || !dataPedido.ok || !dataPedido.draftOrderId) {
+        setErrors({ general: dataPedido?.error || 'No se pudo registrar el pedido.' });
+        setCargandoPago(false);
         return;
       }
 
-      if (data.status === 'pending' || data.status === 'in_process') {
-        // PSE: redirigir al banco
-        if (data.redirect_url) {
-          const url = new URL(data.redirect_url);
-          const dominiosPermitidos = ['mercadopago.com', 'mercadolibre.com', 'mlstatic.com'];
-          const dominioValido = dominiosPermitidos.some(d => url.hostname === d || url.hostname.endsWith(`.${d}`));
-          if (!dominioValido) {
-            fallar('URL de redirección inválida. Contacta soporte.');
-            return;
-          }
-          window.location.href = data.redirect_url;
-          return;
-        }
-        // Nequi / revisión manual: mostrar mensaje de pendiente
-        setResultadoPago(data);
+      // Paso 3 — Crear preferencia en MercadoPago
+      const resPref = await fetch('/api/procesar-pago', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ form, cartItems, cartTotal, draftOrderId: dataPedido.draftOrderId }),
+      });
+      const dataPref = await resPref.json();
+      if (!resPref.ok || !dataPref.init_point) {
+        setErrors({ general: dataPref?.error || 'No se pudo iniciar el pago.' });
+        setCargandoPago(false);
         return;
       }
 
-      // rejected / cancelled
-      fallar(`Pago rechazado (${data.status_detail || 'motivo desconocido'}). Verifica los datos e intenta de nuevo.`);
+      // Paso 4 — Guardar datos del pedido en sessionStorage para mostrar al volver
+      sessionStorage.setItem('pavoa-pending-order', JSON.stringify({
+        items: cartItems.map(item => ({
+          nombre:   item.producto.nombre,
+          talla:    item.talla,
+          color:    item.producto.colorSeleccionado || '',
+          cantidad: item.cantidad,
+          precio:   item.producto.precio,
+          imagen:   item.producto.imagen1,
+        })),
+        total:  cartTotal,
+        email:  form.email,
+        nombre: form.nombre,
+      }));
+
+      // Paso 5 — Redirigir a MercadoPago
+      window.location.href = dataPref.init_point;
 
     } catch (err) {
-      if (!errorLocal) {
-        setErrorPago('Error inesperado. Intenta de nuevo o usa WhatsApp.');
-      }
-      throw err;
+      console.error('[PAVOA] Error al iniciar pago:', err);
+      setErrors({ general: 'Error inesperado. Intenta de nuevo.' });
+      setCargandoPago(false);
     }
-  };
-
-  const handleCambiarMetodo = () => {
-    setMostrarFormPago(false);
-    setResultadoPago(null);
-    setErrorPago(null);
-    setErrorBrick(!MP_PUBLIC_KEY);
   };
 
   return (
@@ -383,116 +284,29 @@ export default function CheckoutPage() {
               </div>
             </div>
 
-            {/* ── BOTONES DE PAGO (se ocultan cuando aparece el formulario de tarjeta) ── */}
-            {!mostrarFormPago && (
-              <>
-                <button onClick={handleConfirmar} disabled={enviando || pagandoOnline} className={`mt-12 w-full h-14 text-[10px] font-bold tracking-[0.25em] uppercase transition-all duration-300 flex items-center justify-center gap-3 ${enviando ? 'bg-stone-700 text-white scale-[0.98]' : 'bg-stone-900 text-white hover:bg-stone-800'}`}>
-                  {enviando ? 'Redirigiendo a WhatsApp...' : 'Confirmar pedido por WhatsApp'}
-                  {!enviando && <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>}
-                </button>
+            {/* ── BOTONES DE PAGO ── */}
+            <button onClick={handleConfirmar} disabled={enviando || cargandoPago} className={`mt-12 w-full h-14 text-[10px] font-bold tracking-[0.25em] uppercase transition-all duration-300 flex items-center justify-center gap-3 ${enviando ? 'bg-stone-700 text-white scale-[0.98]' : 'bg-stone-900 text-white hover:bg-stone-800'}`}>
+              {enviando ? 'Redirigiendo a WhatsApp...' : 'Confirmar pedido por WhatsApp'}
+              {!enviando && <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>}
+            </button>
 
-                <div className="flex items-center gap-4 my-6">
-                  <div className="flex-1 h-[1px] bg-stone-100" />
-                  <span className="text-[9px] tracking-[0.2em] text-stone-300 uppercase">o</span>
-                  <div className="flex-1 h-[1px] bg-stone-100" />
-                </div>
+            <div className="flex items-center gap-4 my-6">
+              <div className="flex-1 h-[1px] bg-stone-100" />
+              <span className="text-[9px] tracking-[0.2em] text-stone-300 uppercase">o</span>
+              <div className="flex-1 h-[1px] bg-stone-100" />
+            </div>
 
-                <button onClick={handleMercadoPago} disabled={enviando || pagandoOnline} className={`w-full h-14 text-[10px] font-bold tracking-[0.25em] uppercase transition-all duration-300 flex items-center justify-center gap-3 border border-stone-900 ${pagandoOnline ? 'bg-stone-100 text-stone-400 border-stone-200' : 'bg-white text-stone-900 hover:bg-stone-50'}`}>
-                  {pagandoOnline ? 'Preparando pago...' : 'Pagar en línea ahora'}
-                </button>
+            <button onClick={handlePagarOnline} disabled={enviando || cargandoPago} className={`w-full h-14 text-[10px] font-bold tracking-[0.25em] uppercase transition-all duration-300 flex items-center justify-center gap-3 border border-stone-900 ${cargandoPago ? 'bg-stone-100 text-stone-400 border-stone-200' : 'bg-white text-stone-900 hover:bg-stone-50'}`}>
+              {cargandoPago ? 'Preparando pago...' : 'Pagar en línea ahora'}
+            </button>
 
-                <p className="text-[10px] text-stone-400 tracking-[0.1em] uppercase text-center mt-4 italic">
-                  Selecciona tu método de preferencia para finalizar
-                </p>
-              </>
+            {errors.general && (
+              <p className="text-[10px] text-red-500 tracking-[0.08em] text-center mt-4">{errors.general}</p>
             )}
 
-            {/* ── FORMULARIO DE TARJETA (Checkout API) ── */}
-            {mostrarFormPago && (
-              <div id="seccion-pago" className="mt-12">
-                <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-[10px] font-bold tracking-[0.2em] text-stone-900 uppercase">
-                    Datos de pago
-                  </h2>
-                  <button
-                    onClick={handleCambiarMetodo}
-                    className="text-[10px] tracking-[0.1em] text-stone-400 uppercase border-b border-stone-200 hover:border-stone-900 hover:text-stone-900 transition-colors"
-                  >
-                    Cambiar método
-                  </button>
-                </div>
-
-                {/* Error visible al usuario (fallo de API o pago rechazado) */}
-                {errorPago && (
-                  <div className="mb-6 p-4 border border-red-200 bg-red-50">
-                    <p className="text-[11px] font-bold tracking-[0.15em] text-red-700 uppercase mb-1">
-                      Error al procesar el pago
-                    </p>
-                    <p className="text-[10px] text-red-500 tracking-[0.08em]">
-                      {errorPago}
-                    </p>
-                  </div>
-                )}
-
-                {/* Mensaje de pago aprobado */}
-                {resultadoPago?.status === 'approved' && (
-                  <div className="mb-6 p-4 border border-stone-900 bg-stone-50">
-                    <p className="text-[11px] font-bold tracking-[0.15em] text-stone-900 uppercase">
-                      Pago aprobado
-                    </p>
-                    <p className="text-[10px] text-stone-500 tracking-[0.08em] mt-1">
-                      Tu pedido fue confirmado. Redirigiendo...
-                    </p>
-                  </div>
-                )}
-
-                {/* Mensaje de pago pendiente (PSE / revisión manual) */}
-                {(resultadoPago?.status === 'pending' || resultadoPago?.status === 'in_process') && (
-                  <div className="mb-6 p-4 border border-stone-300 bg-stone-50">
-                    <p className="text-[11px] font-bold tracking-[0.15em] text-stone-700 uppercase">
-                      Pago en proceso
-                    </p>
-                    <p className="text-[10px] text-stone-500 tracking-[0.08em] mt-1">
-                      {resultadoPago?.status_detail === 'pending_review_manual'
-                        ? 'Tu pago está siendo revisado por Mercado Pago. Recibirás confirmación por correo en las próximas horas.'
-                        : 'Tu pago está siendo procesado. Recibirás confirmación por correo cuando esté aprobado.'}
-                    </p>
-                  </div>
-                )}
-
-                {!resultadoPago && !errorBrick && (
-                  <Payment
-                    initialization={{ amount: cartTotal }}
-                    customization={{
-                      paymentMethods: {
-                        creditCard:   'all',
-                        debitCard:    'all',
-                        bankTransfer: ['pse'],
-                      },
-                    }}
-                    onSubmit={handlePagar}
-                    onError={(err) => { console.error('[MP Payment Brick error]', err); setErrorBrick(true); }}
-                  />
-                )}
-
-                {!resultadoPago && errorBrick && (
-                  <div className="p-5 border border-stone-200 bg-stone-50">
-                    <p className="text-[11px] font-bold tracking-[0.15em] text-stone-700 uppercase mb-2">
-                      No se pudo cargar el formulario de pago
-                    </p>
-                    <p className="text-[10px] text-stone-500 tracking-[0.08em] mb-4">
-                      Hubo un problema al inicializar el sistema de pago. Puedes intentarlo de nuevo o completar tu pedido por WhatsApp.
-                    </p>
-                    <button
-                      onClick={() => { setErrorBrick(false); setMostrarFormPago(false); }}
-                      className="text-[10px] font-bold tracking-[0.15em] uppercase border-b border-stone-900 pb-0.5 hover:text-stone-600 transition-colors"
-                    >
-                      Volver a intentar
-                    </button>
-                  </div>
-                )}
-              </div>
-            )}
+            <p className="text-[10px] text-stone-400 tracking-[0.1em] uppercase text-center mt-4 italic">
+              Selecciona tu método de preferencia para finalizar
+            </p>
           </div>
 
           {/* ── RESUMEN DEL PEDIDO ── */}
