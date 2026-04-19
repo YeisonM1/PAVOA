@@ -46,22 +46,23 @@ export default async function handler(req, res) {
       unit_price:  parsePrecio(item.producto.precioNumerico, item.producto.precio),
       currency_id: 'COP',
     }));
-    console.log('📦 Items:', JSON.stringify(itemsMapped));
-    console.log('💰 cartTotal recibido:', cartTotal);
-
     const preference = await preferenceClient.create({
       body: {
         items: itemsMapped,
+        payer: { email: form.email },
         back_urls: {
           success: `${APP_URL}/orden-confirmada`,
           failure: `${APP_URL}/checkout`,
           pending: `${APP_URL}/orden-confirmada`,
         },
-        external_reference: String(draftOrderId),
+        auto_return:          'approved',
+        external_reference:   String(draftOrderId),
+        notification_url:     `${APP_URL}/api/webhook-mercadopago`,
+        statement_descriptor: 'PAVOA',
       },
     });
 
-    console.log(`✅ Preferencia MP creada: ${preference.id} | init_point: ${preference.init_point} | sandbox: ${preference.sandbox_init_point} | draft: ${draftOrderId}`);
+    console.log(`✅ Preferencia MP creada: ${preference.id} | draft: ${draftOrderId}`);
 
     return res.status(200).json({ ok: true, init_point: preference.init_point });
 
