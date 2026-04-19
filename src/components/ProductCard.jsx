@@ -26,7 +26,7 @@ function ProductCard({ producto }) {
     <Link
       to={`/producto/${producto.id}`}
       onClick={() => window.scrollTo(0, 0)}
-      className="group cursor-pointer flex flex-col gap-4 w-full flex-shrink-0 snap-center relative block"
+      className="group cursor-pointer flex flex-col gap-4 w-full flex-shrink-0 snap-center relative block overflow-hidden"
     >
       <div className="relative overflow-hidden bg-stone-100" style={{ aspectRatio: '3/4' }}>
 

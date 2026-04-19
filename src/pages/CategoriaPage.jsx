@@ -92,7 +92,7 @@ export default function CategoriaPage() {
     const mapa = new Map();
     productosDB.forEach(p => {
       parseVariantes(p.variantes).forEach(v => {
-        if (v.color && v.hex && !mapa.has(v.color)) mapa.set(v.color, v.hex);
+        if (v.color && v.hex && !mapa.has(v.color)) mapa.set(v.color, v.hex.startsWith('#') ? v.hex : `#${v.hex}`);
       });
     });
     return Array.from(mapa, ([nombre, hex]) => ({ nombre, hex }));

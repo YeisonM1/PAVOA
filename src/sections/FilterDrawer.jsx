@@ -145,7 +145,7 @@ export default function FilterDrawer({
               <X size={20} strokeWidth={1.5} />
             </button>
           </div>
-          <div className="flex-grow overflow-y-auto px-8 py-8">
+          <div className="flex-grow overflow-y-auto overscroll-contain px-8 py-8">
             <FilterContent />
           </div>
           <div className="border-t border-stone-200/50 px-8 py-6 bg-white/40 backdrop-blur-md">
