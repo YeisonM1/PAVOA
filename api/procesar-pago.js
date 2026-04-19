@@ -73,7 +73,14 @@ export default async function handler(req, res) {
       },
     });
 
-    console.log(`✅ Preferencia MP creada: ${preference.id} | draft: ${draftOrderId}`);
+    const itemsLog = cartItems.map(item => ({
+      nombre:          item.producto.nombre,
+      precioNumerico:  item.producto.precioNumerico,
+      precio:          item.producto.precio,
+      unit_price_enviado: parsePrecio(item.producto.precioNumerico, item.producto.precio),
+    }));
+    console.log('📦 Items enviados a MP:', JSON.stringify(itemsLog));
+    console.log(`✅ Preferencia MP creada: ${preference.id} | init_point: ${preference.init_point} | draft: ${draftOrderId}`);
 
     return res.status(200).json({ ok: true, init_point: preference.init_point });
 
