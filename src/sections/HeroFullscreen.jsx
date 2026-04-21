@@ -74,6 +74,12 @@ export default function HeroFullscreen() {
       {/* Hero — 90% desktop, 100% mobile */}
       <div className="w-full md:w-[90%] h-full relative overflow-hidden flex-shrink-0">
 
+      {/* Degradado que suaviza el borde con la franja — solo desktop */}
+      <div
+        className="hidden md:block absolute left-0 top-0 w-20 h-full z-30 pointer-events-none"
+        style={{ background: 'linear-gradient(to right, #F2E4E1 0%, transparent 100%)' }}
+      />
+
       {slides.map((slide, index) => (
         <div
           key={slide.id}
