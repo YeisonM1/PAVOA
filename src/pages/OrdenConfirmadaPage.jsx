@@ -4,6 +4,7 @@ import { CartContext } from '../App';
 import SEO from '../components/SEO';
 import { thumbImage } from '../utils/imageUrl';
 import { trackPurchase } from '../lib/analytics';
+import { getCliente } from '../services/authService';
 
 export default function OrdenConfirmadaPage() {
   const { state } = useLocation();
@@ -64,7 +65,8 @@ export default function OrdenConfirmadaPage() {
   }
 
   const isPending  = statusParam === 'pending';
-  const firstName  = nombre?.split(' ')[0] || 'Cliente';
+  const cliente    = getCliente();
+  const firstName  = nombre?.split(' ')[0] || cliente?.firstName || 'Cliente';
 
   return (
     <div className="min-h-screen bg-white pt-[88px] md:pt-[104px]">
@@ -99,7 +101,7 @@ export default function OrdenConfirmadaPage() {
           <p className="text-[13px] text-stone-500 leading-relaxed tracking-[0.05em]">
             {isPending
               ? 'Tu pago está siendo procesado. Recibirás confirmación por correo cuando sea aprobado.'
-              : 'Tu pedido fue confirmado. Pronto nos pondremos en contacto para coordinar la entrega.'}
+              : 'Tu pedido fue confirmado. En breve recibirás un correo con los detalles.'}
           </p>
         </div>
 
@@ -167,7 +169,6 @@ export default function OrdenConfirmadaPage() {
               'Una vez confirmado, coordinaremos la entrega contigo.',
             ] : [
               'Recibirás un correo de confirmación con los detalles.',
-              'Nos pondremos en contacto por WhatsApp para coordinar la entrega.',
               'Tu pedido será preparado y enviado según el horario acordado.',
             ]).map((paso, i) => (
               <li key={i} className="flex items-start gap-3">
