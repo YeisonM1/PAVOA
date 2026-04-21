@@ -10,7 +10,21 @@ const supabase = createClient(
   process.env.VITE_SUPABASE_ANON_KEY
 );
 
-const APP_URL = process.env.VITE_APP_URL || 'https://pavoa.vercel.app';
+const APP_URL      = process.env.VITE_APP_URL || 'https://pavoa.vercel.app';
+const SHOPIFY_DOMAIN = process.env.SHOPIFY_DOMAIN;
+
+let _tokenCache = { token: null, expiresAt: 0 };
+const getShopifyToken = async () => {
+  const now = Date.now();
+  if (_tokenCache.token && _tokenCache.expiresAt - now > 120_000) return _tokenCache.token;
+  const res = await fetch(
+    `https://${SHOPIFY_DOMAIN}/admin/oauth/access_token?grant_type=client_credentials&client_id=${process.env.SHOPIFY_CLIENT_ID}&client_secret=${process.env.SHOPIFY_CLIENT_SECRET}`,
+    { method: 'POST' }
+  );
+  const data = await res.json();
+  _tokenCache = { token: data.access_token, expiresAt: now + (data.expires_in ?? 3600) * 1000 };
+  return _tokenCache.token;
+};
 
 const parsePrecio = (precioNumerico, precioStr) => {
   if (typeof precioNumerico === 'number' && precioNumerico > 0) return Math.round(precioNumerico);
@@ -73,6 +87,28 @@ export default async function handler(req, res) {
       }
     } catch (descErr) {
       console.warn('⚠️ No se pudo verificar descuento:', descErr.message);
+    }
+
+    // Aplicar descuento en el draft order de Shopify para que quede registrado
+    if (descuentoAplicado) {
+      try {
+        const shopifyToken = await getShopifyToken();
+        await fetch(
+          `https://${SHOPIFY_DOMAIN}/admin/api/2026-04/draft_orders/${draftOrderId}.json`,
+          {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', 'X-Shopify-Access-Token': shopifyToken },
+            body: JSON.stringify({
+              draft_order: {
+                applied_discount: { title: 'Descuento Bienvenida 10%', value: '10.0', value_type: 'percentage' },
+              },
+            }),
+          }
+        );
+        console.log(`🏷️ Descuento aplicado en Shopify draft order: ${draftOrderId}`);
+      } catch (shopifyErr) {
+        console.warn('⚠️ No se pudo aplicar descuento en Shopify:', shopifyErr.message);
+      }
     }
 
     // El flag se guarda en external_reference para que el webhook lo marque

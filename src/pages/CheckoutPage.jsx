@@ -63,6 +63,21 @@ export default function CheckoutPage() {
   const [enviando, setEnviando]       = useState(false);
   const [cargandoPago, setCargandoPago] = useState(false);
   const [errors, setErrors]           = useState({});
+  const [tieneDescuento, setTieneDescuento] = useState(false);
+
+  useEffect(() => {
+    if (!estaAutenticado()) return;
+    const cliente = getCliente();
+    if (!cliente?.email) return;
+    fetch('/api/check-descuento', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: cliente.email }),
+    })
+      .then(r => r.json())
+      .then(d => setTieneDescuento(d.disponible || false))
+      .catch(() => {});
+  }, []);
 
   if (cartCount === 0) {
     return (
@@ -296,15 +311,6 @@ export default function CheckoutPage() {
               <div className="flex-1 h-[1px] bg-stone-100" />
             </div>
 
-            {estaAutenticado() && (
-              <div className="flex items-center gap-2 mb-4 px-4 py-3 border border-stone-100 bg-stone-50">
-                <span style={{ color: '#DFCDB4' }} className="text-[11px]">✦</span>
-                <p className="text-[9px] tracking-[0.15em] text-stone-500 uppercase">
-                  Descuento de bienvenida 10% · Aplicado automáticamente en tu primera compra
-                </p>
-              </div>
-            )}
-
             <button onClick={handlePagarOnline} disabled={enviando || cargandoPago} className={`w-full h-14 text-[10px] font-bold tracking-[0.25em] uppercase transition-all duration-300 flex items-center justify-center gap-3 border border-stone-900 ${cargandoPago ? 'bg-stone-100 text-stone-400 border-stone-200' : 'bg-white text-stone-900 hover:bg-stone-50'}`}>
               {cargandoPago ? 'Preparando pago...' : 'Pagar en línea ahora'}
             </button>
@@ -340,15 +346,29 @@ export default function CheckoutPage() {
               <div className="border-t border-stone-100 pt-6 flex flex-col gap-3">
                 <div className="flex justify-between items-center">
                   <span className="text-[10px] tracking-[0.15em] text-stone-500 uppercase">Subtotal</span>
-                  <span className="text-[13px] text-stone-900">${cartTotal.toLocaleString('es-CO')}</span>
+                  <span className={`text-[13px] ${tieneDescuento ? 'text-stone-400 line-through' : 'text-stone-900'}`}>
+                    ${cartTotal.toLocaleString('es-CO')}
+                  </span>
                 </div>
+                {tieneDescuento && (
+                  <div className="flex justify-between items-center">
+                    <span className="text-[10px] tracking-[0.15em] uppercase flex items-center gap-1.5" style={{ color: '#DFCDB4' }}>
+                      <span>✦</span> Descuento bienvenida −10%
+                    </span>
+                    <span className="text-[13px]" style={{ color: '#DFCDB4' }}>
+                      −${Math.round(cartTotal * 0.1).toLocaleString('es-CO')}
+                    </span>
+                  </div>
+                )}
                 <div className="flex justify-between items-center">
                   <span className="text-[10px] tracking-[0.15em] text-stone-500 uppercase">Envío</span>
                   <span className="text-[11px] text-stone-500 uppercase tracking-[0.1em]">A coordinar</span>
                 </div>
                 <div className="flex justify-between items-center border-t border-stone-100 pt-4 mt-1">
                   <span className="text-[11px] font-bold tracking-[0.2em] text-stone-900 uppercase">Total</span>
-                  <span className="text-[16px] font-bold text-stone-900">${cartTotal.toLocaleString('es-CO')}</span>
+                  <span className="text-[16px] font-bold text-stone-900">
+                    ${(tieneDescuento ? Math.round(cartTotal * 0.9) : cartTotal).toLocaleString('es-CO')}
+                  </span>
                 </div>
               </div>
             </div>

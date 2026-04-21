@@ -99,13 +99,14 @@ const completarDraftOrder = async (draftOrderId) => {
   return { ...data, _emailCliente: emailCliente };
 };
 
-const enviarEmailConfirmacion = async (order, paymentId) => {
+const enviarEmailConfirmacion = async (order, paymentId, totalReal, descuentoAplicado = false) => {
   const email     = order.email;
   if (!email) return;
 
   const firstName = order.shipping_address?.first_name || order.customer?.first_name || 'Cliente';
   const orderName = order.name || `#${order.order_number}`;
-  const total     = Number(order.total_price).toLocaleString('es-CO');
+  const total     = Number(totalReal || order.total_price).toLocaleString('es-CO');
+  const totalOriginal = descuentoAplicado ? Math.round(Number(totalReal || order.total_price) / 0.9).toLocaleString('es-CO') : null;
 
   const lineItemsHTML = (order.line_items || []).map(item => `
     <tr>
@@ -190,6 +191,24 @@ const enviarEmailConfirmacion = async (order, paymentId) => {
               <p style="font-size:10px;letter-spacing:0.3em;color:#0B0B0B;text-transform:uppercase;margin:0 0 16px 0;font-weight:700;">Detalle del pedido</p>
               <table width="100%" cellpadding="0" cellspacing="0">
                 ${lineItemsHTML}
+                <!-- DESCUENTO -->
+                ${descuentoAplicado ? `
+                <tr>
+                  <td colspan="2" style="padding-top:12px;">
+                    <p style="font-size:10px;letter-spacing:0.2em;color:#9ca3af;text-transform:uppercase;margin:0;">Subtotal</p>
+                  </td>
+                  <td style="padding-top:12px;text-align:right;">
+                    <p style="font-size:13px;color:#9ca3af;margin:0;text-decoration:line-through;">$${totalOriginal}</p>
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="2" style="padding-top:6px;">
+                    <p style="font-size:10px;letter-spacing:0.2em;color:#DFCDB4;text-transform:uppercase;margin:0;">✦ Descuento bienvenida (−10%)</p>
+                  </td>
+                  <td style="padding-top:6px;text-align:right;">
+                    <p style="font-size:13px;color:#DFCDB4;margin:0;">−$${Math.round(Number(totalReal) / 0.9 * 0.1).toLocaleString('es-CO')}</p>
+                  </td>
+                </tr>` : ''}
                 <!-- TOTAL -->
                 <tr>
                   <td colspan="2" style="padding-top:16px;">
@@ -303,14 +322,20 @@ export default async function handler(req, res) {
         const itemsFinales = order?.line_items
           ? order.line_items.map(i => ({ nombre: i.title, cantidad: i.quantity, precio: i.price }))
           : itemsMP;
+        const esDescuento    = descuentoRef === '1';
+        const totalPagado    = pagoInfo.transaction_amount || totalMP;
+        const totalOriginalV = esDescuento ? Math.round(totalPagado / 0.9) : totalPagado;
+
         const { error: sbError } = await supabase.from('pedidos').insert({
-          email:              emailCliente.toLowerCase(),
-          payment_id:         String(pagoInfo.id),
-          shopify_order_name: order?.name || `MP-${pagoInfo.id}`,
-          shopify_order_id:   String(order?.id || ''),
-          total:              order ? Number(order.total_price || 0) : totalMP,
-          status:             'approved',
-          nombre:             order
+          email:               emailCliente.toLowerCase(),
+          payment_id:          String(pagoInfo.id),
+          shopify_order_name:  order?.name || `MP-${pagoInfo.id}`,
+          shopify_order_id:    String(order?.id || ''),
+          total:               totalPagado,
+          total_original:      totalOriginalV,
+          descuento_aplicado:  esDescuento,
+          status:              'approved',
+          nombre:              order
             ? `${order.shipping_address?.first_name || ''} ${order.shipping_address?.last_name || ''}`.trim()
             : primerNombre,
           items: itemsFinales,
@@ -336,7 +361,7 @@ export default async function handler(req, res) {
           : {
               email:            emailCliente,
               name:             `MP-${pagoInfo.id}`,
-              total_price:      totalMP,
+              total_price:      totalPagado,
               line_items:       (pagoInfo.additional_info?.items || []).map(i => ({
                 title:         i.title,
                 quantity:      i.quantity,
@@ -346,7 +371,7 @@ export default async function handler(req, res) {
               shipping_address: null,
               customer:         { first_name: primerNombre },
             };
-        await enviarEmailConfirmacion(orderParaEmail, pagoInfo.id);
+        await enviarEmailConfirmacion(orderParaEmail, pagoInfo.id, totalPagado, esDescuento);
       } catch (emailErr) {
         console.error('⚠️ Email no enviado:', emailErr.message);
       }

@@ -81,6 +81,8 @@ export const getPedidos = async () => {
     financialStatus:   'PAID',
     fulfillmentStatus: 'UNFULFILLED',
     totalPrice:        { amount: p.total, currencyCode: 'COP' },
+    totalOriginal:     p.total_original || 0,
+    descuentoAplicado: p.descuento_aplicado || false,
     lineItems: {
       edges: (p.items || []).map(item => ({
         node: { title: item.nombre, quantity: item.cantidad, variant: null },

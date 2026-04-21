@@ -170,9 +170,24 @@ export default function AccountPage() {
                     </div>
 
                     <div className="flex items-center justify-between border-t border-stone-100 pt-4">
-                      <p style={{ letterSpacing: '0.15em' }} className="text-[10px] font-bold text-stone-900 uppercase">
-                        Total: {formatPrecio(pedido.totalPrice.amount, pedido.totalPrice.currencyCode)}
-                      </p>
+                      <div className="flex flex-col gap-1">
+                        {pedido.descuentoAplicado && (
+                          <div className="flex items-center gap-2">
+                            <span style={{ color: '#DFCDB4' }} className="text-[9px]">✦</span>
+                            <span style={{ letterSpacing: '0.15em', color: '#DFCDB4' }} className="text-[9px] uppercase">
+                              Descuento bienvenida −10%
+                            </span>
+                            {pedido.totalOriginal > 0 && (
+                              <span className="text-[9px] text-stone-300 line-through">
+                                ${Number(pedido.totalOriginal).toLocaleString('es-CO')}
+                              </span>
+                            )}
+                          </div>
+                        )}
+                        <p style={{ letterSpacing: '0.15em' }} className="text-[10px] font-bold text-stone-900 uppercase">
+                          Total pagado: {formatPrecio(pedido.totalPrice.amount, pedido.totalPrice.currencyCode)}
+                        </p>
+                      </div>
                     </div>
                   </div>
                 );
