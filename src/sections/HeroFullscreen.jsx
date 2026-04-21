@@ -170,7 +170,7 @@ export default function HeroFullscreen() {
         className="hidden md:flex absolute left-0 top-0 h-full z-30 items-center pointer-events-none pl-5"
         style={{ width: '45%', background: 'linear-gradient(to right, #F2E4E1 0%, #F2E4E1CC 30%, #F2E4E180 55%, #F2E4E120 80%, transparent 100%)' }}
       >
-        <img src={logoNegro} alt="PAVOA" className="max-w-[105px] w-[8vw] object-contain" />
+        <img src={logoNegro} alt="PAVOA" className="max-w-[88px] w-[6.5vw] object-contain" />
       </div>
 
       </div>{/* fin hero */}
