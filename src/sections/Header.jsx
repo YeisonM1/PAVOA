@@ -73,6 +73,11 @@ const Header = () => {
   const usuario = getCliente();
 
   useEffect(() => {
+    const urls = [defaultImage, ...Object.values(categoryImages)];
+    urls.forEach(url => { const img = new Image(); img.src = url; });
+  }, []);
+
+  useEffect(() => {
     let ticking = false;
     const onScroll = () => {
       if (!ticking) {
@@ -300,9 +305,14 @@ const Header = () => {
           position: 'fixed', left: 0, right: 0, top: isScrolled ? HEADER_H_SCROLLED : HEADER_H_DEFAULT, zIndex: 49,
           background: 'var(--color-bg)',
           borderTop: '1px solid var(--color-gold)', borderBottom: '1px solid var(--color-border)',
-          overflow: 'hidden', maxHeight: catalogoOpen ? '650px' : '0px', opacity: catalogoOpen ? 1 : 0,
-          transition: 'max-height 0.45s cubic-bezier(0.4,0,0.2,1), opacity 0.3s ease, top 0.5s ease',
-          pointerEvents: catalogoOpen ? 'auto' : 'none', boxShadow: catalogoOpen ? '0 8px 40px rgba(11,11,11,0.08)' : 'none',
+          overflow: 'hidden',
+          opacity: catalogoOpen ? 1 : 0,
+          transform: catalogoOpen ? 'translateY(0)' : 'translateY(-12px)',
+          visibility: catalogoOpen ? 'visible' : 'hidden',
+          transition: 'opacity 0.3s ease, transform 0.35s cubic-bezier(0.4,0,0.2,1), top 0.5s ease',
+          pointerEvents: catalogoOpen ? 'auto' : 'none',
+          boxShadow: catalogoOpen ? '0 8px 40px rgba(11,11,11,0.08)' : 'none',
+          willChange: 'opacity, transform',
         }}
       >
         <div style={{ maxWidth: 1280, margin: '0 auto', padding: '44px 64px', display: 'grid', gridTemplateColumns: '1fr 1px 1fr 1px 1.2fr', alignItems: 'start' }}>
