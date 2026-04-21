@@ -305,6 +305,10 @@ export default async function handler(req, res) {
       }));
       const totalMP    = pagoInfo.transaction_amount || 0;
 
+      const esDescuento    = descuentoRef === '1';
+      const totalPagado    = pagoInfo.transaction_amount || totalMP;
+      const totalOriginalV = esDescuento ? Math.round(totalPagado / 0.9) : totalPagado;
+
       // Intentar completar la orden en Shopify (no bloquea si falla)
       let order        = null;
       let emailCliente = emailMP;
@@ -322,10 +326,6 @@ export default async function handler(req, res) {
         const itemsFinales = order?.line_items
           ? order.line_items.map(i => ({ nombre: i.title, cantidad: i.quantity, precio: i.price }))
           : itemsMP;
-        const esDescuento    = descuentoRef === '1';
-        const totalPagado    = pagoInfo.transaction_amount || totalMP;
-        const totalOriginalV = esDescuento ? Math.round(totalPagado / 0.9) : totalPagado;
-
         const { error: sbError } = await supabase.from('pedidos').insert({
           email:               emailCliente.toLowerCase(),
           payment_id:          String(pagoInfo.id),
