@@ -259,37 +259,69 @@ export default async function handler(req, res) {
     console.log(`📩 Webhook | pago: ${data.id} | estado: ${pagoInfo.status} | draft: ${draftOrderId}`);
 
     if (pagoInfo.status === 'approved') {
-      const shopifyResponse = await completarDraftOrder(draftOrderId);
-      const order           = shopifyResponse.draft_order || shopifyResponse.order;
-      const emailCliente    = shopifyResponse._emailCliente;
-      console.log(`✅ Orden completada en Shopify: ${draftOrderId}`);
+      // Email e items de respaldo desde los datos de MercadoPago
+      const emailMP    = pagoInfo.payer?.email || null;
+      const primerNombre = pagoInfo.payer?.first_name || 'Cliente';
+      const itemsMP    = (pagoInfo.additional_info?.items || []).map(i => ({
+        nombre:   i.title,
+        cantidad: Number(i.quantity),
+        precio:   i.unit_price,
+      }));
+      const totalMP    = pagoInfo.transaction_amount || 0;
 
-      // Guardar pedido en Supabase para "Mis Pedidos"
+      // Intentar completar la orden en Shopify (no bloquea si falla)
+      let order        = null;
+      let emailCliente = emailMP;
+      try {
+        const shopifyResponse = await completarDraftOrder(draftOrderId);
+        order        = shopifyResponse.draft_order || shopifyResponse.order;
+        emailCliente = shopifyResponse._emailCliente || emailMP;
+        console.log(`✅ Orden completada en Shopify: ${draftOrderId}`);
+      } catch (shopifyErr) {
+        console.error(`⚠️ Shopify falló (no bloquea): ${shopifyErr.message}`);
+      }
+
+      // Guardar pedido en Supabase — siempre, con lo que haya
       if (emailCliente) {
+        const itemsFinales = order?.line_items
+          ? order.line_items.map(i => ({ nombre: i.title, cantidad: i.quantity, precio: i.price }))
+          : itemsMP;
         const { error: sbError } = await supabase.from('pedidos').insert({
-          email:               emailCliente.toLowerCase(),
-          payment_id:          String(pagoInfo.id),
-          shopify_order_name:  order?.name,
-          shopify_order_id:    String(order?.id || ''),
-          total:               Number(order?.total_price || 0),
-          status:              'approved',
-          nombre:              `${order?.shipping_address?.first_name || ''} ${order?.shipping_address?.last_name || ''}`.trim(),
-          items:               (order?.line_items || []).map(item => ({
-            nombre:   item.title,
-            cantidad: item.quantity,
-            precio:   item.price,
-          })),
+          email:              emailCliente.toLowerCase(),
+          payment_id:         String(pagoInfo.id),
+          shopify_order_name: order?.name || `MP-${pagoInfo.id}`,
+          shopify_order_id:   String(order?.id || ''),
+          total:              order ? Number(order.total_price || 0) : totalMP,
+          status:             'approved',
+          nombre:             order
+            ? `${order.shipping_address?.first_name || ''} ${order.shipping_address?.last_name || ''}`.trim()
+            : primerNombre,
+          items: itemsFinales,
         });
         if (sbError) console.error('⚠️ Error guardando pedido en Supabase:', sbError.message);
         else console.log(`💾 Pedido guardado en Supabase para: ${emailCliente}`);
       }
 
-      // Enviar nuestro email de confirmación con Resend
+      // Enviar email — siempre, con lo que haya
       try {
-        const orderConEmail = { ...order, email: emailCliente || order?.email };
-        await enviarEmailConfirmacion(orderConEmail, pagoInfo.id);
+        const orderParaEmail = order
+          ? { ...order, email: emailCliente || order.email }
+          : {
+              email:            emailCliente,
+              name:             `MP-${pagoInfo.id}`,
+              total_price:      totalMP,
+              line_items:       (pagoInfo.additional_info?.items || []).map(i => ({
+                title:         i.title,
+                quantity:      i.quantity,
+                price:         i.unit_price,
+                variant_title: null,
+              })),
+              shipping_address: null,
+              customer:         { first_name: primerNombre },
+            };
+        await enviarEmailConfirmacion(orderParaEmail, pagoInfo.id);
       } catch (emailErr) {
-        console.error('⚠️ Email no enviado (no bloquea el flujo):', emailErr.message);
+        console.error('⚠️ Email no enviado:', emailErr.message);
       }
 
     } else if (pagoInfo.status === 'rejected' || pagoInfo.status === 'cancelled') {
