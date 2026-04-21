@@ -61,24 +61,10 @@ export default function HeroFullscreen() {
   const s = slides[current];
 
   return (
-    <section className="relative w-full h-[100dvh] overflow-hidden bg-black flex" role="region" aria-roledescription="carrusel" aria-label="Banner principal">
+    <section className="relative w-full h-[100dvh] overflow-hidden bg-black" role="region" aria-roledescription="carrusel" aria-label="Banner principal">
 
-      {/* Franja izquierda — solo desktop */}
-      <div
-        className="hidden md:flex md:w-[10%] h-full flex-shrink-0 flex-col items-center justify-center z-30"
-        style={{ background: '#F2E4E1' }}
-      >
-        <img src={logoNegro} alt="PAVOA" className="w-[72%] max-w-[110px] object-contain" />
-      </div>
-
-      {/* Hero — 90% desktop, 100% mobile */}
-      <div className="w-full md:w-[90%] h-full relative overflow-hidden flex-shrink-0">
-
-      {/* Degradado que suaviza el borde con la franja — solo desktop */}
-      <div
-        className="hidden md:block absolute left-0 top-0 w-48 h-full z-30 pointer-events-none"
-        style={{ background: 'linear-gradient(to right, #F2E4E1 0%, transparent 100%)' }}
-      />
+      {/* Hero — ancho completo */}
+      <div className="w-full h-full relative overflow-hidden">
 
       {slides.map((slide, index) => (
         <div
@@ -118,7 +104,7 @@ export default function HeroFullscreen() {
         <img src={logoNegro} alt="PAVOA" className="h-14 w-auto object-contain" />
       </div>
 
-      <div className="absolute inset-0 z-20 flex flex-col justify-end pb-16 md:pb-20 lg:pb-24 px-8 sm:px-12 md:px-8 lg:px-12">
+      <div className="absolute inset-0 z-20 flex flex-col justify-end pb-16 md:pb-20 lg:pb-24 px-8 sm:px-12 md:pl-[14%] md:pr-16 lg:pl-[16%] lg:pr-24">
         <div
           key={s.id + '-text'}
           className={`transition-all duration-700 ease-[cubic-bezier(0.25,1,0.5,1)] ${
@@ -176,7 +162,17 @@ export default function HeroFullscreen() {
         </div>
       </div>
 
-      </div>{/* fin hero 90% */}
+      {/* Logo overlay con degradado integrado — desktop only, sin borde físico */}
+      <div
+        className="hidden md:flex absolute left-0 top-0 h-full z-30 items-center pointer-events-none"
+        style={{ width: '18%', background: 'linear-gradient(to right, #F2E4E1 50%, transparent 100%)' }}
+      >
+        <div className="flex items-center justify-center w-[60%] h-full">
+          <img src={logoNegro} alt="PAVOA" className="w-[85%] max-w-[105px] object-contain" />
+        </div>
+      </div>
+
+      </div>{/* fin hero */}
     </section>
   );
 }
