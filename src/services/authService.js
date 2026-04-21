@@ -74,12 +74,18 @@ export const getPedidos = async () => {
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || 'Error al obtener pedidos');
 
+  const mapFulfillment = (s) => {
+    if (s === 'fulfilled')  return 'FULFILLED';
+    if (s === 'partial')    return 'UNFULFILLED';
+    return 'UNFULFILLED';
+  };
+
   return (data.pedidos || []).map(p => ({
     id:                p.id,
     name:              p.shopify_order_name || `#${p.id.slice(0, 6).toUpperCase()}`,
     processedAt:       p.created_at,
     financialStatus:   'PAID',
-    fulfillmentStatus: 'UNFULFILLED',
+    fulfillmentStatus: mapFulfillment(p.fulfillment_status),
     totalPrice:        { amount: p.total, currencyCode: 'COP' },
     totalOriginal:     p.total_original || 0,
     descuentoAplicado: p.descuento_aplicado || false,

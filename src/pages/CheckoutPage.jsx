@@ -90,6 +90,11 @@ export default function CheckoutPage() {
     );
   }
 
+  // Limpiar sesión de checkout si el carrito cambia
+  React.useEffect(() => {
+    sessionStorage.removeItem('pavoa-checkout-session');
+  }, [cartItems.length]);
+
   const handleChange = (e) => {
     setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
     setErrors(prev => ({ ...prev, [e.target.name]: '' }));
@@ -161,6 +166,16 @@ export default function CheckoutPage() {
       return;
     }
 
+    // Protección doble pago: reutilizar init_point si el carrito no cambió
+    const cartHash = cartItems.map(i => `${i.producto.id}|${i.talla}|${i.cantidad}`).join(',');
+    try {
+      const existing = JSON.parse(sessionStorage.getItem('pavoa-checkout-session') || 'null');
+      if (existing && existing.cartHash === cartHash && Date.now() - existing.ts < 30 * 60 * 1000) {
+        window.location.href = existing.initPoint;
+        return;
+      }
+    } catch {}
+
     setCargandoPago(true);
 
     try {
@@ -198,7 +213,7 @@ export default function CheckoutPage() {
         return;
       }
 
-      // Paso 4 — Guardar datos del pedido en sessionStorage para mostrar al volver
+      // Paso 4 — Guardar datos del pedido y sesión de checkout en sessionStorage
       sessionStorage.setItem('pavoa-pending-order', JSON.stringify({
         items: cartItems.map(item => ({
           nombre:   item.producto.nombre,
@@ -211,6 +226,12 @@ export default function CheckoutPage() {
         total:  cartTotal,
         email:  form.email,
         nombre: form.nombre,
+      }));
+      sessionStorage.setItem('pavoa-checkout-session', JSON.stringify({
+        initPoint:    dataPref.init_point,
+        draftOrderId: dataPedido.draftOrderId,
+        cartHash,
+        ts:           Date.now(),
       }));
 
       // Paso 5 — Redirigir a MercadoPago
@@ -311,8 +332,10 @@ export default function CheckoutPage() {
               <div className="flex-1 h-[1px] bg-stone-100" />
             </div>
 
-            <button onClick={handlePagarOnline} disabled={enviando || cargandoPago} className={`w-full h-14 text-[10px] font-bold tracking-[0.25em] uppercase transition-all duration-300 flex items-center justify-center gap-3 border border-stone-900 ${cargandoPago ? 'bg-stone-100 text-stone-400 border-stone-200' : 'bg-white text-stone-900 hover:bg-stone-50'}`}>
-              {cargandoPago ? 'Preparando pago...' : 'Pagar en línea ahora'}
+            <button onClick={handlePagarOnline} disabled={enviando || cargandoPago} className={`w-full h-14 text-[10px] font-bold tracking-[0.25em] uppercase transition-all duration-300 flex items-center justify-center gap-3 border border-stone-900 ${cargandoPago ? 'bg-stone-100 text-stone-400 border-stone-200 cursor-not-allowed' : 'bg-white text-stone-900 hover:bg-stone-50'}`}>
+              {cargandoPago
+                ? <><span className="w-3.5 h-3.5 border-2 border-stone-300 border-t-stone-500 rounded-full animate-spin" />Redirigiendo a MercadoPago...</>
+                : 'Pagar en línea ahora'}
             </button>
 
             {errors.general && (

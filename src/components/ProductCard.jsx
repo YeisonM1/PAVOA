@@ -20,6 +20,8 @@ function ProductCard({ producto }) {
   const tallas = [...new Set(variantes.map(v => v.talla))];
   const esTallaUnica = tallas.length === 1 && tallas[0] === 'ÚNICA';
   const tieneTallas  = tallas.length > 0;
+  const totalStock   = variantes.reduce((sum, v) => sum + (v.stock ?? 0), 0);
+  const pocasUnidades = totalStock > 0 && totalStock <= 3;
   // ────────────────────────────────────────────────────────
 
   return (
@@ -33,6 +35,11 @@ function ProductCard({ producto }) {
         {producto.tag && (
           <span className="absolute top-4 left-4 z-30 text-[8px] font-bold text-white bg-stone-900 px-3 py-1.5 uppercase tracking-[0.15em]">
             {producto.tag}
+          </span>
+        )}
+        {pocasUnidades && (
+          <span className="absolute top-4 right-4 z-30 text-[8px] font-bold text-white bg-amber-700 px-3 py-1.5 uppercase tracking-[0.15em]">
+            Últimas {totalStock}
           </span>
         )}
 
