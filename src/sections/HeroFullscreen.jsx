@@ -96,11 +96,11 @@ export default function HeroFullscreen() {
         Slide {current + 1} de {slides.length}
       </span>
 
-      <div className="absolute inset-0 z-10 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none" />
-      <div className="absolute inset-0 z-10 bg-black/10 pointer-events-none" />
+      <div className="absolute inset-0 z-10 bg-gradient-to-t from-black/90 via-black/40 to-transparent pointer-events-none" />
+      <div className="absolute inset-0 z-10 bg-black/20 pointer-events-none" />
 
-      {/* Logo mobile — solo visible en móvil (desktop va en la franja) */}
-      <div className="md:hidden absolute top-[160px] left-4 z-20 pointer-events-none">
+      {/* Logo mobile */}
+      <div className="md:hidden absolute top-[120px] left-4 z-20 pointer-events-none">
         <img src={logoNegro} alt="PAVOA" className="h-14 w-auto object-contain" />
       </div>
 
@@ -115,7 +115,10 @@ export default function HeroFullscreen() {
             {s.tag}
           </p>
 
-          <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-[5.5rem] font-light text-white leading-[1.05] uppercase tracking-wide mb-6 drop-shadow-lg">
+          <h1
+            style={{ textShadow: '0 2px 20px rgba(0,0,0,0.4)' }}
+            className="text-5xl sm:text-6xl md:text-7xl lg:text-[5.5rem] font-light text-white leading-[1.05] uppercase tracking-wide mb-6"
+          >
             {s.headline.map((line, i) => (
               <span key={i} className="block">
                 {i === s.headline.length - 1
@@ -125,7 +128,7 @@ export default function HeroFullscreen() {
             ))}
           </h1>
 
-          <p style={{ letterSpacing: '0.15em' }} className="text-white/80 text-[10px] sm:text-[11px] font-medium uppercase leading-relaxed max-w-md mb-10 drop-shadow-md">
+          <p style={{ letterSpacing: '0.15em' }} className="text-white/95 text-[10px] sm:text-[11px] font-medium uppercase leading-relaxed max-w-md mb-10 drop-shadow-md">
             {s.sub}
           </p>
 
@@ -165,7 +168,7 @@ export default function HeroFullscreen() {
       {/* Logo overlay con degradado integrado — desktop only, sin borde físico */}
       <div
         className="hidden md:flex absolute left-0 top-0 h-full z-30 items-center pointer-events-none pl-5"
-        style={{ width: '38%', background: 'linear-gradient(to right, #F2E4E1 25%, transparent 100%)' }}
+        style={{ width: '45%', background: 'linear-gradient(to right, #F2E4E1 0%, #F2E4E1CC 30%, #F2E4E180 55%, #F2E4E120 80%, transparent 100%)' }}
       >
         <img src={logoNegro} alt="PAVOA" className="max-w-[105px] w-[8vw] object-contain" />
       </div>
