@@ -165,7 +165,7 @@ export default function HeroFullscreen() {
       {/* Logo overlay con degradado integrado — desktop only, sin borde físico */}
       <div
         className="hidden md:flex absolute left-0 top-0 h-full z-30 items-center pointer-events-none"
-        style={{ width: '18%', background: 'linear-gradient(to right, #F2E4E1 50%, transparent 100%)' }}
+        style={{ width: '38%', background: 'linear-gradient(to right, #F2E4E1 25%, transparent 100%)' }}
       >
         <div className="flex items-center justify-center w-[60%] h-full">
           <img src={logoNegro} alt="PAVOA" className="w-[85%] max-w-[105px] object-contain" />
