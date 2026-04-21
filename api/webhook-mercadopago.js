@@ -10,10 +10,26 @@ const APP_URL       = process.env.VITE_APP_URL || 'https://pavoa.vercel.app';
 const LOGO_URL      = `${APP_URL}/logo-pavoa.png`;
 const supabase      = createClient(process.env.VITE_SUPABASE_URL, process.env.VITE_SUPABASE_ANON_KEY);
 
-const getShopifyToken = () => {
-  const token = process.env.SHOPIFY_ADMIN_TOKEN;
-  if (!token) throw new Error('SHOPIFY_ADMIN_TOKEN no configurado');
-  return token;
+let _tokenCache = { token: null, expiresAt: 0 };
+
+const getShopifyToken = async () => {
+  const now = Date.now();
+  if (_tokenCache.token && _tokenCache.expiresAt - now > 120_000) {
+    return _tokenCache.token;
+  }
+  const clientId     = process.env.SHOPIFY_CLIENT_ID;
+  const clientSecret = process.env.SHOPIFY_CLIENT_SECRET;
+  if (!clientId || !clientSecret) throw new Error('SHOPIFY_CLIENT_ID o SHOPIFY_CLIENT_SECRET no configurados');
+
+  const res = await fetch(
+    `https://${SHOPIFY_DOMAIN}/admin/oauth/access_token?grant_type=client_credentials&client_id=${clientId}&client_secret=${clientSecret}`,
+    { method: 'POST' }
+  );
+  if (!res.ok) throw new Error(`Error obteniendo token Shopify: ${await res.text()}`);
+
+  const data = await res.json();
+  _tokenCache = { token: data.access_token, expiresAt: now + (data.expires_in ?? 3600) * 1000 };
+  return _tokenCache.token;
 };
 
 const validarFirma = (req) => {
@@ -38,11 +54,12 @@ const validarFirma = (req) => {
 
 const eliminarDraftOrder = async (draftOrderId) => {
   try {
+    const token = await getShopifyToken();
     await fetch(
       `https://${SHOPIFY_DOMAIN}/admin/api/2026-04/draft_orders/${draftOrderId}.json`,
       {
         method: 'DELETE',
-        headers: { 'X-Shopify-Access-Token': getShopifyToken() },
+        headers: { 'X-Shopify-Access-Token': token },
       }
     );
     console.log(`🗑️ Draft order eliminado: ${draftOrderId}`);
@@ -52,7 +69,7 @@ const eliminarDraftOrder = async (draftOrderId) => {
 };
 
 const completarDraftOrder = async (draftOrderId) => {
-  const token = getShopifyToken();
+  const token = await getShopifyToken();
   const base  = `https://${SHOPIFY_DOMAIN}/admin/api/2026-04`;
 
   // 1. Leer el email desde note_attributes (nunca está en el campo email
