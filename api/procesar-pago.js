@@ -53,13 +53,12 @@ export default async function handler(req, res) {
       currency_id: 'COP',
     }));
 
-    // Verificar descuento de bienvenida (primera compra)
+    // Verificar descuento de bienvenida — solo aplica al precio, NO marca en Supabase todavía
     let descuentoAplicado = false;
-    let usuarioId = null;
     try {
       const { data: usuario } = await supabase
         .from('usuarios')
-        .select('id, descuento_bienvenida_usado')
+        .select('descuento_bienvenida_usado')
         .eq('email', form.email.toLowerCase())
         .eq('email_verified', true)
         .single();
@@ -70,12 +69,15 @@ export default async function handler(req, res) {
           unit_price: Math.round(item.unit_price * 0.9),
         }));
         descuentoAplicado = true;
-        usuarioId = usuario.id;
         console.log(`🎁 Descuento bienvenida 10% aplicado a: ${form.email}`);
       }
     } catch (descErr) {
       console.warn('⚠️ No se pudo verificar descuento:', descErr.message);
     }
+
+    // El flag se guarda en external_reference para que el webhook lo marque
+    // solo cuando el pago sea confirmado (approved)
+    const externalRef = `${draftOrderId}|${form.email.toLowerCase()}|${descuentoAplicado ? '1' : '0'}`;
 
     const preference = await preferenceClient.create({
       body: {
@@ -87,21 +89,13 @@ export default async function handler(req, res) {
           pending: `${APP_URL}/orden-confirmada`,
         },
         auto_return:          'approved',
-        external_reference:   `${draftOrderId}|${form.email.toLowerCase()}`,
+        external_reference:   externalRef,
         notification_url:     `${APP_URL}/api/webhook-mercadopago`,
         statement_descriptor: 'PAVOA',
       },
     });
 
-    console.log(`✅ Preferencia MP creada: ${preference.id} | draft: ${draftOrderId}`);
-
-    // Marcar descuento como usado (solo si se aplicó)
-    if (descuentoAplicado && usuarioId) {
-      await supabase
-        .from('usuarios')
-        .update({ descuento_bienvenida_usado: true })
-        .eq('id', usuarioId);
-    }
+    console.log(`✅ Preferencia MP creada: ${preference.id} | draft: ${draftOrderId} | descuento: ${descuentoAplicado}`);
 
     return res.status(200).json({ ok: true, init_point: preference.init_point, descuento_aplicado: descuentoAplicado });
 

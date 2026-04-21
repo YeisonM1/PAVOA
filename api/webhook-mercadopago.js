@@ -266,7 +266,7 @@ export default async function handler(req, res) {
   try {
     const paymentClient = new mercadopago.Payment(client);
     const pagoInfo      = await paymentClient.get({ id: data.id });
-    const [draftOrderId, emailRef] = (pagoInfo.external_reference || '').split('|');
+    const [draftOrderId, emailRef, descuentoRef] = (pagoInfo.external_reference || '').split('|');
 
     if (!draftOrderId) {
       console.warn('⚠️ Webhook: pago sin external_reference', data.id);
@@ -317,6 +317,16 @@ export default async function handler(req, res) {
         });
         if (sbError) console.error('⚠️ Error guardando pedido en Supabase:', sbError.message);
         else console.log(`💾 Pedido guardado en Supabase para: ${emailCliente}`);
+
+        // Marcar descuento como usado — solo si el pago fue aprobado y se aplicó
+        if (descuentoRef === '1') {
+          const { error: descErr } = await supabase
+            .from('usuarios')
+            .update({ descuento_bienvenida_usado: true })
+            .eq('email', emailCliente.toLowerCase());
+          if (descErr) console.error('⚠️ Error marcando descuento:', descErr.message);
+          else console.log(`🎁 Descuento bienvenida marcado como usado para: ${emailCliente}`);
+        }
       }
 
       // Enviar email — siempre, con lo que haya
