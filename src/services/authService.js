@@ -89,11 +89,16 @@ export const getPedidos = async () => {
     totalPrice:        { amount: p.total, currencyCode: 'COP' },
     totalOriginal:     p.total_original || 0,
     descuentoAplicado: p.descuento_aplicado || false,
-    lineItems: {
-      edges: (p.items || []).map(item => ({
-        node: { title: item.nombre, quantity: item.cantidad, variant: null },
-      })),
-    },
+    paymentId:         p.payment_id || '',
+    nombreCliente:     p.nombre || '',
+    telefono:          p.telefono || '',
+    ciudad:            p.ciudad || '',
+    direccion:         p.direccion || '',
+    items:             (p.items || []).map(item => ({
+      nombre:   item.nombre,
+      cantidad: item.cantidad,
+      precio:   item.precio,
+    })),
   }));
 };
 

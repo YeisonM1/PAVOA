@@ -326,6 +326,7 @@ export default async function handler(req, res) {
         const itemsFinales = order?.line_items
           ? order.line_items.map(i => ({ nombre: i.title, cantidad: i.quantity, precio: i.price }))
           : itemsMP;
+        const addr = order?.shipping_address;
         const { error: sbError } = await supabase.from('pedidos').insert({
           email:               emailCliente.toLowerCase(),
           payment_id:          String(pagoInfo.id),
@@ -335,10 +336,13 @@ export default async function handler(req, res) {
           total_original:      totalOriginalV,
           descuento_aplicado:  esDescuento,
           status:              'approved',
-          nombre:              order
-            ? `${order.shipping_address?.first_name || ''} ${order.shipping_address?.last_name || ''}`.trim()
+          nombre:              addr
+            ? `${addr.first_name || ''} ${addr.last_name || ''}`.trim()
             : primerNombre,
-          items: itemsFinales,
+          telefono:            addr?.phone || order?.phone || '',
+          ciudad:              addr?.city || '',
+          direccion:           addr ? [addr.address1, addr.address2].filter(Boolean).join(', ') : '',
+          items:               itemsFinales,
         });
         if (sbError) console.error('⚠️ Error guardando pedido en Supabase:', sbError.message);
         else console.log(`💾 Pedido guardado en Supabase para: ${emailCliente}`);
