@@ -76,7 +76,7 @@ export default function HeroFullscreen() {
 
       {/* Degradado que suaviza el borde con la franja — solo desktop */}
       <div
-        className="hidden md:block absolute left-0 top-0 w-20 h-full z-30 pointer-events-none"
+        className="hidden md:block absolute left-0 top-0 w-48 h-full z-30 pointer-events-none"
         style={{ background: 'linear-gradient(to right, #F2E4E1 0%, transparent 100%)' }}
       />
 
@@ -118,7 +118,7 @@ export default function HeroFullscreen() {
         <img src={logoNegro} alt="PAVOA" className="h-14 w-auto object-contain" />
       </div>
 
-      <div className="absolute inset-0 z-20 flex flex-col justify-end pb-16 md:pb-20 lg:pb-24 px-8 sm:px-12 md:px-16 lg:px-24">
+      <div className="absolute inset-0 z-20 flex flex-col justify-end pb-16 md:pb-20 lg:pb-24 px-8 sm:px-12 md:px-8 lg:px-12">
         <div
           key={s.id + '-text'}
           className={`transition-all duration-700 ease-[cubic-bezier(0.25,1,0.5,1)] ${
