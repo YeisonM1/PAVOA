@@ -577,7 +577,7 @@ export default function ProductPage() {
               </div>
               <div className="border-b border-stone-200">
                 <button onClick={() => toggleAccordion('cuidados')} className="w-full py-6 flex items-center justify-between text-left">
-                  <span className="text-[10px] font-bold tracking-[0.2em] text-stone-900 uppercase">Composición y Cuidados</span>
+                  <span className="text-[10px] font-bold tracking-[0.2em] text-stone-900 uppercase">Cuidados de la Prenda</span>
                   {openAccordion === 'cuidados' ? <Minus size={14} className="text-stone-500" /> : <Plus size={14} className="text-stone-500" />}
                 </button>
                 <div className={`overflow-hidden transition-all duration-300 ease-in-out ${openAccordion === 'cuidados' ? 'max-h-[600px] pb-6' : 'max-h-0'}`}>

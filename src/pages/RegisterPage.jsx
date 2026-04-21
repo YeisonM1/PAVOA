@@ -6,7 +6,7 @@ import SEO from '../components/SEO';
 
 export default function RegisterPage() {
   const navigate = useNavigate();
-  const [form, setForm]       = useState({ firstName: '', lastName: '', email: '', password: '' });
+  const [form, setForm]       = useState({ firstName: '', lastName: '', email: '', password: '', confirmPassword: '' });
   const [loading, setLoading] = useState(false);
   const [error, setError]     = useState('');
 
@@ -17,6 +17,10 @@ export default function RegisterPage() {
     setError('');
     if (form.password.length < 5) {
       setError('La contraseña debe tener al menos 5 caracteres.');
+      return;
+    }
+    if (form.password !== form.confirmPassword) {
+      setError('Las contraseñas no coinciden.');
       return;
     }
     setLoading(true);
@@ -148,6 +152,22 @@ export default function RegisterPage() {
                 onChange={handleChange}
                 required
                 placeholder="Mínimo 5 caracteres"
+                className="border border-stone-300 bg-white px-4 py-3.5 text-[12px] text-stone-900 placeholder-stone-300 focus:outline-none focus:border-stone-900 transition-colors duration-200"
+                style={{ backgroundColor: 'rgba(255,255,255,0.7)' }}
+              />
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <label style={{ letterSpacing: '0.25em' }} className="text-[9px] font-bold text-stone-500 uppercase">
+                Confirmar contraseña
+              </label>
+              <input
+                type="password"
+                name="confirmPassword"
+                value={form.confirmPassword}
+                onChange={handleChange}
+                required
+                placeholder="Repite tu contraseña"
                 className="border border-stone-300 bg-white px-4 py-3.5 text-[12px] text-stone-900 placeholder-stone-300 focus:outline-none focus:border-stone-900 transition-colors duration-200"
                 style={{ backgroundColor: 'rgba(255,255,255,0.7)' }}
               />

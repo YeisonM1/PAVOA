@@ -61,8 +61,19 @@ export default function HeroFullscreen() {
   const s = slides[current];
 
   return (
-    <section className="relative w-full h-[100dvh] overflow-hidden bg-black" role="region" aria-roledescription="carrusel" aria-label="Banner principal">
-      
+    <section className="relative w-full h-[100dvh] overflow-hidden bg-black flex" role="region" aria-roledescription="carrusel" aria-label="Banner principal">
+
+      {/* Franja izquierda — solo desktop */}
+      <div
+        className="hidden md:flex md:w-[10%] h-full flex-shrink-0 flex-col items-center justify-center z-30"
+        style={{ background: '#F2E4E1' }}
+      >
+        <img src={logoNegro} alt="PAVOA" className="w-[72%] max-w-[110px] object-contain" />
+      </div>
+
+      {/* Hero — 90% desktop, 100% mobile */}
+      <div className="w-full md:w-[90%] h-full relative overflow-hidden flex-shrink-0">
+
       {slides.map((slide, index) => (
         <div
           key={slide.id}
@@ -96,9 +107,9 @@ export default function HeroFullscreen() {
       <div className="absolute inset-0 z-10 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none" />
       <div className="absolute inset-0 z-10 bg-black/10 pointer-events-none" />
 
-      {/* Logo Champan — arriba izquierda, debajo del header */}
-      <div className="absolute top-[160px] left-4 md:top-[168px] md:left-6 z-20 pointer-events-none">
-        <img src={logoNegro} alt="PAVOA" className="h-14 md:h-16 w-auto object-contain" />
+      {/* Logo mobile — solo visible en móvil (desktop va en la franja) */}
+      <div className="md:hidden absolute top-[160px] left-4 z-20 pointer-events-none">
+        <img src={logoNegro} alt="PAVOA" className="h-14 w-auto object-contain" />
       </div>
 
       <div className="absolute inset-0 z-20 flex flex-col justify-end pb-16 md:pb-20 lg:pb-24 px-8 sm:px-12 md:px-16 lg:px-24">
@@ -159,6 +170,7 @@ export default function HeroFullscreen() {
         </div>
       </div>
 
+      </div>{/* fin hero 90% */}
     </section>
   );
 }

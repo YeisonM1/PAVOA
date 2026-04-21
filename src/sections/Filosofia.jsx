@@ -9,7 +9,7 @@ export default function Filosofia() {
 
         {/* Logo Champan — arriba derecha del panel */}
         <div className="absolute top-8 right-8 md:top-10 md:right-10 pointer-events-none">
-          <img src={logoChampan} alt="PAVOA" className="h-12 md:h-14 w-auto object-contain" />
+          <img src={logoChampan} alt="PAVOA" className="h-24 md:h-36 w-auto object-contain" />
         </div>
 
         {/* Tag */}
@@ -23,11 +23,11 @@ export default function Filosofia() {
         {/* Frase principal */}
         <h2
           style={{ fontFamily: 'Montserrat, sans-serif' }}
-          className="text-4xl md:text-5xl lg:text-6xl font-thin text-white leading-tight mb-6"
+          className="text-4xl md:text-5xl lg:text-6xl font-[100] text-white leading-tight mb-6"
         >
           No es ropa.
           <br />
-          <span className="font-light">Es armadura.</span>
+          <span className="font-[100]">Es armadura.</span>
         </h2>
 
         {/* Línea decorativa */}
