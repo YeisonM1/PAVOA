@@ -1,8 +1,14 @@
 import mercadopago from 'mercadopago';
+import { createClient } from '@supabase/supabase-js';
 
 const client = new mercadopago.MercadoPagoConfig({
   accessToken: process.env.MP_ACCESS_TOKEN,
 });
+
+const supabase = createClient(
+  process.env.VITE_SUPABASE_URL,
+  process.env.VITE_SUPABASE_ANON_KEY
+);
 
 const APP_URL = process.env.VITE_APP_URL || 'https://pavoa.vercel.app';
 
@@ -39,13 +45,38 @@ export default async function handler(req, res) {
   try {
     const preferenceClient = new mercadopago.Preference(client);
 
-    const itemsMapped = cartItems.map(item => ({
+    let itemsMapped = cartItems.map(item => ({
       id:          String(item.producto.id),
       title:       item.producto.nombre,
       quantity:    Number(item.cantidad),
       unit_price:  parsePrecio(item.producto.precioNumerico, item.producto.precio),
       currency_id: 'COP',
     }));
+
+    // Verificar descuento de bienvenida (primera compra)
+    let descuentoAplicado = false;
+    let usuarioId = null;
+    try {
+      const { data: usuario } = await supabase
+        .from('usuarios')
+        .select('id, descuento_bienvenida_usado')
+        .eq('email', form.email.toLowerCase())
+        .eq('email_verified', true)
+        .single();
+
+      if (usuario && !usuario.descuento_bienvenida_usado) {
+        itemsMapped = itemsMapped.map(item => ({
+          ...item,
+          unit_price: Math.round(item.unit_price * 0.9),
+        }));
+        descuentoAplicado = true;
+        usuarioId = usuario.id;
+        console.log(`🎁 Descuento bienvenida 10% aplicado a: ${form.email}`);
+      }
+    } catch (descErr) {
+      console.warn('⚠️ No se pudo verificar descuento:', descErr.message);
+    }
+
     const preference = await preferenceClient.create({
       body: {
         items: itemsMapped,
@@ -64,7 +95,15 @@ export default async function handler(req, res) {
 
     console.log(`✅ Preferencia MP creada: ${preference.id} | draft: ${draftOrderId}`);
 
-    return res.status(200).json({ ok: true, init_point: preference.init_point });
+    // Marcar descuento como usado (solo si se aplicó)
+    if (descuentoAplicado && usuarioId) {
+      await supabase
+        .from('usuarios')
+        .update({ descuento_bienvenida_usado: true })
+        .eq('id', usuarioId);
+    }
+
+    return res.status(200).json({ ok: true, init_point: preference.init_point, descuento_aplicado: descuentoAplicado });
 
   } catch (error) {
     console.error('❌ Error creando preferencia MP:', error?.message);

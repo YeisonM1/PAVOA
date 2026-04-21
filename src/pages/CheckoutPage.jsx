@@ -296,6 +296,15 @@ export default function CheckoutPage() {
               <div className="flex-1 h-[1px] bg-stone-100" />
             </div>
 
+            {estaAutenticado() && (
+              <div className="flex items-center gap-2 mb-4 px-4 py-3 border border-stone-100 bg-stone-50">
+                <span style={{ color: '#DFCDB4' }} className="text-[11px]">✦</span>
+                <p className="text-[9px] tracking-[0.15em] text-stone-500 uppercase">
+                  Descuento de bienvenida 10% · Aplicado automáticamente en tu primera compra
+                </p>
+              </div>
+            )}
+
             <button onClick={handlePagarOnline} disabled={enviando || cargandoPago} className={`w-full h-14 text-[10px] font-bold tracking-[0.25em] uppercase transition-all duration-300 flex items-center justify-center gap-3 border border-stone-900 ${cargandoPago ? 'bg-stone-100 text-stone-400 border-stone-200' : 'bg-white text-stone-900 hover:bg-stone-50'}`}>
               {cargandoPago ? 'Preparando pago...' : 'Pagar en línea ahora'}
             </button>
