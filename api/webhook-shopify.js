@@ -1,8 +1,10 @@
 import crypto from 'crypto';
+import { createClient } from '@supabase/supabase-js';
 
 const SHOPIFY_DOMAIN      = process.env.SHOPIFY_DOMAIN;
 const SHOPIFY_ADMIN_TOKEN = process.env.SHOPIFY_ADMIN_TOKEN;
 const SHOPIFY_SECRET      = process.env.SHOPIFY_WEBHOOK_SECRET;
+const supabase            = createClient(process.env.VITE_SUPABASE_URL, process.env.VITE_SUPABASE_ANON_KEY);
 
 const validarFirma = (rawBody, hmacHeader) => {
   if (!SHOPIFY_SECRET || !hmacHeader) return true;
@@ -77,6 +79,25 @@ export default async function handler(req, res) {
   // Firma: Vercel re-parsea el body y rompe el HMAC — procesamos siempre
   validarFirma(rawBody, hmacHeader);
 
+  // ── Fulfillment: actualizar estado en Supabase ──────────
+  if (topic === 'orders/updated' || topic === 'orders/fulfilled') {
+    const order              = req.body;
+    const shopifyOrderId     = String(order.id || '');
+    const fulfillmentStatus  = order.fulfillment_status || 'unfulfilled';
+
+    if (shopifyOrderId) {
+      console.log(`📦 Shopify [${topic}] | order: ${shopifyOrderId} | fulfillment: ${fulfillmentStatus}`);
+      const { error } = await supabase
+        .from('pedidos')
+        .update({ fulfillment_status: fulfillmentStatus })
+        .eq('shopify_order_id', shopifyOrderId);
+      if (error) console.error('⚠️ Error actualizando fulfillment:', error.message);
+      else console.log(`✅ Fulfillment actualizado: ${shopifyOrderId} → ${fulfillmentStatus}`);
+    }
+    return res.status(200).send('OK');
+  }
+
+  // ── Refund: restock de inventario ────────────────────────
   if (topic !== 'refunds/create') {
     return res.status(200).send('OK');
   }
