@@ -249,7 +249,7 @@ export default async function handler(req, res) {
   try {
     const paymentClient = new mercadopago.Payment(client);
     const pagoInfo      = await paymentClient.get({ id: data.id });
-    const draftOrderId  = pagoInfo.external_reference;
+    const [draftOrderId, emailRef] = (pagoInfo.external_reference || '').split('|');
 
     if (!draftOrderId) {
       console.warn('⚠️ Webhook: pago sin external_reference', data.id);
@@ -259,8 +259,8 @@ export default async function handler(req, res) {
     console.log(`📩 Webhook | pago: ${data.id} | estado: ${pagoInfo.status} | draft: ${draftOrderId}`);
 
     if (pagoInfo.status === 'approved') {
-      // Email e items de respaldo desde los datos de MercadoPago
-      const emailMP    = pagoInfo.payer?.email || null;
+      // Email real del cliente (del formulario de PAVOA, no de la cuenta MP)
+      const emailMP    = emailRef || pagoInfo.payer?.email || null;
       const primerNombre = pagoInfo.payer?.first_name || 'Cliente';
       const itemsMP    = (pagoInfo.additional_info?.items || []).map(i => ({
         nombre:   i.title,

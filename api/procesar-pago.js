@@ -87,7 +87,7 @@ export default async function handler(req, res) {
           pending: `${APP_URL}/orden-confirmada`,
         },
         auto_return:          'approved',
-        external_reference:   String(draftOrderId),
+        external_reference:   `${draftOrderId}|${form.email.toLowerCase()}`,
         notification_url:     `${APP_URL}/api/webhook-mercadopago`,
         statement_descriptor: 'PAVOA',
       },
