@@ -1,0 +1,26 @@
+{
+  "name": "PAVOA — Moda Premium de Edición Limitada",
+  "short_name": "PAVOA",
+  "description": "Diseño deportivo de autor. Piezas exclusivas para mujeres que no distinguen entre rendimiento y estética.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#F6F1EA",
+  "theme_color": "#0B0B0B",
+  "lang": "es-CO",
+  "orientation": "portrait-primary",
+  "categories": ["shopping", "lifestyle"],
+  "icons": [
+    {
+      "src": "/logo-pavoa.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/logo-pavoa.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

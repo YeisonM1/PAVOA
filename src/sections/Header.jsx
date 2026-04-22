@@ -72,10 +72,6 @@ const Header = () => {
   const [autenticado, setAutenticado] = useState(estaAutenticado());
   const usuario = getCliente();
 
-  useEffect(() => {
-    const urls = [defaultImage, ...Object.values(categoryImages)];
-    urls.forEach(url => { const img = new Image(); img.src = url; });
-  }, []);
 
   useEffect(() => {
     let ticking = false;

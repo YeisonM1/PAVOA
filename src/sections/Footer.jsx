@@ -103,10 +103,10 @@ export default function Footer() {
         <nav aria-label="Ayuda">
           <p style={{ letterSpacing: '0.2em' }} className="text-[10px] font-semibold text-white mb-6">AYUDA</p>
           <ul className="space-y-3 text-[11px] font-light">
-            <li><a href="#" className="text-stone-400 hover:text-white transition-colors">Envíos y entregas</a></li>
-            <li><a href="#" className="text-stone-400 hover:text-white transition-colors">Cambios y devoluciones</a></li>
-            <li><a href="#" className="text-stone-400 hover:text-white transition-colors">Guía de tallas</a></li>
-            <li><a href="#" className="text-stone-400 hover:text-white transition-colors">Preguntas frecuentes</a></li>
+            <li><Link to="/contacto" className="text-stone-400 hover:text-white transition-colors">Envíos y entregas</Link></li>
+            <li><Link to="/contacto" className="text-stone-400 hover:text-white transition-colors">Cambios y devoluciones</Link></li>
+            <li><Link to="/contacto" className="text-stone-400 hover:text-white transition-colors">Guía de tallas</Link></li>
+            <li><Link to="/contacto" className="text-stone-400 hover:text-white transition-colors">Preguntas frecuentes</Link></li>
           </ul>
         </nav>
 
