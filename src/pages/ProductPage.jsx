@@ -608,10 +608,10 @@ export default function ProductPage() {
                       return (
                         <button
                           key={talla}
-                          onClick={() => { if (!agotado) { setTallaSeleccionada(talla); setAlertSent(false); } }}
-                          disabled={agotado}
+                          onClick={() => { setTallaSeleccionada(talla); setAlertSent(false); }}
                           className={`h-12 border flex items-center justify-center text-[11px] font-medium tracking-[0.05em] transition-colors uppercase relative
-                            ${agotado ? 'border-stone-100 text-stone-300 cursor-not-allowed' :
+                            ${agotado && activo ? 'border-stone-900 bg-stone-900 text-white' :
+                              agotado ? 'border-stone-100 text-stone-300' :
                               activo ? 'border-stone-900 bg-stone-900 text-white' :
                               'border-stone-200 text-stone-600 hover:border-stone-900'}`}
                         >

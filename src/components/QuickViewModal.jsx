@@ -178,10 +178,10 @@ export default function QuickViewModal({ productoId, onClose }) {
                         const activo = tallaSeleccionada === talla;
                         return (
                           <button key={talla}
-                            onClick={() => { if (!agotado) { setTalla(talla); setAlertSent(false); } }}
-                            disabled={agotado}
+                            onClick={() => { setTalla(talla); setAlertSent(false); }}
                             className={`h-11 px-4 border text-[11px] font-medium tracking-[0.05em] uppercase transition-colors relative
-                              ${agotado ? 'border-stone-100 text-stone-300 cursor-not-allowed' :
+                              ${agotado && activo ? 'border-stone-900 bg-stone-900 text-white' :
+                                agotado ? 'border-stone-100 text-stone-300' :
                                 activo ? 'border-stone-900 bg-stone-900 text-white' :
                                 'border-stone-200 text-stone-600 hover:border-stone-900'}`}
                           >
