@@ -88,10 +88,17 @@ export default function QuickViewModal({ productoId, onClose }) {
     if (!alertEmail) return;
     setAlertLoading(true);
     try {
-      await fetch('/api/stock-alert', {
+      await fetch('/api/contacto', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: alertEmail, productId: producto.id, productNombre: producto.nombre, talla: tallaSeleccionada, color: colorSeleccionado }),
+        body: JSON.stringify({
+          type: 'stock-alert',
+          email: alertEmail,
+          productId: producto.id,
+          productNombre: producto.nombre,
+          talla: tallaSeleccionada,
+          color: colorSeleccionado,
+        }),
       });
       setAlertSent(true);
     } catch {} finally { setAlertLoading(false); }

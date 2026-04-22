@@ -225,10 +225,11 @@ export default function ProductPage() {
     if (!alertEmail) return;
     setAlertLoading(true);
     try {
-      await fetch('/api/stock-alert', {
+      await fetch('/api/contacto', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          type: 'stock-alert',
           email:         alertEmail,
           productId:     producto.id,
           productNombre: producto.nombre,
