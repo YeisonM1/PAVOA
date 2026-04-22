@@ -11,20 +11,29 @@ const APP_URL             = process.env.VITE_APP_URL || 'https://pavoa.vercel.ap
 const LOGO_URL            = `${APP_URL}/logo-pavoa.png`;
 
 const TRANSPORTADORAS = [
-  { nombre: 'Servientrega',    url: 'https://servientrega.com.co/wps/portal/rastreo-envios',                                          claves: ['servientrega'] },
-  { nombre: 'Coordinadora',    url: 'https://coordinadora.com/portafolio-de-servicios/envios-nacionales/rastrear-guia/',              claves: ['coordinadora'] },
-  { nombre: 'Interrapidísimo', url: 'https://www.interrapidisimo.com/rastreo/',                                                       claves: ['interrapidisimo', 'interrapidísimo'] },
-  { nombre: 'TCC',             url: 'https://www.tcc.com.co/rastreo-de-guia/',                                                        claves: ['tcc'] },
+  { nombre: 'Servientrega',    dominios: ['servientrega.com.co', 'servientrega.com'],     claves: ['servientrega']                       },
+  { nombre: 'Coordinadora',    dominios: ['coordinadora.com'],                             claves: ['coordinadora']                       },
+  { nombre: 'Interrapidísimo', dominios: ['interrapidisimo.com'],                          claves: ['interrapidisimo', 'interrapidísimo'] },
+  { nombre: 'TCC',             dominios: ['tcc.com.co', 'tcc.com'],                        claves: ['tcc']                                },
 ];
 
 const normalizarTransportadora = (rawCompany, rawUrl) => {
   const texto = (rawCompany || '').toLowerCase().trim().normalize('NFD').replace(/[̀-ͯ]/g, '');
-  const encontrada = TRANSPORTADORAS.find(t =>
-    t.claves.some(c => texto.includes(c))
-  );
+
+  // 1. Intentar por nombre (cuando la empresa no es "Other"/"Otro")
+  let encontrada = TRANSPORTADORAS.find(t => t.claves.some(c => texto.includes(c)));
+
+  // 2. Si no se encontró (ej: "Other"), detectar por dominio de la URL
+  if (!encontrada && rawUrl) {
+    try {
+      const dominio = new URL(rawUrl).hostname.replace(/^www\./, '');
+      encontrada = TRANSPORTADORAS.find(t => t.dominios.some(d => dominio.includes(d)));
+    } catch { /* URL inválida — ignorar */ }
+  }
+
   return {
     nombre: encontrada?.nombre || rawCompany || null,
-    url:    rawUrl || encontrada?.url || null,
+    url:    rawUrl || null,
   };
 };
 
