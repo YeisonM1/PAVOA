@@ -1,10 +1,14 @@
 import crypto from 'crypto';
 import { createClient } from '@supabase/supabase-js';
+import { Resend } from 'resend';
 
 const SHOPIFY_DOMAIN      = process.env.SHOPIFY_DOMAIN;
 const SHOPIFY_ADMIN_TOKEN = process.env.SHOPIFY_ADMIN_TOKEN;
 const SHOPIFY_SECRET      = process.env.SHOPIFY_WEBHOOK_SECRET;
 const supabase            = createClient(process.env.VITE_SUPABASE_URL, process.env.VITE_SUPABASE_ANON_KEY);
+const resend              = new Resend(process.env.RESEND_API_KEY);
+const APP_URL             = process.env.VITE_APP_URL || 'https://pavoa.vercel.app';
+const LOGO_URL            = `${APP_URL}/logo-pavoa.png`;
 
 const validarFirma = (rawBody, hmacHeader) => {
   if (!SHOPIFY_SECRET || !hmacHeader) return true;
@@ -79,20 +83,135 @@ export default async function handler(req, res) {
   // Firma: Vercel re-parsea el body y rompe el HMAC — procesamos siempre
   validarFirma(rawBody, hmacHeader);
 
-  // ── Fulfillment: actualizar estado en Supabase ──────────
+  // ── Fulfillment: actualizar estado en Supabase + email ──
   if (topic === 'orders/updated' || topic === 'orders/fulfilled') {
-    const order              = req.body;
-    const shopifyOrderId     = String(order.id || '');
-    const fulfillmentStatus  = order.fulfillment_status || 'unfulfilled';
+    const order             = req.body;
+    const shopifyOrderId    = String(order.id || '');
+    const fulfillmentStatus = order.fulfillment_status || 'unfulfilled';
+    const fulfillment       = (order.fulfillments || [])[0];
+    const trackingNumber    = fulfillment?.tracking_number || null;
+    const trackingCompany   = fulfillment?.tracking_company || null;
+    const trackingUrl       = fulfillment?.tracking_url || null;
 
     if (shopifyOrderId) {
-      console.log(`📦 Shopify [${topic}] | order: ${shopifyOrderId} | fulfillment: ${fulfillmentStatus}`);
-      const { error } = await supabase
+      console.log(`📦 Shopify [${topic}] | order: ${shopifyOrderId} | fulfillment: ${fulfillmentStatus} | guía: ${trackingNumber}`);
+
+      const updatePayload = { fulfillment_status: fulfillmentStatus };
+      if (trackingNumber)  updatePayload.tracking_number  = trackingNumber;
+      if (trackingCompany) updatePayload.tracking_company = trackingCompany;
+      if (trackingUrl)     updatePayload.tracking_url     = trackingUrl;
+
+      const { data: pedidoActualizado, error } = await supabase
         .from('pedidos')
-        .update({ fulfillment_status: fulfillmentStatus })
-        .eq('shopify_order_id', shopifyOrderId);
-      if (error) console.error('⚠️ Error actualizando fulfillment:', error.message);
-      else console.log(`✅ Fulfillment actualizado: ${shopifyOrderId} → ${fulfillmentStatus}`);
+        .update(updatePayload)
+        .eq('shopify_order_id', shopifyOrderId)
+        .select('email, shopify_order_name, nombre')
+        .single();
+
+      if (error) {
+        console.error('⚠️ Error actualizando fulfillment:', error.message);
+      } else {
+        console.log(`✅ Fulfillment actualizado: ${shopifyOrderId} → ${fulfillmentStatus}`);
+
+        // Enviar email de envío solo cuando hay guía y el estado es fulfilled
+        if (fulfillmentStatus === 'fulfilled' && trackingNumber && pedidoActualizado?.email) {
+          const nombreCliente = pedidoActualizado.nombre || 'Cliente';
+          const orderName     = pedidoActualizado.shopify_order_name || shopifyOrderId;
+          try {
+            await resend.emails.send({
+              from:    'PAVOA <onboarding@resend.dev>',
+              to:      pedidoActualizado.email,
+              subject: `Tu pedido ${orderName} está en camino — PAVOA`,
+              html: `
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+<body style="margin:0;padding:0;background-color:#F2E4E1;font-family:Georgia,serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#F2E4E1;padding:40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="520" cellpadding="0" cellspacing="0" style="background-color:#ffffff;">
+
+          <tr>
+            <td align="center" style="padding:40px 40px 32px;border-bottom:1px solid #F2E4E1;">
+              <img src="${LOGO_URL}" alt="PAVOA" width="120" style="display:block;height:auto;max-height:48px;object-fit:contain;" />
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding:36px 40px 8px;">
+              <p style="font-size:10px;letter-spacing:0.3em;color:#9ca3af;text-transform:uppercase;margin:0 0 12px 0;">Tu pedido está en camino</p>
+              <h1 style="font-size:22px;font-weight:300;color:#0B0B0B;letter-spacing:0.1em;text-transform:uppercase;margin:0 0 16px 0;">
+                Hola, ${nombreCliente}
+              </h1>
+              <div style="width:32px;height:1px;background-color:#DFCDB4;margin-bottom:20px;"></div>
+              <p style="font-size:13px;color:#6b7280;line-height:1.8;margin:0;">
+                Tu pedido <strong>${orderName}</strong> ha sido despachado y está en camino hacia ti.
+              </p>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding:28px 40px 0;">
+              <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#F2E4E1;padding:20px;">
+                <tr>
+                  <td>
+                    <p style="font-size:10px;letter-spacing:0.2em;color:#9ca3af;text-transform:uppercase;margin:0 0 6px 0;">Transportadora</p>
+                    <p style="font-size:15px;font-weight:600;color:#0B0B0B;letter-spacing:0.05em;margin:0;">${trackingCompany}</p>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding-top:16px;">
+                    <p style="font-size:10px;letter-spacing:0.2em;color:#9ca3af;text-transform:uppercase;margin:0 0 6px 0;">Número de guía</p>
+                    <p style="font-size:20px;font-weight:700;color:#0B0B0B;letter-spacing:0.1em;margin:0;">${trackingNumber}</p>
+                  </td>
+                </tr>
+                ${trackingUrl ? `
+                <tr>
+                  <td style="padding-top:20px;">
+                    <a href="${trackingUrl}" style="display:inline-block;background-color:#0B0B0B;color:#ffffff;text-decoration:none;font-size:10px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;padding:12px 24px;">
+                      Rastrear pedido →
+                    </a>
+                  </td>
+                </tr>` : ''}
+              </table>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding:28px 40px 0;">
+              <div style="border-top:1px solid #F2E4E1;padding-top:24px;">
+                <p style="font-size:13px;color:#6b7280;line-height:1.8;margin:0;">
+                  También puedes ver el estado de tu pedido en cualquier momento desde tu cuenta en PAVOA.
+                </p>
+              </div>
+            </td>
+          </tr>
+
+          <tr>
+            <td align="center" style="padding:32px 40px 40px;">
+              <div style="border-top:1px solid #F2E4E1;padding-top:28px;">
+                <img src="${LOGO_URL}" alt="PAVOA" width="72" style="display:block;margin:0 auto 16px;height:auto;opacity:0.4;" />
+                <p style="font-size:9px;letter-spacing:0.2em;color:#d1d5db;text-transform:uppercase;margin:0;">
+                  © 2026 PAVOA. Todos los derechos reservados.
+                </p>
+              </div>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`,
+            });
+            console.log(`📧 Email de envío enviado a: ${pedidoActualizado.email} | guía: ${trackingNumber}`);
+          } catch (emailErr) {
+            console.error('⚠️ Email de envío no enviado:', emailErr.message);
+          }
+        }
+      }
     }
     return res.status(200).send('OK');
   }

@@ -94,6 +94,9 @@ export const getPedidos = async () => {
     telefono:          p.telefono || '',
     ciudad:            p.ciudad || '',
     direccion:         p.direccion || '',
+    trackingNumber:    p.tracking_number || null,
+    trackingCompany:   p.tracking_company || null,
+    trackingUrl:       p.tracking_url || null,
     items:             (p.items || []).map(item => ({
       nombre:   item.nombre,
       cantidad: item.cantidad,

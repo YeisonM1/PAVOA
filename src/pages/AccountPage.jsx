@@ -134,6 +134,34 @@ function OrdenDetalle({ pedido, imagenMap }) {
             </div>
           )}
 
+          {/* Guía de envío */}
+          {pedido.trackingNumber && (
+            <div className="border border-stone-100 p-4 bg-stone-50">
+              <p style={{ letterSpacing: '0.25em' }} className="text-[9px] font-bold text-stone-400 uppercase mb-3">
+                Información de envío
+              </p>
+              {pedido.trackingCompany && (
+                <p className="text-[10px] text-stone-400 tracking-[0.08em] uppercase mb-1">
+                  {pedido.trackingCompany}
+                </p>
+              )}
+              <p className="text-[15px] font-bold text-stone-900 tracking-[0.1em] font-mono mb-3">
+                {pedido.trackingNumber}
+              </p>
+              {pedido.trackingUrl && (
+                <a
+                  href={pedido.trackingUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ letterSpacing: '0.15em' }}
+                  className="inline-block text-[9px] font-bold text-stone-900 uppercase border-b border-stone-900 pb-0.5 hover:text-stone-500 transition-colors"
+                >
+                  Rastrear pedido →
+                </a>
+              )}
+            </div>
+          )}
+
           {/* Total */}
           <div className="border-t border-stone-100 pt-4 mt-auto">
             {tieneDescuento && (
