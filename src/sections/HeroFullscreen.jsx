@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { heroImage } from '../utils/imageUrl';
 import { useCarousel } from '../hooks/useCarousel';
 import { getHeroSlides } from '../services/productService';
@@ -58,7 +58,14 @@ export default function HeroFullscreen() {
   }, []);
 
   const { current, animating, next, prev } = useCarousel(slides.length, 6000, 800);
+  const previousRef = useRef(current);
+  const [previous, setPrevious] = useState(current);
   const s = slides[current];
+
+  useEffect(() => {
+    setPrevious(previousRef.current);
+    previousRef.current = current;
+  }, [current]);
 
   return (
     <section className="relative w-full h-[100dvh] overflow-hidden bg-black" role="region" aria-roledescription="carrusel" aria-label="Banner principal">
@@ -66,7 +73,11 @@ export default function HeroFullscreen() {
       {/* Hero — ancho completo */}
       <div className="w-full h-full relative overflow-hidden">
 
-      {slides.map((slide, index) => (
+      {slides.map((slide, index) => {
+        const shouldRender = index === current || index === previous;
+        if (!shouldRender) return null;
+
+        return (
         <div
           key={slide.id}
           className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${
@@ -90,7 +101,8 @@ export default function HeroFullscreen() {
             </picture>
           )}
         </div>
-      ))}
+        );
+      })}
 
       <span className="sr-only" aria-live="polite">
         Slide {current + 1} de {slides.length}

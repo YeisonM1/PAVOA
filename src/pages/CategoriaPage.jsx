@@ -7,6 +7,7 @@ import SkeletonCard from '../components/SkeletonCard';
 import QuickViewModal from '../components/QuickViewModal';
 import { getProductos, getCategoriaById } from '../services/productService';
 import SEO from '../components/SEO';
+import { heroImage } from '../utils/imageUrl';
 
 const parseVariantes = (raw) => {
   if (!raw) return [];
@@ -156,7 +157,7 @@ export default function CategoriaPage() {
       <section className="relative w-full h-[60vh] md:h-[70vh] flex items-end justify-center pb-16 md:pb-24 overflow-hidden">
         <img
           key={dataHeader.heroImage}
-          src={dataHeader.heroImage}
+          src={heroImage(dataHeader.heroImage)}
           alt={dataHeader.titulo1 + dataHeader.titulo2}
           width={1600} height={900}
           className="absolute inset-0 w-full h-full object-cover animate-fade-in"
