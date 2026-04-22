@@ -615,11 +615,6 @@ export default function ProductPage() {
                               'border-stone-200 text-stone-600 hover:border-stone-900'}`}
                         >
                           {talla}
-                          {agotado && (
-                            <span className="absolute inset-0 flex items-center justify-center">
-                              <span className="absolute w-full h-[1px] bg-stone-200 rotate-[-20deg]" />
-                            </span>
-                          )}
                         </button>
                       );
                     })}
