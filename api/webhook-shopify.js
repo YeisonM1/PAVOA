@@ -122,36 +122,64 @@ export default async function handler(req, res) {
       fulfillment?.tracking_url,
     );
 
-    if (shopifyOrderId) {
-      console.log(`📦 Shopify [${topic}] | order: ${shopifyOrderId} | fulfillment: ${fulfillmentStatus} | guía: ${trackingNumber}`);
+    if (!shopifyOrderId) return res.status(200).send('OK');
 
-      const updatePayload = { fulfillment_status: fulfillmentStatus };
-      if (trackingNumber)  updatePayload.tracking_number  = trackingNumber;
-      if (trackingCompany) updatePayload.tracking_company = trackingCompany;
-      if (trackingUrl)     updatePayload.tracking_url     = trackingUrl;
+    console.log(`📦 Shopify [${topic}] | order: ${shopifyOrderId} | fulfillment: ${fulfillmentStatus} | guía: ${trackingNumber}`);
 
-      const { data: pedidoActualizado, error } = await supabase
+    // Leer estado actual del pedido para comparar guía
+    const { data: pedidoActual } = await supabase
+      .from('pedidos')
+      .select('email, shopify_order_name, nombre, tracking_number')
+      .eq('shopify_order_id', shopifyOrderId)
+      .single();
+
+    // ── Caso 1: fulfillment cancelado — limpiar guía ────────
+    if (fulfillmentStatus === 'unfulfilled' && !trackingNumber) {
+      const { error } = await supabase
         .from('pedidos')
-        .update(updatePayload)
-        .eq('shopify_order_id', shopifyOrderId)
-        .select('email, shopify_order_name, nombre')
-        .single();
+        .update({ fulfillment_status: 'unfulfilled', tracking_number: null, tracking_company: null, tracking_url: null })
+        .eq('shopify_order_id', shopifyOrderId);
+      if (error) console.error('⚠️ Error limpiando guía:', error.message);
+      else console.log(`🔄 Fulfillment cancelado — guía limpiada: ${shopifyOrderId}`);
+      return res.status(200).send('OK');
+    }
+
+    // ── Casos 2 y 3: hay guía — actualizar Supabase ─────────
+    if (trackingNumber) {
+      const esCorreccion = !!pedidoActual?.tracking_number && pedidoActual.tracking_number !== trackingNumber;
+
+      const { error } = await supabase
+        .from('pedidos')
+        .update({ fulfillment_status: fulfillmentStatus, tracking_number: trackingNumber, tracking_company: trackingCompany, tracking_url: trackingUrl })
+        .eq('shopify_order_id', shopifyOrderId);
 
       if (error) {
         console.error('⚠️ Error actualizando fulfillment:', error.message);
-      } else {
-        console.log(`✅ Fulfillment actualizado: ${shopifyOrderId} → ${fulfillmentStatus}`);
+        return res.status(200).send('OK');
+      }
+      console.log(`✅ Fulfillment actualizado: ${shopifyOrderId} → ${fulfillmentStatus} | corrección: ${esCorreccion}`);
 
-        // Enviar email de envío solo cuando hay guía y el estado es fulfilled
-        if (fulfillmentStatus === 'fulfilled' && trackingNumber && pedidoActualizado?.email) {
-          const nombreCliente = pedidoActualizado.nombre || 'Cliente';
-          const orderName     = pedidoActualizado.shopify_order_name || shopifyOrderId;
-          try {
-            await resend.emails.send({
-              from:    'PAVOA <onboarding@resend.dev>',
-              to:      pedidoActualizado.email,
-              subject: `Tu pedido ${orderName} está en camino — PAVOA`,
-              html: `
+      if (!pedidoActual?.email) return res.status(200).send('OK');
+
+      const nombreCliente = pedidoActual.nombre || 'Cliente';
+      const orderName     = pedidoActual.shopify_order_name || shopifyOrderId;
+
+      const encabezado = esCorreccion
+        ? 'Actualización de tu envío'
+        : 'Tu pedido está en camino';
+      const subtitulo = esCorreccion
+        ? 'Actualización de guía de envío'
+        : 'Tu pedido está en camino';
+      const cuerpo = esCorreccion
+        ? `Queremos informarte que hemos actualizado la información de envío de tu pedido <strong>${orderName}</strong>. Lamentamos cualquier inconveniente ocasionado.`
+        : `Tu pedido <strong>${orderName}</strong> ha sido despachado y está en camino hacia ti.`;
+
+      try {
+        await resend.emails.send({
+          from:    'PAVOA <onboarding@resend.dev>',
+          to:      pedidoActual.email,
+          subject: `${encabezado} ${orderName} — PAVOA`,
+          html: `
 <!DOCTYPE html>
 <html>
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
@@ -169,14 +197,12 @@ export default async function handler(req, res) {
 
           <tr>
             <td style="padding:36px 40px 8px;">
-              <p style="font-size:10px;letter-spacing:0.3em;color:#9ca3af;text-transform:uppercase;margin:0 0 12px 0;">Tu pedido está en camino</p>
+              <p style="font-size:10px;letter-spacing:0.3em;color:#9ca3af;text-transform:uppercase;margin:0 0 12px 0;">${subtitulo}</p>
               <h1 style="font-size:22px;font-weight:300;color:#0B0B0B;letter-spacing:0.1em;text-transform:uppercase;margin:0 0 16px 0;">
                 Hola, ${nombreCliente}
               </h1>
               <div style="width:32px;height:1px;background-color:#DFCDB4;margin-bottom:20px;"></div>
-              <p style="font-size:13px;color:#6b7280;line-height:1.8;margin:0;">
-                Tu pedido <strong>${orderName}</strong> ha sido despachado y está en camino hacia ti.
-              </p>
+              <p style="font-size:13px;color:#6b7280;line-height:1.8;margin:0;">${cuerpo}</p>
             </td>
           </tr>
 
@@ -234,14 +260,13 @@ export default async function handler(req, res) {
   </table>
 </body>
 </html>`,
-            });
-            console.log(`📧 Email de envío enviado a: ${pedidoActualizado.email} | guía: ${trackingNumber}`);
-          } catch (emailErr) {
-            console.error('⚠️ Email de envío no enviado:', emailErr.message);
-          }
-        }
+        });
+        console.log(`📧 Email [${esCorreccion ? 'corrección' : 'despacho'}] enviado a: ${pedidoActual.email}`);
+      } catch (emailErr) {
+        console.error('⚠️ Email no enviado:', emailErr.message);
       }
     }
+
     return res.status(200).send('OK');
   }
 
