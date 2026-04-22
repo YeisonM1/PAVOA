@@ -1,14 +1,20 @@
-import React, { useContext, useEffect, useRef } from 'react';
+import React, { useContext, useEffect, useRef, useState } from 'react';
 import { X, ShoppingBag } from 'lucide-react';
 import { CartContext } from '../App';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { thumbImage } from '../utils/imageUrl';
+import { getRecentlyViewed } from '../hooks/useRecentlyViewed';
 
 export default function CartDrawer({ cartOpen, setCartOpen }) {
   const navigate = useNavigate();
   const { cartItems, cartCount, cartTotal, removeFromCart, updateQuantity } = useContext(CartContext);
-  const [modalOpen, setModalOpen] = React.useState(false);
+  const [modalOpen, setModalOpen]       = React.useState(false);
+  const [recentlyViewed, setRecentlyViewed] = useState([]);
   const drawerRef = useRef(null);
+
+  useEffect(() => {
+    if (cartOpen) setRecentlyViewed(getRecentlyViewed());
+  }, [cartOpen]);
 
   useEffect(() => {
     if (!cartOpen || !drawerRef.current) return;
@@ -59,9 +65,30 @@ export default function CartDrawer({ cartOpen, setCartOpen }) {
 
         <div className="flex-grow overflow-y-auto px-8 py-8 flex flex-col">
           {cartItems.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full text-center gap-4 opacity-50">
-              <ShoppingBag size={32} strokeWidth={1} className="text-stone-400" aria-hidden="true" />
-              <p className="text-[11px] tracking-[0.15em] uppercase text-stone-500">Tu bolsa está vacía</p>
+            <div className="flex flex-col h-full">
+              <div className="flex flex-col items-center justify-center py-12 text-center gap-4 opacity-50">
+                <ShoppingBag size={32} strokeWidth={1} className="text-stone-400" aria-hidden="true" />
+                <p className="text-[11px] tracking-[0.15em] uppercase text-stone-500">Tu bolsa está vacía</p>
+              </div>
+
+              {recentlyViewed.length > 0 && (
+                <div className="mt-auto">
+                  <p className="text-[9px] font-bold tracking-[0.25em] text-stone-400 uppercase mb-4">Visto recientemente</p>
+                  <div className="flex gap-3 overflow-x-auto pb-2 -mx-1 px-1">
+                    {recentlyViewed.map(p => (
+                      <Link key={p.id} to={`/producto/${p.id}`} onClick={() => setCartOpen(false)}
+                        className="flex-shrink-0 flex flex-col gap-2 w-[88px] group">
+                        <div className="w-[88px] h-[116px] bg-stone-100 overflow-hidden">
+                          <img src={thumbImage(p.imagen1)} alt={p.nombre} width={88} height={116}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                        </div>
+                        <p className="text-[9px] font-bold text-stone-900 tracking-[0.08em] uppercase leading-tight line-clamp-2">{p.nombre}</p>
+                        <p className="text-[10px] text-stone-500">{p.precio}</p>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           ) : (
             <div className="flex flex-col gap-8">

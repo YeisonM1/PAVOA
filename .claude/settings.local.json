@@ -5,7 +5,17 @@
       "Bash(node -e \"require\\('@mercadopago/sdk-react'\\)\")",
       "Bash(git add:*)",
       "Bash(git commit:*)",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Bash(head -20 \"C:\\\\Users\\\\Usuario\\\\PAVOA\\\\src\\\\utils\"/*.js)",
+      "WebSearch",
+      "WebFetch(domain:help.brevo.com)",
+      "WebFetch(domain:developers.brevo.com)",
+      "Bash(npm run *)",
+      "Bash(xargs grep *)",
+      "Bash(npm uninstall *)",
+      "mcp__plugin_context-mode_context-mode__ctx_stats",
+      "mcp__plugin_context-mode_context-mode__ctx_batch_execute",
+      "mcp__plugin_context-mode_context-mode__ctx_search"
     ]
   }
 }

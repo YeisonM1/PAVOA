@@ -1,9 +1,17 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { productImage } from '../utils/imageUrl';
+import { useWishlist } from '../context/WishlistContext';
 
-function ProductCard({ producto }) {
+const HeartIcon = ({ filled }) => (
+  <svg width="15" height="15" viewBox="0 0 24 24" fill={filled ? '#0B0B0B' : 'none'} stroke={filled ? '#0B0B0B' : 'currentColor'} strokeWidth="1.5">
+    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+  </svg>
+);
+
+function ProductCard({ producto, onQuickView }) {
   const [showMobileSizes, setShowMobileSizes] = useState(false);
+  const { isWished, toggle } = useWishlist();
 
   // ── Leer variantes ──────────────────────────────────────
   const variantes = (() => {
@@ -37,10 +45,24 @@ function ProductCard({ producto }) {
             {producto.tag}
           </span>
         )}
-        {pocasUnidades && (
+        {totalStock === 0 ? (
+          <span className="absolute top-4 right-4 z-30 text-[8px] font-bold text-white bg-stone-500 px-3 py-1.5 uppercase tracking-[0.15em]">
+            Agotado
+          </span>
+        ) : pocasUnidades ? (
           <span className="absolute top-4 right-4 z-30 text-[8px] font-bold text-white bg-amber-700 px-3 py-1.5 uppercase tracking-[0.15em]">
             Últimas {totalStock}
           </span>
+        ) : null}
+
+        {onQuickView && (
+          <button
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); onQuickView(producto.id); }}
+            className="hidden md:flex absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-40 opacity-0 group-hover:opacity-100 transition-all duration-300 bg-white/90 backdrop-blur-sm text-stone-900 text-[9px] font-bold tracking-[0.2em] uppercase px-5 py-2.5 hover:bg-white whitespace-nowrap"
+            aria-label="Vista rápida"
+          >
+            Vista rápida
+          </button>
         )}
 
         <img
@@ -120,10 +142,17 @@ function ProductCard({ producto }) {
       </div>
 
       {/* Info */}
-      <div className="flex flex-col items-center text-center">
-        <h3 className="text-[11px] font-bold text-stone-900 tracking-[0.15em] uppercase">
+      <div className="flex flex-col items-center text-center relative">
+        <h3 className="text-[11px] font-bold text-stone-900 tracking-[0.15em] uppercase pr-5">
           {producto.nombre}
         </h3>
+        <button
+          onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggle(producto.id); }}
+          className="absolute top-0 right-0 text-stone-300 hover:text-stone-900 transition-colors"
+          aria-label={isWished(producto.id) ? 'Quitar de favoritos' : 'Guardar en favoritos'}
+        >
+          <HeartIcon filled={isWished(producto.id)} />
+        </button>
         <div className="h-[24px] overflow-hidden mt-1.5">
           <p className="text-[13px] font-semibold text-stone-500 transform translate-y-0 opacity-100 md:translate-y-full md:opacity-0 md:group-hover:translate-y-0 md:group-hover:opacity-100 transition-all duration-500 ease-out">
             {producto.precio}

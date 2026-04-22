@@ -8,6 +8,9 @@ import SEO from '../components/SEO';
 import { productImage, heroImage, thumbImage } from '../utils/imageUrl';
 import { trackViewItem } from '../lib/analytics';
 import GuiaTallasModal from '../components/GuiaTallasModal';
+import { saveRecentlyViewed } from '../hooks/useRecentlyViewed';
+import { useWishlist } from '../context/WishlistContext';
+import { estaAutenticado, getCliente } from '../services/authService';
 
 export default function ProductPage() {
   const { id } = useParams();
@@ -27,6 +30,12 @@ export default function ProductPage() {
   const [showCantidadHint, setShowCantidadHint] = useState(false);
   const [showGuiaTallas, setShowGuiaTallas]   = useState(false);
   const touchStartX                           = useRef(null);
+  const addBtnRef                             = useRef(null);
+  const [showStickyBar, setShowStickyBar]     = useState(false);
+  const [alertEmail, setAlertEmail]           = useState('');
+  const [alertSent, setAlertSent]             = useState(false);
+  const [alertLoading, setAlertLoading]       = useState(false);
+  const { isWished, toggle }                  = useWishlist();
 
   useEffect(() => {
     let cancelled = false;
@@ -37,7 +46,7 @@ export default function ProductPage() {
         if (!cancelled) {
           setProducto(data);
           setLoading(false);
-          if (data) trackViewItem(data);
+          if (data) { trackViewItem(data); saveRecentlyViewed(data); }
         }
       } catch {
         if (!cancelled) setLoading(false);
@@ -140,6 +149,7 @@ export default function ProductPage() {
     setColorSeleccionado(colorSeleccionado === color ? null : color);
     setTallaSeleccionada(null);
     setCantidad(1);
+    setAlertSent(false);
   };
 
   const handleAddToCart = () => {
@@ -191,6 +201,43 @@ export default function ProductPage() {
     const diff = touchStartX.current - e.changedTouches[0].clientX;
     if (Math.abs(diff) > 80) lbNav(diff > 0 ? 1 : -1);
     touchStartX.current = null;
+  };
+
+  useEffect(() => {
+    if (estaAutenticado()) {
+      const cliente = getCliente();
+      if (cliente?.email) setAlertEmail(cliente.email);
+    }
+  }, []);
+
+  useEffect(() => {
+    const btn = addBtnRef.current;
+    if (!btn) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => setShowStickyBar(!entry.isIntersecting),
+      { rootMargin: '-80px 0px 0px 0px' }
+    );
+    observer.observe(btn);
+    return () => observer.disconnect();
+  }, [producto]);
+
+  const handleStockAlert = async () => {
+    if (!alertEmail) return;
+    setAlertLoading(true);
+    try {
+      await fetch('/api/stock-alert', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email:         alertEmail,
+          productId:     producto.id,
+          productNombre: producto.nombre,
+          talla:         tallaSeleccionada,
+          color:         colorSeleccionado,
+        }),
+      });
+      setAlertSent(true);
+    } catch {} finally { setAlertLoading(false); }
   };
 
   const toggleAccordion = (s) => setOpenAccordion(openAccordion === s ? null : s);
@@ -274,6 +321,35 @@ export default function ProductPage() {
         type="product"
         jsonLd={[productJsonLd, breadcrumbJsonLd]}
       />
+
+      {/* ── STICKY ADD-TO-CART BAR ── */}
+      {showStickyBar && (
+        <div className="fixed top-[64px] md:top-[80px] left-0 right-0 z-40 bg-white border-b border-stone-200 shadow-sm">
+          <div className="max-w-[1600px] mx-auto px-5 py-3 flex items-center gap-4">
+            <div className="w-10 h-[52px] bg-stone-100 overflow-hidden flex-shrink-0">
+              <img src={thumbImage(producto.imagen1)} alt={producto.nombre} width={40} height={52} className="w-full h-full object-cover" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[10px] font-bold tracking-[0.15em] text-stone-900 uppercase truncate">{producto.nombre}</p>
+              <p className="text-[11px] text-stone-500">{producto.precio}</p>
+            </div>
+            {tallaSeleccionada && (
+              <p className="text-[10px] tracking-[0.1em] text-stone-500 uppercase hidden sm:block">Talla: {tallaSeleccionada}</p>
+            )}
+            <button
+              onClick={handleAddToCart}
+              disabled={stockActual === 0 || stockActual === null}
+              className={`flex-shrink-0 h-10 px-6 text-[9px] font-bold tracking-[0.2em] uppercase transition-colors
+                ${stockActual === 0 ? 'bg-stone-200 text-stone-400 cursor-not-allowed' :
+                  stockActual === null ? 'bg-stone-300 text-stone-500 cursor-not-allowed' :
+                  adding ? 'bg-stone-800 text-white' :
+                  'bg-stone-900 text-white hover:bg-stone-800'}`}
+            >
+              {stockActual === 0 ? 'Agotado' : stockActual === null ? 'Selecciona opciones' : adding ? '✔' : 'Añadir'}
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="flex flex-col md:flex-row max-w-[1600px] mx-auto pt-[115px] md:pt-[120px]">
 
@@ -397,9 +473,20 @@ export default function ProductPage() {
             <h1 className="text-2xl md:text-3xl font-light text-stone-900 tracking-[0.15em] uppercase mb-3 md:mb-4">
               {producto.nombre}
             </h1>
-            <p className="text-sm md:text-base font-medium text-stone-600 tracking-[0.1em] mb-6 md:mb-10">
-              {producto.precio}
-            </p>
+            <div className="flex items-center justify-between mb-6 md:mb-10">
+              <p className="text-sm md:text-base font-medium text-stone-600 tracking-[0.1em]">
+                {producto.precio}
+              </p>
+              <button
+                onClick={() => toggle(producto.id)}
+                className="text-stone-300 hover:text-stone-900 transition-colors"
+                aria-label={isWished(producto.id) ? 'Quitar de favoritos' : 'Guardar en favoritos'}
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill={isWished(producto.id) ? '#0B0B0B' : 'none'} stroke={isWished(producto.id) ? '#0B0B0B' : 'currentColor'} strokeWidth="1.5">
+                  <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                </svg>
+              </button>
+            </div>
             <div className="text-[12px] md:text-[13px] text-stone-600 tracking-[0.1em] leading-loose mb-6 md:mb-12 uppercase flex flex-col gap-3">
               {producto.descripcion?.split('.').filter(s => s.trim()).map((oracion, i) => (
                 <p key={i}>{oracion.trim()}.</p>
@@ -520,7 +607,7 @@ export default function ProductPage() {
                       return (
                         <button
                           key={talla}
-                          onClick={() => !agotado && setTallaSeleccionada(talla)}
+                          onClick={() => { if (!agotado) { setTallaSeleccionada(talla); setAlertSent(false); } }}
                           disabled={agotado}
                           className={`h-12 border flex items-center justify-center text-[11px] font-medium tracking-[0.05em] transition-colors uppercase relative
                             ${agotado ? 'border-stone-100 text-stone-300 cursor-not-allowed' :
@@ -548,6 +635,7 @@ export default function ProductPage() {
 
             {/* ── BOTÓN AGREGAR ── */}
             <button
+              ref={addBtnRef}
               onClick={handleAddToCart}
               disabled={stockActual === 0 || stockActual === null}
               className={`w-full h-14 text-[10px] font-bold tracking-[0.25em] uppercase transition-all duration-300 flex items-center justify-center gap-3
@@ -558,6 +646,33 @@ export default function ProductPage() {
             >
               {stockActual === 0 ? 'Agotado' : stockActual === null ? 'Selecciona color y talla' : adding ? 'Agregado ✔' : 'Añadir a la bolsa'}
             </button>
+
+            {/* ── AVISO STOCK AGOTADO ── */}
+            {stockActual === 0 && tallaSeleccionada && (
+              alertSent ? (
+                <p className="text-[9px] tracking-[0.15em] text-stone-500 uppercase mt-4">✓ Te avisaremos cuando esté disponible.</p>
+              ) : (
+                <div className="mt-4 flex flex-col gap-3">
+                  <p className="text-[9px] tracking-[0.15em] text-stone-400 uppercase">Esta talla está agotada. Avísame cuando vuelva:</p>
+                  <div className="flex gap-2">
+                    <input
+                      type="email"
+                      value={alertEmail}
+                      onChange={e => setAlertEmail(e.target.value)}
+                      placeholder="tu@correo.com"
+                      className="flex-1 border-b border-stone-200 focus:border-stone-900 outline-none py-2.5 text-[12px] text-stone-900 placeholder-stone-300 bg-transparent transition-colors"
+                    />
+                    <button
+                      onClick={handleStockAlert}
+                      disabled={alertLoading || !alertEmail}
+                      className="text-[9px] font-bold tracking-[0.15em] uppercase text-white bg-stone-900 px-4 py-2 hover:bg-stone-700 transition-colors disabled:opacity-40"
+                    >
+                      {alertLoading ? '...' : 'Avísame'}
+                    </button>
+                  </div>
+                </div>
+              )
+            )}
 
             <div className="w-full h-[1px] bg-stone-200 my-12" />
 

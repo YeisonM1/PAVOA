@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-route
 import { useEffect, Suspense, lazy, useState, useContext, Component } from 'react';
 import { trackPageView } from './lib/analytics';
 import { CartProvider, CartContext } from './context/CartContext';
+import { WishlistProvider } from './context/WishlistContext';
 import AnnouncementBar from './sections/AnnouncementBar';
 import Header from './sections/Header';
 import Footer from './sections/Footer';
@@ -20,6 +21,7 @@ const VerifyPage = lazy(() => import('./pages/VerifyPage'));
 const ForgotPasswordPage = lazy(() => import('./pages/ForgotPasswordPage'));
 const ResetPasswordPage      = lazy(() => import('./pages/ResetPasswordPage'));
 const OrdenConfirmadaPage    = lazy(() => import('./pages/OrdenConfirmadaPage'));
+const WishlistPage           = lazy(() => import('./pages/WishlistPage'));
 
 export { CartContext };
 
@@ -111,6 +113,7 @@ function AppShell() {
               <Route path="/forgot-password" element={<ForgotPasswordPage />} />
               <Route path="/reset-password"   element={<ResetPasswordPage />} />
               <Route path="/orden-confirmada" element={<OrdenConfirmadaPage />} />
+              <Route path="/wishlist"         element={<WishlistPage />} />
               <Route path="*"              element={<NotFoundPage />} />
             </Routes>
           </Suspense>
@@ -145,9 +148,11 @@ function Toast() {
 function App() {
   return (
     <CartProvider>
-      <Router>
-        <AppShell />
-      </Router>
+      <WishlistProvider>
+        <Router>
+          <AppShell />
+        </Router>
+      </WishlistProvider>
     </CartProvider>
   );
 }
