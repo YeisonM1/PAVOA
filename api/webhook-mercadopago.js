@@ -331,11 +331,12 @@ export default async function handler(req, res) {
           email:               emailCliente.toLowerCase(),
           payment_id:          String(pagoInfo.id),
           shopify_order_name:  order?.name || `MP-${pagoInfo.id}`,
-          shopify_order_id:    String(order?.id || ''),
+          shopify_order_id:    String(order?.order_id || order?.id || ''),
           total:               totalPagado,
           total_original:      totalOriginalV,
           descuento_aplicado:  esDescuento,
           status:              'approved',
+          fulfillment_status:  'unfulfilled',
           nombre:              addr
             ? `${addr.first_name || ''} ${addr.last_name || ''}`.trim()
             : primerNombre,
