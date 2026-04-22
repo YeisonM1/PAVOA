@@ -10,6 +10,24 @@ const resend              = new Resend(process.env.RESEND_API_KEY);
 const APP_URL             = process.env.VITE_APP_URL || 'https://pavoa.vercel.app';
 const LOGO_URL            = `${APP_URL}/logo-pavoa.png`;
 
+const TRANSPORTADORAS = [
+  { nombre: 'Servientrega',    url: 'https://servientrega.com.co/wps/portal/rastreo-envios',                                          claves: ['servientrega'] },
+  { nombre: 'Coordinadora',    url: 'https://coordinadora.com/portafolio-de-servicios/envios-nacionales/rastrear-guia/',              claves: ['coordinadora'] },
+  { nombre: 'Interrapidísimo', url: 'https://www.interrapidisimo.com/rastreo/',                                                       claves: ['interrapidisimo', 'interrapidísimo'] },
+  { nombre: 'TCC',             url: 'https://www.tcc.com.co/rastreo-de-guia/',                                                        claves: ['tcc'] },
+];
+
+const normalizarTransportadora = (rawCompany, rawUrl) => {
+  const texto = (rawCompany || '').toLowerCase().trim().normalize('NFD').replace(/[̀-ͯ]/g, '');
+  const encontrada = TRANSPORTADORAS.find(t =>
+    t.claves.some(c => texto.includes(c))
+  );
+  return {
+    nombre: encontrada?.nombre || rawCompany || null,
+    url:    rawUrl || encontrada?.url || null,
+  };
+};
+
 const validarFirma = (rawBody, hmacHeader) => {
   if (!SHOPIFY_SECRET || !hmacHeader) return true;
   const hmac = crypto
@@ -90,8 +108,10 @@ export default async function handler(req, res) {
     const fulfillmentStatus = order.fulfillment_status || 'unfulfilled';
     const fulfillment       = (order.fulfillments || [])[0];
     const trackingNumber    = fulfillment?.tracking_number || null;
-    const trackingCompany   = fulfillment?.tracking_company || null;
-    const trackingUrl       = fulfillment?.tracking_url || null;
+    const { nombre: trackingCompany, url: trackingUrl } = normalizarTransportadora(
+      fulfillment?.tracking_company,
+      fulfillment?.tracking_url,
+    );
 
     if (shopifyOrderId) {
       console.log(`📦 Shopify [${topic}] | order: ${shopifyOrderId} | fulfillment: ${fulfillmentStatus} | guía: ${trackingNumber}`);
