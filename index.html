@@ -9,13 +9,18 @@
     <meta name="apple-mobile-web-app-title" content="PAVOA" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    <!-- ── Google Analytics 4 ── -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-MLC7S1Q64S"></script>
+    <!-- ── Google Analytics 4 — diferido para no bloquear LCP ── -->
     <script>
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
       gtag('js', new Date());
       gtag('config', 'G-MLC7S1Q64S', { send_page_view: false });
+      window.addEventListener('load', function() {
+        var s = document.createElement('script');
+        s.src = 'https://www.googletagmanager.com/gtag/js?id=G-MLC7S1Q64S';
+        s.async = true;
+        document.head.appendChild(s);
+      });
     </script>
 
     <!-- ── Primarios ── -->
