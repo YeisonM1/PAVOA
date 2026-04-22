@@ -222,6 +222,8 @@ export default async function handler(req, res) {
   if (topic === 'orders/updated' || topic === 'orders/fulfilled') {
     const order             = req.body;
     const shopifyOrderId    = String(order.id || '');
+    const tags              = (order.tags || '').toLowerCase().split(',').map(t => t.trim());
+    const esEntregado       = tags.includes('entregado');
     const fulfillmentStatus = order.fulfillment_status || 'unfulfilled';
     const fulfillment       = (order.fulfillments || []).find(f => f.status !== 'cancelled') || null;
     const trackingNumber    = fulfillment?.tracking_number || null;
@@ -240,6 +242,9 @@ export default async function handler(req, res) {
       .select('email, shopify_order_name, nombre, tracking_number')
       .eq('shopify_order_id', shopifyOrderId)
       .single();
+
+    // Si ya está marcado como entregado, no sobreescribir el estado
+    if (esEntregado) return res.status(200).send('OK');
 
     // ── Caso 1: fulfillment cancelado — limpiar guía ────────
     if (fulfillmentStatus === 'unfulfilled' && !trackingNumber) {
