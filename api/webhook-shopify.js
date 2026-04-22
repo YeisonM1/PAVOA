@@ -115,7 +115,7 @@ export default async function handler(req, res) {
     const order             = req.body;
     const shopifyOrderId    = String(order.id || '');
     const fulfillmentStatus = order.fulfillment_status || 'unfulfilled';
-    const fulfillment       = (order.fulfillments || [])[0];
+    const fulfillment       = (order.fulfillments || []).find(f => f.status !== 'cancelled') || null;
     const trackingNumber    = fulfillment?.tracking_number || null;
     const { nombre: trackingCompany, url: trackingUrl } = normalizarTransportadora(
       fulfillment?.tracking_company,
