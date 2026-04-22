@@ -317,6 +317,7 @@ export default async function handler(req, res) {
         order        = shopifyResponse.draft_order || shopifyResponse.order;
         emailCliente = shopifyResponse._emailCliente || emailMP;
         console.log(`✅ Orden completada en Shopify: ${draftOrderId}`);
+        await eliminarDraftOrder(draftOrderId);
       } catch (shopifyErr) {
         console.error(`⚠️ Shopify falló (no bloquea): ${shopifyErr.message}`);
       }
