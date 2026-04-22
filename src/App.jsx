@@ -1,5 +1,5 @@
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
-import { useEffect, Suspense, lazy, useState, useContext } from 'react';
+import { useEffect, Suspense, lazy, useState, useContext, Component } from 'react';
 import { trackPageView } from './lib/analytics';
 import { CartProvider, CartContext } from './context/CartContext';
 import AnnouncementBar from './sections/AnnouncementBar';
@@ -22,6 +22,37 @@ const ResetPasswordPage      = lazy(() => import('./pages/ResetPasswordPage'));
 const OrdenConfirmadaPage    = lazy(() => import('./pages/OrdenConfirmadaPage'));
 
 export { CartContext };
+
+class ErrorBoundary extends Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false };
+  }
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+  componentDidCatch(error) {
+    console.error('[PAVOA] Error de renderizado:', error);
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="min-h-screen flex flex-col items-center justify-center gap-4 bg-white">
+          <p className="text-[10px] tracking-[0.2em] uppercase text-stone-500">
+            Algo salió mal. Por favor recarga la página.
+          </p>
+          <button
+            onClick={() => window.location.reload()}
+            className="text-[10px] font-bold tracking-[0.2em] uppercase border-b border-stone-900 pb-1"
+          >
+            Recargar
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -57,6 +88,7 @@ function AppShell() {
         {!esRutaLimpia && <Header />}
 
         <div className="flex-grow" id="main-content">
+          <ErrorBoundary>
           <Suspense fallback={
             <div className="min-h-screen flex items-center justify-center bg-white">
               <span className="text-[10px] font-bold tracking-[0.3em] uppercase text-stone-500 animate-pulse">
@@ -82,6 +114,7 @@ function AppShell() {
               <Route path="*"              element={<NotFoundPage />} />
             </Routes>
           </Suspense>
+          </ErrorBoundary>
         </div>
 
         {!esRutaLimpia && <Footer />}

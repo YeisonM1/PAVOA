@@ -7,8 +7,31 @@ const supabase = createClient(
   process.env.VITE_SUPABASE_ANON_KEY
 );
 
+// Rate limiter en memoria — protección básica contra brute force
+// Nota: en Vercel serverless solo persiste por instancia caliente; para protección completa usar Upstash Redis.
+const _loginAttempts = new Map(); // ip → { count, resetAt }
+const RATE_LIMIT  = 10;
+const RATE_WINDOW = 15 * 60 * 1000; // 15 minutos
+
+function isRateLimited(ip) {
+  const now   = Date.now();
+  const entry = _loginAttempts.get(ip) || { count: 0, resetAt: now + RATE_WINDOW };
+  if (now > entry.resetAt) {
+    _loginAttempts.set(ip, { count: 1, resetAt: now + RATE_WINDOW });
+    return false;
+  }
+  if (entry.count >= RATE_LIMIT) return true;
+  _loginAttempts.set(ip, { ...entry, count: entry.count + 1 });
+  return false;
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+
+  const ip = (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || req.socket?.remoteAddress || 'unknown';
+  if (isRateLimited(ip)) {
+    return res.status(429).json({ error: 'Demasiados intentos. Espera 15 minutos e intenta de nuevo.' });
+  }
 
   const { email, password } = req.body;
 

@@ -168,6 +168,10 @@ export default function CheckoutPage() {
 
     // Protección doble pago: reutilizar init_point si el carrito no cambió
     const cartHash = cartItems.map(i => `${i.producto.id}|${i.talla}|${i.cantidad}`).join(',');
+    // Clave de idempotencia por minuto: evita crear dos Draft Orders por doble-click o retry rápido
+    const minuteBucket    = Math.floor(Date.now() / 60000);
+    const idempotencyKey  = `${form.email || 'anon'}-${cartHash}-${minuteBucket}`;
+
     try {
       const existing = JSON.parse(sessionStorage.getItem('pavoa-checkout-session') || 'null');
       if (existing && existing.cartHash === cartHash && Date.now() - existing.ts < 30 * 60 * 1000) {
@@ -191,7 +195,7 @@ export default function CheckoutPage() {
       const resPedido = await fetch('/api/pedido', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ form, cartItems, cartTotal }),
+        body: JSON.stringify({ form, cartItems, cartTotal, idempotencyKey }),
       });
       const dataPedido = await resPedido.json();
       if (!resPedido.ok || !dataPedido.ok || !dataPedido.draftOrderId) {

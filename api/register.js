@@ -20,8 +20,8 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Todos los campos son requeridos.' });
   }
 
-  if (password.length < 5) {
-    return res.status(400).json({ error: 'La contraseña debe tener al menos 5 caracteres.' });
+  if (password.length < 8) {
+    return res.status(400).json({ error: 'La contraseña debe tener al menos 8 caracteres.' });
   }
 
   try {
