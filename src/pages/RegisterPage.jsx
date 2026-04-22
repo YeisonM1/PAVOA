@@ -15,8 +15,8 @@ export default function RegisterPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-    if (form.password.length < 5) {
-      setError('La contraseña debe tener al menos 5 caracteres.');
+    if (form.password.length < 8) {
+      setError('La contraseña debe tener al menos 8 caracteres.');
       return;
     }
     if (form.password !== form.confirmPassword) {
@@ -151,7 +151,7 @@ export default function RegisterPage() {
                 value={form.password}
                 onChange={handleChange}
                 required
-                placeholder="Mínimo 5 caracteres"
+                placeholder="Mínimo 8 caracteres"
                 className="border border-stone-300 bg-white px-4 py-3.5 text-[12px] text-stone-900 placeholder-stone-300 focus:outline-none focus:border-stone-900 transition-colors duration-200"
                 style={{ backgroundColor: 'rgba(255,255,255,0.7)' }}
               />
