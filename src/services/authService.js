@@ -75,6 +75,7 @@ export const getPedidos = async () => {
   if (!res.ok) throw new Error(data.error || 'Error al obtener pedidos');
 
   const mapFulfillment = (s) => {
+    if (s === 'delivered')  return 'DELIVERED';
     if (s === 'fulfilled')  return 'FULFILLED';
     if (s === 'partial')    return 'UNFULFILLED';
     return 'UNFULFILLED';

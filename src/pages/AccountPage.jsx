@@ -15,7 +15,8 @@ const EstadoBadge = ({ status, type }) => {
   const map = {
     PAID:        { label: 'Pagado',     bg: 'bg-emerald-50', text: 'text-emerald-700', dot: 'bg-emerald-500' },
     PENDING:     { label: 'Pendiente',  bg: 'bg-amber-50',   text: 'text-amber-700',   dot: 'bg-amber-400'   },
-    FULFILLED:   { label: 'Enviado',    bg: 'bg-emerald-50', text: 'text-emerald-700', dot: 'bg-emerald-500' },
+    DELIVERED:   { label: 'Entregado',  bg: 'bg-emerald-50', text: 'text-emerald-700', dot: 'bg-emerald-500' },
+    FULFILLED:   { label: 'Enviado',    bg: 'bg-blue-50',    text: 'text-blue-600',    dot: 'bg-blue-400'    },
     UNFULFILLED: { label: 'En proceso', bg: 'bg-stone-50',   text: 'text-stone-500',   dot: 'bg-stone-400'   },
     REFUNDED:    { label: 'Reembolsado',bg: 'bg-stone-50',   text: 'text-stone-400',   dot: 'bg-stone-300'   },
   };

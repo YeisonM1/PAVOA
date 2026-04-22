@@ -110,6 +110,114 @@ export default async function handler(req, res) {
   // Firma: Vercel re-parsea el body y rompe el HMAC — procesamos siempre
   validarFirma(rawBody, hmacHeader);
 
+  // ── Entregado: tag "entregado" en la orden ─────────────
+  if (topic === 'orders/updated') {
+    const order          = req.body;
+    const shopifyOrderId = String(order.id || '');
+    const tags           = (order.tags || '').toLowerCase().split(',').map(t => t.trim());
+
+    if (shopifyOrderId && tags.includes('entregado')) {
+      const { data: pedido } = await supabase
+        .from('pedidos')
+        .select('email, shopify_order_name, nombre, fulfillment_status')
+        .eq('shopify_order_id', shopifyOrderId)
+        .single();
+
+      if (pedido && pedido.fulfillment_status !== 'delivered') {
+        await supabase
+          .from('pedidos')
+          .update({ fulfillment_status: 'delivered' })
+          .eq('shopify_order_id', shopifyOrderId);
+
+        console.log(`✅ Pedido marcado como entregado: ${shopifyOrderId}`);
+
+        if (pedido.email) {
+          const nombreCliente = pedido.nombre || 'Cliente';
+          const orderName     = pedido.shopify_order_name || shopifyOrderId;
+          try {
+            await resend.emails.send({
+              from:    'PAVOA <onboarding@resend.dev>',
+              to:      pedido.email,
+              subject: `Tu pedido ${orderName} ha llegado — PAVOA`,
+              html: `
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+<body style="margin:0;padding:0;background-color:#F2E4E1;font-family:Georgia,serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#F2E4E1;padding:40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="520" cellpadding="0" cellspacing="0" style="background-color:#ffffff;">
+
+          <tr>
+            <td align="center" style="padding:40px 40px 32px;border-bottom:1px solid #F2E4E1;">
+              <img src="${LOGO_URL}" alt="PAVOA" width="120" style="display:block;height:auto;max-height:48px;object-fit:contain;" />
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding:36px 40px 8px;">
+              <p style="font-size:10px;letter-spacing:0.3em;color:#9ca3af;text-transform:uppercase;margin:0 0 12px 0;">Pedido entregado</p>
+              <h1 style="font-size:22px;font-weight:300;color:#0B0B0B;letter-spacing:0.1em;text-transform:uppercase;margin:0 0 16px 0;">
+                Hola, ${nombreCliente}
+              </h1>
+              <div style="width:32px;height:1px;background-color:#DFCDB4;margin-bottom:20px;"></div>
+              <p style="font-size:13px;color:#6b7280;line-height:1.8;margin:0;">
+                Tu pedido <strong>${orderName}</strong> ha sido entregado. Esperamos que lo disfrutes mucho.
+              </p>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding:28px 40px 0;">
+              <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#F2E4E1;padding:24px;">
+                <tr>
+                  <td align="center">
+                    <p style="font-size:10px;letter-spacing:0.3em;color:#9ca3af;text-transform:uppercase;margin:0 0 10px 0;">Número de pedido</p>
+                    <p style="font-size:20px;font-weight:700;color:#0B0B0B;letter-spacing:0.15em;margin:0;">${orderName}</p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding:28px 40px 0;">
+              <div style="border-top:1px solid #F2E4E1;padding-top:24px;">
+                <p style="font-size:13px;color:#6b7280;line-height:1.8;margin:0;">
+                  Gracias por confiar en PAVOA. Si tienes alguna duda sobre tu pedido no dudes en contactarnos.
+                </p>
+              </div>
+            </td>
+          </tr>
+
+          <tr>
+            <td align="center" style="padding:32px 40px 40px;">
+              <div style="border-top:1px solid #F2E4E1;padding-top:28px;">
+                <img src="${LOGO_URL}" alt="PAVOA" width="72" style="display:block;margin:0 auto 16px;height:auto;opacity:0.4;" />
+                <p style="font-size:9px;letter-spacing:0.2em;color:#d1d5db;text-transform:uppercase;margin:0;">
+                  © 2026 PAVOA. Todos los derechos reservados.
+                </p>
+              </div>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`,
+            });
+            console.log(`📧 Email de entrega enviado a: ${pedido.email}`);
+          } catch (emailErr) {
+            console.error('⚠️ Email de entrega no enviado:', emailErr.message);
+          }
+        }
+      }
+    }
+  }
+
   // ── Fulfillment: actualizar estado en Supabase + email ──
   if (topic === 'orders/updated' || topic === 'orders/fulfilled') {
     const order             = req.body;
