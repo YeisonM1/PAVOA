@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { heroImage } from '../utils/imageUrl';
 import { useCarousel } from '../hooks/useCarousel';
 import { getHeroSlides } from '../services/productService';
-import logoNegro from '../assets/LOGO-PAVOA.svg';
+import logoNegro from '../assets/Logo Negro.png';
 
 const CACHE_KEY = 'pavoa_hero_slides';
 
