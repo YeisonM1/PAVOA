@@ -67,12 +67,11 @@ export default function ProductPage() {
 
   useEffect(() => {
     if (!producto || imagenes.length <= 1) return;
-    imagenes.forEach((img, i) => {
-      if (i === 0) return;
-      const image = new Image();
-      image.src = heroImage(img);
-    });
-  }, [imagenes]);
+    const nextImage = imagenes[selectedImage + 1];
+    if (!nextImage) return;
+    const image = new Image();
+    image.src = heroImage(nextImage);
+  }, [imagenes, producto, selectedImage]);
 
   useEffect(() => {
     setSelectedImage(0);
@@ -219,7 +218,27 @@ export default function ProductPage() {
     );
     observer.observe(btn);
     return () => observer.disconnect();
-  }, [producto]);
+  }, []);
+
+  const crossSellingRef = useRef(null);
+  const [showCrossSelling, setShowCrossSelling] = useState(false);
+
+  useEffect(() => {
+    const section = crossSellingRef.current;
+    if (!section || showCrossSelling) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry.isIntersecting) return;
+        setShowCrossSelling(true);
+        observer.disconnect();
+      },
+      { rootMargin: '300px 0px' }
+    );
+
+    observer.observe(section);
+    return () => observer.disconnect();
+  }, [showCrossSelling]);
 
   const handleStockAlert = async () => {
     if (!alertEmail) return;
@@ -704,7 +723,9 @@ export default function ProductPage() {
         </div>
       </div>
 
-      <CrossSelling currentProductId={producto.id} />
+      <div ref={crossSellingRef}>
+        {showCrossSelling && <CrossSelling currentProductId={producto.id} />}
+      </div>
 
       {/* ── LIGHTBOX ── */}
       {isLightboxOpen && (
