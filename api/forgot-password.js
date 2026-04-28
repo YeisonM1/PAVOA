@@ -10,8 +10,30 @@ const supabase = createClient(
 const resend = new Resend(process.env.RESEND_API_KEY);
 const APP_URL = process.env.VITE_APP_URL || 'https://pavoa.vercel.app';
 
+// Rate limiter — 3 solicitudes por IP cada 15 minutos
+const _forgotAttempts = new Map();
+const FORGOT_LIMIT  = 3;
+const FORGOT_WINDOW = 15 * 60 * 1000;
+
+function isRateLimited(ip) {
+  const now   = Date.now();
+  const entry = _forgotAttempts.get(ip) || { count: 0, resetAt: now + FORGOT_WINDOW };
+  if (now > entry.resetAt) {
+    _forgotAttempts.set(ip, { count: 1, resetAt: now + FORGOT_WINDOW });
+    return false;
+  }
+  if (entry.count >= FORGOT_LIMIT) return true;
+  _forgotAttempts.set(ip, { ...entry, count: entry.count + 1 });
+  return false;
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+
+  const ip = (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || req.socket?.remoteAddress || 'unknown';
+  if (isRateLimited(ip)) {
+    return res.status(429).json({ error: 'Demasiados intentos. Espera 15 minutos e intenta de nuevo.' });
+  }
 
   const { email } = req.body;
 

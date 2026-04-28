@@ -1,5 +1,6 @@
 import mercadopago from 'mercadopago';
 import { createClient } from '@supabase/supabase-js';
+import { getShopifyToken, eliminarDraftOrder } from './_helpers/shopify-token.js';
 
 const client = new mercadopago.MercadoPagoConfig({
   accessToken: process.env.MP_ACCESS_TOKEN,
@@ -13,38 +14,10 @@ const supabase = createClient(
 const APP_URL      = process.env.VITE_APP_URL || 'https://pavoa.vercel.app';
 const SHOPIFY_DOMAIN = process.env.SHOPIFY_DOMAIN;
 
-let _tokenCache = { token: null, expiresAt: 0 };
-const getShopifyToken = async () => {
-  const now = Date.now();
-  if (_tokenCache.token && _tokenCache.expiresAt - now > 120_000) return _tokenCache.token;
-  const res = await fetch(
-    `https://${SHOPIFY_DOMAIN}/admin/oauth/access_token?grant_type=client_credentials&client_id=${process.env.SHOPIFY_CLIENT_ID}&client_secret=${process.env.SHOPIFY_CLIENT_SECRET}`,
-    { method: 'POST' }
-  );
-  const data = await res.json();
-  _tokenCache = { token: data.access_token, expiresAt: now + (data.expires_in ?? 3600) * 1000 };
-  return _tokenCache.token;
-};
-
 const parsePrecio = (precioNumerico, precioStr) => {
   if (typeof precioNumerico === 'number' && precioNumerico > 0) return Math.round(precioNumerico);
   if (typeof precioStr === 'string') return Number(precioStr.replace(/[^0-9]/g, '')) || 0;
   return 0;
-};
-
-const eliminarDraftOrder = async (draftOrderId) => {
-  try {
-    await fetch(
-      `https://${process.env.SHOPIFY_DOMAIN}/admin/api/2026-04/draft_orders/${draftOrderId}.json`,
-      {
-        method: 'DELETE',
-        headers: { 'X-Shopify-Access-Token': process.env.SHOPIFY_ADMIN_TOKEN },
-      }
-    );
-    console.log(`🗑️ Draft order eliminado: ${draftOrderId}`);
-  } catch (err) {
-    console.error(`⚠️ No se pudo eliminar draft order ${draftOrderId}:`, err.message);
-  }
 };
 
 export default async function handler(req, res) {

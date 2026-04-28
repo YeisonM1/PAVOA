@@ -5,7 +5,7 @@ import { trackBeginCheckout } from '../lib/analytics';
 import SEO from '../components/SEO';
 import { thumbImage } from '../utils/imageUrl';
 import { verificarStock } from '../services/productService';
-import { estaAutenticado, getCliente } from '../services/authService';
+import { estaAutenticado, getCliente, getToken } from '../services/authService';
 
 const NUMERO_WHATSAPP = import.meta.env.VITE_WHATSAPP_NUMBER;
 
@@ -69,9 +69,12 @@ export default function CheckoutPage() {
     if (!estaAutenticado()) return;
     const cliente = getCliente();
     if (!cliente?.email) return;
+    const token = getToken();
+    const headers = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
     fetch('/api/check-descuento', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify({ email: cliente.email }),
     })
       .then(r => r.json())

@@ -1,6 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import bcrypt from 'bcryptjs';
-import crypto from 'crypto';
+import { signToken } from './_helpers/auth.js';
 
 const supabase = createClient(
   process.env.VITE_SUPABASE_URL,
@@ -62,13 +62,16 @@ export default async function handler(req, res) {
       return res.status(401).json({ error: 'Correo o contraseña incorrectos.' });
     }
 
-    // 4. Generar token de sesión
-    const sessionToken = crypto.randomBytes(32).toString('hex');
+    // 4. Generar token JWT firmado
+    const token = signToken({
+      userId: usuario.id,
+      email:  usuario.email,
+    });
     const expiresAt = Date.now() + 30 * 24 * 60 * 60 * 1000; // 30 días
 
     return res.status(200).json({
       ok: true,
-      token: sessionToken,
+      token,
       expiresAt,
       usuario: {
         id:         usuario.id,

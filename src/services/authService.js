@@ -45,6 +45,14 @@ export const getToken = () => {
   return token;
 };
 
+// ── Headers autenticados — reutilizable ───────────────
+const authHeaders = () => {
+  const token = getToken();
+  const headers = { 'Content-Type': 'application/json' };
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+  return headers;
+};
+
 // ── Verificar si está autenticado ─────────────────────
 export const estaAutenticado = () => !!getToken();
 
@@ -67,7 +75,7 @@ export const getPedidos = async () => {
 
   const res = await fetch('/api/mis-pedidos', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: authHeaders(),
     body: JSON.stringify({ email: usuario.email }),
   });
 
