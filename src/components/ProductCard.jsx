@@ -30,6 +30,10 @@ function ProductCard({ producto, onQuickView }) {
   const tieneTallas  = tallas.length > 0;
   const totalStock   = variantes.reduce((sum, v) => sum + (v.stock ?? 0), 0);
   const pocasUnidades = totalStock > 0 && totalStock <= 3;
+
+  // Colores únicos por hex (solo si hay 2+)
+  const coloresUnicos = [...new Map(variantes.map(v => [v.hex, v.hex])).values()];
+  const mostrarColores = coloresUnicos.length >= 2;
   // ────────────────────────────────────────────────────────
 
   return (
@@ -153,6 +157,18 @@ function ProductCard({ producto, onQuickView }) {
         >
           <HeartIcon filled={isWished(producto.id)} />
         </button>
+        {mostrarColores && (
+          <div className="flex items-center justify-center gap-1.5 mt-2">
+            {coloresUnicos.slice(0, 7).map((hex) => (
+              <span
+                key={hex}
+                className="w-3 h-3 rounded-full border border-stone-200 flex-shrink-0"
+                style={{ backgroundColor: hex }}
+                aria-hidden="true"
+              />
+            ))}
+          </div>
+        )}
         <div className="h-[24px] overflow-hidden mt-1.5">
           <p className="text-[13px] font-semibold text-stone-500 transform translate-y-0 opacity-100 md:translate-y-full md:opacity-0 md:group-hover:translate-y-0 md:group-hover:opacity-100 transition-all duration-500 ease-out">
             {producto.precio}
