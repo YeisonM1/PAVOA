@@ -8,7 +8,7 @@ import { emailConfirmacion } from './_helpers/email-templates.js';
 const client        = new mercadopago.MercadoPagoConfig({ accessToken: process.env.MP_ACCESS_TOKEN });
 const SHOPIFY_DOMAIN = process.env.SHOPIFY_DOMAIN;
 const resend        = new Resend(process.env.RESEND_API_KEY);
-const supabase      = createClient(process.env.VITE_SUPABASE_URL, process.env.VITE_SUPABASE_ANON_KEY);
+const supabase      = createClient(process.env.VITE_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
 
 const validarFirma = (req) => {
   const secret = process.env.MP_WEBHOOK_SECRET;

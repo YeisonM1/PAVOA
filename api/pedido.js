@@ -2,6 +2,23 @@ import { getShopifyToken } from './_helpers/shopify-token.js';
 
 const SHOPIFY_DOMAIN = process.env.SHOPIFY_DOMAIN;
 
+// Rate limiter — 10 pedidos por IP cada 15 minutos
+const _pedidoAttempts = new Map();
+const PEDIDO_LIMIT  = 10;
+const PEDIDO_WINDOW = 15 * 60 * 1000;
+
+function isRateLimited(ip) {
+  const now   = Date.now();
+  const entry = _pedidoAttempts.get(ip) || { count: 0, resetAt: now + PEDIDO_WINDOW };
+  if (now > entry.resetAt) {
+    _pedidoAttempts.set(ip, { count: 1, resetAt: now + PEDIDO_WINDOW });
+    return false;
+  }
+  if (entry.count >= PEDIDO_LIMIT) return true;
+  _pedidoAttempts.set(ip, { ...entry, count: entry.count + 1 });
+  return false;
+}
+
 // Caché de idempotencia: evita crear un Draft Order duplicado si el mismo request llega dos veces
 const _pedidoCache = new Map(); // idempotencyKey → { draftOrderId, name, ts }
 const IDEM_TTL = 30 * 60 * 1000; // 30 minutos
@@ -85,6 +102,11 @@ const crearDraftOrder = async (token, { form, cartItems }) => {
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Método no permitido' });
+  }
+
+  const ip = (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || req.socket?.remoteAddress || 'unknown';
+  if (isRateLimited(ip)) {
+    return res.status(429).json({ error: 'Demasiados pedidos. Espera 15 minutos e intenta de nuevo.' });
   }
 
   const { form, cartItems, cartTotal, idempotencyKey } = req.body;
