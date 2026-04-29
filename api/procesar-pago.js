@@ -12,7 +12,7 @@ const supabase = createClient(
 );
 
 const APP_URL      = process.env.VITE_APP_URL || 'https://pavoa.vercel.app';
-const SHOPIFY_DOMAIN = process.env.SHOPIFY_DOMAIN;
+const SHOPIFY_DOMAIN = process.env.VITE_SHOPIFY_DOMAIN;
 
 const parsePrecio = (precioNumerico, precioStr) => {
   if (typeof precioNumerico === 'number' && precioNumerico > 0) return Math.round(precioNumerico);

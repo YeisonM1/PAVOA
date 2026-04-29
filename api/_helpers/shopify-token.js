@@ -1,4 +1,4 @@
-const SHOPIFY_DOMAIN = process.env.SHOPIFY_DOMAIN;
+const SHOPIFY_DOMAIN = process.env.VITE_SHOPIFY_DOMAIN;
 
 // Cache del token en memoria + mutex para evitar race condition en cold starts concurrentes
 let _tokenCache    = { token: null, expiresAt: 0 };

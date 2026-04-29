@@ -1,6 +1,6 @@
 import { getShopifyToken } from './_helpers/shopify-token.js';
 
-const SHOPIFY_DOMAIN = process.env.SHOPIFY_DOMAIN;
+const SHOPIFY_DOMAIN = process.env.VITE_SHOPIFY_DOMAIN;
 
 // Rate limiter — 10 pedidos por IP cada 15 minutos
 const _pedidoAttempts = new Map();

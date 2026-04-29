@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 import { Resend } from 'resend';
 import { emailDespacho, emailEntregado } from './_helpers/email-templates.js';
 
-const SHOPIFY_DOMAIN      = process.env.SHOPIFY_DOMAIN;
+const SHOPIFY_DOMAIN      = process.env.VITE_SHOPIFY_DOMAIN;
 const SHOPIFY_ADMIN_TOKEN = process.env.SHOPIFY_ADMIN_TOKEN;
 const SHOPIFY_SECRET      = process.env.SHOPIFY_WEBHOOK_SECRET;
 const supabase            = createClient(process.env.VITE_SUPABASE_URL, process.env.VITE_SUPABASE_ANON_KEY);
