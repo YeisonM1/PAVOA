@@ -190,7 +190,10 @@ export default function CategoriaPage() {
         </div>
       </section>
 
-      <div className="sticky top-[72px] md:top-[88px] z-30 w-full bg-white/80 backdrop-blur-md border-b border-stone-200 transition-all duration-300">
+      <div
+        className="sticky z-30 w-full bg-white/80 backdrop-blur-md border-b border-stone-200"
+        style={{ top: 'var(--sticky-top, 88px)', transition: 'top 500ms cubic-bezier(0.25,1,0.5,1)' }}
+      >
         <div className="max-w-[1400px] mx-auto px-6 md:px-12 lg:px-16 h-16 md:h-20 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <button

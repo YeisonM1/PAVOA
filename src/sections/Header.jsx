@@ -35,9 +35,12 @@ const Header = () => {
           const currentY = window.scrollY;
           setIsScrolled(currentY > 20);
           if (currentY > 80) {
-            setIsHidden(currentY > lastScrollY.current);
+            const hidden = currentY > lastScrollY.current;
+            setIsHidden(hidden);
+            document.documentElement.style.setProperty('--sticky-top', hidden ? '0px' : '88px');
           } else {
             setIsHidden(false);
+            document.documentElement.style.setProperty('--sticky-top', '88px');
           }
           lastScrollY.current = currentY;
           ticking = false;
