@@ -34,13 +34,15 @@ const Header = () => {
         window.requestAnimationFrame(() => {
           const currentY = window.scrollY;
           setIsScrolled(currentY > 20);
+          const headerEl = document.querySelector('header');
+          const headerH = (headerEl?.offsetHeight ?? 72) + 36;
           if (currentY > 80) {
             const hidden = currentY > lastScrollY.current;
             setIsHidden(hidden);
-            document.documentElement.style.setProperty('--sticky-top', hidden ? '0px' : '88px');
+            document.documentElement.style.setProperty('--sticky-top', hidden ? '0px' : `${headerH}px`);
           } else {
             setIsHidden(false);
-            document.documentElement.style.setProperty('--sticky-top', '88px');
+            document.documentElement.style.setProperty('--sticky-top', `${headerH}px`);
           }
           lastScrollY.current = currentY;
           ticking = false;
