@@ -17,7 +17,7 @@ export default function CartDrawer({ cartOpen, setCartOpen }) {
 
   useEffect(() => {
     if (cartOpen) {
-      setRecentlyViewed(getRecentlyViewed());
+      setRecentlyViewed(getRecentlyViewed().slice(0, 3));
       setStockErrores([]);
     }
   }, [cartOpen]);
