@@ -3,7 +3,7 @@ import { verifyToken } from './_helpers/auth.js';
 
 const supabase = createClient(
   process.env.VITE_SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY
+  process.env.VITE_SUPABASE_ANON_KEY
 );
 
 export default async function handler(req, res) {

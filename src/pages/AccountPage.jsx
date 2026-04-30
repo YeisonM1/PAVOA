@@ -281,12 +281,12 @@ export default function AccountPage() {
     const c = getCliente();
     setCliente(c);
 
-    Promise.all([
-      getPedidos(),
-      getProductos(),
-    ])
-      .then(([pedidosData, productos]) => {
-        setPedidos(pedidosData);
+    getPedidos()
+      .then(pedidosData => setPedidos(pedidosData))
+      .catch(() => {});
+
+    getProductos()
+      .then(productos => {
         setAllProductos(productos);
         const map = {};
         productos.forEach(p => { map[p.nombre] = p.imagen1; });
