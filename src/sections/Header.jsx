@@ -75,11 +75,15 @@ const Header = () => {
   return (
     <>
       <header
-        className={`fixed top-9 left-0 w-full z-50 transition-all duration-500 border-b ${
+        className={`fixed top-9 left-0 w-full z-50 border-b ${
           isScrolled ? 'border-white/10 py-1 md:py-2 shadow-lg' : 'border-transparent py-2 md:py-4'
-        } backdrop-blur-md ${(isHidden && !menuOpen && !catalogoOpen && !isSearchOpen) ? '-translate-y-full' : 'translate-y-0'}`}
+        } backdrop-blur-md`}
         style={{
           background: isScrolled ? 'rgba(242, 228, 225, 0.98)' : 'rgba(242, 228, 225, 0.92)',
+          transform: (isHidden && !menuOpen && !catalogoOpen && !isSearchOpen)
+            ? 'translateY(calc(-100% - 36px))'
+            : 'translateY(0)',
+          transition: 'transform 500ms cubic-bezier(0.25,1,0.5,1), background 500ms, box-shadow 500ms, padding 500ms',
         }}
       >
         <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
