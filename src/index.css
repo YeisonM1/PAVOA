@@ -63,4 +63,9 @@
     outline: 2px solid var(--color-gold);
     outline-offset: 2px;
   }
+
+  /* Elimina el delay de 300ms en táctil (iOS Safari + Android) */
+  a, button, [role="button"] {
+    touch-action: manipulation;
+  }
 }
