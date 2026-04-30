@@ -1,7 +1,9 @@
-import { useState, useEffect, useContext } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { estaAutenticado, getCliente, getPedidos, cerrarSesion } from '../services/authService';
 import { getProductos } from '../services/productService';
+import { useWishlist } from '../context/WishlistContext';
+import ProductCard from '../components/ProductCard';
 import SEO from '../components/SEO';
 
 const formatFecha = (iso) => new Date(iso).toLocaleDateString('es-CO', {
@@ -266,11 +268,13 @@ function OrdenCard({ pedido, imagenMap }) {
 
 export default function AccountPage() {
   const navigate = useNavigate();
-  const [cliente, setCliente]     = useState(null);
-  const [pedidos, setPedidos]     = useState([]);
-  const [loading, setLoading]     = useState(true);
-  const [activeTab, setActiveTab] = useState('pedidos');
-  const [imagenMap, setImagenMap] = useState({});
+  const { wishlist, clearWishlist } = useWishlist();
+  const [cliente, setCliente]         = useState(null);
+  const [pedidos, setPedidos]         = useState([]);
+  const [allProductos, setAllProductos] = useState([]);
+  const [loading, setLoading]         = useState(true);
+  const [activeTab, setActiveTab]     = useState('pedidos');
+  const [imagenMap, setImagenMap]     = useState({});
 
   useEffect(() => {
     if (!estaAutenticado()) { navigate('/login', { replace: true }); return; }
@@ -283,7 +287,7 @@ export default function AccountPage() {
     ])
       .then(([pedidosData, productos]) => {
         setPedidos(pedidosData);
-        // Mapa nombre → imagen1
+        setAllProductos(productos);
         const map = {};
         productos.forEach(p => { map[p.nombre] = p.imagen1; });
         setImagenMap(map);
@@ -320,7 +324,7 @@ export default function AccountPage() {
             <p className="text-[11px] text-stone-400 mt-1 tracking-[0.1em]">{cliente?.email}</p>
           </div>
           <button
-            onClick={async () => { await cerrarSesion(); navigate('/'); }}
+            onClick={() => { clearWishlist(); cerrarSesion(); navigate('/'); }}
             style={{ letterSpacing: '0.15em' }}
             className="text-[10px] font-bold text-stone-400 hover:text-stone-900 uppercase transition-colors border-b border-stone-200 pb-0.5"
           >
@@ -332,6 +336,7 @@ export default function AccountPage() {
         <div className="flex gap-0 mb-10 border-b border-stone-100">
           {[
             { label: 'Mis Pedidos', value: 'pedidos' },
+            { label: 'Mis Deseos',  value: 'deseos'  },
             { label: 'Mi Perfil',   value: 'perfil'  },
           ].map(tab => (
             <button
@@ -379,6 +384,32 @@ export default function AccountPage() {
             )}
           </div>
         )}
+
+        {/* ── DESEOS ── */}
+        {activeTab === 'deseos' && (() => {
+          const wishlistProductos = allProductos.filter(p => wishlist.includes(p.id));
+          return wishlistProductos.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-20 gap-3">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" className="text-stone-300">
+                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+              </svg>
+              <p style={{ letterSpacing: '0.3em' }} className="text-[9px] font-bold uppercase text-stone-300">
+                Sin piezas guardadas
+              </p>
+              <button
+                onClick={() => navigate('/categoria')}
+                style={{ letterSpacing: '0.2em' }}
+                className="mt-2 text-[10px] font-bold text-stone-900 uppercase border-b border-stone-900 pb-0.5 hover:text-stone-500 transition-colors"
+              >
+                Explorar colección →
+              </button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-12 md:gap-x-8 md:gap-y-16">
+              {wishlistProductos.map(p => <ProductCard key={p.id} producto={p} />)}
+            </div>
+          );
+        })()}
 
         {/* ── PERFIL ── */}
         {activeTab === 'perfil' && (
