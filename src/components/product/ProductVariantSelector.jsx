@@ -125,6 +125,8 @@ export default function ProductVariantSelector({
                   <button
                     key={talla}
                     onClick={() => onTallaSelect(talla)}
+                    aria-label={`Talla ${talla}${agotado ? ', agotado' : ''}${activo ? ', seleccionada' : ''}`}
+                    aria-pressed={activo}
                     className={`h-12 border flex items-center justify-center text-[11px] font-medium tracking-[0.05em] transition-colors uppercase relative
                       ${agotado && activo ? 'border-stone-900 bg-stone-900 text-white' :
                         agotado ? 'border-stone-100 text-stone-300' :
