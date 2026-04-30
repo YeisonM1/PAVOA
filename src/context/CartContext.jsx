@@ -9,6 +9,7 @@ export function CartProvider({ children }) {
   const [cartItems, setCartItems]             = useLocalStorage('pavoa-cart', []);
   const [isCartAnimating, setIsCartAnimating] = useState(false);
   const [showToast, setShowToast]             = useState(null);
+  const [toastKey, setToastKey]               = useState(0);
 
   const addToCart = useCallback((producto, talla, cantidad = 1) => {
     setCartItems((prev) => {
@@ -27,6 +28,7 @@ export function CartProvider({ children }) {
 
     trackAddToCart(producto, talla, cantidad);
     setIsCartAnimating(true);
+    setToastKey(k => k + 1);
     setShowToast(`${producto.nombre} añadido`);
     setTimeout(() => setIsCartAnimating(false), 300);
     setTimeout(() => setShowToast(null), 3000);
@@ -66,8 +68,8 @@ export function CartProvider({ children }) {
   const value = useMemo(() => ({
     cartItems, cartCount, cartTotal,
     addToCart, removeFromCart, updateQuantity, clearCart,
-    isCartAnimating, showToast,
-  }), [cartItems, cartCount, cartTotal, addToCart, removeFromCart, updateQuantity, clearCart, isCartAnimating, showToast]);
+    isCartAnimating, showToast, toastKey,
+  }), [cartItems, cartCount, cartTotal, addToCart, removeFromCart, updateQuantity, clearCart, isCartAnimating, showToast, toastKey]);
 
   return (
     <CartContext.Provider value={value}>

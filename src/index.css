@@ -25,7 +25,13 @@
   --color-border:     #e0d8ce;
 }
 
-/* 3. BASE */
+/* 3. ANIMACIONES GLOBALES */
+@keyframes progress-shrink {
+  from { transform: scaleX(1); }
+  to   { transform: scaleX(0); }
+}
+
+/* 4. BASE */
 @layer base {
   html {
     scroll-behavior: smooth;

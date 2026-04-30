@@ -128,18 +128,25 @@ function AppShell() {
 }
 
 function Toast() {
-  const { showToast } = useContext(CartContext);
+  const { showToast, toastKey } = useContext(CartContext);
   return (
     <div className={`fixed bottom-8 left-1/2 -translate-x-1/2 z-[100] transition-all duration-500 ease-out ${
       showToast ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'
     }`}>
-      <div className="bg-stone-900 text-white px-6 py-3 shadow-2xl flex items-center gap-3 border border-stone-800">
+      <div className="relative bg-stone-900 text-white px-6 py-3 shadow-2xl flex items-center gap-3 border border-stone-800 overflow-hidden">
         <span className="text-[10px] font-bold tracking-[0.2em] uppercase whitespace-nowrap">
           {showToast}
         </span>
-        <div className="w-4 h-4 flex items-center justify-center bg-stone-700 rounded-full">
+        <div className="w-4 h-4 flex items-center justify-center bg-stone-700 rounded-full flex-shrink-0">
           <span className="text-[8px]">✓</span>
         </div>
+        {showToast && (
+          <div
+            key={toastKey}
+            className="absolute bottom-0 left-0 h-[2px] w-full origin-left"
+            style={{ background: 'var(--color-gold)', animation: 'progress-shrink 3s linear forwards' }}
+          />
+        )}
       </div>
     </div>
   );

@@ -16,8 +16,10 @@ const Header = () => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
 
   const [isScrolled, setIsScrolled]     = useState(false);
+  const [isHidden, setIsHidden]         = useState(false);
   const [menuOpen, setMenuOpen]         = useState(false);
   const [catalogoOpen, setCatalogoOpen] = useState(false);
+  const lastScrollY = useRef(0);
 
   const megaRef  = useRef(null);
   const panelRef = useRef(null);
@@ -30,7 +32,14 @@ const Header = () => {
     const onScroll = () => {
       if (!ticking) {
         window.requestAnimationFrame(() => {
-          setIsScrolled(window.scrollY > 20);
+          const currentY = window.scrollY;
+          setIsScrolled(currentY > 20);
+          if (currentY > 80) {
+            setIsHidden(currentY > lastScrollY.current);
+          } else {
+            setIsHidden(false);
+          }
+          lastScrollY.current = currentY;
           ticking = false;
         });
         ticking = true;
@@ -63,7 +72,7 @@ const Header = () => {
       <header
         className={`fixed top-9 left-0 w-full z-50 transition-all duration-500 border-b ${
           isScrolled ? 'border-white/10 py-1 md:py-2 shadow-lg' : 'border-transparent py-2 md:py-4'
-        } backdrop-blur-md`}
+        } backdrop-blur-md ${(isHidden && !menuOpen && !catalogoOpen && !isSearchOpen) ? '-translate-y-full' : 'translate-y-0'}`}
         style={{
           background: isScrolled ? 'rgba(242, 228, 225, 0.98)' : 'rgba(242, 228, 225, 0.92)',
         }}

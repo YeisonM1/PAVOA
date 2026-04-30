@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { productImage } from '../utils/imageUrl';
 import { useWishlist } from '../context/WishlistContext';
+import { useCart } from '../hooks/useCart';
+import { getProductoById } from '../services/productService';
 
 const HeartIcon = ({ filled }) => (
   <svg width="15" height="15" viewBox="0 0 24 24" fill={filled ? '#0B0B0B' : 'none'} stroke={filled ? '#0B0B0B' : 'currentColor'} strokeWidth="1.5">
@@ -12,6 +14,7 @@ const HeartIcon = ({ filled }) => (
 function ProductCard({ producto, onQuickView }) {
   const [showMobileSizes, setShowMobileSizes] = useState(false);
   const { isWished, toggle } = useWishlist();
+  const { addToCart } = useCart();
 
   // ── Leer variantes ──────────────────────────────────────
   const variantes = (() => {
@@ -40,6 +43,7 @@ function ProductCard({ producto, onQuickView }) {
     <Link
       to={`/producto/${producto.id}`}
       onClick={() => window.scrollTo(0, 0)}
+      onMouseEnter={() => getProductoById(producto.id)}
       className="group cursor-pointer flex flex-col gap-4 w-full flex-shrink-0 snap-center relative block overflow-hidden isolate"
     >
       <div className="relative overflow-hidden bg-stone-100" style={{ aspectRatio: '3/4' }}>
@@ -120,24 +124,34 @@ function ProductCard({ producto, onQuickView }) {
               {esTallaUnica ? (
                 <>
                   <span className="text-[9px] font-bold tracking-[0.25em] text-stone-400 uppercase">Talla disponible</span>
-                  <div className="px-6 h-10 flex items-center justify-center text-[11px] font-medium text-stone-400 border border-stone-200 bg-stone-50 cursor-default select-none tracking-[0.1em]">
-                    TALLA ÚNICA
-                  </div>
+                  <button
+                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); addToCart(producto, 'ÚNICA', 1); setShowMobileSizes(false); }}
+                    className="px-6 h-10 flex items-center justify-center text-[11px] font-medium text-stone-700 border border-stone-200 bg-white/60 hover:bg-stone-900 hover:text-white hover:border-stone-900 transition-all duration-300 tracking-[0.1em]"
+                  >
+                    TALLA ÚNICA — Añadir
+                  </button>
                 </>
               ) : (
                 <>
                   <span className="text-[9px] font-bold tracking-[0.25em] text-stone-800 uppercase">Seleccionar Talla</span>
                   <div className="flex gap-2 w-full justify-center">
                     {tallas.map(talla => (
-                      <span
+                      <button
                         key={talla}
+                        onClick={coloresUnicos.length < 2
+                          ? (e) => { e.preventDefault(); e.stopPropagation(); addToCart(producto, talla, 1); setShowMobileSizes(false); }
+                          : (e) => { e.stopPropagation(); }
+                        }
                         className="w-10 h-10 flex items-center justify-center text-[11px] font-medium text-stone-700 border border-stone-300/60 bg-white/60 hover:bg-stone-900 hover:text-white hover:border-stone-900 transition-all duration-300 cursor-pointer"
                       >
                         {talla}
-                      </span>
+                      </button>
                     ))}
                   </div>
-                  <span className="text-[8px] tracking-[0.2em] text-stone-400 uppercase">Ver producto →</span>
+                  {coloresUnicos.length >= 2
+                    ? <span className="text-[8px] tracking-[0.2em] text-stone-400 uppercase">Ver producto →</span>
+                    : <span className="text-[8px] tracking-[0.2em] text-stone-400 uppercase">Toca para añadir</span>
+                  }
                 </>
               )}
             </div>

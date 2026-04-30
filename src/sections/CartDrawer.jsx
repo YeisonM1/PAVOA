@@ -1,20 +1,38 @@
-import React, { useContext, useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { X, ShoppingBag } from 'lucide-react';
-import { CartContext } from '../App';
+import { useCart } from '../hooks/useCart';
+import { verificarStock } from '../services/productService';
 import { useNavigate, Link } from 'react-router-dom';
 import { thumbImage } from '../utils/imageUrl';
 import { getRecentlyViewed } from '../hooks/useRecentlyViewed';
 
 export default function CartDrawer({ cartOpen, setCartOpen }) {
   const navigate = useNavigate();
-  const { cartItems, cartCount, cartTotal, removeFromCart, updateQuantity } = useContext(CartContext);
-  const [modalOpen, setModalOpen]       = React.useState(false);
+  const { cartItems, cartCount, cartTotal, removeFromCart, updateQuantity } = useCart();
+  const [modalOpen, setModalOpen]           = React.useState(false);
   const [recentlyViewed, setRecentlyViewed] = useState([]);
+  const [stockLoading, setStockLoading]     = useState(false);
+  const [stockErrores, setStockErrores]     = useState([]);
   const drawerRef = useRef(null);
 
   useEffect(() => {
-    if (cartOpen) setRecentlyViewed(getRecentlyViewed());
+    if (cartOpen) {
+      setRecentlyViewed(getRecentlyViewed());
+      setStockErrores([]);
+    }
   }, [cartOpen]);
+
+  const handleFinalizarCompra = async () => {
+    setStockLoading(true);
+    setStockErrores([]);
+    const errores = await verificarStock(cartItems);
+    setStockLoading(false);
+    if (errores.length > 0) {
+      setStockErrores(errores);
+      return;
+    }
+    setModalOpen(true);
+  };
 
   useEffect(() => {
     if (!cartOpen || !drawerRef.current) return;
@@ -167,15 +185,25 @@ export default function CartDrawer({ cartOpen, setCartOpen }) {
                 ${cartTotal.toLocaleString('es-CO')}
               </span>
             </div>
-            <button 
-              onClick={() => setModalOpen(true)} // ✅ Abre modal, no WhatsApp directo
-              className="w-full bg-stone-900 text-white py-4 text-[10px] font-bold tracking-[0.25em] uppercase hover:bg-stone-800 transition-colors flex items-center justify-center gap-2"
-              aria-label="Finalizar compra por WhatsApp"
+            {stockErrores.length > 0 && (
+              <div className="mb-4 flex flex-col gap-1">
+                {stockErrores.map((err, i) => (
+                  <p key={i} className="text-[10px] text-red-600 tracking-[0.08em]">{err}</p>
+                ))}
+              </div>
+            )}
+            <button
+              onClick={handleFinalizarCompra}
+              disabled={stockLoading}
+              className="w-full bg-stone-900 text-white py-4 text-[10px] font-bold tracking-[0.25em] uppercase hover:bg-stone-800 transition-colors flex items-center justify-center gap-2 disabled:opacity-60"
+              aria-label="Finalizar compra"
             >
-              Finalizar Compra
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-                <path d="M5 12h14M12 5l7 7-7 7"/>
-              </svg>
+              {stockLoading ? 'Verificando stock...' : 'Finalizar Compra'}
+              {!stockLoading && (
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                  <path d="M5 12h14M12 5l7 7-7 7"/>
+                </svg>
+              )}
             </button>
           </div>
         )}
