@@ -34,14 +34,13 @@ export default function Instagram() {
       {/* Título */}
       <div className="text-center mb-10 px-6">
         <p
-          style={{ fontFamily: 'Montserrat, sans-serif', letterSpacing: '0.3em' }}
-          className="text-[10px] font-medium text-stone-400 mb-3"
+          style={{ letterSpacing: '0.3em' }}
+          className="font-secondary text-[10px] font-medium text-stone-400 mb-3"
         >
           SÍGUENOS EN INSTAGRAM
         </p>
         <h2
-          style={{ fontFamily: 'Montserrat, sans-serif' }}
-          className="text-2xl md:text-3xl font-light text-stone-900 tracking-widest"
+          className="font-secondary text-2xl md:text-3xl font-light text-stone-900 tracking-widest"
         >
           @PAVOA
         </h2>
@@ -80,8 +79,8 @@ export default function Instagram() {
           href="https://instagram.com/pavoa"
           target="_blank"
           rel="noopener noreferrer"
-          style={{ fontFamily: 'Montserrat, sans-serif', letterSpacing: '0.2em' }}
-          className="inline-block text-[11px] font-medium text-stone-500 hover:text-stone-900 transition-colors border-b border-stone-300 pb-0.5"
+          style={{ letterSpacing: '0.2em' }}
+          className="font-secondary inline-block text-[11px] font-medium text-stone-500 hover:text-stone-900 transition-colors border-b border-stone-300 pb-0.5"
         >
           VER PERFIL
         </a>

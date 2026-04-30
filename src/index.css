@@ -1,11 +1,13 @@
 /* 1. TAILWIND */
 @import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600&display=swap');
 
 /* 2. TEMA DE TAILWIND — tokens disponibles como clases de Tailwind */
 @theme {
   /* Tipografía */
   --font-sans: 'Raleway', sans-serif;
-  --font-primary: 'Raleway', sans-serif; /* alias — eliminar inline styles que lo usan */
+  --font-primary: 'Raleway', sans-serif;
+  --font-secondary: 'Montserrat', sans-serif;
 
   /* Colores principales */
   --color-black:      #0B0B0B;

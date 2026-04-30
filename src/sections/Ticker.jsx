@@ -41,8 +41,8 @@ export default function Ticker() {
         {repeated.map((item, i) => (
           <span
             key={i}
-            style={{ fontFamily: 'Montserrat, sans-serif', letterSpacing: '0.2em' }}
-            className="text-[10px] font-light text-stone-300 flex-shrink-0 flex items-center"
+            style={{ letterSpacing: '0.2em' }}
+            className="font-secondary text-[10px] font-light text-stone-300 flex-shrink-0 flex items-center"
           >
             <span className="mx-8">{item.toUpperCase()}</span>
             <span style={{ color: '#57534e' }}>·</span>

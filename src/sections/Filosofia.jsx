@@ -14,16 +14,15 @@ export default function Filosofia() {
 
         {/* Tag */}
         <p
-          style={{ fontFamily: 'Montserrat, sans-serif', letterSpacing: '0.3em' }}
-          className="text-[10px] font-medium text-stone-500 mb-8"
+          style={{ letterSpacing: '0.3em' }}
+          className="font-secondary text-[10px] font-medium text-stone-500 mb-8"
         >
           NUESTRA FILOSOFÍA
         </p>
 
         {/* Frase principal */}
         <h2
-          style={{ fontFamily: 'Montserrat, sans-serif' }}
-          className="text-4xl md:text-5xl lg:text-6xl font-[100] text-white leading-tight mb-6"
+          className="font-secondary text-4xl md:text-5xl lg:text-6xl font-[100] text-white leading-tight mb-6"
         >
           No es ropa.
           <br />
@@ -35,8 +34,7 @@ export default function Filosofia() {
 
         {/* Subtexto */}
         <p
-          style={{ fontFamily: 'Montserrat, sans-serif' }}
-          className="text-stone-400 text-sm font-light leading-relaxed max-w-sm mb-12"
+          className="font-secondary text-stone-400 text-sm font-light leading-relaxed max-w-sm mb-12"
         >
           Cada pieza de PAVOA nace de la convicción de que la mujer que se mueve con intención merece ropa que esté a su altura. Elegancia natural. Presencia silenciosa.
         </p>
@@ -44,8 +42,8 @@ export default function Filosofia() {
         {/* CTA */}
         <a
           href="#nosotros"
-          style={{ fontFamily: 'Montserrat, sans-serif', letterSpacing: '0.2em' }}
-          className="inline-block text-[11px] font-semibold text-stone-900 bg-white px-8 py-4 hover:bg-stone-100 transition-colors duration-300 w-fit"
+          style={{ letterSpacing: '0.2em' }}
+          className="font-secondary inline-block text-[11px] font-semibold text-stone-900 bg-white px-8 py-4 hover:bg-stone-100 transition-colors duration-300 w-fit"
         >
           SOBRE NOSOTROS
         </a>
