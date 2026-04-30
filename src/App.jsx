@@ -98,6 +98,7 @@ function AppShell() {
               </span>
             </div>
           }>
+            <div key={pathname} style={{ animation: 'page-fade-in 150ms ease-out' }}>
             <Routes>
               <Route path="/"              element={<HomePage />} />
               <Route path="/categoria"     element={<CategoriaPage />} />
@@ -116,6 +117,7 @@ function AppShell() {
               <Route path="/wishlist"         element={<WishlistPage />} />
               <Route path="*"              element={<NotFoundPage />} />
             </Routes>
+            </div>
           </Suspense>
           </ErrorBoundary>
         </div>
