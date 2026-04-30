@@ -42,9 +42,11 @@
 @layer base {
   html {
     scroll-behavior: smooth;
+    overflow-x: hidden;
   }
 
   body {
+    overflow-x: hidden;
     font-family: var(--font-sans);          /* ✅ var() en lugar de theme() */
     background-color: var(--color-white);
     color: var(--color-black);
