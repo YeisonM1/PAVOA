@@ -16,10 +16,8 @@ const Header = () => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
 
   const [isScrolled, setIsScrolled]     = useState(false);
-  const [isHidden, setIsHidden]         = useState(false);
   const [menuOpen, setMenuOpen]         = useState(false);
   const [catalogoOpen, setCatalogoOpen] = useState(false);
-  const lastScrollY = useRef(0);
 
   const megaRef  = useRef(null);
   const panelRef = useRef(null);
@@ -36,15 +34,7 @@ const Header = () => {
           setIsScrolled(currentY > 20);
           const headerEl = document.querySelector('header');
           const headerH = (headerEl?.offsetHeight ?? 72) + 36;
-          if (currentY > 80) {
-            const hidden = currentY > lastScrollY.current;
-            setIsHidden(hidden);
-            document.documentElement.style.setProperty('--sticky-top', hidden ? '0px' : `${headerH}px`);
-          } else {
-            setIsHidden(false);
-            document.documentElement.style.setProperty('--sticky-top', `${headerH}px`);
-          }
-          lastScrollY.current = currentY;
+          document.documentElement.style.setProperty('--sticky-top', `${headerH}px`);
           ticking = false;
         });
         ticking = true;
@@ -80,10 +70,7 @@ const Header = () => {
         } backdrop-blur-md`}
         style={{
           background: isScrolled ? 'rgba(242, 228, 225, 0.98)' : 'rgba(242, 228, 225, 0.92)',
-          transform: (isHidden && !menuOpen && !catalogoOpen && !isSearchOpen)
-            ? 'translateY(calc(-100% - 36px))'
-            : 'translateY(0)',
-          transition: 'transform 500ms cubic-bezier(0.25,1,0.5,1), background 500ms, box-shadow 500ms, padding 500ms',
+          transition: 'background 500ms, box-shadow 500ms, padding 500ms',
         }}
       >
         <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
