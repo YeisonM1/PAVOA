@@ -74,3 +74,11 @@ Ver `.env.example`. Las `VITE_*` son públicas (build time). Las secretas solo e
 
 ## Git workflow
 Commit + push a `main` después de cada cambio. Vercel auto-deploys. **Nunca dejar commits sin sincronizar.**
+
+---
+
+## ⚠️ Límite Vercel Hobby — 12 funciones serverless
+El plan Hobby de Vercel permite **máximo 12 archivos** en `/api/` (excluye `_helpers/`).
+Actualmente se usan los 12. Antes de agregar una nueva función:
+1. Verificar si se puede llamar al servicio directamente desde el frontend (ej. Supabase con anon key + RLS)
+2. Si no, consolidar dos funciones existentes en una antes de crear la nueva
