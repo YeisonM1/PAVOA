@@ -6,12 +6,29 @@ import { InstagramIcon, FacebookIcon, WhatsAppIcon } from '../components/Icons';
 export default function Footer() {
   const [email, setEmail] = useState('');
   const [subscribed, setSubscribed] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
-  const handleSubscribe = (e) => {
+  const handleSubscribe = async (e) => {
     e.preventDefault();
-    if (!email) return;
-    setSubscribed(true);
-    setEmail('');
+    if (!email || loading) return;
+    setLoading(true);
+    setError('');
+    try {
+      const res = await fetch('/api/newsletter', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Error al suscribirse.');
+      setSubscribed(true);
+      setEmail('');
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -39,24 +56,29 @@ export default function Footer() {
               ✓ GRACIAS POR SUSCRIBIRTE
             </p>
           ) : (
-            <form onSubmit={handleSubscribe} className="flex w-full md:w-auto">
-              <label htmlFor="newsletter-email" className="sr-only">Tu correo electrónico</label>
-              <input
-                id="newsletter-email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="Tu correo electrónico"
-                               className="bg-transparent border border-stone-700 text-white text-[11px] px-5 py-3 w-full md:w-72 placeholder-stone-500 focus:outline-none focus:border-stone-400 transition-colors"
-              />
-              <button
-                type="submit"
-                style={{ letterSpacing: '0.15em' }}
-                className="text-[10px] font-semibold text-stone-900 bg-white px-6 py-3 hover:bg-stone-200 transition-colors whitespace-nowrap"
-              >
-                SUSCRIBIRSE
-              </button>
-            </form>
+            <div className="flex flex-col gap-2 w-full md:w-auto">
+              <form onSubmit={handleSubscribe} className="flex w-full md:w-auto">
+                <label htmlFor="newsletter-email" className="sr-only">Tu correo electrónico</label>
+                <input
+                  id="newsletter-email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="Tu correo electrónico"
+                  disabled={loading}
+                  className="bg-transparent border border-stone-700 text-white text-[11px] px-5 py-3 w-full md:w-72 placeholder-stone-500 focus:outline-none focus:border-stone-400 transition-colors disabled:opacity-50"
+                />
+                <button
+                  type="submit"
+                  disabled={loading}
+                  style={{ letterSpacing: '0.15em' }}
+                  className="text-[10px] font-semibold text-stone-900 bg-white px-6 py-3 hover:bg-stone-200 transition-colors whitespace-nowrap disabled:opacity-50"
+                >
+                  {loading ? '...' : 'SUSCRIBIRSE'}
+                </button>
+              </form>
+              {error && <p className="text-[10px] text-red-400 tracking-[0.1em]">{error}</p>}
+            </div>
           )}
         </div>
       </div>
