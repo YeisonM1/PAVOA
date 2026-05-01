@@ -7,8 +7,6 @@ import { thumbImage } from '../utils/imageUrl';
 import { verificarStock } from '../services/productService';
 import { estaAutenticado, getCliente, getToken } from '../services/authService';
 
-const NUMERO_WHATSAPP = import.meta.env.VITE_WHATSAPP_NUMBER;
-
 const HORARIOS = ['Mañana (8am - 12pm)', 'Tarde (12pm - 6pm)', 'Noche (6pm - 9pm)'];
 
 const CAMPO = ({ label, name, value, onChange, placeholder, type = 'text', required = true }) => (
@@ -60,7 +58,6 @@ export default function CheckoutPage() {
     }
   }, []);
 
-  const [enviando, setEnviando]       = useState(false);
   const [cargandoPago, setCargandoPago] = useState(false);
   const [errors, setErrors]           = useState({});
   const [tieneDescuento, setTieneDescuento] = useState(false);
@@ -115,51 +112,7 @@ export default function CheckoutPage() {
     return nuevosErrores;
   };
 
-  // ── FUNCIÓN 1: PAGO POR WHATSAPP ──
-  const handleConfirmar = async () => {
-    const nuevosErrores = validar();
-    if (Object.keys(nuevosErrores).length > 0) {
-      setErrors(nuevosErrores);
-      const primerError = document.querySelector('.error-field');
-      if (primerError) primerError.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      return;
-    }
-
-    setEnviando(true);
-
-    let mensaje = `Hola PAVOA, me gustaría confirmar mi pedido 🛍️\n\n`;
-    mensaje += `*DATOS DE ENVÍO*\n`;
-    mensaje += `───────────────\n`;
-    mensaje += `👤 Nombre: ${form.nombre}\n`;
-    if (form.email) mensaje += `📧 Email: ${form.email}\n`;
-    mensaje += `📞 Teléfono: ${form.telefono}\n`;
-    mensaje += `🏙️ Ciudad: ${form.ciudad}\n`;
-    mensaje += `📍 Dirección: ${form.direccion}, ${form.barrio}\n`;
-    if (form.referencia) mensaje += `📌 Referencia: ${form.referencia}\n`;
-    mensaje += `🕐 Horario: ${form.horario}\n\n`;
-    mensaje += `*DETALLE DEL PEDIDO*\n`;
-    mensaje += `───────────────\n`;
-
-    cartItems.forEach((item, i) => {
-      const color = item.producto.colorSeleccionado ? ` · Color: ${item.producto.colorSeleccionado}` : '';
-      mensaje += `${i + 1}. ${item.producto.nombre}\n`;
-      mensaje += `   Talla: ${item.talla}${color}\n`;
-      mensaje += `   Cantidad: ${item.cantidad}\n`;
-      mensaje += `   Precio: ${item.producto.precio}\n\n`;
-    });
-
-    mensaje += `───────────────\n`;
-    mensaje += `*Total estimado: $${cartTotal.toLocaleString('es-CO')}*\n\n`;
-    mensaje += `Quedo atenta a los pasos para confirmar el pago.`;
-
-    setTimeout(() => {
-      window.open(`https://wa.me/${NUMERO_WHATSAPP}?text=${encodeURIComponent(mensaje)}`, '_blank');
-      setEnviando(false);
-      navigate('/');
-    }, 600);
-  };
-
-  // ── FUNCIÓN 2: PAGO EN LÍNEA (Checkout Pro) ──
+  // ── PAGO EN LÍNEA (Checkout Pro) ──
   const handlePagarOnline = async () => {
     const nuevosErrores = validar();
     if (Object.keys(nuevosErrores).length > 0) {
@@ -327,19 +280,8 @@ export default function CheckoutPage() {
               </div>
             </div>
 
-            {/* ── BOTONES DE PAGO ── */}
-            <button onClick={handleConfirmar} disabled={enviando || cargandoPago} className={`mt-12 w-full h-14 text-[10px] font-bold tracking-[0.25em] uppercase transition-all duration-300 flex items-center justify-center gap-3 ${enviando ? 'bg-stone-700 text-white scale-[0.98]' : 'bg-stone-900 text-white hover:bg-stone-800'}`}>
-              {enviando ? 'Redirigiendo a WhatsApp...' : 'Confirmar pedido por WhatsApp'}
-              {!enviando && <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>}
-            </button>
-
-            <div className="flex items-center gap-4 my-6">
-              <div className="flex-1 h-[1px] bg-stone-100" />
-              <span className="text-[9px] tracking-[0.2em] text-stone-300 uppercase">o</span>
-              <div className="flex-1 h-[1px] bg-stone-100" />
-            </div>
-
-            <button onClick={handlePagarOnline} disabled={enviando || cargandoPago} className={`w-full h-14 text-[10px] font-bold tracking-[0.25em] uppercase transition-all duration-300 flex items-center justify-center gap-3 border border-stone-900 ${cargandoPago ? 'bg-stone-100 text-stone-400 border-stone-200 cursor-not-allowed' : 'bg-white text-stone-900 hover:bg-stone-50'}`}>
+            {/* ── BOTÓN DE PAGO ── */}
+            <button onClick={handlePagarOnline} disabled={cargandoPago} className={`mt-12 w-full h-14 text-[10px] font-bold tracking-[0.25em] uppercase transition-all duration-300 flex items-center justify-center gap-3 border border-stone-900 ${cargandoPago ? 'bg-stone-100 text-stone-400 border-stone-200 cursor-not-allowed' : 'bg-stone-900 text-white hover:bg-stone-800'}`}>
               {cargandoPago
                 ? <><span className="w-3.5 h-3.5 border-2 border-stone-300 border-t-stone-500 rounded-full animate-spin" />Redirigiendo a MercadoPago...</>
                 : 'Pagar en línea ahora'}
@@ -348,10 +290,6 @@ export default function CheckoutPage() {
             {errors.general && (
               <p className="text-[10px] text-red-500 tracking-[0.08em] text-center mt-4">{errors.general}</p>
             )}
-
-            <p className="text-[10px] text-stone-400 tracking-[0.1em] uppercase text-center mt-4 italic">
-              Selecciona tu método de preferencia para finalizar
-            </p>
           </div>
 
           {/* ── RESUMEN DEL PEDIDO ── */}
