@@ -1,6 +1,16 @@
 import { useState, useEffect, useRef, useContext } from 'react';
-import { Menu, User, ShoppingBag, X, Search } from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
+import {
+  Menu,
+  User,
+  ShoppingBag,
+  X,
+  Search,
+  Package,
+  CircleUserRound,
+  Heart,
+  LogOut,
+} from 'lucide-react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import logo from '../assets/LOGO-PAVOA.svg';
 import { CartContext } from '../App';
 import CartDrawer from './CartDrawer';
@@ -8,7 +18,7 @@ import SearchOverlay from './SearchOverlay';
 import MegaMenu from './header/MegaMenu';
 import MobileMenu from './header/MobileMenu';
 import { InstagramIcon, FacebookIcon } from '../components/Icons';
-import { estaAutenticado, getCliente } from '../services/authService';
+import { estaAutenticado, getCliente, cerrarSesion } from '../services/authService';
 
 const INSTAGRAM_URL = 'https://instagram.com/pavoa';
 const FACEBOOK_URL = 'https://facebook.com/pavoa';
@@ -18,14 +28,18 @@ const Header = () => {
   const [cartOpen, setCartOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
 
-  const [isScrolled, setIsScrolled]     = useState(false);
-  const [menuOpen, setMenuOpen]         = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const [catalogoOpen, setCatalogoOpen] = useState(false);
+  const [accountOpen, setAccountOpen] = useState(false);
 
-  const megaRef  = useRef(null);
+  const megaRef = useRef(null);
   const panelRef = useRef(null);
+  const accountRef = useRef(null);
   const navigate = useNavigate();
-  const [autenticado] = useState(estaAutenticado());
+  const location = useLocation();
+
+  const autenticado = estaAutenticado();
   const usuario = getCliente();
 
   useEffect(() => {
@@ -55,10 +69,25 @@ const Header = () => {
       ) {
         setCatalogoOpen(false);
       }
+      if (accountRef.current && !accountRef.current.contains(e.target)) {
+        setAccountOpen(false);
+      }
     };
     document.addEventListener('mousedown', onClickOutside);
     return () => document.removeEventListener('mousedown', onClickOutside);
   }, []);
+
+  useEffect(() => {
+    const onKeyDown = (e) => {
+      if (e.key === 'Escape') setAccountOpen(false);
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, []);
+
+  useEffect(() => {
+    setAccountOpen(false);
+  }, [location.pathname, location.search]);
 
   useEffect(() => {
     document.body.style.overflow = (menuOpen || cartOpen) ? 'hidden' : '';
@@ -81,10 +110,12 @@ const Header = () => {
             <button
               className="md:hidden text-stone-800 mr-4 hover:text-stone-500 transition-colors"
               onClick={() => setMenuOpen(!menuOpen)}
-              aria-label={menuOpen ? "Cerrar menú" : "Abrir menú principal"}
+              aria-label={menuOpen ? 'Cerrar menu' : 'Abrir menu principal'}
               aria-expanded={menuOpen}
             >
-              {menuOpen ? <X size={22} strokeWidth={1.5} aria-hidden="true" /> : <Menu size={22} strokeWidth={1.5} aria-hidden="true" />}
+              {menuOpen
+                ? <X size={22} strokeWidth={1.5} aria-hidden="true" />
+                : <Menu size={22} strokeWidth={1.5} aria-hidden="true" />}
             </button>
 
             <nav className="hidden md:flex items-center gap-8 text-[13.5px] font-medium tracking-[0.18em]">
@@ -95,8 +126,10 @@ const Header = () => {
                 style={{ color: '#3E2723' }}
               >
                 INICIO
-                <span className="absolute -bottom-1 left-0 w-0 h-[1px] transition-all duration-300 group-hover:w-full"
-                  style={{ background: 'var(--color-gold)' }} />
+                <span
+                  className="absolute -bottom-1 left-0 w-0 h-[1px] transition-all duration-300 group-hover:w-full"
+                  style={{ background: 'var(--color-gold)' }}
+                />
               </Link>
 
               <div className="relative" ref={megaRef}>
@@ -106,38 +139,56 @@ const Header = () => {
                   aria-haspopup="true"
                   className="flex items-center gap-1.5 transition-opacity hover:opacity-70"
                   style={{
-                    fontSize: '13.5px', fontWeight: 500,
-                    letterSpacing: '0.2em', color: '#3E2723', background: 'none',
-                    border: 'none', cursor: 'pointer', padding: 0,
+                    fontSize: '13.5px',
+                    fontWeight: 500,
+                    letterSpacing: '0.2em',
+                    color: '#3E2723',
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    padding: 0,
                   }}
                 >
                   <span style={{ position: 'relative' }}>
-                    CATÁLOGO
-                    <span style={{
-                      position: 'absolute', bottom: 0, left: 0, height: 1,
-                      width: catalogoOpen ? '100%' : '0%', background: 'var(--color-gold)',
-                      transition: 'width 0.3s ease',
-                    }} />
+                    CATALOGO
+                    <span
+                      style={{
+                        position: 'absolute',
+                        bottom: 0,
+                        left: 0,
+                        height: 1,
+                        width: catalogoOpen ? '100%' : '0%',
+                        background: 'var(--color-gold)',
+                        transition: 'width 0.3s ease',
+                      }}
+                    />
                   </span>
-                  <span style={{
-                    display: 'inline-block', width: 7, height: 7,
-                    borderRight: '1.5px solid #3E2723', borderBottom: '1.5px solid #3E2723',
-                    transform: catalogoOpen ? 'rotate(-135deg)' : 'rotate(45deg)',
-                    verticalAlign: 'middle',
-                    transition: 'transform 0.3s ease',
-                  }} />
+                  <span
+                    style={{
+                      display: 'inline-block',
+                      width: 7,
+                      height: 7,
+                      borderRight: '1.5px solid #3E2723',
+                      borderBottom: '1.5px solid #3E2723',
+                      transform: catalogoOpen ? 'rotate(-135deg)' : 'rotate(45deg)',
+                      verticalAlign: 'middle',
+                      transition: 'transform 0.3s ease',
+                    }}
+                  />
                 </button>
               </div>
 
               <Link
-                  to="/contacto"
-                  onClick={() => window.scrollTo(0, 0)}
-                  className="transition-opacity hover:opacity-70 relative group"
-                  style={{ color: '#3E2723' }}
-                >
-                  CONTACTO
-                  <span className="absolute -bottom-1 left-0 w-0 h-[1px] transition-all duration-300 group-hover:w-full"
-                    style={{ background: 'var(--color-gold)' }} />
+                to="/contacto"
+                onClick={() => window.scrollTo(0, 0)}
+                className="transition-opacity hover:opacity-70 relative group"
+                style={{ color: '#3E2723' }}
+              >
+                CONTACTO
+                <span
+                  className="absolute -bottom-1 left-0 w-0 h-[1px] transition-all duration-300 group-hover:w-full"
+                  style={{ background: 'var(--color-gold)' }}
+                />
               </Link>
             </nav>
           </div>
@@ -156,33 +207,102 @@ const Header = () => {
 
           <div className="flex-1 flex items-center justify-end gap-5 text-stone-900">
             <div className="hidden sm:flex items-center gap-4">
-              <a href={INSTAGRAM_URL} target="_blank" rel="noopener noreferrer" className="hover:text-stone-900 transition-colors" aria-label="Síguenos en Instagram"><InstagramIcon /></a>
-              <a href={FACEBOOK_URL} target="_blank" rel="noopener noreferrer" className="hover:text-stone-900 transition-colors" aria-label="Síguenos en Facebook"><FacebookIcon /></a>
+              <a
+                href={INSTAGRAM_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-stone-900 transition-colors"
+                aria-label="Siguenos en Instagram"
+              >
+                <InstagramIcon />
+              </a>
+              <a
+                href={FACEBOOK_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-stone-900 transition-colors"
+                aria-label="Siguenos en Facebook"
+              >
+                <FacebookIcon />
+              </a>
             </div>
+
             <div className="w-[1px] h-4 bg-stone-200 hidden sm:block" />
-            <button onClick={() => setIsSearchOpen(true)} className="hover:text-stone-900 transition-colors" aria-label="Abrir búsqueda">
+
+            <button
+              onClick={() => setIsSearchOpen(true)}
+              className="hover:text-stone-900 transition-colors"
+              aria-label="Abrir busqueda"
+            >
               <Search size={20} strokeWidth={1.8} aria-hidden="true" />
             </button>
-            <button
-                  onClick={() => navigate(autenticado ? '/cuenta' : '/login')}
-                  className="hover:text-stone-900 transition-colors relative"
-                  aria-label={autenticado ? 'Ir a mi cuenta' : 'Iniciar sesión'}
-                >
-                  {autenticado && usuario ? (
-                    <div
-                      className="w-7 h-7 rounded-full flex items-center justify-center text-white text-[10px] font-bold"
-                      style={{ backgroundColor: '#DFCDB4' }}
-                    >
-                      {usuario.firstName?.[0]?.toUpperCase()}{usuario.lastName?.[0]?.toUpperCase()}
-                    </div>
-                  ) : (
-                    <User size={20} strokeWidth={1.8} aria-hidden="true" />
-                  )}
-                </button>
+
+            <div className="relative" ref={accountRef}>
+              <button
+                onClick={() => {
+                  if (!autenticado) { navigate('/login'); return; }
+                  setAccountOpen(v => !v);
+                }}
+                className="hover:text-stone-900 transition-colors relative"
+                aria-label={autenticado ? 'Abrir menu de cuenta' : 'Iniciar sesion'}
+                aria-haspopup={autenticado ? 'menu' : undefined}
+                aria-expanded={autenticado ? accountOpen : undefined}
+              >
+                {autenticado && usuario ? (
+                  <div
+                    className="w-7 h-7 rounded-full flex items-center justify-center text-white text-[10px] font-bold"
+                    style={{ backgroundColor: '#DFCDB4' }}
+                  >
+                    {usuario.firstName?.[0]?.toUpperCase()}{usuario.lastName?.[0]?.toUpperCase()}
+                  </div>
+                ) : (
+                  <User size={20} strokeWidth={1.8} aria-hidden="true" />
+                )}
+              </button>
+
+              {autenticado && accountOpen && (
+                <div className="absolute right-0 top-full mt-3 w-56 border border-stone-200 bg-white/95 backdrop-blur-sm shadow-[0_14px_40px_rgba(0,0,0,0.08)] z-[70]">
+                  <button
+                    onClick={() => { setAccountOpen(false); navigate('/cuenta?tab=pedidos'); }}
+                    className="w-full px-4 py-3 text-left text-[10px] font-bold tracking-[0.18em] uppercase text-stone-700 hover:bg-stone-50 hover:text-stone-900 transition-colors flex items-center gap-3"
+                  >
+                    <Package size={15} strokeWidth={1.7} aria-hidden="true" />
+                    Pedidos
+                  </button>
+                  <button
+                    onClick={() => { setAccountOpen(false); navigate('/cuenta?tab=perfil'); }}
+                    className="w-full px-4 py-3 text-left text-[10px] font-bold tracking-[0.18em] uppercase text-stone-700 hover:bg-stone-50 hover:text-stone-900 transition-colors flex items-center gap-3"
+                  >
+                    <CircleUserRound size={15} strokeWidth={1.7} aria-hidden="true" />
+                    Cuenta
+                  </button>
+                  <button
+                    onClick={() => { setAccountOpen(false); navigate('/cuenta?tab=deseos'); }}
+                    className="w-full px-4 py-3 text-left text-[10px] font-bold tracking-[0.18em] uppercase text-stone-700 hover:bg-stone-50 hover:text-stone-900 transition-colors flex items-center gap-3"
+                  >
+                    <Heart size={15} strokeWidth={1.7} aria-hidden="true" />
+                    Lista de deseos
+                  </button>
+                  <div className="h-px bg-stone-100" />
+                  <button
+                    onClick={() => {
+                      setAccountOpen(false);
+                      cerrarSesion();
+                      navigate('/');
+                    }}
+                    className="w-full px-4 py-3 text-left text-[10px] font-bold tracking-[0.18em] uppercase text-stone-500 hover:bg-stone-50 hover:text-stone-900 transition-colors flex items-center gap-3"
+                  >
+                    <LogOut size={15} strokeWidth={1.7} aria-hidden="true" />
+                    Cerrar sesion
+                  </button>
+                </div>
+              )}
+            </div>
+
             <button
               onClick={() => setCartOpen(true)}
               className="hover:text-stone-900 transition-colors relative"
-              aria-label={cartCount > 0 ? `Abrir carrito. Tienes ${cartCount} artículos` : "Abrir carrito. Tu carrito está vacío"}
+              aria-label={cartCount > 0 ? `Abrir carrito. Tienes ${cartCount} articulos` : 'Abrir carrito. Tu carrito esta vacio'}
             >
               <ShoppingBag size={20} strokeWidth={1.8} />
               {cartCount > 0 ? (

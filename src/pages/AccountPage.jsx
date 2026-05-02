@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { estaAutenticado, getCliente, getPedidos, cerrarSesion } from '../services/authService';
 import { getProductos } from '../services/productService';
 import { useWishlist } from '../context/WishlistContext';
@@ -12,6 +12,9 @@ const formatFecha = (iso) => new Date(iso).toLocaleDateString('es-CO', {
 
 const formatPrecio = (amount) =>
   `$${Number(amount).toLocaleString('es-CO')}`;
+
+const TABS_VALIDOS = new Set(['pedidos', 'deseos', 'perfil']);
+const resolverTab = (tab) => (TABS_VALIDOS.has(tab) ? tab : 'pedidos');
 
 const EstadoBadge = ({ status }) => {
   const map = {
@@ -268,13 +271,23 @@ function OrdenCard({ pedido, imagenMap }) {
 
 export default function AccountPage() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { wishlist, clearWishlist } = useWishlist();
   const [cliente, setCliente]         = useState(null);
   const [pedidos, setPedidos]         = useState([]);
   const [allProductos, setAllProductos] = useState([]);
   const [loading, setLoading]         = useState(true);
-  const [activeTab, setActiveTab]     = useState('pedidos');
+  const [activeTab, setActiveTab]     = useState(() => resolverTab(searchParams.get('tab')));
   const [imagenMap, setImagenMap]     = useState({});
+
+  const cambiarTab = (tab) => {
+    setActiveTab(tab);
+    setSearchParams(prev => {
+      const next = new URLSearchParams(prev);
+      next.set('tab', tab);
+      return next;
+    }, { replace: true });
+  };
 
   useEffect(() => {
     if (!estaAutenticado()) { navigate('/login', { replace: true }); return; }
@@ -295,6 +308,11 @@ export default function AccountPage() {
       .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => {
+    const tabURL = resolverTab(searchParams.get('tab'));
+    setActiveTab(tabURL);
+  }, [searchParams]);
 
   if (loading) {
     return (
@@ -341,7 +359,7 @@ export default function AccountPage() {
           ].map(tab => (
             <button
               key={tab.value}
-              onClick={() => setActiveTab(tab.value)}
+              onClick={() => cambiarTab(tab.value)}
               className={`relative pb-3 px-5 text-[10px] font-bold tracking-[0.25em] uppercase transition-colors duration-200
                 ${activeTab === tab.value ? 'text-stone-900' : 'text-stone-400 hover:text-stone-600'}`}
             >
