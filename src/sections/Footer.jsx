@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { createClient } from '@supabase/supabase-js';
 import logo from '../assets/LOGO-PAVOA.svg';
-import { InstagramIcon, FacebookIcon, WhatsAppIcon } from '../components/Icons';
+import { InstagramIcon, FacebookIcon } from '../components/Icons';
 
 const INSTAGRAM_URL = 'https://instagram.com/pavoa';
 const FACEBOOK_URL = 'https://facebook.com/pavoa';
@@ -113,7 +113,6 @@ export default function Footer() {
             {/* ✅ aria-labels en links de redes sociales */}
             <a href={INSTAGRAM_URL} target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors" aria-label="Síguenos en Instagram"><InstagramIcon /></a>
             <a href={FACEBOOK_URL} target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors" aria-label="Síguenos en Facebook"><FacebookIcon /></a>
-            <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors" aria-label="Contáctanos por WhatsApp"><WhatsAppIcon /></a>
           </div>
         </div>
 
@@ -134,10 +133,10 @@ export default function Footer() {
         <nav aria-label="Ayuda">
           <p style={{ letterSpacing: '0.2em' }} className="text-[10px] font-semibold text-white mb-6">AYUDA</p>
           <ul className="space-y-3 text-[11px] font-light">
-            <li><Link to="/contacto" className="text-stone-400 hover:text-white transition-colors">Envíos y entregas</Link></li>
-            <li><Link to="/contacto" className="text-stone-400 hover:text-white transition-colors">Cambios y devoluciones</Link></li>
-            <li><Link to="/contacto" className="text-stone-400 hover:text-white transition-colors">Guía de tallas</Link></li>
-            <li><Link to="/contacto" className="text-stone-400 hover:text-white transition-colors">Preguntas frecuentes</Link></li>
+            <li><Link to="/envios-y-entregas" className="text-stone-400 hover:text-white transition-colors">Envíos y entregas</Link></li>
+            <li><Link to="/cambios-y-devoluciones" className="text-stone-400 hover:text-white transition-colors">Cambios y devoluciones</Link></li>
+            <li><Link to="/guia-de-tallas" className="text-stone-400 hover:text-white transition-colors">Guía de tallas</Link></li>
+            <li><Link to="/preguntas-frecuentes" className="text-stone-400 hover:text-white transition-colors">Preguntas frecuentes</Link></li>
           </ul>
         </nav>
 
@@ -164,7 +163,7 @@ export default function Footer() {
             © 2026 PAVOA. TODOS LOS DERECHOS RESERVADOS.
           </p>
           <div className="flex items-center gap-4 flex-wrap justify-center">
-            {['Visa', 'Mastercard', 'PSE', 'Nequi', 'Daviplata', 'Contraentrega'].map((medio) => (
+            {['Visa', 'Mastercard', 'PSE', 'Nequi'].map((medio) => (
               <span
                 key={medio}
                 style={{ letterSpacing: '0.1em' }}

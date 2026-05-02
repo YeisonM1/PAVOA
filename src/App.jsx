@@ -23,6 +23,10 @@ const ResetPasswordPage      = lazy(() => import('./pages/ResetPasswordPage'));
 const OrdenConfirmadaPage    = lazy(() => import('./pages/OrdenConfirmadaPage'));
 const WishlistPage           = lazy(() => import('./pages/WishlistPage'));
 const NosotrosPage           = lazy(() => import('./pages/NosotrosPage'));
+const EnviosEntregasPage     = lazy(() => import('./pages/EnviosEntregasPage'));
+const CambiosDevolucionesPage = lazy(() => import('./pages/CambiosDevolucionesPage'));
+const GuiaTallasPage         = lazy(() => import('./pages/GuiaTallasPage'));
+const PreguntasFrecuentesPage = lazy(() => import('./pages/PreguntasFrecuentesPage'));
 
 export { CartContext };
 
@@ -117,6 +121,10 @@ function AppShell() {
               <Route path="/orden-confirmada" element={<OrdenConfirmadaPage />} />
               <Route path="/wishlist"         element={<WishlistPage />} />
               <Route path="/nosotros"         element={<NosotrosPage />} />
+              <Route path="/envios-y-entregas" element={<EnviosEntregasPage />} />
+              <Route path="/cambios-y-devoluciones" element={<CambiosDevolucionesPage />} />
+              <Route path="/guia-de-tallas"   element={<GuiaTallasPage />} />
+              <Route path="/preguntas-frecuentes" element={<PreguntasFrecuentesPage />} />
               <Route path="*"              element={<NotFoundPage />} />
             </Routes>
             </div>
