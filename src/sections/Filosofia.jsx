@@ -1,4 +1,4 @@
-import logoPavoa from '../assets/LOGO-PAVOA.svg';
+import logoChampan from '../assets/Logo Champan.png';
 
 export default function Filosofia() {
   return (
@@ -9,14 +9,7 @@ export default function Filosofia() {
 
         {/* Logo Champan — arriba derecha del panel */}
         <div className="absolute top-8 right-8 md:top-10 md:right-10 pointer-events-none">
-          <img
-            src={logoPavoa}
-            alt="PAVOA"
-            width={120}
-            height={54}
-            className="h-16 md:h-24 w-auto object-contain opacity-90"
-            style={{ filter: 'invert(89%) sepia(11%) saturate(444%) hue-rotate(348deg) brightness(96%) contrast(91%)' }}
-          />
+          <img src={logoChampan} alt="PAVOA" width={120} height={194} className="h-24 md:h-36 w-auto object-contain" />
         </div>
 
         {/* Tag */}
