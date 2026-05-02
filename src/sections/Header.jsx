@@ -260,37 +260,58 @@ const Header = () => {
                 )}
               </button>
 
-              {autenticado && accountOpen && (
-                <div className="absolute right-0 top-full mt-3 w-56 border border-stone-200 bg-white/95 backdrop-blur-sm shadow-[0_14px_40px_rgba(0,0,0,0.08)] z-[70]">
+              {autenticado && (
+                <div
+                  className={`absolute right-0 top-full mt-1 w-64 z-[70] origin-top-right transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] ${
+                    accountOpen
+                      ? 'opacity-100 translate-y-0 visible'
+                      : 'opacity-0 -translate-y-2 invisible pointer-events-none'
+                  }`}
+                  style={{
+                    background: 'rgba(242, 228, 225, 0.98)',
+                    border: '1px solid var(--color-border)',
+                    borderTop: '1px solid var(--color-gold)',
+                    boxShadow: '0 8px 30px rgba(11,11,11,0.08)',
+                  }}
+                >
+                  <div className="px-4 py-3 border-b border-stone-200/70">
+                    <p className="text-[8px] font-semibold tracking-[0.28em] uppercase text-stone-500">
+                      Mi cuenta
+                    </p>
+                    <p className="text-[10px] text-stone-600 tracking-[0.08em] mt-1 truncate">
+                      {usuario?.email}
+                    </p>
+                  </div>
+
                   <button
                     onClick={() => { setAccountOpen(false); navigate('/cuenta?tab=pedidos'); }}
-                    className="w-full px-4 py-3 text-left text-[10px] font-bold tracking-[0.18em] uppercase text-stone-700 hover:bg-stone-50 hover:text-stone-900 transition-colors flex items-center gap-3"
+                    className="w-full px-4 py-3 text-left text-[10px] font-bold tracking-[0.18em] uppercase text-stone-700 hover:bg-white/60 hover:text-stone-900 transition-colors flex items-center gap-3"
                   >
                     <Package size={15} strokeWidth={1.7} aria-hidden="true" />
                     Pedidos
                   </button>
                   <button
                     onClick={() => { setAccountOpen(false); navigate('/cuenta?tab=perfil'); }}
-                    className="w-full px-4 py-3 text-left text-[10px] font-bold tracking-[0.18em] uppercase text-stone-700 hover:bg-stone-50 hover:text-stone-900 transition-colors flex items-center gap-3"
+                    className="w-full px-4 py-3 text-left text-[10px] font-bold tracking-[0.18em] uppercase text-stone-700 hover:bg-white/60 hover:text-stone-900 transition-colors flex items-center gap-3"
                   >
                     <CircleUserRound size={15} strokeWidth={1.7} aria-hidden="true" />
                     Cuenta
                   </button>
                   <button
                     onClick={() => { setAccountOpen(false); navigate('/cuenta?tab=deseos'); }}
-                    className="w-full px-4 py-3 text-left text-[10px] font-bold tracking-[0.18em] uppercase text-stone-700 hover:bg-stone-50 hover:text-stone-900 transition-colors flex items-center gap-3"
+                    className="w-full px-4 py-3 text-left text-[10px] font-bold tracking-[0.18em] uppercase text-stone-700 hover:bg-white/60 hover:text-stone-900 transition-colors flex items-center gap-3"
                   >
                     <Heart size={15} strokeWidth={1.7} aria-hidden="true" />
                     Lista de deseos
                   </button>
-                  <div className="h-px bg-stone-100" />
+                  <div className="h-px bg-stone-200/70" />
                   <button
                     onClick={() => {
                       setAccountOpen(false);
                       cerrarSesion();
                       navigate('/');
                     }}
-                    className="w-full px-4 py-3 text-left text-[10px] font-bold tracking-[0.18em] uppercase text-stone-500 hover:bg-stone-50 hover:text-stone-900 transition-colors flex items-center gap-3"
+                    className="w-full px-4 py-3 text-left text-[10px] font-bold tracking-[0.18em] uppercase text-stone-500 hover:bg-white/60 hover:text-stone-900 transition-colors flex items-center gap-3"
                   >
                     <LogOut size={15} strokeWidth={1.7} aria-hidden="true" />
                     Cerrar sesion
