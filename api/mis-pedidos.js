@@ -22,23 +22,76 @@ export default async function handler(req, res) {
 
     const actorType = tokenPayload ? 'auth' : 'guest';
     const actorId = tokenPayload?.userId || anonId || null;
+    const userEmail = tokenPayload?.email || null;
 
-    const { error } = await supabase
-      .from('wishlist_events')
-      .insert({
-        product_id: productId,
-        action_type: actionType,
-        actor_type: actorType,
-        actor_id: actorId,
-        user_id: tokenPayload?.userId || null,
-      });
+    if (!actorId) return res.status(400).json({ error: 'actorId requerido' });
 
-    if (error) {
+    const insertEvent = async () => {
+      const { error } = await supabase
+        .from('wishlist_events')
+        .insert({
+          product_id: productId,
+          action_type: actionType,
+          actor_type: actorType,
+          actor_id: actorId,
+          user_id: tokenPayload?.userId || null,
+          user_email: userEmail,
+        });
+      if (error) throw error;
+    };
+
+    try {
+      if (actionType === 'add') {
+        const { data: existing, error: findError } = await supabase
+          .from('wishlist_actor_state')
+          .select('id')
+          .eq('actor_type', actorType)
+          .eq('actor_id', actorId)
+          .eq('product_id', productId)
+          .limit(1);
+        if (findError) throw findError;
+
+        // Ya estaba activo: no contamos otro "add"
+        if ((existing || []).length > 0) return res.status(200).json({ ok: true, deduped: true });
+
+        const { error: upsertError } = await supabase
+          .from('wishlist_actor_state')
+          .upsert(
+            {
+              actor_type: actorType,
+              actor_id: actorId,
+              product_id: productId,
+              user_id: tokenPayload?.userId || null,
+              user_email: userEmail,
+              last_action_at: new Date().toISOString(),
+            },
+            { onConflict: 'actor_type,actor_id,product_id' }
+          );
+        if (upsertError) throw upsertError;
+
+        await insertEvent();
+        return res.status(200).json({ ok: true });
+      }
+
+      // remove
+      const { data: removed, error: removeStateError } = await supabase
+        .from('wishlist_actor_state')
+        .delete()
+        .eq('actor_type', actorType)
+        .eq('actor_id', actorId)
+        .eq('product_id', productId)
+        .select('id');
+      if (removeStateError) throw removeStateError;
+
+      // Si no estaba activo, no contamos otro "remove"
+      if ((removed || []).length === 0) return res.status(200).json({ ok: true, deduped: true });
+
+      await insertEvent();
+      return res.status(200).json({ ok: true });
+    } catch (error) {
       console.error('Error wishlist-track:', error.message);
       return res.status(200).json({ ok: false });
     }
-
-    return res.status(200).json({ ok: true });
   }
 
   // From here, auth is required
