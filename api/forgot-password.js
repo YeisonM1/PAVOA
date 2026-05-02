@@ -43,7 +43,7 @@ export default async function handler(req, res) {
 
   try {
     // 1. Buscar si el usuario existe
-    const { data: usuario, error } = await supabase
+    const { data: usuario } = await supabase
       .from('usuarios')
       .select('id, first_name')
       .eq('email', email.toLowerCase())

@@ -4,6 +4,11 @@ import { createClient } from '@supabase/supabase-js';
 import logo from '../assets/LOGO-PAVOA.svg';
 import { InstagramIcon, FacebookIcon, WhatsAppIcon } from '../components/Icons';
 
+const INSTAGRAM_URL = 'https://instagram.com/pavoa';
+const FACEBOOK_URL = 'https://facebook.com/pavoa';
+const WHATSAPP_NUMBER = import.meta.env.VITE_WHATSAPP_NUMBER || '573000000000';
+const WHATSAPP_URL = `https://wa.me/${WHATSAPP_NUMBER.replace(/\D/g, '')}`;
+
 const supabase = createClient(
   import.meta.env.VITE_SUPABASE_URL,
   import.meta.env.VITE_SUPABASE_ANON_KEY
@@ -106,9 +111,9 @@ export default function Footer() {
           </p>
           <div className="flex items-center gap-4">
             {/* ✅ aria-labels en links de redes sociales */}
-            <a href="#" className="hover:text-white transition-colors" aria-label="Síguenos en Instagram"><InstagramIcon /></a>
-            <a href="#" className="hover:text-white transition-colors" aria-label="Síguenos en Facebook"><FacebookIcon /></a>
-            <a href="#" className="hover:text-white transition-colors" aria-label="Contáctanos por WhatsApp"><WhatsAppIcon /></a>
+            <a href={INSTAGRAM_URL} target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors" aria-label="Síguenos en Instagram"><InstagramIcon /></a>
+            <a href={FACEBOOK_URL} target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors" aria-label="Síguenos en Facebook"><FacebookIcon /></a>
+            <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors" aria-label="Contáctanos por WhatsApp"><WhatsAppIcon /></a>
           </div>
         </div>
 
@@ -140,7 +145,7 @@ export default function Footer() {
         <div>
           <p style={{ letterSpacing: '0.2em' }} className="text-[10px] font-semibold text-white mb-6">CONTACTO</p>
           <ul className="space-y-3 text-[11px] font-light">
-            <li className="text-stone-400">WhatsApp: <a href="https://wa.me/573000000000" className="hover:text-white transition-colors">+57 000 000 0000</a></li>
+            <li className="text-stone-400">WhatsApp: <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">+57 000 000 0000</a></li>
             <li className="text-stone-400">Email: <a href="mailto:hola@pavoa.co" className="hover:text-white transition-colors">hola@pavoa.co</a></li>
             {/* ✅ text-stone-600 → text-stone-400 para mejor contraste */}
             <li className="text-stone-400 text-[10px] leading-relaxed pt-1">

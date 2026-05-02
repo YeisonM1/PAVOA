@@ -63,10 +63,10 @@ const attachDeferredLoadTriggers = () => {
   window.addEventListener('scroll', start, { once: true, passive: true, capture: true });
   window.addEventListener('touchstart', start, { once: true, passive: true, capture: true });
 
-  const defer = () => window.setTimeout(requestAnalytics, 3000);
+  const defer = () => window.setTimeout(requestAnalytics, 8000);
 
   if (typeof window.requestIdleCallback === 'function') {
-    window.requestIdleCallback(() => defer(), { timeout: 4000 });
+    window.requestIdleCallback(() => defer(), { timeout: 7000 });
   } else {
     defer();
   }
@@ -77,7 +77,6 @@ attachDeferredLoadTriggers();
 const gtag = (...args) => {
   if (typeof window === 'undefined') return;
   queuedEvents.push(args);
-  requestAnalytics();
   flushQueue();
 };
 
@@ -142,4 +141,5 @@ export const trackPurchase = ({ paymentId, items, total }) => {
       quantity:     item.cantidad,
     })),
   });
+  requestAnalytics();
 };

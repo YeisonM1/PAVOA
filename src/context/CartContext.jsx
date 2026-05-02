@@ -5,6 +5,13 @@ import { trackAddToCart } from '../lib/analytics';
 
 export const CartContext = createContext();
 
+const sameCartItem = (item, producto, talla) => {
+  const currentVariant = item.producto?.selectedVariantId || null;
+  const nextVariant = producto?.selectedVariantId || null;
+  if (currentVariant || nextVariant) return currentVariant === nextVariant;
+  return item.producto.id === producto.id && item.talla === talla;
+};
+
 export function CartProvider({ children }) {
   const [cartItems, setCartItems]             = useLocalStorage('pavoa-cart', []);
   const [isCartAnimating, setIsCartAnimating] = useState(false);
@@ -13,12 +20,10 @@ export function CartProvider({ children }) {
 
   const addToCart = useCallback((producto, talla, cantidad = 1) => {
     setCartItems((prev) => {
-      const itemExistente = prev.find(
-        item => item.producto.id === producto.id && item.talla === talla
-      );
+      const itemExistente = prev.find(item => sameCartItem(item, producto, talla));
       if (itemExistente) {
         return prev.map(item =>
-          item.producto.id === producto.id && item.talla === talla
+          sameCartItem(item, producto, talla)
             ? { ...item, cantidad: item.cantidad + cantidad }
             : item
         );

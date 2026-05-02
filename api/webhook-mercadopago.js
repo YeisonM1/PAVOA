@@ -56,7 +56,6 @@ const completarDraftOrder = async (draftOrderId) => {
     throw new Error(`Shopify ${res.status}: ${err}`);
   }
   const data  = await res.json();
-  const order = data.draft_order || data.order;
 
   return { ...data, _emailCliente: emailCliente };
 };

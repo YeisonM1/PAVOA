@@ -13,7 +13,7 @@ const formatFecha = (iso) => new Date(iso).toLocaleDateString('es-CO', {
 const formatPrecio = (amount) =>
   `$${Number(amount).toLocaleString('es-CO')}`;
 
-const EstadoBadge = ({ status, type }) => {
+const EstadoBadge = ({ status }) => {
   const map = {
     PAID:        { label: 'Pagado',     bg: 'bg-emerald-50', text: 'text-emerald-700', dot: 'bg-emerald-500' },
     PENDING:     { label: 'Pendiente',  bg: 'bg-amber-50',   text: 'text-amber-700',   dot: 'bg-amber-400'   },
@@ -308,7 +308,7 @@ export default function AccountPage() {
 
   return (
     <div className="min-h-screen bg-white">
-      <SEO title="Mi Cuenta" description="Gestiona tu cuenta PAVOA" url="/cuenta" />
+      <SEO title="Mi Cuenta" description="Gestiona tu cuenta PAVOA" url="/cuenta" noIndex />
 
       <div className="max-w-[1100px] mx-auto px-6 md:px-12 pt-[160px] pb-24">
 

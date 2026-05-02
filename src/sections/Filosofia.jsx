@@ -1,4 +1,4 @@
-import logoChampan from '../assets/Logo Champan.png';
+import logoPavoa from '../assets/LOGO-PAVOA.svg';
 
 export default function Filosofia() {
   return (
@@ -9,13 +9,20 @@ export default function Filosofia() {
 
         {/* Logo Champan — arriba derecha del panel */}
         <div className="absolute top-8 right-8 md:top-10 md:right-10 pointer-events-none">
-          <img src={logoChampan} alt="PAVOA" className="h-24 md:h-36 w-auto object-contain" />
+          <img
+            src={logoPavoa}
+            alt="PAVOA"
+            width={120}
+            height={54}
+            className="h-16 md:h-24 w-auto object-contain opacity-90"
+            style={{ filter: 'invert(89%) sepia(11%) saturate(444%) hue-rotate(348deg) brightness(96%) contrast(91%)' }}
+          />
         </div>
 
         {/* Tag */}
         <p
           style={{ letterSpacing: '0.3em' }}
-          className="font-secondary text-[10px] font-medium text-stone-500 mb-8"
+          className="font-secondary text-[10px] font-medium text-stone-300 mb-8"
         >
           NUESTRA FILOSOFÍA
         </p>
@@ -34,7 +41,7 @@ export default function Filosofia() {
 
         {/* Subtexto */}
         <p
-          className="font-secondary text-stone-400 text-sm font-light leading-relaxed max-w-sm mb-12"
+          className="font-secondary text-stone-300 text-sm font-light leading-relaxed max-w-sm mb-12"
         >
           Cada pieza de PAVOA nace de la convicción de que la mujer que se mueve con intención merece ropa que esté a su altura. Elegancia natural. Presencia silenciosa.
         </p>
@@ -54,6 +61,10 @@ export default function Filosofia() {
         <img
           src="https://cdn.shopify.com/s/files/1/0752/0436/2380/files/Filosofia.jpg?width=600&format=webp"
           alt="PAVOA Filosofía"
+          width={600}
+          height={900}
+          loading="lazy"
+          decoding="async"
           className="w-full h-full object-cover absolute inset-0 hover:scale-105 transition-transform duration-700 ease-out"
         />
         {/* Overlay sutil */}

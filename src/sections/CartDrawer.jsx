@@ -84,14 +84,14 @@ export default function CartDrawer({ cartOpen, setCartOpen }) {
         <div className="flex-grow overflow-y-auto px-8 py-8 flex flex-col">
           {cartItems.length === 0 ? (
             <div className="flex flex-col h-full">
-              <div className="flex flex-col items-center justify-center py-12 text-center gap-4 opacity-50">
-                <ShoppingBag size={32} strokeWidth={1} className="text-stone-400" aria-hidden="true" />
-                <p className="text-[11px] tracking-[0.15em] uppercase text-stone-500">Tu bolsa está vacía</p>
+              <div className="flex flex-col items-center justify-center py-12 text-center gap-4">
+                <ShoppingBag size={32} strokeWidth={1} className="text-stone-500" aria-hidden="true" />
+                <p className="text-[11px] tracking-[0.15em] uppercase text-stone-700">Tu bolsa está vacía</p>
               </div>
 
               {recentlyViewed.length > 0 && (
                 <div className="mt-auto">
-                  <p className="text-[9px] font-bold tracking-[0.25em] text-stone-400 uppercase mb-4">Visto recientemente</p>
+                  <p className="text-[9px] font-bold tracking-[0.25em] text-stone-600 uppercase mb-4">Visto recientemente</p>
                   <div className="flex gap-3 overflow-x-auto pb-2 -mx-1 px-1">
                     {recentlyViewed.map(p => (
                       <Link key={p.id} to={`/producto/${p.id}`} onClick={() => setCartOpen(false)}

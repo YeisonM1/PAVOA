@@ -1,6 +1,7 @@
 import mercadopago from 'mercadopago';
 import { createClient } from '@supabase/supabase-js';
 import { getShopifyToken, eliminarDraftOrder } from './_helpers/shopify-token.js';
+import { validateCartWithShopify } from './_helpers/cart-validation.js';
 
 const client = new mercadopago.MercadoPagoConfig({
   accessToken: process.env.MP_ACCESS_TOKEN,
@@ -14,12 +15,6 @@ const supabase = createClient(
 const APP_URL      = process.env.VITE_APP_URL || 'https://pavoa.vercel.app';
 const SHOPIFY_DOMAIN = process.env.VITE_SHOPIFY_DOMAIN;
 
-const parsePrecio = (precioNumerico, precioStr) => {
-  if (typeof precioNumerico === 'number' && precioNumerico > 0) return Math.round(precioNumerico);
-  if (typeof precioStr === 'string') return Number(precioStr.replace(/[^0-9]/g, '')) || 0;
-  return 0;
-};
-
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
@@ -32,11 +27,17 @@ export default async function handler(req, res) {
   try {
     const preferenceClient = new mercadopago.Preference(client);
 
-    let itemsMapped = cartItems.map(item => ({
-      id:          String(item.producto.id),
-      title:       item.producto.nombre,
-      quantity:    Number(item.cantidad),
-      unit_price:  parsePrecio(item.producto.precioNumerico, item.producto.precio),
+    const { trustedItems, total } = await validateCartWithShopify(cartItems);
+    if (Math.abs(Number(cartTotal) - total) > 1) {
+      await eliminarDraftOrder(draftOrderId);
+      return res.status(409).json({ error: 'El precio del carrito cambio. Actualiza la bolsa e intenta de nuevo.' });
+    }
+
+    let itemsMapped = trustedItems.map(item => ({
+      id:          String(item.variantId),
+      title:       item.title,
+      quantity:    item.quantity,
+      unit_price:  item.unitPrice,
       currency_id: 'COP',
     }));
 

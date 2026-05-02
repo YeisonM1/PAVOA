@@ -51,7 +51,7 @@ npm run dev      # → http://localhost:5173
 
 ### Cliente (prefijo `VITE_`)
 - `VITE_SHOPIFY_DOMAIN` — Dominio de la tienda Shopify
-- `VITE_SHOPIFY_STOREFRONT_TOKEN` — Token Storefront API
+- `VITE_SHOPIFY_TOKEN` — Token Storefront API
 - `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY`
 - `VITE_APP_URL` — URL base de la app
 - `VITE_WHATSAPP_NUMBER` — Número de WhatsApp para checkout

@@ -116,13 +116,13 @@ export default function SearchOverlay({ isSearchOpen, setIsSearchOpen }) {
           {/* Sin búsqueda — sugerencias */}
           {query.length === 0 && (
             <div>
-              <p className="text-[9px] font-bold tracking-[0.25em] text-stone-400 uppercase mb-4">
+              <p className="text-[9px] font-bold tracking-[0.25em] text-stone-700 uppercase mb-4">
                 Tendencias
               </p>
               <div className="flex flex-wrap gap-2">
                 {['Enterizos', 'Sets', 'Faldas'].map(s => (
                   <button key={s} onClick={() => setQuery(s)}
-                    className="text-[10px] tracking-[0.1em] uppercase border border-stone-200 px-3 py-2 text-stone-600 hover:border-stone-900 hover:text-stone-900 transition-colors">
+                    className="min-h-11 text-[10px] tracking-[0.1em] uppercase border border-stone-200 px-4 py-2 text-stone-700 hover:border-stone-900 hover:text-stone-900 transition-colors">
                     {s}
                   </button>
                 ))}
@@ -143,7 +143,7 @@ export default function SearchOverlay({ isSearchOpen, setIsSearchOpen }) {
           {/* Con resultados */}
           {resultados.length > 0 && (
             <div>
-              <p className="text-[9px] font-bold tracking-[0.25em] text-stone-400 uppercase mb-6">
+              <p className="text-[9px] font-bold tracking-[0.25em] text-stone-700 uppercase mb-6">
                 {resultados.length} {resultados.length === 1 ? 'resultado' : 'resultados'}
               </p>
               <div className="flex flex-col gap-1">

@@ -1,5 +1,5 @@
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
-import { useEffect, Suspense, lazy, useState, useContext, Component } from 'react';
+import { useEffect, Suspense, lazy, useContext, Component } from 'react';
 import { trackPageView } from './lib/analytics';
 import { CartProvider, CartContext } from './context/CartContext';
 import { WishlistProvider } from './context/WishlistContext';

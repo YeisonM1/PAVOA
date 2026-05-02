@@ -1,4 +1,5 @@
 import { getShopifyToken } from './_helpers/shopify-token.js';
+import { validateCartWithShopify } from './_helpers/cart-validation.js';
 
 const SHOPIFY_DOMAIN = process.env.VITE_SHOPIFY_DOMAIN;
 
@@ -23,23 +24,11 @@ function isRateLimited(ip) {
 const _pedidoCache = new Map(); // idempotencyKey → { draftOrderId, name, ts }
 const IDEM_TTL = 30 * 60 * 1000; // 30 minutos
 
-const crearDraftOrder = async (token, { form, cartItems }) => {
-  const lineItems = cartItems.map(item => {
-    const rawId     = item.producto.selectedVariantId || '';
-    const variantId = rawId.includes('gid://')
-      ? Number(rawId.split('/').pop())
-      : Number(rawId) || null;
-
-    return {
-      variant_id: variantId || undefined,
-      title:      item.producto.nombre,
-      quantity:   item.cantidad,
-      price:      String(
-        item.producto.precioNumerico ??
-        parseInt(String(item.producto.precio).replace(/[$,.]/g, ''), 10) ?? 0
-      ),
-    };
-  });
+const crearDraftOrder = async (token, { form, trustedItems }) => {
+  const lineItems = trustedItems.map(item => ({
+    variant_id: item.variantId,
+    quantity:   item.quantity,
+  }));
 
   const nota = [
     `Horario de entrega: ${form.horario}`,
@@ -109,7 +98,7 @@ export default async function handler(req, res) {
     return res.status(429).json({ error: 'Demasiados pedidos. Espera 15 minutos e intenta de nuevo.' });
   }
 
-  const { form, cartItems, cartTotal, idempotencyKey } = req.body;
+  const { form, cartItems, idempotencyKey } = req.body;
 
   if (!form?.nombre?.trim() || !form?.telefono?.trim()) {
     return res.status(400).json({ error: 'Nombre y teléfono son requeridos' });
@@ -128,8 +117,9 @@ export default async function handler(req, res) {
   }
 
   try {
+    const { trustedItems } = await validateCartWithShopify(cartItems);
     const token      = await getShopifyToken();
-    const draftOrder = await crearDraftOrder(token, { form, cartItems, cartTotal });
+    const draftOrder = await crearDraftOrder(token, { form, trustedItems });
 
     if (idempotencyKey) {
       _pedidoCache.set(idempotencyKey, { draftOrderId: draftOrder.id, name: draftOrder.name, ts: Date.now() });

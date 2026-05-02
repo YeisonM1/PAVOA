@@ -82,7 +82,7 @@ export default function Productos() {
               key={tab.value}
               onClick={() => setActiveTab(tab.value)}
                            className={`relative pb-3 px-5 text-[10px] font-bold tracking-[0.25em] uppercase transition-colors duration-200
-                ${activeTab === tab.value ? 'text-stone-900' : 'text-stone-400 hover:text-stone-600'}
+                ${activeTab === tab.value ? 'text-stone-900' : 'text-stone-600 hover:text-stone-800'}
               `}
             >
               {tab.label}

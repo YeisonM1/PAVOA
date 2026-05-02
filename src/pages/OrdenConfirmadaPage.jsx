@@ -70,7 +70,7 @@ export default function OrdenConfirmadaPage() {
 
   return (
     <div className="min-h-screen bg-white pt-[88px] md:pt-[104px]">
-      <SEO title="Pedido confirmado — PAVOA" url="/orden-confirmada" />
+      <SEO title="Pedido confirmado" url="/orden-confirmada" noIndex />
 
       <div className="max-w-[640px] mx-auto px-6 md:px-12 py-16 md:py-24">
 

@@ -12,8 +12,8 @@ export default function HomePage() {
   return (
     <>
       <SEO
-        title="Tienda Deportiva Online"
-        description="Encuentra ropa, calzado y accesorios deportivos. Running, fútbol, gym y más. Envíos a toda Colombia."
+        title="Ropa Deportiva Femenina Premium"
+        description="PAVOA crea ropa deportiva femenina premium para entrenamiento, movimiento diario y estilo. Piezas de edicion limitada con envios a toda Colombia."
         url="/"
       />
       <main>

@@ -1,7 +1,7 @@
 import { Plus, Minus } from 'lucide-react';
 
 export default function ProductVariantSelector({
-  variantes, coloresUnicos, tallasDisponibles, esTallaUnica, tieneVariantes,
+  coloresUnicos, tallasDisponibles, esTallaUnica, tieneVariantes,
   colorSeleccionado, tallaSeleccionada, cantidad, stockActual,
   puedeSeleccionarCantidad, showCantidadHint, adding,
   onColorSelect, onTallaSelect, onIncrementar, onDecrementar, onCantidadBloqueada,

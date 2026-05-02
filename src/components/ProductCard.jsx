@@ -37,6 +37,15 @@ function ProductCard({ producto, onQuickView }) {
   // Colores únicos por hex (solo si hay 2+)
   const coloresUnicos = [...new Map(variantes.map(v => [v.hex, v.hex])).values()];
   const mostrarColores = coloresUnicos.length >= 2;
+  const addVariantToCart = (talla) => {
+    const varianteElegida = variantes.find(v => v.talla === talla && (v.stock ?? 0) > 0)
+      || variantes.find(v => v.talla === talla);
+    addToCart({
+      ...producto,
+      colorSeleccionado: varianteElegida?.color || '',
+      selectedVariantId: varianteElegida?.variantId || null,
+    }, talla, 1);
+  };
   // ────────────────────────────────────────────────────────
 
   return (
@@ -125,7 +134,7 @@ function ProductCard({ producto, onQuickView }) {
                 <>
                   <span className="text-[9px] font-bold tracking-[0.25em] text-stone-400 uppercase">Talla disponible</span>
                   <button
-                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); addToCart(producto, 'ÚNICA', 1); setShowMobileSizes(false); }}
+                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); addVariantToCart('ÚNICA'); setShowMobileSizes(false); }}
                     className="px-6 h-10 flex items-center justify-center text-[11px] font-medium text-stone-700 border border-stone-200 bg-white/60 hover:bg-stone-900 hover:text-white hover:border-stone-900 transition-all duration-300 tracking-[0.1em]"
                   >
                     TALLA ÚNICA — Añadir
@@ -139,7 +148,7 @@ function ProductCard({ producto, onQuickView }) {
                       <button
                         key={talla}
                         onClick={coloresUnicos.length < 2
-                          ? (e) => { e.preventDefault(); e.stopPropagation(); addToCart(producto, talla, 1); setShowMobileSizes(false); }
+                          ? (e) => { e.preventDefault(); e.stopPropagation(); addVariantToCart(talla); setShowMobileSizes(false); }
                           : (e) => { e.stopPropagation(); }
                         }
                         className="w-10 h-10 flex items-center justify-center text-[11px] font-medium text-stone-700 border border-stone-300/60 bg-white/60 hover:bg-stone-900 hover:text-white hover:border-stone-900 transition-all duration-300 cursor-pointer"
@@ -166,7 +175,7 @@ function ProductCard({ producto, onQuickView }) {
         </h3>
         <button
           onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggle(producto.id); }}
-          className="absolute top-0 right-0 text-stone-300 hover:text-stone-900 transition-colors"
+          className="absolute -top-3 -right-3 w-11 h-11 flex items-center justify-center text-stone-500 hover:text-stone-900 transition-colors"
           aria-label={isWished(producto.id) ? 'Quitar de favoritos' : 'Guardar en favoritos'}
         >
           <HeartIcon filled={isWished(producto.id)} />

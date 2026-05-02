@@ -11,10 +11,11 @@ export default function WishlistPage() {
 
   const sharedIdsRaw = searchParams.get('ids');
   const isSharedView = !!sharedIdsRaw;
+  const wishlistKey = wishlist.join(',');
   const idsStr = useMemo(() => {
     if (isSharedView) return sharedIdsRaw || '';
-    return wishlist.join(',');
-  }, [isSharedView, sharedIdsRaw, wishlist.join(',')]);
+    return wishlistKey;
+  }, [isSharedView, sharedIdsRaw, wishlistKey]);
 
   const [productos, setProductos] = useState([]);
   const [loading, setLoading]     = useState(true);
@@ -43,6 +44,7 @@ export default function WishlistPage() {
       <SEO
         title={isSharedView ? 'Lista de deseos — PAVOA' : 'Mis favoritos — PAVOA'}
         url="/wishlist"
+        noIndex
       />
 
       <div className="max-w-[1400px] mx-auto px-6 md:px-12 py-12 md:py-20">

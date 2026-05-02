@@ -1,5 +1,5 @@
 import React, { useState, useContext, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { CartContext } from '../App';
 import { trackBeginCheckout } from '../lib/analytics';
 import SEO from '../components/SEO';
@@ -27,8 +27,7 @@ const CAMPO = ({ label, name, value, onChange, placeholder, type = 'text', requi
 );
 
 export default function CheckoutPage() {
-  const { cartItems, cartTotal, cartCount, clearCart } = useContext(CartContext);
-  const navigate = useNavigate();
+  const { cartItems, cartTotal, cartCount } = useContext(CartContext);
 
   useEffect(() => {
     if (cartItems.length > 0) trackBeginCheckout(cartItems, cartTotal);
@@ -79,6 +78,11 @@ export default function CheckoutPage() {
       .catch(() => {});
   }, []);
 
+  // Limpiar sesion de checkout si el carrito cambia
+  useEffect(() => {
+    sessionStorage.removeItem('pavoa-checkout-session');
+  }, [cartItems.length]);
+
   if (cartCount === 0) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-6 bg-white">
@@ -89,11 +93,6 @@ export default function CheckoutPage() {
       </div>
     );
   }
-
-  // Limpiar sesión de checkout si el carrito cambia
-  React.useEffect(() => {
-    sessionStorage.removeItem('pavoa-checkout-session');
-  }, [cartItems.length]);
 
   const handleChange = (e) => {
     setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
@@ -206,7 +205,7 @@ export default function CheckoutPage() {
 
   return (
     <div className="min-h-screen bg-white pt-[88px] md:pt-[104px]">
-      <SEO title="Checkout — PAVOA" url="/checkout" />
+      <SEO title="Checkout" url="/checkout" noIndex />
 
       <div className="max-w-[1100px] mx-auto px-6 md:px-12 py-12 md:py-20">
 

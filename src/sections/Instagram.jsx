@@ -35,7 +35,7 @@ export default function Instagram() {
       <div className="text-center mb-10 px-6">
         <p
           style={{ letterSpacing: '0.3em' }}
-          className="font-secondary text-[10px] font-medium text-stone-400 mb-3"
+          className="font-secondary text-[10px] font-medium text-stone-600 mb-3"
         >
           SÍGUENOS EN INSTAGRAM
         </p>
@@ -61,6 +61,9 @@ export default function Instagram() {
               src={post.image}
               alt="PAVOA Instagram"
               loading="lazy"
+              width={300}
+              height={300}
+              decoding="async"
               className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
             />
             {/* Overlay con ícono */}
@@ -80,7 +83,7 @@ export default function Instagram() {
           target="_blank"
           rel="noopener noreferrer"
           style={{ letterSpacing: '0.2em' }}
-          className="font-secondary inline-block text-[11px] font-medium text-stone-500 hover:text-stone-900 transition-colors border-b border-stone-300 pb-0.5"
+          className="font-secondary inline-block text-[11px] font-medium text-stone-700 hover:text-stone-900 transition-colors border-b border-stone-300 pb-0.5"
         >
           VER PERFIL
         </a>

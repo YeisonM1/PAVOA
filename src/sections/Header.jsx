@@ -10,6 +10,9 @@ import MobileMenu from './header/MobileMenu';
 import { InstagramIcon, FacebookIcon } from '../components/Icons';
 import { estaAutenticado, getCliente } from '../services/authService';
 
+const INSTAGRAM_URL = 'https://instagram.com/pavoa';
+const FACEBOOK_URL = 'https://facebook.com/pavoa';
+
 const Header = () => {
   const { cartCount, isCartAnimating } = useContext(CartContext);
   const [cartOpen, setCartOpen] = useState(false);
@@ -22,7 +25,7 @@ const Header = () => {
   const megaRef  = useRef(null);
   const panelRef = useRef(null);
   const navigate = useNavigate();
-  const [autenticado, setAutenticado] = useState(estaAutenticado());
+  const [autenticado] = useState(estaAutenticado());
   const usuario = getCliente();
 
   useEffect(() => {
@@ -153,8 +156,8 @@ const Header = () => {
 
           <div className="flex-1 flex items-center justify-end gap-5 text-stone-900">
             <div className="hidden sm:flex items-center gap-4">
-              <a href="#" className="hover:text-stone-900 transition-colors" aria-label="Síguenos en Instagram"><InstagramIcon /></a>
-              <a href="#" className="hover:text-stone-900 transition-colors" aria-label="Síguenos en Facebook"><FacebookIcon /></a>
+              <a href={INSTAGRAM_URL} target="_blank" rel="noopener noreferrer" className="hover:text-stone-900 transition-colors" aria-label="Síguenos en Instagram"><InstagramIcon /></a>
+              <a href={FACEBOOK_URL} target="_blank" rel="noopener noreferrer" className="hover:text-stone-900 transition-colors" aria-label="Síguenos en Facebook"><FacebookIcon /></a>
             </div>
             <div className="w-[1px] h-4 bg-stone-200 hidden sm:block" />
             <button onClick={() => setIsSearchOpen(true)} className="hover:text-stone-900 transition-colors" aria-label="Abrir búsqueda">

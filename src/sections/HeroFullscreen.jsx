@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { heroImage } from '../utils/imageUrl';
 import { useCarousel } from '../hooks/useCarousel';
 import { getHeroSlides } from '../services/productService';
-import logoNegro from '../assets/Logo Negro.png';
+import logoNegro from '../assets/LOGO-PAVOA.svg';
 
 const CACHE_KEY = 'pavoa_hero_slides';
 
@@ -92,8 +92,11 @@ export default function HeroFullscreen() {
               <img
                 src={heroImage(slide.image)}
                 alt={slide.tag}
-                fetchpriority={index === current ? 'high' : 'auto'}
+                fetchPriority={index === current ? 'high' : 'auto'}
                 loading={index === 0 ? 'eager' : 'lazy'}
+                decoding={index === current ? 'sync' : 'async'}
+                width={1400}
+                height={1800}
                 className={`w-full h-full object-cover origin-center transition-transform duration-[6000ms] ease-linear ${
                   index === current ? 'scale-105' : 'scale-100'
                 }`}
@@ -113,7 +116,7 @@ export default function HeroFullscreen() {
 
       {/* Logo mobile */}
       <div className="md:hidden absolute top-[120px] left-4 z-20 pointer-events-none">
-        <img src={logoNegro} alt="PAVOA" className="h-14 w-auto object-contain" />
+        <img src={logoNegro} alt="PAVOA" width={96} height={96} className="h-14 w-auto object-contain" />
       </div>
 
       <div className="absolute inset-0 z-20 flex flex-col justify-end pb-16 md:pb-20 lg:pb-24 px-8 sm:px-12 md:pl-[14%] md:pr-16 lg:pl-[16%] lg:pr-24">
@@ -182,7 +185,7 @@ export default function HeroFullscreen() {
         className="hidden md:flex absolute left-0 top-0 h-full z-30 items-center pointer-events-none pl-5"
         style={{ width: '45%', background: 'linear-gradient(to right, #F2E4E1 0%, #F2E4E1CC 30%, #F2E4E180 55%, #F2E4E120 80%, transparent 100%)' }}
       >
-        <img src={logoNegro} alt="PAVOA" className="max-w-[88px] w-[6.5vw] object-contain" />
+        <img src={logoNegro} alt="PAVOA" width={88} height={88} className="max-w-[88px] w-[6.5vw] object-contain" />
       </div>
 
       </div>{/* fin hero */}

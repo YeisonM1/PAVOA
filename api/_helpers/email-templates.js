@@ -169,6 +169,7 @@ export const emailDespacho = ({ nombreCliente, orderName, subtitulo, cuerpo, tra
               <h1 style="font-size:22px;font-weight:300;color:#0B0B0B;letter-spacing:0.1em;text-transform:uppercase;margin:0 0 16px 0;">
                 Hola, ${nombreCliente}
               </h1>
+              <p style="font-size:11px;letter-spacing:0.2em;color:#9ca3af;text-transform:uppercase;margin:0 0 16px 0;">Pedido ${orderName}</p>
               <div style="width:32px;height:1px;background-color:#DFCDB4;margin-bottom:20px;"></div>
               <p style="font-size:13px;color:#6b7280;line-height:1.8;margin:0;">${cuerpo}</p>
             </td>

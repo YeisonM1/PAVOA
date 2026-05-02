@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { useWishlist } from '../../context/WishlistContext';
 
-export default function ProductInfo({ producto, id }) {
+export default function ProductInfo({ producto }) {
   const { isWished, toggle } = useWishlist();
 
   return (
