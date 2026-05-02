@@ -1,10 +1,26 @@
 import { createClient } from '@supabase/supabase-js';
+import { createHash } from 'crypto';
 import { verifyToken } from './_helpers/auth.js';
 
 const supabase = createClient(
   process.env.VITE_SUPABASE_URL,
   process.env.VITE_SUPABASE_ANON_KEY
 );
+
+const GUEST_WINDOW_HOURS = 24;
+
+const toHash = (value) =>
+  createHash('sha256').update(String(value || '')).digest('hex');
+
+const getClientIp = (req) => {
+  const xfwd = req.headers['x-forwarded-for'];
+  if (Array.isArray(xfwd) && xfwd.length > 0) return xfwd[0].split(',')[0].trim();
+  if (typeof xfwd === 'string' && xfwd.length > 0) return xfwd.split(',')[0].trim();
+  const xreal = req.headers['x-real-ip'];
+  if (Array.isArray(xreal) && xreal.length > 0) return xreal[0];
+  if (typeof xreal === 'string' && xreal.length > 0) return xreal;
+  return req.socket?.remoteAddress || '';
+};
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
@@ -23,6 +39,7 @@ export default async function handler(req, res) {
     const actorType = tokenPayload ? 'auth' : 'guest';
     const actorId = tokenPayload?.userId || anonId || null;
     const userEmail = tokenPayload?.email || null;
+    const nowIso = new Date().toISOString();
 
     if (!actorId) return res.status(400).json({ error: 'actorId requerido' });
 
@@ -41,6 +58,43 @@ export default async function handler(req, res) {
     };
 
     try {
+      if (actorType === 'guest' && actionType === 'add') {
+        const ip = getClientIp(req);
+        const userAgent = req.headers['user-agent'] || '';
+        const fingerprintHash = toHash(`${ip}|${userAgent}`);
+
+        const { data: windowRow, error: windowFindError } = await supabase
+          .from('wishlist_guest_window')
+          .select('last_add_at')
+          .eq('fingerprint_hash', fingerprintHash)
+          .eq('product_id', productId)
+          .limit(1);
+
+        if (windowFindError) {
+          console.error('Error wishlist_guest_window select:', windowFindError.message);
+        } else if ((windowRow || []).length > 0) {
+          const last = new Date(windowRow[0].last_add_at).getTime();
+          const diffHours = (Date.now() - last) / (1000 * 60 * 60);
+          if (diffHours < GUEST_WINDOW_HOURS) {
+            return res.status(200).json({ ok: true, deduped: true, reason: 'guest_window' });
+          }
+        }
+
+        const { error: windowUpsertError } = await supabase
+          .from('wishlist_guest_window')
+          .upsert(
+            {
+              fingerprint_hash: fingerprintHash,
+              product_id: productId,
+              last_add_at: nowIso,
+            },
+            { onConflict: 'fingerprint_hash,product_id' }
+          );
+        if (windowUpsertError) {
+          console.error('Error wishlist_guest_window upsert:', windowUpsertError.message);
+        }
+      }
+
       if (actionType === 'add') {
         const { data: existing, error: findError } = await supabase
           .from('wishlist_actor_state')
@@ -63,7 +117,7 @@ export default async function handler(req, res) {
               product_id: productId,
               user_id: tokenPayload?.userId || null,
               user_email: userEmail,
-              last_action_at: new Date().toISOString(),
+              last_action_at: nowIso,
             },
             { onConflict: 'actor_type,actor_id,product_id' }
           );
