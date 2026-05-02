@@ -68,7 +68,7 @@ export default function Productos() {
           <Link
             to="/categoria"
             style={{ letterSpacing: '0.15em' }}
-            className="text-[10px] font-bold text-stone-500 hover:text-stone-900 transition-colors uppercase flex items-center gap-2 group"
+            className="hidden text-[10px] font-bold text-stone-500 hover:text-stone-900 transition-colors uppercase flex items-center gap-2 group"
           >
             Ver todo
             <span className="transform transition-transform duration-300 group-hover:translate-x-1">→</span>
