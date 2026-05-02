@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { getAnnouncementBar } from '../services/productService';
 
 const FALLBACK = [
@@ -11,6 +11,14 @@ export default function AnnouncementBar() {
   const [mensajes, setMensajes] = useState(FALLBACK);
   const [current, setCurrent]   = useState(0);
   const [visible, setVisible]   = useState(true);
+  const [heroSyncActive, setHeroSyncActive] = useState(false);
+  const currentRef = useRef(0);
+  const syncTimerRef = useRef(null);
+  const fadeTimerRef = useRef(null);
+
+  useEffect(() => {
+    currentRef.current = current;
+  }, [current]);
 
   useEffect(() => {
     getAnnouncementBar().then(data => {
@@ -20,6 +28,7 @@ export default function AnnouncementBar() {
 
   useEffect(() => {
     if (mensajes.length <= 1) return;
+    if (heroSyncActive) return;
     const interval = setInterval(() => {
       setVisible(false);
       setTimeout(() => {
@@ -28,7 +37,36 @@ export default function AnnouncementBar() {
       }, 600);
     }, 4000);
     return () => clearInterval(interval);
-  }, [mensajes]);
+  }, [mensajes, heroSyncActive]);
+
+  useEffect(() => {
+    const onHeroSlideChange = (e) => {
+      const rawIndex = Number(e?.detail?.index ?? 0);
+      if (Number.isNaN(rawIndex) || mensajes.length === 0) return;
+
+      const nextIndex = ((rawIndex % mensajes.length) + mensajes.length) % mensajes.length;
+      setHeroSyncActive(true);
+
+      if (syncTimerRef.current) clearTimeout(syncTimerRef.current);
+      syncTimerRef.current = setTimeout(() => setHeroSyncActive(false), 9000);
+
+      if (currentRef.current === nextIndex) return;
+
+      setVisible(false);
+      if (fadeTimerRef.current) clearTimeout(fadeTimerRef.current);
+      fadeTimerRef.current = setTimeout(() => {
+        setCurrent(nextIndex);
+        setVisible(true);
+      }, 500);
+    };
+
+    window.addEventListener('pavoa:hero-slide-change', onHeroSlideChange);
+    return () => {
+      window.removeEventListener('pavoa:hero-slide-change', onHeroSlideChange);
+      if (syncTimerRef.current) clearTimeout(syncTimerRef.current);
+      if (fadeTimerRef.current) clearTimeout(fadeTimerRef.current);
+    };
+  }, [mensajes.length]);
 
   return (
     // ✏️ FIX: eliminado "relative" que conflictuaba con "fixed"

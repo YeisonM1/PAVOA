@@ -67,6 +67,12 @@ export default function HeroFullscreen() {
     previousRef.current = current;
   }, [current]);
 
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent('pavoa:hero-slide-change', {
+      detail: { index: current, total: slides.length },
+    }));
+  }, [current, slides.length]);
+
   return (
     <section className="relative w-full h-[100dvh] overflow-hidden bg-black" role="region" aria-roledescription="carrusel" aria-label="Banner principal">
 
