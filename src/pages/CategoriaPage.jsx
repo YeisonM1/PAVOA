@@ -4,7 +4,6 @@ import { useParams, Link } from 'react-router-dom';
 import FilterDrawer from '../sections/FilterDrawer';
 import ProductCard from '../components/ProductCard';
 import SkeletonCard from '../components/SkeletonCard';
-import QuickViewModal from '../components/QuickViewModal';
 import { getProductos, getCategoriaById } from '../services/productService';
 import SEO from '../components/SEO';
 import { heroImage } from '../utils/imageUrl';
@@ -44,7 +43,6 @@ export default function CategoriaPage() {
   const [tallasFiltro, setTallasFiltro]   = useState([]);
   const [coloresFiltro, setColoresFiltro] = useState([]);
   const [visibles, setVisibles]           = useState(12);
-  const [quickViewId, setQuickViewId]     = useState(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -264,7 +262,7 @@ export default function CategoriaPage() {
               <>
                 <div className="grid grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-12 md:gap-x-8 md:gap-y-16">
                   {productosFiltrados.slice(0, visibles).map(p => (
-                    <ProductCard key={p.id} producto={p} onQuickView={setQuickViewId} />
+                    <ProductCard key={p.id} producto={p} />
                   ))}
                 </div>
                 {visibles < productosFiltrados.length && (
@@ -295,10 +293,6 @@ export default function CategoriaPage() {
           </div>
         </div>
       </section>
-
-      {quickViewId && (
-        <QuickViewModal productoId={quickViewId} onClose={() => setQuickViewId(null)} />
-      )}
     </div>
   );
 }

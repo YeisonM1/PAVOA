@@ -11,7 +11,7 @@ const HeartIcon = ({ filled }) => (
   </svg>
 );
 
-function ProductCard({ producto, onQuickView }) {
+function ProductCard({ producto }) {
   const [showMobileSizes, setShowMobileSizes] = useState(false);
   const { isWished, toggle } = useWishlist();
   const { addToCart } = useCart();
@@ -72,15 +72,6 @@ function ProductCard({ producto, onQuickView }) {
           </span>
         ) : null}
 
-        {onQuickView && (
-          <button
-            onClick={(e) => { e.preventDefault(); e.stopPropagation(); onQuickView(producto.id); }}
-            className="hidden md:flex absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-40 opacity-0 group-hover:opacity-100 transition-all duration-300 bg-white/90 backdrop-blur-sm text-stone-900 text-[9px] font-bold tracking-[0.2em] uppercase px-5 py-2.5 hover:bg-white whitespace-nowrap"
-            aria-label="Vista rápida"
-          >
-            Vista rápida
-          </button>
-        )}
 
         <img
           src={productImage(producto.imagen1)}
