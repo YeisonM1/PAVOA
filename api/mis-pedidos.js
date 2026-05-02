@@ -53,7 +53,7 @@ export default async function handler(req, res) {
           actor_id: actorId,
           user_id: tokenPayload?.userId || null,
           user_email: userEmail,
-        });
+      });
       if (error) throw error;
     };
 
@@ -144,7 +144,7 @@ export default async function handler(req, res) {
       return res.status(200).json({ ok: true });
     } catch (error) {
       console.error('Error wishlist-track:', error.message);
-      return res.status(200).json({ ok: false });
+      return res.status(200).json({ ok: false, error: error.message });
     }
   }
 

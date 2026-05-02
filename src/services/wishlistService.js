@@ -47,4 +47,15 @@ export const trackWishlistEvent = ({ productId, actionType }) =>
     productId,
     actionType,
     anonId: getAnonId(),
-  }).catch(() => {});
+  })
+    .then(async (res) => {
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || data?.ok === false) {
+        console.warn('[WishlistTrack] fallo:', data?.error || res.status);
+      }
+      if (data?.deduped) {
+        console.info('[WishlistTrack] deduped:', data?.reason || 'actor_state');
+      }
+      return data;
+    })
+    .catch(() => {});
