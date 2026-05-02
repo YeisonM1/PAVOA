@@ -6,25 +6,25 @@ const BLOQUES = [
     id: 'creemos',
     etiqueta: '01',
     titulo: 'Que creemos',
-    texto: 'Placeholder: manifiesto corto de marca.',
+    texto: 'Creemos en vestirnos como vivimos: con intencion. PAVOA nace para mujeres que sostienen muchas cosas al mismo tiempo y no necesitan elegir entre verse bien y sentirse capaces. No hacemos ropa para verse deportiva; hacemos piezas para habitar el dia con presencia, desde un entrenamiento temprano hasta una reunion tarde.',
   },
   {
     id: 'materializamos',
     etiqueta: '02',
     titulo: 'Como lo materializamos',
-    texto: 'Placeholder: explicar proceso, criterio y estandar.',
+    texto: 'Disenamos menos, pero mejor. Cada prenda tiene que pasar una prueba simple: acompanar cuando te mueves de verdad. Trabajamos con siluetas limpias, telas comodas y decisiones que no gritan, pero se notan. Lo funcional no esta peleado con lo elegante; para nosotros, van juntos.',
   },
   {
     id: 'vestimos',
     etiqueta: '03',
     titulo: 'A quien vestimos',
-    texto: 'Placeholder: describir perfil de mujer PAVOA.',
+    texto: 'Vestimos a la mujer que se cumple a si misma. La que entrena aunque este cansada. La que trabaja con foco. La que no necesita llamar la atencion para tener presencia. PAVOA es para ella: una mujer disciplinada, sensible al detalle y clara con lo que quiere proyectar.',
   },
   {
     id: 'vision',
     etiqueta: '04',
     titulo: 'Hacia donde vamos',
-    texto: 'Placeholder: vision de marca en el tiempo.',
+    texto: 'Queremos construir una marca latinoamericana con identidad propia. No perseguimos volumen por volumen. Queremos crecer cuidando el criterio, la calidad y la coherencia de cada coleccion. Nuestra vision es simple: que cuando una mujer piense en activewear premium con caracter, piense en PAVOA.',
   },
 ];
 
@@ -87,7 +87,7 @@ export default function NosotrosPage() {
               Siguiente paso
             </p>
             <h3 className="text-xl md:text-2xl font-light text-stone-900 tracking-[0.08em] uppercase">
-              Completar manifiesto y narrativa final
+              Explorar coleccion o hablar con nosotros
             </h3>
           </div>
 
