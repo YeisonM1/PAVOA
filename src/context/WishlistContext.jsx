@@ -1,6 +1,6 @@
 import { createContext, useState, useCallback, useMemo, useContext, useEffect } from 'react';
 import { estaAutenticado } from '../services/authService';
-import { fetchWishlist, addToWishlistAPI, removeFromWishlistAPI } from '../services/wishlistService';
+import { fetchWishlist, addToWishlistAPI, removeFromWishlistAPI, trackWishlistEvent } from '../services/wishlistService';
 
 export const WishlistContext = createContext();
 
@@ -38,6 +38,11 @@ export function WishlistProvider({ children }) {
         if (wished) removeFromWishlistAPI(productoId).catch(() => {});
         else        addToWishlistAPI(productoId).catch(() => {});
       }
+
+      trackWishlistEvent({
+        productId: productoId,
+        actionType: wished ? 'remove' : 'add',
+      }).catch(() => {});
 
       return next;
     });

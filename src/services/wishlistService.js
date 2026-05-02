@@ -27,3 +27,24 @@ export const addToWishlistAPI = (productId) =>
 
 export const removeFromWishlistAPI = (productId) =>
   post('wishlist-remove', { productId }).catch(() => {});
+
+const ANON_ID_KEY = 'pavoa_anon_id';
+
+const getAnonId = () => {
+  try {
+    const existing = localStorage.getItem(ANON_ID_KEY);
+    if (existing) return existing;
+    const id = (globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(16).slice(2)}`);
+    localStorage.setItem(ANON_ID_KEY, id);
+    return id;
+  } catch {
+    return `anon-${Date.now()}`;
+  }
+};
+
+export const trackWishlistEvent = ({ productId, actionType }) =>
+  post('wishlist-track', {
+    productId,
+    actionType,
+    anonId: getAnonId(),
+  }).catch(() => {});

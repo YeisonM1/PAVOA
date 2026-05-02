@@ -9,12 +9,42 @@ const supabase = createClient(
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  const tokenPayload = verifyToken(req);
-  if (!tokenPayload) return res.status(401).json({ error: 'No autorizado. Inicia sesión de nuevo.' });
-
   const { action } = req.body || {};
+  const tokenPayload = verifyToken(req);
 
-  // ── Wishlist: obtener ─────────────────────────────────
+  // Wishlist analytics events: auth + guest
+  if (action === 'wishlist-track') {
+    const { productId, actionType, anonId } = req.body || {};
+
+    if (!productId || !['add', 'remove'].includes(actionType)) {
+      return res.status(400).json({ error: 'productId y actionType validos son requeridos' });
+    }
+
+    const actorType = tokenPayload ? 'auth' : 'guest';
+    const actorId = tokenPayload?.userId || anonId || null;
+
+    const { error } = await supabase
+      .from('wishlist_events')
+      .insert({
+        product_id: productId,
+        action_type: actionType,
+        actor_type: actorType,
+        actor_id: actorId,
+        user_id: tokenPayload?.userId || null,
+      });
+
+    if (error) {
+      console.error('Error wishlist-track:', error.message);
+      return res.status(200).json({ ok: false });
+    }
+
+    return res.status(200).json({ ok: true });
+  }
+
+  // From here, auth is required
+  if (!tokenPayload) return res.status(401).json({ error: 'No autorizado. Inicia sesion de nuevo.' });
+
+  // Wishlist: get
   if (action === 'wishlist-get') {
     const { data, error } = await supabase
       .from('wishlists')
@@ -24,9 +54,9 @@ export default async function handler(req, res) {
     return res.status(200).json({ ids: (data || []).map(r => r.product_id) });
   }
 
-  // ── Wishlist: añadir ──────────────────────────────────
+  // Wishlist: add
   if (action === 'wishlist-add') {
-    const { productId } = req.body;
+    const { productId } = req.body || {};
     if (!productId) return res.status(400).json({ error: 'productId requerido' });
     const { error } = await supabase
       .from('wishlists')
@@ -35,9 +65,9 @@ export default async function handler(req, res) {
     return res.status(200).json({ ok: true });
   }
 
-  // ── Wishlist: quitar ──────────────────────────────────
+  // Wishlist: remove
   if (action === 'wishlist-remove') {
-    const { productId } = req.body;
+    const { productId } = req.body || {};
     if (!productId) return res.status(400).json({ error: 'productId requerido' });
     const { error } = await supabase
       .from('wishlists')
@@ -48,8 +78,8 @@ export default async function handler(req, res) {
     return res.status(200).json({ ok: true });
   }
 
-  // ── Mis pedidos (comportamiento original) ─────────────
-  const { email } = req.body;
+  // Original behavior: fetch user orders
+  const { email } = req.body || {};
   if (!email) return res.status(400).json({ error: 'Email requerido' });
   if (tokenPayload.email.toLowerCase() !== email.toLowerCase()) {
     return res.status(403).json({ error: 'No autorizado para ver estos pedidos.' });
