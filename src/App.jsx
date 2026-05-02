@@ -22,6 +22,7 @@ const ForgotPasswordPage = lazy(() => import('./pages/ForgotPasswordPage'));
 const ResetPasswordPage      = lazy(() => import('./pages/ResetPasswordPage'));
 const OrdenConfirmadaPage    = lazy(() => import('./pages/OrdenConfirmadaPage'));
 const WishlistPage           = lazy(() => import('./pages/WishlistPage'));
+const NosotrosPage           = lazy(() => import('./pages/NosotrosPage'));
 
 export { CartContext };
 
@@ -115,6 +116,7 @@ function AppShell() {
               <Route path="/reset-password"   element={<ResetPasswordPage />} />
               <Route path="/orden-confirmada" element={<OrdenConfirmadaPage />} />
               <Route path="/wishlist"         element={<WishlistPage />} />
+              <Route path="/nosotros"         element={<NosotrosPage />} />
               <Route path="*"              element={<NotFoundPage />} />
             </Routes>
             </div>

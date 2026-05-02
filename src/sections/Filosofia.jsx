@@ -41,7 +41,7 @@ export default function Filosofia() {
 
         {/* CTA */}
         <a
-          href="#nosotros"
+          href="/nosotros"
           style={{ letterSpacing: '0.2em' }}
           className="font-secondary inline-block text-[11px] font-semibold text-stone-900 bg-white px-8 py-4 hover:bg-stone-100 transition-colors duration-300 w-fit"
         >
