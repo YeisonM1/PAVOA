@@ -1,4 +1,5 @@
 import { Plus, Minus } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 export default function ProductVariantSelector({
   coloresUnicos, tallasDisponibles, esTallaUnica, tieneVariantes,
@@ -10,7 +11,6 @@ export default function ProductVariantSelector({
 }) {
   return (
     <>
-      {/* ── CANTIDAD ── */}
       <div className="mb-5 md:mb-8">
         <span className="text-[10px] font-bold tracking-[0.2em] text-stone-900 uppercase block mb-4">Cantidad</span>
         <div className="relative inline-block">
@@ -24,11 +24,11 @@ export default function ProductVariantSelector({
               onClick={puedeSeleccionarCantidad ? onDecrementar : undefined}
               disabled={!puedeSeleccionarCantidad || cantidad <= 1}
               aria-label="Disminuir cantidad"
-              className={`w-11 h-11 flex items-center justify-center transition-colors
-                ${!puedeSeleccionarCantidad
+              className={`w-11 h-11 flex items-center justify-center transition-colors ${
+                !puedeSeleccionarCantidad
                   ? 'text-stone-200 cursor-not-allowed'
                   : 'text-stone-600 hover:text-stone-900 hover:bg-stone-50 disabled:opacity-30 disabled:cursor-not-allowed'
-                }`}
+              }`}
             >
               <Minus size={13} strokeWidth={2} />
             </button>
@@ -43,28 +43,28 @@ export default function ProductVariantSelector({
             <button
               onClick={puedeSeleccionarCantidad ? onIncrementar : onCantidadBloqueada}
               aria-label="Aumentar cantidad"
-              className={`w-11 h-11 flex items-center justify-center transition-colors
-                ${!puedeSeleccionarCantidad
+              className={`w-11 h-11 flex items-center justify-center transition-colors ${
+                !puedeSeleccionarCantidad
                   ? 'text-stone-200 cursor-not-allowed'
                   : 'text-stone-600 hover:text-stone-900 hover:bg-stone-50'
-                }`}
+              }`}
             >
               <Plus size={13} strokeWidth={2} />
             </button>
           </div>
 
-          {/* Tooltip premium */}
-          <div className={`absolute left-0 -bottom-8 transition-all duration-300 ease-out pointer-events-none ${
-            showCantidadHint ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-1'
-          }`}>
+          <div
+            className={`absolute left-0 -bottom-8 transition-all duration-300 ease-out pointer-events-none ${
+              showCantidadHint ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-1'
+            }`}
+          >
             <p style={{ letterSpacing: '0.15em' }} className="text-[9px] text-stone-400 uppercase whitespace-nowrap">
-              ✦ Selecciona primero color y talla
+              Selecciona primero color y talla
             </p>
           </div>
         </div>
       </div>
 
-      {/* ── COLORES ── */}
       {tieneVariantes && (
         <div id="color-selector" className="mb-5 md:mb-8">
           <div className="flex justify-between items-end mb-4">
@@ -74,15 +74,22 @@ export default function ProductVariantSelector({
             )}
           </div>
           <div className="flex items-center gap-3 flex-wrap">
-            {coloresUnicos.map(v => {
+            {coloresUnicos.map((v) => {
               const activo = colorSeleccionado === v.color;
               return (
-                <button key={v.color} onClick={() => onColorSelect(v.color)} title={v.color}
+                <button
+                  key={v.color}
+                  onClick={() => onColorSelect(v.color)}
+                  title={v.color}
                   className="flex flex-col items-center gap-1.5 group"
-                  aria-label={`Color ${v.color}${activo ? ', seleccionado' : ''}`}>
-                  <div className={`w-7 h-7 rounded-full border transition-all duration-200 group-hover:scale-110
-                    ${activo ? 'ring-2 ring-offset-2 ring-stone-900 border-stone-300 scale-110' : 'border-stone-200 shadow-sm'}`}
-                    style={{ backgroundColor: v.hex }} />
+                  aria-label={`Color ${v.color}${activo ? ', seleccionado' : ''}`}
+                >
+                  <div
+                    className={`w-7 h-7 rounded-full border transition-all duration-200 group-hover:scale-110 ${
+                      activo ? 'ring-2 ring-offset-2 ring-stone-900 border-stone-300 scale-110' : 'border-stone-200 shadow-sm'
+                    }`}
+                    style={{ backgroundColor: v.hex }}
+                  />
                   <span className={`text-[8px] tracking-[0.1em] uppercase transition-colors ${activo ? 'text-stone-900 font-bold' : 'text-stone-400'}`}>
                     {v.color}
                   </span>
@@ -93,7 +100,6 @@ export default function ProductVariantSelector({
         </div>
       )}
 
-      {/* ── TALLAS ── */}
       {colorSeleccionado && (
         <div id="talla-selector" className="mb-10">
           <div className="flex justify-between items-end mb-4">
@@ -110,10 +116,10 @@ export default function ProductVariantSelector({
           {esTallaUnica ? (
             <div className="flex flex-col gap-3">
               <div className="h-12 border border-stone-200 bg-stone-50 flex items-center justify-center cursor-default select-none">
-                <span className="text-[11px] font-medium text-stone-400 tracking-[0.15em] uppercase">Talla Única</span>
+                <span className="text-[11px] font-medium text-stone-400 tracking-[0.15em] uppercase">Talla única</span>
               </div>
               <p className="text-[9px] tracking-[0.15em] text-stone-400 uppercase text-center">
-                Tecnología de adaptación multidireccional · Se adapta a tu cuerpo desde la talla xs hasta la L
+                Tecnología de adaptación multidireccional. Se adapta a tu cuerpo desde la talla XS hasta la L.
               </p>
             </div>
           ) : (
@@ -127,11 +133,15 @@ export default function ProductVariantSelector({
                     onClick={() => onTallaSelect(talla)}
                     aria-label={`Talla ${talla}${agotado ? ', agotado' : ''}${activo ? ', seleccionada' : ''}`}
                     aria-pressed={activo}
-                    className={`h-12 border flex items-center justify-center text-[11px] font-medium tracking-[0.05em] transition-colors uppercase relative
-                      ${agotado && activo ? 'border-stone-900 bg-stone-900 text-white' :
-                        agotado ? 'border-stone-100 text-stone-300' :
-                        activo ? 'border-stone-900 bg-stone-900 text-white' :
-                        'border-stone-200 text-stone-600 hover:border-stone-900'}`}
+                    className={`h-12 border flex items-center justify-center text-[11px] font-medium tracking-[0.05em] transition-colors uppercase relative ${
+                      agotado && activo
+                        ? 'border-stone-900 bg-stone-900 text-white'
+                        : agotado
+                          ? 'border-stone-100 text-stone-300'
+                          : activo
+                            ? 'border-stone-900 bg-stone-900 text-white'
+                            : 'border-stone-200 text-stone-600 hover:border-stone-900'
+                    }`}
                   >
                     {talla}
                   </button>
@@ -147,24 +157,58 @@ export default function ProductVariantSelector({
         </div>
       )}
 
-      {/* ── BOTÓN AGREGAR ── */}
       <button
         ref={addBtnRef}
         onClick={onAddToCart}
         disabled={stockActual === 0 || stockActual === null}
-        className={`w-full h-14 text-[10px] font-bold tracking-[0.25em] uppercase transition-all duration-300 flex items-center justify-center gap-3
-          ${stockActual === 0 ? 'bg-stone-200 text-stone-400 cursor-not-allowed' :
-            stockActual === null ? 'bg-stone-300 text-stone-500 cursor-not-allowed' :
-            adding ? 'bg-stone-800 text-white scale-[0.98]' :
-            'bg-stone-900 text-white hover:bg-stone-800'}`}
+        className={`w-full h-14 text-[10px] font-bold tracking-[0.25em] uppercase transition-all duration-300 flex items-center justify-center gap-3 ${
+          stockActual === 0
+            ? 'bg-stone-200 text-stone-400 cursor-not-allowed'
+            : stockActual === null
+              ? 'bg-stone-300 text-stone-500 cursor-not-allowed'
+              : adding
+                ? 'bg-stone-800 text-white scale-[0.98]'
+                : 'bg-stone-900 text-white hover:bg-stone-800'
+        }`}
       >
-        {stockActual === 0 ? 'Agotado' : stockActual === null ? 'Selecciona color y talla' : adding ? 'Agregado ✔' : 'Añadir a la bolsa'}
+        {stockActual === 0 ? 'Agotado' : stockActual === null ? 'Selecciona color y talla' : adding ? 'Agregado' : 'Añadir a la bolsa'}
       </button>
 
-      {/* ── AVISO STOCK AGOTADO ── */}
+      <div className="mt-4 border border-stone-100 bg-stone-50 px-4 py-3">
+        <ul className="flex flex-col gap-2">
+          <li className="text-[9px] tracking-[0.14em] text-stone-500 uppercase flex items-start gap-2">
+            <span className="mt-[5px] w-1 h-1 bg-stone-400 rounded-full flex-shrink-0" />
+            Envío estimado: ciudades principales 2 a 5 días hábiles
+          </li>
+          <li className="text-[9px] tracking-[0.14em] text-stone-500 uppercase flex items-start gap-2">
+            <span className="mt-[5px] w-1 h-1 bg-stone-400 rounded-full flex-shrink-0" />
+            Cambios y devoluciones dentro de 5 días hábiles
+          </li>
+          <li className="text-[9px] tracking-[0.14em] text-stone-500 uppercase flex items-start gap-2">
+            <span className="mt-[5px] w-1 h-1 bg-stone-400 rounded-full flex-shrink-0" />
+            <span>
+              ¿Duda de talla?{' '}
+              <button
+                onClick={onShowGuiaTallas}
+                className="text-stone-900 border-b border-stone-900 hover:text-stone-600 transition-colors"
+              >
+                Ver guía
+              </button>
+              {' '}o{' '}
+              <Link
+                to="/guia-de-tallas"
+                className="text-stone-900 border-b border-stone-900 hover:text-stone-600 transition-colors"
+              >
+                abrir página
+              </Link>
+            </span>
+          </li>
+        </ul>
+      </div>
+
       {stockActual === 0 && tallaSeleccionada && (
         alertSent ? (
-          <p className="text-[9px] tracking-[0.15em] text-stone-500 uppercase mt-4">✓ Te avisaremos cuando esté disponible.</p>
+          <p className="text-[9px] tracking-[0.15em] text-stone-500 uppercase mt-4">Te avisaremos cuando esté disponible.</p>
         ) : (
           <div className="mt-4 flex flex-col gap-3">
             <p className="text-[9px] tracking-[0.15em] text-stone-400 uppercase">Esta talla está agotada. Avísame cuando vuelva:</p>
@@ -172,7 +216,7 @@ export default function ProductVariantSelector({
               <input
                 type="email"
                 value={alertEmail}
-                onChange={e => onAlertEmailChange(e.target.value)}
+                onChange={(e) => onAlertEmailChange(e.target.value)}
                 placeholder="tu@correo.com"
                 className="flex-1 border-b border-stone-200 focus:border-stone-900 outline-none py-2.5 text-[12px] text-stone-900 placeholder-stone-300 bg-transparent transition-colors"
               />

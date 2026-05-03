@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { estaAutenticado, getCliente, getPedidos, cerrarSesion } from '../services/authService';
 import { getProductos } from '../services/productService';
 import { useWishlist } from '../context/WishlistContext';
@@ -15,6 +15,27 @@ const formatPrecio = (amount) =>
 
 const TABS_VALIDOS = new Set(['pedidos', 'deseos', 'perfil']);
 const resolverTab = (tab) => (TABS_VALIDOS.has(tab) ? tab : 'pedidos');
+
+const getEstadoResumen = (pedido) => {
+  if (pedido.fulfillmentStatus === 'DELIVERED') {
+    return {
+      titulo: 'Pedido entregado',
+      detalle: 'Tu pedido ya fue entregado. Si necesitas cambio, puedes iniciarlo desde aqui.',
+    };
+  }
+
+  if (pedido.fulfillmentStatus === 'FULFILLED') {
+    return {
+      titulo: 'Pedido en camino',
+      detalle: 'Tu pedido ya fue despachado. Revisa el rastreo para ver el avance.',
+    };
+  }
+
+  return {
+    titulo: 'Preparando pedido',
+    detalle: 'Estamos alistando tu pedido para despacho.',
+  };
+};
 
 const EstadoBadge = ({ status }) => {
   const map = {
@@ -46,6 +67,7 @@ const ChevronIcon = ({ open }) => (
 
 function OrdenDetalle({ pedido, imagenMap }) {
   const tieneDescuento = pedido.descuentoAplicado && pedido.totalOriginal > 0;
+  const estadoResumen = getEstadoResumen(pedido);
 
   return (
     <div className="border-t border-stone-100 bg-[#FAFAF9]">
@@ -167,6 +189,46 @@ function OrdenDetalle({ pedido, imagenMap }) {
               )}
             </div>
           )}
+
+          <div className="border border-stone-100 bg-white p-4">
+            <p style={{ letterSpacing: '0.25em' }} className="text-[9px] font-bold text-stone-400 uppercase mb-2">
+              Estado actual
+            </p>
+            <p className="text-[11px] font-bold text-stone-900 tracking-[0.08em] uppercase">
+              {estadoResumen.titulo}
+            </p>
+            <p className="text-[11px] text-stone-500 tracking-[0.05em] mt-1">
+              {estadoResumen.detalle}
+            </p>
+
+            <div className="flex flex-wrap gap-4 mt-4">
+              {pedido.trackingUrl && (
+                <a
+                  href={pedido.trackingUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ letterSpacing: '0.12em' }}
+                  className="text-[9px] font-bold text-stone-900 uppercase border-b border-stone-900 pb-0.5 hover:text-stone-500 transition-colors"
+                >
+                  Rastrear pedido
+                </a>
+              )}
+              <Link
+                to={`/cambios-y-devoluciones?pedido=${encodeURIComponent(pedido.name)}`}
+                style={{ letterSpacing: '0.12em' }}
+                className="text-[9px] font-bold text-stone-900 uppercase border-b border-stone-900 pb-0.5 hover:text-stone-500 transition-colors"
+              >
+                Iniciar cambio o devolucion
+              </Link>
+              <Link
+                to={`/contacto?pedido=${encodeURIComponent(pedido.name)}`}
+                style={{ letterSpacing: '0.12em' }}
+                className="text-[9px] font-bold text-stone-400 uppercase border-b border-stone-300 pb-0.5 hover:text-stone-700 transition-colors"
+              >
+                Hablar con soporte
+              </Link>
+            </div>
+          </div>
 
           {/* Total */}
           <div className="border-t border-stone-100 pt-4 mt-auto">
@@ -314,6 +376,10 @@ export default function AccountPage() {
     setActiveTab(tabURL);
   }, [searchParams]);
 
+  const pedidosEntregados = pedidos.filter((pedido) => pedido.fulfillmentStatus === 'DELIVERED').length;
+  const pedidosEnCamino = pedidos.filter((pedido) => pedido.fulfillmentStatus === 'FULFILLED').length;
+  const pedidosEnProceso = pedidos.filter((pedido) => pedido.fulfillmentStatus === 'UNFULFILLED').length;
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white">
@@ -396,9 +462,25 @@ export default function AccountPage() {
                 </button>
               </div>
             ) : (
-              pedidos.map(pedido => (
-                <OrdenCard key={pedido.id} pedido={pedido} imagenMap={imagenMap} />
-              ))
+              <>
+                <div className="border border-stone-100 bg-stone-50 px-5 py-4 mb-2 grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div>
+                    <p className="text-[9px] text-stone-400 tracking-[0.2em] uppercase">En proceso</p>
+                    <p className="text-[18px] text-stone-900 font-semibold">{pedidosEnProceso}</p>
+                  </div>
+                  <div>
+                    <p className="text-[9px] text-stone-400 tracking-[0.2em] uppercase">En camino</p>
+                    <p className="text-[18px] text-stone-900 font-semibold">{pedidosEnCamino}</p>
+                  </div>
+                  <div>
+                    <p className="text-[9px] text-stone-400 tracking-[0.2em] uppercase">Entregados</p>
+                    <p className="text-[18px] text-stone-900 font-semibold">{pedidosEntregados}</p>
+                  </div>
+                </div>
+                {pedidos.map(pedido => (
+                  <OrdenCard key={pedido.id} pedido={pedido} imagenMap={imagenMap} />
+                ))}
+              </>
             )}
           </div>
         )}
