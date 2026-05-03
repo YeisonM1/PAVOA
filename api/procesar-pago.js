@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 import { getShopifyToken, eliminarDraftOrder } from './_helpers/shopify-token.js';
 import { processMercadoPagoPayment } from './_helpers/mercadopago-order.js';
 import { validateCartWithShopify } from './_helpers/cart-validation.js';
+import { verifyToken } from './_helpers/auth.js';
 
 const client = new mercadopago.MercadoPagoConfig({
   accessToken: process.env.MP_ACCESS_TOKEN,
@@ -18,6 +19,7 @@ const SHOPIFY_DOMAIN = process.env.VITE_SHOPIFY_DOMAIN;
 const MP_EXPECTED_USER_ID = String(
   process.env.MP_EXPECTED_USER_ID || process.env.MP_SELLER_USER_ID || ''
 ).trim();
+const normalizeEmail = (value) => String(value || '').trim().toLowerCase();
 
 const requiredEnvError = () => {
   if (!process.env.MP_ACCESS_TOKEN) return 'Falta MP_ACCESS_TOKEN en variables de entorno de Vercel.';
@@ -269,10 +271,19 @@ export default async function handler(req, res) {
     return res.status(result.ok ? 200 : 409).json(result);
   }
 
+  const tokenPayload = verifyToken(req);
   const { form, cartItems, cartTotal, draftOrderId } = req.body;
+  const orderOwnerEmail = normalizeEmail(tokenPayload?.email || form?.email);
+  const payerEmail = normalizeEmail(form?.email);
 
   if (!form || !cartItems?.length || !draftOrderId || !cartTotal) {
     return res.status(400).json({ error: 'Datos incompletos' });
+  }
+  if (!orderOwnerEmail) {
+    return res.status(400).json({ error: 'No se pudo determinar el correo asociado al pedido.' });
+  }
+  if (!payerEmail) {
+    return res.status(400).json({ error: 'Correo de pago invalido.' });
   }
 
   try {
@@ -305,7 +316,7 @@ export default async function handler(req, res) {
       const { data: usuario } = await supabase
         .from('usuarios')
         .select('descuento_bienvenida_usado')
-        .eq('email', form.email.toLowerCase())
+        .eq('email', orderOwnerEmail)
         .eq('email_verified', true)
         .single();
 
@@ -315,7 +326,7 @@ export default async function handler(req, res) {
           unit_price: Math.round(item.unit_price * 0.9),
         }));
         descuentoAplicado = true;
-        console.log(`Descuento bienvenida 10% aplicado a: ${form.email}`);
+        console.log(`Descuento bienvenida 10% aplicado a: ${orderOwnerEmail}`);
       }
     } catch (descErr) {
       console.warn('No se pudo verificar descuento:', descErr.message);
@@ -342,12 +353,12 @@ export default async function handler(req, res) {
       }
     }
 
-    const externalRef = `${draftOrderId}|${form.email.toLowerCase()}|${descuentoAplicado ? '1' : '0'}`;
+    const externalRef = `${draftOrderId}|${orderOwnerEmail}|${descuentoAplicado ? '1' : '0'}`;
 
     const preference = await preferenceClient.create({
       body: {
         items: itemsMapped,
-        payer: { email: form.email },
+        payer: { email: payerEmail },
         back_urls: {
           success: `${APP_URL}/orden-confirmada`,
           failure: `${APP_URL}/checkout`,

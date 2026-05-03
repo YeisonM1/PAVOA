@@ -31,6 +31,13 @@ const formatBackendError = (error, detail) => {
   }
 };
 
+const getJsonHeaders = () => {
+  const headers = { 'Content-Type': 'application/json' };
+  const token = getToken();
+  if (token) headers.Authorization = `Bearer ${token}`;
+  return headers;
+};
+
 const limpiarDraftPendiente = async (draftOrderId) => {
   const id = String(draftOrderId || '').trim();
   if (!id) return false;
@@ -38,7 +45,7 @@ const limpiarDraftPendiente = async (draftOrderId) => {
   try {
     const res = await fetch('/api/procesar-pago', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: getJsonHeaders(),
       body: JSON.stringify({ type: 'cancel-draft-order', draftOrderId: id }),
     });
     const data = await res.json().catch(() => null);
@@ -138,7 +145,7 @@ export default function CheckoutPage() {
     if (!cliente?.email) return;
     const token = getToken();
     const headers = { 'Content-Type': 'application/json' };
-    if (token) headers['Authorization'] = `Bearer ${token}`;
+    if (token) headers.Authorization = `Bearer ${token}`;
     fetch('/api/check-descuento', {
       method: 'POST',
       headers,
@@ -325,7 +332,7 @@ export default function CheckoutPage() {
       // Paso 2 — Crear draft order en Shopify
       const resPedido = await fetch('/api/pedido', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getJsonHeaders(),
         body: JSON.stringify({ form, cartItems, cartTotal, idempotencyKey }),
       });
       const dataPedido = await resPedido.json();
@@ -339,7 +346,7 @@ export default function CheckoutPage() {
       // Paso 3 — Crear preferencia en MercadoPago
       const resPref = await fetch('/api/procesar-pago', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getJsonHeaders(),
         body: JSON.stringify({ form, cartItems, cartTotal, draftOrderId: draftOrderIdCreado }),
       });
       const dataPref = await resPref.json();
@@ -399,7 +406,7 @@ export default function CheckoutPage() {
 
       const res = await fetch('/api/procesar-pago', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getJsonHeaders(),
         body: JSON.stringify({ type: 'mp-diagnostico', preferenceId }),
       });
       const data = await res.json();

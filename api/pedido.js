@@ -1,7 +1,10 @@
 import { getShopifyToken } from './_helpers/shopify-token.js';
 import { validateCartWithShopify } from './_helpers/cart-validation.js';
+import { verifyToken } from './_helpers/auth.js';
 
 const SHOPIFY_DOMAIN = process.env.VITE_SHOPIFY_DOMAIN;
+
+const normalizeEmail = (value) => String(value || '').trim().toLowerCase();
 
 const requiredEnvError = () => {
   if (!SHOPIFY_DOMAIN) return 'Falta VITE_SHOPIFY_DOMAIN en variables de entorno de Vercel.';
@@ -44,7 +47,7 @@ const parseShopifyError = (message = '') => {
   }
 };
 
-const crearDraftOrder = async (token, { form, trustedItems }) => {
+const crearDraftOrder = async (token, { form, trustedItems, orderOwnerEmail }) => {
   const lineItems = trustedItems.map((item) => ({
     variant_id: item.variantId,
     quantity: item.quantity,
@@ -86,7 +89,8 @@ const crearDraftOrder = async (token, { form, trustedItems }) => {
       tags: 'pavoa-web,mercadopago',
       send_receipt: false,
       note_attributes: [
-        { name: 'customer_email', value: form.email || '' },
+        { name: 'customer_email', value: orderOwnerEmail || '' },
+        { name: 'payer_email', value: normalizeEmail(form.email) || '' },
       ],
     },
   };
@@ -124,10 +128,15 @@ export default async function handler(req, res) {
     return res.status(429).json({ error: 'Demasiados pedidos. Espera 15 minutos e intenta de nuevo.' });
   }
 
+  const tokenPayload = verifyToken(req);
   const { form, cartItems, idempotencyKey } = req.body;
+  const orderOwnerEmail = normalizeEmail(tokenPayload?.email || form?.email);
 
   if (!form?.nombre?.trim() || !form?.telefono?.trim()) {
     return res.status(400).json({ error: 'Nombre y telefono son requeridos' });
+  }
+  if (!orderOwnerEmail) {
+    return res.status(400).json({ error: 'Correo requerido para asociar el pedido.' });
   }
   if (!Array.isArray(cartItems) || cartItems.length === 0) {
     return res.status(400).json({ error: 'El carrito esta vacio' });
@@ -150,7 +159,7 @@ export default async function handler(req, res) {
     for (const preferredToken of ['app', 'admin']) {
       try {
         const token = await getShopifyToken(preferredToken);
-        draftOrder = await crearDraftOrder(token, { form, trustedItems });
+        draftOrder = await crearDraftOrder(token, { form, trustedItems, orderOwnerEmail });
         if (preferredToken === 'admin') {
           console.warn('[PAVOA] Draft Order creado usando fallback con SHOPIFY_ADMIN_TOKEN.');
         }
