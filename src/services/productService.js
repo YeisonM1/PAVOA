@@ -85,6 +85,21 @@ export const CONTACT_PAGE_DEFAULTS = {
   submittingButtonText: 'Enviando...',
 };
 
+export const FOOTER_CONTENT_DEFAULTS = {
+  internalName: 'Principal',
+  newsletterEyebrow: 'NEWSLETTER',
+  newsletterTitle: 'Se la primera en enterarte.',
+  newsletterBody: 'Nuevas colecciones, descuentos exclusivos y mas.',
+  newsletterSuccessText: 'GRACIAS POR SUSCRIBIRTE',
+  newsletterInputPlaceholder: 'Tu correo electronico',
+  newsletterButtonText: 'SUSCRIBIRSE',
+  brandBody: 'Ropa deportiva femenina premium. Elegancia natural. Presencia silenciosa.',
+  storeHeading: 'TIENDA',
+  helpHeading: 'AYUDA',
+  contactHeading: 'CONTACTO',
+  copyrightText: '© 2026 PAVOA. TODOS LOS DERECHOS RESERVADOS.',
+};
+
 // ── Caché en memoria con TTL ──────────────────────────
 const _cache = new Map();
 const CACHE_TTL = 60 * 1000; // 60 segundos
@@ -782,6 +797,56 @@ export const getContactPage = () => {
   })();
 
   setCache('contact-page', promise);
+  return promise;
+};
+
+export const getFooterContent = () => {
+  const cached = getCached('footer-content');
+  if (cached) return cached;
+
+  const promise = (async () => {
+    try {
+      const data = await shopifyFetch(`
+        query {
+          metaobjects(type: "footer_content", first: 1) {
+            edges {
+              node {
+                fields {
+                  key
+                  value
+                }
+              }
+            }
+          }
+        }
+      `);
+
+      const node = data.metaobjects.edges[0]?.node;
+      if (!node) return FOOTER_CONTENT_DEFAULTS;
+
+      const fields = node.fields || [];
+
+      return {
+        internalName: getMetaobjectFieldValue(fields, 'internal_name') || FOOTER_CONTENT_DEFAULTS.internalName,
+        newsletterEyebrow: getMetaobjectFieldValue(fields, 'newsletter_eyebrow') || FOOTER_CONTENT_DEFAULTS.newsletterEyebrow,
+        newsletterTitle: getMetaobjectFieldValue(fields, 'newsletter_title') || FOOTER_CONTENT_DEFAULTS.newsletterTitle,
+        newsletterBody: getMetaobjectFieldValue(fields, 'newsletter_body') || FOOTER_CONTENT_DEFAULTS.newsletterBody,
+        newsletterSuccessText: getMetaobjectFieldValue(fields, 'newsletter_success_text') || FOOTER_CONTENT_DEFAULTS.newsletterSuccessText,
+        newsletterInputPlaceholder: getMetaobjectFieldValue(fields, 'newsletter_input_placeholder') || FOOTER_CONTENT_DEFAULTS.newsletterInputPlaceholder,
+        newsletterButtonText: getMetaobjectFieldValue(fields, 'newsletter_button_text') || FOOTER_CONTENT_DEFAULTS.newsletterButtonText,
+        brandBody: getMetaobjectFieldValue(fields, 'brand_body') || FOOTER_CONTENT_DEFAULTS.brandBody,
+        storeHeading: getMetaobjectFieldValue(fields, 'store_heading') || FOOTER_CONTENT_DEFAULTS.storeHeading,
+        helpHeading: getMetaobjectFieldValue(fields, 'help_heading') || FOOTER_CONTENT_DEFAULTS.helpHeading,
+        contactHeading: getMetaobjectFieldValue(fields, 'contact_heading') || FOOTER_CONTENT_DEFAULTS.contactHeading,
+        copyrightText: getMetaobjectFieldValue(fields, 'copyright_text') || FOOTER_CONTENT_DEFAULTS.copyrightText,
+      };
+    } catch (err) {
+      console.error('Error getFooterContent:', err);
+      return FOOTER_CONTENT_DEFAULTS;
+    }
+  })();
+
+  setCache('footer-content', promise);
   return promise;
 };
 
