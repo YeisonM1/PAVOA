@@ -19,9 +19,19 @@ const getShopifyAppToken = async () => {
         throw new Error('SHOPIFY_CLIENT_ID o SHOPIFY_CLIENT_SECRET no configurados');
       }
 
+      const body = new URLSearchParams({
+        grant_type: 'client_credentials',
+        client_id: clientId,
+        client_secret: clientSecret,
+      });
+
       const res = await fetch(
-        `https://${SHOPIFY_DOMAIN}/admin/oauth/access_token?grant_type=client_credentials&client_id=${clientId}&client_secret=${clientSecret}`,
-        { method: 'POST' }
+        `https://${SHOPIFY_DOMAIN}/admin/oauth/access_token`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body,
+        }
       );
 
       if (!res.ok) {

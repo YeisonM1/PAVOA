@@ -91,6 +91,8 @@ export const validateCartWithShopify = async (cartItems = []) => {
     throw new Error('El carrito esta vacio');
   }
 
+  const hasLegacyAdminToken = Boolean(String(process.env.SHOPIFY_ADMIN_TOKEN || '').trim());
+
   try {
     const buildTrustedItemsFromShopify = async (preferredToken) => {
       const token = await getShopifyToken(preferredToken);
@@ -137,14 +139,28 @@ export const validateCartWithShopify = async (cartItems = []) => {
 
     let trustedItems;
     try {
-      trustedItems = await buildTrustedItemsFromShopify('admin');
-    } catch (error) {
-      if (!isInvalidShopifyTokenError(error?.message)) {
-        throw error;
+      trustedItems = await buildTrustedItemsFromShopify('app');
+    } catch (appError) {
+      if (!hasLegacyAdminToken) {
+        throw appError;
       }
 
-      console.warn('[PAVOA] SHOPIFY_ADMIN_TOKEN invalido para leer variantes; reintentando con token de app.');
-      trustedItems = await buildTrustedItemsFromShopify('app');
+      if (!isInvalidShopifyTokenError(appError?.message) && !isReadProductsScopeError(appError?.message)) {
+        throw appError;
+      }
+
+      console.warn('[PAVOA] No se pudo validar variantes con el token del app; reintentando con SHOPIFY_ADMIN_TOKEN legado.');
+
+      try {
+        trustedItems = await buildTrustedItemsFromShopify('admin');
+      } catch (adminError) {
+        if (!isInvalidShopifyTokenError(adminError?.message) && !isReadProductsScopeError(adminError?.message)) {
+          throw adminError;
+        }
+
+        console.warn('[PAVOA] Tampoco se pudo validar variantes con el token legado; usando validacion fallback desde carrito.');
+        return buildFallbackFromCart(cartItems);
+      }
     }
 
     const total = trustedItems.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);

@@ -2,12 +2,12 @@ import crypto from 'crypto';
 import { createClient } from '@supabase/supabase-js';
 import { Resend } from 'resend';
 import { emailDespacho, emailEntregado } from './_helpers/email-templates.js';
+import { getShopifyToken } from './_helpers/shopify-token.js';
 
-const SHOPIFY_DOMAIN      = process.env.VITE_SHOPIFY_DOMAIN;
-const SHOPIFY_ADMIN_TOKEN = process.env.SHOPIFY_ADMIN_TOKEN;
-const SHOPIFY_SECRET      = process.env.SHOPIFY_WEBHOOK_SECRET;
-const supabase            = createClient(process.env.VITE_SUPABASE_URL, process.env.VITE_SUPABASE_ANON_KEY);
-const resend              = new Resend(process.env.RESEND_API_KEY);
+const SHOPIFY_DOMAIN = process.env.VITE_SHOPIFY_DOMAIN;
+const SHOPIFY_SECRET = process.env.SHOPIFY_WEBHOOK_SECRET;
+const supabase = createClient(process.env.VITE_SUPABASE_URL, process.env.VITE_SUPABASE_ANON_KEY);
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 const TRANSPORTADORAS = [
   { nombre: 'Servientrega',    dominios: ['servientrega.com.co', 'servientrega.com'],     claves: ['servientrega']                       },
@@ -62,6 +62,8 @@ const restockRefund = async (refund) => {
     return;
   }
 
+  const token = await getShopifyToken();
+
   for (const rli of itemsParaRestock) {
     const variantId       = rli.line_item?.variant_id;
     const cantidad        = rli.quantity;
@@ -80,7 +82,7 @@ const restockRefund = async (refund) => {
         method: 'POST',
         headers: {
           'Content-Type':           'application/json',
-          'X-Shopify-Access-Token': SHOPIFY_ADMIN_TOKEN,
+          'X-Shopify-Access-Token': token,
         },
         body: JSON.stringify({
           inventory_item_id:    inventoryItemId,
