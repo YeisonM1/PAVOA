@@ -1,26 +1,19 @@
 const SHOPIFY_DOMAIN = process.env.VITE_SHOPIFY_DOMAIN;
 
-// Cache del token en memoria + mutex para evitar race condition en cold starts concurrentes
-let _tokenCache    = { token: null, expiresAt: 0 };
+// Cache del token de app en memoria + mutex para evitar race condition en cold starts concurrentes
+let _tokenCache = { token: null, expiresAt: 0 };
 let _tokenInflight = null;
 
-export const getShopifyToken = async () => {
-  const adminToken = String(process.env.SHOPIFY_ADMIN_TOKEN || '').trim();
-  if (adminToken) {
-    return adminToken;
-  }
-
+const getShopifyAppToken = async () => {
   const now = Date.now();
-  // Si el token existe y le quedan más de 2 minutos de vida, lo reutiliza
   if (_tokenCache.token && _tokenCache.expiresAt - now > 120_000) {
     return _tokenCache.token;
   }
-  // Si ya hay una petición en vuelo, esperar la misma (evita doble fetch concurrente)
   if (_tokenInflight) return _tokenInflight;
 
   _tokenInflight = (async () => {
     try {
-      const clientId     = process.env.SHOPIFY_CLIENT_ID;
+      const clientId = process.env.SHOPIFY_CLIENT_ID;
       const clientSecret = process.env.SHOPIFY_CLIENT_SECRET;
       if (!clientId || !clientSecret) {
         throw new Error('SHOPIFY_CLIENT_ID o SHOPIFY_CLIENT_SECRET no configurados');
@@ -37,9 +30,8 @@ export const getShopifyToken = async () => {
       }
 
       const data = await res.json();
-      // Shopify devuelve expires_in en segundos (normalmente 3600 = 1 hora)
       _tokenCache = {
-        token:     data.access_token,
+        token: data.access_token,
         expiresAt: now + (data.expires_in ?? 3600) * 1000,
       };
       return _tokenCache.token;
@@ -51,12 +43,32 @@ export const getShopifyToken = async () => {
   return _tokenInflight;
 };
 
+export const getShopifyToken = async (preferred = 'app') => {
+  const adminToken = String(process.env.SHOPIFY_ADMIN_TOKEN || '').trim();
+  const hasAppCreds = Boolean(process.env.SHOPIFY_CLIENT_ID && process.env.SHOPIFY_CLIENT_SECRET);
+
+  if (preferred === 'admin') {
+    if (adminToken) return adminToken;
+    if (hasAppCreds) return getShopifyAppToken();
+    throw new Error('No hay token disponible de Shopify');
+  }
+
+  if (hasAppCreds) {
+    return getShopifyAppToken();
+  }
+  if (adminToken) {
+    return adminToken;
+  }
+
+  throw new Error('No hay token disponible de Shopify');
+};
+
 /**
  * Elimina un draft order de Shopify.
  */
 export const eliminarDraftOrder = async (draftOrderId) => {
   try {
-    const token = await getShopifyToken();
+    const token = await getShopifyToken('app');
     await fetch(
       `https://${SHOPIFY_DOMAIN}/admin/api/2026-04/draft_orders/${draftOrderId}.json`,
       {
@@ -64,8 +76,8 @@ export const eliminarDraftOrder = async (draftOrderId) => {
         headers: { 'X-Shopify-Access-Token': token },
       }
     );
-    console.log(`🗑️ Draft order eliminado: ${draftOrderId}`);
+    console.log(`Draft order eliminado: ${draftOrderId}`);
   } catch (err) {
-    console.error(`⚠️ No se pudo eliminar draft order ${draftOrderId}:`, err.message);
+    console.error(`No se pudo eliminar draft order ${draftOrderId}:`, err.message);
   }
 };

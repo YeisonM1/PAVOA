@@ -90,7 +90,7 @@ export const validateCartWithShopify = async (cartItems = []) => {
   }
 
   try {
-    const token = await getShopifyToken();
+    const token = await getShopifyToken('admin');
     const trustedItems = [];
 
     for (const item of cartItems) {
