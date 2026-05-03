@@ -145,6 +145,13 @@ export default function CheckoutPage() {
       ...prev,
       general: rejectionMessages[statusDetailFromMP] || 'No se pudo procesar tu pago. Intenta nuevamente o usa otro medio.',
     }));
+
+    try {
+      const debugRaw = sessionStorage.getItem('pavoa-last-mp-debug');
+      if (debugRaw) {
+        console.warn('[PAVOA][MP DEBUG][ultimo intento]', JSON.parse(debugRaw));
+      }
+    } catch {}
   }, [statusFromMP, statusDetailFromMP]);
 
   if (cartCount === 0) {
@@ -294,6 +301,11 @@ export default function CheckoutPage() {
         setErrors({ general: dataPref?.error || 'No se pudo iniciar el pago.' });
         setCargandoPago(false);
         return;
+      }
+
+      if (dataPref?.debug) {
+        sessionStorage.setItem('pavoa-last-mp-debug', JSON.stringify(dataPref.debug));
+        console.info('[PAVOA][MP DEBUG]', dataPref.debug);
       }
 
       // Paso 4 — Guardar datos del pedido y sesión de checkout en sessionStorage

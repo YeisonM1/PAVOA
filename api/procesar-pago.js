@@ -119,9 +119,20 @@ export default async function handler(req, res) {
       },
     });
 
-    console.log(`✅ Preferencia MP creada: ${preference.id} | draft: ${draftOrderId} | descuento: ${descuentoAplicado}`);
+    console.log(
+      `✅ Preferencia MP creada: ${preference.id} | collector: ${preference.collector_id} | live_mode: ${preference.live_mode} | draft: ${draftOrderId} | descuento: ${descuentoAplicado}`
+    );
 
-    return res.status(200).json({ ok: true, init_point: preference.init_point, descuento_aplicado: descuentoAplicado });
+    return res.status(200).json({
+      ok: true,
+      init_point: preference.init_point,
+      descuento_aplicado: descuentoAplicado,
+      debug: {
+        preference_id: preference.id,
+        collector_id: preference.collector_id,
+        live_mode: preference.live_mode,
+      },
+    });
 
   } catch (error) {
     console.error('❌ Error creando preferencia MP:', error?.message);
