@@ -196,21 +196,21 @@ const Header = () => {
 
           <div className="flex-1 flex justify-center">
             <Link to="/" onClick={() => window.scrollTo(0, 0)}>
-              <div className="relative flex items-center justify-center">
+              <div className="flex items-center justify-center gap-2 md:gap-3">
+                <img
+                  src={logoPavo}
+                  alt=""
+                  aria-hidden="true"
+                  width={28}
+                  height={44}
+                  className="h-8 md:h-11 w-auto object-contain"
+                />
                 <img
                   src={logo}
                   alt="PAVOA"
                   width={180}
                   height={72}
                   className="h-14 md:h-20 w-auto object-contain transition-transform duration-500"
-                />
-                <img
-                  src={logoPavo}
-                  alt=""
-                  aria-hidden="true"
-                  width={34}
-                  height={56}
-                  className="pointer-events-none absolute left-[38%] top-1/2 h-8 md:h-11 w-auto -translate-x-1/2 -translate-y-[56%] object-contain"
                 />
               </div>
             </Link>
