@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import logo from '../assets/LOGO-PAVOA.svg';
+import logoPavo from '../assets/Logo Negro.png';
 import { CartContext } from '../App';
 import CartDrawer from './CartDrawer';
 import SearchOverlay from './SearchOverlay';
@@ -195,13 +196,23 @@ const Header = () => {
 
           <div className="flex-1 flex justify-center">
             <Link to="/" onClick={() => window.scrollTo(0, 0)}>
-              <img
-                src={logo}
-                alt="PAVOA"
-                width={160}
-                height={72}
-                className="h-14 md:h-20 w-auto object-contain transition-transform duration-500"
-              />
+              <div className="relative flex items-center justify-center">
+                <img
+                  src={logo}
+                  alt="PAVOA"
+                  width={180}
+                  height={72}
+                  className="h-14 md:h-20 w-auto object-contain transition-transform duration-500"
+                />
+                <img
+                  src={logoPavo}
+                  alt=""
+                  aria-hidden="true"
+                  width={34}
+                  height={56}
+                  className="pointer-events-none absolute left-[38%] top-1/2 h-8 md:h-11 w-auto -translate-x-1/2 -translate-y-[56%] object-contain"
+                />
+              </div>
             </Link>
           </div>
 
