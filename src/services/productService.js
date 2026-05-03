@@ -67,6 +67,24 @@ export const NOSOTROS_PAGE_DEFAULTS = {
   ],
 };
 
+export const CONTACT_PAGE_DEFAULTS = {
+  internalName: 'Principal',
+  eyebrow: 'Estamos aqui',
+  title: 'Hablemos',
+  informationHeading: 'Informacion',
+  emailLabel: 'Email',
+  scheduleLabel: 'Horario',
+  observationLabel: 'Observacion',
+  responseTimeHeading: 'Tiempo de respuesta',
+  formHeading: 'Envianos un mensaje',
+  guidedRequestEyebrow: 'Solicitud guiada',
+  successTitle: 'Mensaje enviado',
+  successBody: 'Te respondemos en menos de 24 horas.',
+  successButtonText: 'Enviar otro mensaje',
+  submitButtonText: 'Enviar mensaje',
+  submittingButtonText: 'Enviando...',
+};
+
 // ── Caché en memoria con TTL ──────────────────────────
 const _cache = new Map();
 const CACHE_TTL = 60 * 1000; // 60 segundos
@@ -711,6 +729,59 @@ export const getNosotrosPage = () => {
   })();
 
   setCache('nosotros-page', promise);
+  return promise;
+};
+
+export const getContactPage = () => {
+  const cached = getCached('contact-page');
+  if (cached) return cached;
+
+  const promise = (async () => {
+    try {
+      const data = await shopifyFetch(`
+        query {
+          metaobjects(type: "contact_page", first: 1) {
+            edges {
+              node {
+                fields {
+                  key
+                  value
+                }
+              }
+            }
+          }
+        }
+      `);
+
+      const node = data.metaobjects.edges[0]?.node;
+      if (!node) return CONTACT_PAGE_DEFAULTS;
+
+      const fields = node.fields || [];
+
+      return {
+        internalName: getMetaobjectFieldValue(fields, 'internal_name') || CONTACT_PAGE_DEFAULTS.internalName,
+        eyebrow: getMetaobjectFieldValue(fields, 'eyebrow') || CONTACT_PAGE_DEFAULTS.eyebrow,
+        title: getMetaobjectFieldValue(fields, 'title') || CONTACT_PAGE_DEFAULTS.title,
+        informationHeading: getMetaobjectFieldValue(fields, 'information_heading') || CONTACT_PAGE_DEFAULTS.informationHeading,
+        emailLabel: getMetaobjectFieldValue(fields, 'email_label') || CONTACT_PAGE_DEFAULTS.emailLabel,
+        scheduleLabel: getMetaobjectFieldValue(fields, 'schedule_label') || CONTACT_PAGE_DEFAULTS.scheduleLabel,
+        observationLabel: getMetaobjectFieldValue(fields, 'observation_label') || CONTACT_PAGE_DEFAULTS.observationLabel,
+        responseTimeHeading: getMetaobjectFieldValue(fields, 'response_time_heading') || CONTACT_PAGE_DEFAULTS.responseTimeHeading,
+        formHeading: getMetaobjectFieldValue(fields, 'form_heading') || CONTACT_PAGE_DEFAULTS.formHeading,
+        guidedRequestEyebrow: getMetaobjectFieldValue(fields, 'guided_request_eyebrow') || CONTACT_PAGE_DEFAULTS.guidedRequestEyebrow,
+        successTitle: getMetaobjectFieldValue(fields, 'success_title') || CONTACT_PAGE_DEFAULTS.successTitle,
+        successBody: getMetaobjectFieldValue(fields, 'success_body') || CONTACT_PAGE_DEFAULTS.successBody,
+        successButtonText: getMetaobjectFieldValue(fields, 'success_button_text') || CONTACT_PAGE_DEFAULTS.successButtonText,
+        submitButtonText: getMetaobjectFieldValue(fields, 'submit_button_text') || CONTACT_PAGE_DEFAULTS.submitButtonText,
+        submittingButtonText: getMetaobjectFieldValue(fields, 'submitting_button_text') || CONTACT_PAGE_DEFAULTS.submittingButtonText,
+      };
+    } catch (err) {
+      console.error('Error getContactPage:', err);
+      return CONTACT_PAGE_DEFAULTS;
+    }
+  })();
+
+  setCache('contact-page', promise);
   return promise;
 };
 
