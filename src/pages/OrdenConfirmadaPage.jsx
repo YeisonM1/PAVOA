@@ -39,6 +39,27 @@ export default function OrdenConfirmadaPage() {
     }
   }, []);
 
+  useEffect(() => {
+    if (!paymentIdParam || statusParam !== 'approved') return;
+
+    fetch('/api/procesar-pago', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'mp-finalizar', paymentId: paymentIdParam }),
+    })
+      .then((res) => res.json().catch(() => null))
+      .then((data) => {
+        if (!data?.ok) {
+          console.warn('[PAVOA] No se pudo finalizar el pedido aprobado desde la pagina de confirmacion.', data);
+          return;
+        }
+        console.info('[PAVOA] Pedido finalizado desde la pagina de confirmacion.', data);
+      })
+      .catch((err) => {
+        console.warn('[PAVOA] Error finalizando pedido desde la pagina de confirmacion.', err);
+      });
+  }, [paymentIdParam, statusParam]);
+
   // Analytics
   useEffect(() => {
     if (paymentId && items.length > 0) {

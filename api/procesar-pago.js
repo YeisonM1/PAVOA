@@ -1,6 +1,7 @@
 import mercadopago from 'mercadopago';
 import { createClient } from '@supabase/supabase-js';
 import { getShopifyToken, eliminarDraftOrder } from './_helpers/shopify-token.js';
+import { processMercadoPagoPayment } from './_helpers/mercadopago-order.js';
 import { validateCartWithShopify } from './_helpers/cart-validation.js';
 
 const client = new mercadopago.MercadoPagoConfig({
@@ -256,6 +257,16 @@ export default async function handler(req, res) {
 
     await eliminarDraftOrder(draftOrderId);
     return res.status(200).json({ ok: true, draftOrderId });
+  }
+
+  if (req.body?.type === 'mp-finalizar') {
+    const paymentId = String(req.body?.paymentId || '').trim();
+    if (!paymentId) {
+      return res.status(400).json({ error: 'Falta paymentId' });
+    }
+
+    const result = await processMercadoPagoPayment(paymentId);
+    return res.status(result.ok ? 200 : 409).json(result);
   }
 
   const { form, cartItems, cartTotal, draftOrderId } = req.body;
