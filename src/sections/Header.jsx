@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import logo from '../assets/LOGO-PAVOA.svg';
-import logoPavo from '../assets/Logo Negro.png';
+import logoPavo from '../assets/Pavoa Logo Negro Sin Fondo.svg';
 import { CartContext } from '../App';
 import CartDrawer from './CartDrawer';
 import SearchOverlay from './SearchOverlay';
@@ -21,7 +21,7 @@ import MobileMenu from './header/MobileMenu';
 import { InstagramIcon, FacebookIcon } from '../components/Icons';
 import { estaAutenticado, getCliente, cerrarSesion } from '../services/authService';
 
-const INSTAGRAM_URL = 'https://instagram.com/pavoa';
+const INSTAGRAM_URL = 'https://www.instagram.com/pavoacolombia/';
 const FACEBOOK_URL = 'https://facebook.com/pavoa';
 
 const Header = () => {
@@ -196,21 +196,21 @@ const Header = () => {
 
           <div className="flex-1 flex justify-center">
             <Link to="/" onClick={() => window.scrollTo(0, 0)}>
-              <div className="flex items-center justify-center gap-2 md:gap-3">
-                <img
-                  src={logoPavo}
-                  alt=""
-                  aria-hidden="true"
-                  width={28}
-                  height={44}
-                  className="h-8 md:h-11 w-auto object-contain"
-                />
+              <div className="flex items-center justify-center gap-0 md:gap-0.5">
                 <img
                   src={logo}
                   alt="PAVOA"
                   width={180}
                   height={72}
                   className="h-14 md:h-20 w-auto object-contain transition-transform duration-500"
+                />
+                <img
+                  src={logoPavo}
+                  alt=""
+                  aria-hidden="true"
+                  width={38}
+                  height={60}
+                  className="h-10 md:h-[3.35rem] w-auto object-contain"
                 />
               </div>
             </Link>

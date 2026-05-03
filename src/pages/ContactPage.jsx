@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import SEO from '../components/SEO';
 import { enviarContacto } from '../services/productService';
-import { WhatsAppIcon, MailIcon, ClockIcon } from '../components/Icons';
+import { MailIcon, ClockIcon } from '../components/Icons';
 
 const ASUNTOS = [
   'Selecciona un asunto',
@@ -69,7 +69,7 @@ export default function ContactPage() {
   const validar = () => {
     const nuevosErrores = {};
     if (!form.nombre.trim())   nuevosErrores.nombre   = 'Tu nombre es requerido';
-    if (!form.contacto.trim()) nuevosErrores.contacto = 'Tu email o WhatsApp es requerido';
+    if (!form.contacto.trim()) nuevosErrores.contacto = 'Tu email es requerido';
     if (form.asunto === 'Selecciona un asunto') nuevosErrores.asunto = 'Selecciona un asunto';
     if (!form.mensaje.trim())  nuevosErrores.mensaje  = 'Escribe tu mensaje';
     return nuevosErrores;
@@ -144,18 +144,6 @@ export default function ContactPage() {
               <div className="flex flex-col gap-8">
                 <div className="flex items-start gap-4">
                   <div className="w-9 h-9 flex items-center justify-center border border-stone-200 flex-shrink-0 text-stone-500">
-                    <WhatsAppIcon />
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-bold tracking-[0.15em] uppercase text-stone-900 mb-1">WhatsApp</p>
-                    <a href="https://wa.me/573000000000" target="_blank" rel="noopener noreferrer"
-                      className="text-[12px] text-stone-500 hover:text-stone-900 transition-colors">
-                      +57 300 000 0000
-                    </a>
-                  </div>
-                </div>
-                <div className="flex items-start gap-4">
-                  <div className="w-9 h-9 flex items-center justify-center border border-stone-200 flex-shrink-0 text-stone-500">
                     <MailIcon />
                   </div>
                   <div>
@@ -173,9 +161,16 @@ export default function ContactPage() {
                   <div>
                     <p className="text-[10px] font-bold tracking-[0.15em] uppercase text-stone-900 mb-1">Horario</p>
                     <p className="text-[12px] text-stone-500 leading-relaxed">
-                      Lun — Vie: 8am – 6pm<br />
-                      Sáb: 9am – 2pm
+                      Lunes a sábado: 8am – 6pm
                     </p>
+                    <div className="mt-3 inline-flex flex-col gap-1 border border-stone-200 bg-stone-50 px-4 py-3">
+                      <p className="text-[8px] font-bold tracking-[0.28em] uppercase text-stone-400">
+                        Observación
+                      </p>
+                      <p className="text-[10px] tracking-[0.16em] uppercase text-stone-700">
+                        Haz tu compra en línea 24/7h
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -248,11 +243,11 @@ export default function ContactPage() {
 
                 {/* Contacto */}
                 <div>
-                  <label htmlFor="contacto" className={labelBase}>Email o WhatsApp</label>
+                  <label htmlFor="contacto" className={labelBase}>Email</label>
                   <input
-                    id="contacto" name="contacto" type="text"
+                    id="contacto" name="contacto" type="email"
                     value={form.contacto} onChange={handleChange}
-                    placeholder="hola@correo.com o +57 300 000 0000"
+                    placeholder="hola@correo.com"
                     className={`${inputBase} ${errores.contacto ? inputError : inputNormal}`}
                                      />
                   {errores.contacto && <p className="text-[10px] text-red-400 mt-1 tracking-[0.05em]">{errores.contacto}</p>}
@@ -326,7 +321,7 @@ export default function ContactPage() {
                 {/* Error general */}
                 {estado === 'error' && (
                   <p className="text-[11px] text-red-400 tracking-[0.08em]">
-                    Hubo un error al enviar. Intenta de nuevo o escríbenos por WhatsApp.
+                    Hubo un error al enviar. Intenta de nuevo o escríbenos por correo.
                   </p>
                 )}
 

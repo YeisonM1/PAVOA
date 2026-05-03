@@ -160,33 +160,42 @@ function ProductCard({ producto }) {
       </div>
 
       {/* Info */}
-      <div className="flex flex-col items-center text-center relative">
-        <h3 className="text-[11px] font-bold text-stone-900 tracking-[0.15em] uppercase pr-5">
-          {producto.nombre}
-        </h3>
+      <div className="relative w-full px-2 md:px-3 pt-1">
         <button
           onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggle(producto.id); }}
-          className="absolute -top-3 -right-3 w-11 h-11 flex items-center justify-center text-stone-500 hover:text-stone-900 transition-colors"
+          className="absolute -top-3 right-0 w-11 h-11 flex items-center justify-center text-stone-500 hover:text-stone-900 transition-colors"
           aria-label={isWished(producto.id) ? 'Quitar de favoritos' : 'Guardar en favoritos'}
         >
           <HeartIcon filled={isWished(producto.id)} />
         </button>
-        {mostrarColores && (
-          <div className="flex items-center justify-center gap-1.5 mt-2">
-            {coloresUnicos.slice(0, 7).map((hex) => (
-              <span
-                key={hex}
-                className="w-3 h-3 rounded-full border border-stone-200 flex-shrink-0"
-                style={{ backgroundColor: hex }}
-                aria-hidden="true"
-              />
-            ))}
+
+        <div className="mx-auto flex min-h-[98px] w-full max-w-[260px] flex-col items-center justify-between text-center">
+          <div className="flex min-h-[38px] w-full items-start justify-center">
+            <h3 className="w-full max-w-[220px] text-[11px] font-bold uppercase tracking-[0.15em] text-stone-900 leading-[1.55]">
+              {producto.nombre}
+            </h3>
           </div>
-        )}
-        <div className="h-[24px] overflow-hidden mt-1.5">
-          <p className="text-[13px] font-semibold text-stone-500 transform translate-y-0 opacity-100 md:translate-y-full md:opacity-0 md:group-hover:translate-y-0 md:group-hover:opacity-100 transition-all duration-500 ease-out">
-            {producto.precio}
-          </p>
+
+          <div className="flex min-h-[18px] items-center justify-center">
+            {mostrarColores && (
+              <div className="flex items-center justify-center gap-1.5">
+                {coloresUnicos.slice(0, 7).map((hex) => (
+                  <span
+                    key={hex}
+                    className="h-3 w-3 flex-shrink-0 rounded-full border border-stone-200"
+                    style={{ backgroundColor: hex }}
+                    aria-hidden="true"
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="h-[24px] overflow-hidden">
+            <p className="text-[13px] font-semibold text-stone-500 transform translate-y-0 opacity-100 md:translate-y-full md:opacity-0 md:group-hover:translate-y-0 md:group-hover:opacity-100 transition-all duration-500 ease-out">
+              {producto.precio}
+            </p>
+          </div>
         </div>
       </div>
     </Link>

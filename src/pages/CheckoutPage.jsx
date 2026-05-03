@@ -236,7 +236,7 @@ export default function CheckoutPage() {
     }
     if (field === 'telefono') {
       const telefono = String(value || '').trim();
-      if (!telefono) return 'Escribe tu telefono o WhatsApp.';
+      if (!telefono) return 'Escribe tu telefono.';
       if (telefono.replace(SOLO_DIGITOS, '').length < 10) return 'Revisa tu numero, parece incompleto.';
       return '';
     }
@@ -481,7 +481,7 @@ export default function CheckoutPage() {
               </div>
 
               <div className={errors.telefono ? 'error-field' : ''}>
-                <CAMPO label="Teléfono / WhatsApp" name="telefono" value={form.telefono} onChange={handleChange} onBlur={handleBlur} placeholder="3XX XXX XXXX" type="tel" error={errors.telefono} />
+                <CAMPO label="Teléfono" name="telefono" value={form.telefono} onChange={handleChange} onBlur={handleBlur} placeholder="3XX XXX XXXX" type="tel" error={errors.telefono} />
               </div>
 
               <div className={errors.ciudad ? 'error-field' : ''}>

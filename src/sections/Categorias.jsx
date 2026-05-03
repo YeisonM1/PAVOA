@@ -14,7 +14,7 @@ const CATEGORIAS_FALLBACK = {
   },
   superior: {
     id: 2,
-    nombre: 'Tops & Superior',
+    nombre: 'Tops y Camisetas',
     desc: 'Soporte y diseño',
     href: '/categoria/superior',
     image: 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=500&q=70&fm=webp&auto=format',
@@ -111,7 +111,17 @@ export default function Categorias() {
 
   useEffect(() => {
     getCategoriasDestacadas().then(data => {
-      if (Object.keys(data).length > 0) setCategorias(data);
+      if (Object.keys(data).length > 0) {
+        const next = { ...data };
+        if (next.superior) {
+          next.superior = {
+            ...next.superior,
+            nombre: 'Tops y Camisetas',
+            href: '/categoria/superior',
+          };
+        }
+        setCategorias(next);
+      }
     });
   }, []);
 
@@ -144,7 +154,7 @@ export default function Categorias() {
       <div className="max-w-[1400px] mx-auto mb-10 md:mb-12 flex items-end justify-between border-b border-stone-200 pb-6">
         <div className="flex flex-col gap-1">
           <span className="text-[9px] text-stone-500 tracking-[0.3em] uppercase font-medium">
-            Descubre tu estilo
+            Descubre la prenda a tu estilo
           </span>
           <h2 className="text-lg md:text-xl font-light text-stone-900 tracking-[0.2em] uppercase">
             DISEÑADO <strong className="font-bold">PARA TI</strong>

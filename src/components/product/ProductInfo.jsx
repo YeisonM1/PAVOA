@@ -3,6 +3,30 @@ import { useWishlist } from '../../context/WishlistContext';
 
 export default function ProductInfo({ producto }) {
   const { isWished, toggle } = useWishlist();
+  const descripcionRaw = String(producto.descripcion || '').trim();
+  const descripcionParrafos = (() => {
+    if (!descripcionRaw) return [];
+
+    const bloquesOriginales = descripcionRaw
+      .split(/\n\s*\n/)
+      .map((bloque) => bloque.replace(/\s+/g, ' ').trim())
+      .filter(Boolean);
+
+    if (bloquesOriginales.length > 1) return bloquesOriginales;
+
+    const oraciones = descripcionRaw
+      .replace(/\s+/g, ' ')
+      .split(/(?<=[.!?])\s+/)
+      .map((oracion) => oracion.trim())
+      .filter(Boolean);
+
+    const bloques = [];
+    for (let i = 0; i < oraciones.length; i += 2) {
+      bloques.push(oraciones.slice(i, i + 2).join(' ').trim());
+    }
+
+    return bloques.length > 0 ? bloques : [descripcionRaw.replace(/\s+/g, ' ').trim()];
+  })();
 
   return (
     <>
@@ -41,10 +65,18 @@ export default function ProductInfo({ producto }) {
           </svg>
         </button>
       </div>
-      <div className="text-[12px] md:text-[13px] text-stone-600 tracking-[0.1em] leading-loose mb-6 md:mb-12 uppercase flex flex-col gap-3">
-        {producto.descripcion?.split('.').filter(s => s.trim()).map((oracion, i) => (
-          <p key={i}>{oracion.trim()}.</p>
-        ))}
+      <div className="mb-6 md:mb-12 w-full max-w-[36rem]">
+        <div className="flex flex-col gap-4 md:gap-5">
+          {descripcionParrafos.map((parrafo, index) => (
+            <p
+              key={`${producto.id}-descripcion-${index}`}
+              className="text-[12px] md:text-[13px] text-stone-600 tracking-[0.1em] leading-loose uppercase"
+              style={{ textAlign: 'justify', textWrap: 'pretty' }}
+            >
+              {parrafo}
+            </p>
+          ))}
+        </div>
       </div>
     </>
   );

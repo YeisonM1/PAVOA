@@ -2,7 +2,6 @@ import { useState, useEffect, useRef } from 'react';
 import { heroImage } from '../utils/imageUrl';
 import { useCarousel } from '../hooks/useCarousel';
 import { getHeroSlides } from '../services/productService';
-import logoNegro from '../assets/Logo Negro.png';
 
 const CACHE_KEY = 'pavoa_hero_slides';
 
@@ -30,7 +29,7 @@ const SLIDES_FALLBACK = [
     image: null,
     tag: 'Best Sellers',
     headline: ['Descubre', 'tu mejor', 'versión.'],
-    sub: 'Las piezas favoritas de nuestra comunidad. Ediciones estrictamente limitadas.',
+    sub: 'Las piezas favoritas de nuestra comunidad de mujeres empoderadas y seguras de si mismas.',
     cta: 'Descubrir colección',
     href: '/categoria',
   },
@@ -120,12 +119,7 @@ export default function HeroFullscreen() {
       <div className="absolute inset-0 z-10 bg-gradient-to-t from-black/90 via-black/40 to-transparent pointer-events-none" />
       <div className="absolute inset-0 z-10 bg-black/20 pointer-events-none" />
 
-      {/* Logo mobile */}
-      <div className="md:hidden absolute top-[120px] left-4 z-20 pointer-events-none">
-        <img src={logoNegro} alt="PAVOA" width={96} height={96} className="h-14 w-auto object-contain" />
-      </div>
-
-      <div className="absolute inset-0 z-20 flex flex-col justify-end pb-16 md:pb-20 lg:pb-24 px-8 sm:px-12 md:pl-[14%] md:pr-16 lg:pl-[16%] lg:pr-24">
+      <div className="absolute inset-0 z-20 flex flex-col justify-end pb-12 md:pb-16 lg:pb-20 px-8 sm:px-12 md:pl-[10%] md:pr-16 lg:pl-[12%] lg:pr-24">
         <div
           key={s.id + '-text'}
           className={`transition-all duration-700 ease-[cubic-bezier(0.25,1,0.5,1)] ${
@@ -163,7 +157,7 @@ export default function HeroFullscreen() {
           </a>
 
           <p style={{ letterSpacing: '0.2em' }} className="text-white/40 text-[8px] sm:text-[9px] mt-5 tracking-[0.25em]">
-            Envíos a todo el país  -  Piezas limitadas
+            Envíos a todo el país  -  Ediciones limitadas
           </p>
         </div>
       </div>
@@ -184,14 +178,6 @@ export default function HeroFullscreen() {
             </svg>
           </button>
         </div>
-      </div>
-
-      {/* Logo overlay con degradado integrado — desktop only, sin borde físico */}
-      <div
-        className="hidden md:flex absolute left-0 top-0 h-full z-30 items-center pointer-events-none pl-5"
-        style={{ width: '45%', background: 'linear-gradient(to right, #F2E4E1 0%, #F2E4E1CC 30%, #F2E4E180 55%, #F2E4E120 80%, transparent 100%)' }}
-      >
-        <img src={logoNegro} alt="PAVOA" width={88} height={88} className="max-w-[88px] w-[6.5vw] object-contain" />
       </div>
 
       </div>{/* fin hero */}

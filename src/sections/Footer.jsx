@@ -4,10 +4,8 @@ import { createClient } from '@supabase/supabase-js';
 import logo from '../assets/LOGO-PAVOA.svg';
 import { InstagramIcon, FacebookIcon } from '../components/Icons';
 
-const INSTAGRAM_URL = 'https://instagram.com/pavoa';
+const INSTAGRAM_URL = 'https://www.instagram.com/pavoacolombia/';
 const FACEBOOK_URL = 'https://facebook.com/pavoa';
-const WHATSAPP_NUMBER = import.meta.env.VITE_WHATSAPP_NUMBER || '573000000000';
-const WHATSAPP_URL = `https://wa.me/${WHATSAPP_NUMBER.replace(/\D/g, '')}`;
 
 const supabase = createClient(
   import.meta.env.VITE_SUPABASE_URL,
@@ -123,7 +121,7 @@ export default function Footer() {
           <ul className="space-y-3 text-[11px] font-light">
             {/* ✅ text-stone-400 para links (mejor contraste que stone-500 en negro) */}
             <li><Link to="/categoria" className="text-stone-400 hover:text-white transition-colors">Nueva Colección</Link></li>
-            <li><Link to="/categoria/camisetas" className="text-stone-400 hover:text-white transition-colors">Prendas Superiores</Link></li>
+            <li><Link to="/categoria/superior" className="text-stone-400 hover:text-white transition-colors">Tops y Camisetas</Link></li>
             <li><Link to="/categoria/accesorios" className="text-stone-400 hover:text-white transition-colors">Accesorios</Link></li>
             <li><Link to="/categoria" className="text-stone-400 hover:text-white transition-colors">Más Vendidos</Link></li>
           </ul>
@@ -144,12 +142,13 @@ export default function Footer() {
         <div>
           <p style={{ letterSpacing: '0.2em' }} className="text-[10px] font-semibold text-white mb-6">CONTACTO</p>
           <ul className="space-y-3 text-[11px] font-light">
-            <li className="text-stone-400">WhatsApp: <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">+57 000 000 0000</a></li>
             <li className="text-stone-400">Email: <a href="mailto:hola@pavoa.co" className="hover:text-white transition-colors">hola@pavoa.co</a></li>
             {/* ✅ text-stone-600 → text-stone-400 para mejor contraste */}
             <li className="text-stone-400 text-[10px] leading-relaxed pt-1">
-              Lun — Vie: 8am – 6pm<br />
-              Sáb: 9am – 2pm
+              Lunes a sábado: 8am – 6pm
+            </li>
+            <li className="text-[9px] tracking-[0.18em] uppercase text-stone-500 border border-stone-800 bg-stone-900/40 px-3 py-2 inline-block">
+              Haz tu compra en línea 24/7h
             </li>
           </ul>
         </div>

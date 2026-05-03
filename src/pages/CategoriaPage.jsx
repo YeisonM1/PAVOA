@@ -8,6 +8,27 @@ import { getProductos, getCategoriaById } from '../services/productService';
 import SEO from '../components/SEO';
 import { heroImage } from '../utils/imageUrl';
 
+const CATEGORY_GROUPS = {
+  superior: {
+    categorias: ['tops deportivos', 'camisetas'],
+    header: {
+      titulo1: 'Tops y ',
+      titulo2: 'Camisetas',
+      desc: 'Una coleccion enfocada en tops deportivos y camisetas para entrenar con soporte, ligereza y estilo.',
+      heroImage: 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=1600&q=80',
+    },
+  },
+  movimiento: {
+    categorias: ['licras', 'bikers', 'enterizos', 'pantalonetas'],
+    header: {
+      titulo1: 'Movi',
+      titulo2: 'miento',
+      desc: 'Licras, bikers, enterizos y pantalonetas para entrenar con libertad, soporte y presencia.',
+      heroImage: 'https://images.unsplash.com/photo-1538805060514-97d9cc17730c?w=1600&q=80',
+    },
+  },
+};
+
 const parseVariantes = (raw) => {
   if (!raw) return [];
   if (Array.isArray(raw)) return raw;
@@ -54,14 +75,21 @@ export default function CategoriaPage() {
       try {
         const todosLosProductos = await getProductos();
         if (cancelled) return;
-        const filtrados = id && id !== 'default'
-          ? todosLosProductos.filter(p => p.categoria?.toLowerCase() === id.toLowerCase())
+        const categoriaIdBusqueda = id?.toLowerCase().trim() || 'default';
+        const groupedCategory = CATEGORY_GROUPS[categoriaIdBusqueda];
+        const filtrados = categoriaIdBusqueda !== 'default'
+          ? todosLosProductos.filter((p) => {
+              const categoria = p.categoria?.toLowerCase().trim() || '';
+              return groupedCategory
+                ? groupedCategory.categorias.includes(categoria)
+                : categoria === categoriaIdBusqueda;
+            })
           : todosLosProductos;
         setProductosDB(filtrados);
 
-        const categoriaIdBusqueda = id?.toLowerCase().trim() || 'default';
         let infoCategoria = await getCategoriaById(categoriaIdBusqueda);
         if (cancelled) return;
+        if (!infoCategoria && groupedCategory?.header) infoCategoria = groupedCategory.header;
         if (!infoCategoria) infoCategoria = await getCategoriaById('default');
         setDataHeader(infoCategoria || {
           titulo1: 'Cole', titulo2: 'cciones',

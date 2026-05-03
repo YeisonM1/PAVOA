@@ -1,4 +1,4 @@
-import logoChampan from '../assets/Logo Champan.png';
+import logoChampan from '../assets/Pavoa Logo Hueso Sin Fondo.svg';
 
 export default function Filosofia() {
   return (
@@ -8,16 +8,16 @@ export default function Filosofia() {
       <div className="w-full md:w-1/2 bg-stone-900 flex flex-col justify-center px-10 md:px-16 lg:px-24 py-20 relative">
 
         {/* Logo Champan — arriba derecha del panel */}
-        <div className="absolute top-8 right-8 md:top-10 md:right-10 pointer-events-none">
+        <div className="absolute top-6 right-5 md:top-8 md:right-7 pointer-events-none">
           <img src={logoChampan} alt="PAVOA" width={120} height={194} className="h-24 md:h-36 w-auto object-contain" />
         </div>
 
         {/* Tag */}
         <p
-          style={{ letterSpacing: '0.3em' }}
-          className="font-secondary text-[10px] font-medium text-stone-300 mb-8"
+          style={{ letterSpacing: '0.28em' }}
+          className="font-secondary text-[12px] md:text-[13px] font-medium text-stone-300 mb-8"
         >
-          NUESTRA FILOSOFÍA
+          NUESTRA FILOSOFIA
         </p>
 
         {/* Frase principal */}
@@ -36,7 +36,7 @@ export default function Filosofia() {
         <p
           className="font-secondary text-stone-300 text-sm font-light leading-relaxed max-w-sm mb-12"
         >
-          Cada pieza de PAVOA nace de la convicción de que la mujer que se mueve con intención merece ropa que esté a su altura. Elegancia natural. Presencia silenciosa.
+          Cada pieza de PAVOA nace de la conviccion de que la mujer que se mueve con intencion merece ropa que este a su altura. Elegancia natural. Presencia silenciosa.
         </p>
 
         {/* CTA */}
@@ -53,7 +53,7 @@ export default function Filosofia() {
       <div className="w-full md:w-1/2 relative overflow-hidden min-h-[50vh] md:min-h-full">
         <img
           src="https://cdn.shopify.com/s/files/1/0752/0436/2380/files/Filosofia.jpg?width=600&format=webp"
-          alt="PAVOA Filosofía"
+          alt="PAVOA Filosofia"
           width={600}
           height={900}
           loading="lazy"

@@ -21,6 +21,7 @@ const InstagramIcon = () => (
 
 export default function Instagram() {
   const [posts, setPosts] = useState(POSTS_FALLBACK);
+  const instagramUrl = 'https://www.instagram.com/pavoacolombia/';
 
   useEffect(() => {
     getInstagramPosts()
@@ -42,7 +43,7 @@ export default function Instagram() {
         <h2
           className="font-secondary text-2xl md:text-3xl font-light text-stone-900 tracking-widest"
         >
-          @PAVOA
+          @PAVOACOLOMBIA
         </h2>
       </div>
 
@@ -51,7 +52,7 @@ export default function Instagram() {
         {posts.map((post) => (
           <a
             key={post.id}
-            href="https://instagram.com/pavoa"
+            href={instagramUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="group relative overflow-hidden"
@@ -79,7 +80,7 @@ export default function Instagram() {
       {/* Link al perfil */}
       <div className="text-center mt-10">
         <a
-          href="https://instagram.com/pavoa"
+          href={instagramUrl}
           target="_blank"
           rel="noopener noreferrer"
           style={{ letterSpacing: '0.2em' }}

@@ -108,14 +108,12 @@ export default function GuiaTallasModal({ onClose }) {
           </div>
 
           <p className="text-[10px] text-stone-400 tracking-[0.08em] mt-5 leading-relaxed">
-            ¿Dudas sobre tu talla? Escríbenos por{' '}
+            ¿Dudas sobre tu talla? Escríbenos a{' '}
             <a
-              href="https://wa.me/573000000000"
-              target="_blank"
-              rel="noopener noreferrer"
+              href="mailto:hola@pavoa.co"
               className="text-stone-900 font-bold underline underline-offset-2 hover:text-stone-500 transition-colors"
             >
-              WhatsApp
+              hola@pavoa.co
             </a>{' '}
             y te ayudamos.
           </p>

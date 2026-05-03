@@ -6,6 +6,12 @@ const SHOPIFY_ENDPOINT = `https://${SHOPIFY_DOMAIN}/api/2026-04/graphql.json`;
 const _cache = new Map();
 const CACHE_TTL = 60 * 1000; // 60 segundos
 
+const normalizeAnnouncementMessage = (value) =>
+  String(value || '')
+    .replace(/piezas limitadas/gi, 'Ediciones limitadas')
+    .replace(/\s+/g, ' ')
+    .trim();
+
 const getCached = (key) => {
   const entry = _cache.get(key);
   if (!entry) return null;
@@ -371,7 +377,9 @@ export const getAnnouncementBar = () => {
         get('mensaje_1'),
         get('mensaje_2'),
         get('mensaje_3'),
-      ].filter(Boolean);
+      ]
+        .map(normalizeAnnouncementMessage)
+        .filter(Boolean);
     } catch (err) {
       console.error('Error getAnnouncementBar:', err);
       return null;
