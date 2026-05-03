@@ -11,7 +11,12 @@ const validarFirma = (req) => {
   const v1 = xSignature.match(/v1=([^,]+)/)?.[1];
   if (!ts || !v1) return false;
 
-  const dataId = req.body?.data?.id ?? '';
+  const dataId =
+    req.body?.data?.id ??
+    req.query?.['data.id'] ??
+    req.query?.id ??
+    req.query?.['data[id]'] ??
+    '';
   const plantilla = `id:${dataId};request-id:${xRequestId};ts:${ts};`;
   const hmac = crypto.createHmac('sha256', secret).update(plantilla).digest('hex');
   try {

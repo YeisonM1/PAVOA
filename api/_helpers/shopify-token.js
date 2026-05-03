@@ -5,6 +5,11 @@ let _tokenCache    = { token: null, expiresAt: 0 };
 let _tokenInflight = null;
 
 export const getShopifyToken = async () => {
+  const adminToken = String(process.env.SHOPIFY_ADMIN_TOKEN || '').trim();
+  if (adminToken) {
+    return adminToken;
+  }
+
   const now = Date.now();
   // Si el token existe y le quedan más de 2 minutos de vida, lo reutiliza
   if (_tokenCache.token && _tokenCache.expiresAt - now > 120_000) {

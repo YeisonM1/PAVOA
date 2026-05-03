@@ -5,8 +5,12 @@ const SHOPIFY_DOMAIN = process.env.VITE_SHOPIFY_DOMAIN;
 
 const requiredEnvError = () => {
   if (!SHOPIFY_DOMAIN) return 'Falta VITE_SHOPIFY_DOMAIN en variables de entorno de Vercel.';
-  if (!process.env.SHOPIFY_CLIENT_ID) return 'Falta SHOPIFY_CLIENT_ID en variables de entorno de Vercel.';
-  if (!process.env.SHOPIFY_CLIENT_SECRET) return 'Falta SHOPIFY_CLIENT_SECRET en variables de entorno de Vercel.';
+  if (!process.env.SHOPIFY_ADMIN_TOKEN && !process.env.SHOPIFY_CLIENT_ID) {
+    return 'Falta SHOPIFY_ADMIN_TOKEN o SHOPIFY_CLIENT_ID en variables de entorno de Vercel.';
+  }
+  if (!process.env.SHOPIFY_ADMIN_TOKEN && !process.env.SHOPIFY_CLIENT_SECRET) {
+    return 'Falta SHOPIFY_ADMIN_TOKEN o SHOPIFY_CLIENT_SECRET en variables de entorno de Vercel.';
+  }
   return null;
 };
 
