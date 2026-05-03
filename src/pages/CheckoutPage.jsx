@@ -18,8 +18,9 @@ const CHECKOUT_STEPS = [
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const SOLO_DIGITOS = /\D/g;
+const CHECKOUT_FORM_KEY = 'pavoa-checkout-form-v1';
 
-const CAMPO = ({ label, name, value, onChange, placeholder, type = 'text', required = true, error = '' }) => (
+const CAMPO = ({ label, name, value, onChange, onBlur, placeholder, type = 'text', required = true, error = '' }) => (
   <div className="flex flex-col gap-2">
     <label className="text-[10px] font-bold tracking-[0.2em] text-stone-900 uppercase">
       {label} {required && <span className="text-stone-400">*</span>}
@@ -29,6 +30,7 @@ const CAMPO = ({ label, name, value, onChange, placeholder, type = 'text', requi
       name={name}
       value={value}
       onChange={onChange}
+      onBlur={onBlur}
       placeholder={placeholder}
       required={required}
       className={`w-full border-b outline-none py-3 text-[13px] text-stone-900 placeholder-stone-300 tracking-[0.05em] transition-colors bg-transparent ${
@@ -56,6 +58,16 @@ export default function CheckoutPage() {
     referencia: '',
     horario: '',
   });
+  const [touched, setTouched] = useState({});
+
+  useEffect(() => {
+    try {
+      const savedForm = JSON.parse(sessionStorage.getItem(CHECKOUT_FORM_KEY) || 'null');
+      if (!savedForm || typeof savedForm !== 'object') return;
+      setForm((prev) => ({ ...prev, ...savedForm }));
+    } catch {}
+  }, []);
+
   // Pre-rellenar con datos del usuario logueado
   React.useEffect(() => {
     if (estaAutenticado()) {
@@ -74,6 +86,12 @@ export default function CheckoutPage() {
   const [errors, setErrors]           = useState({});
   const [tieneDescuento, setTieneDescuento] = useState(false);
   const checkoutStep = cargandoPago ? 2 : 1;
+
+  useEffect(() => {
+    try {
+      sessionStorage.setItem(CHECKOUT_FORM_KEY, JSON.stringify(form));
+    } catch {}
+  }, [form]);
 
   useEffect(() => {
     if (!estaAutenticado()) return;
@@ -97,6 +115,13 @@ export default function CheckoutPage() {
     sessionStorage.removeItem('pavoa-checkout-session');
   }, [cartItems.length]);
 
+  useEffect(() => {
+    if (cartCount !== 0) return;
+    try {
+      sessionStorage.removeItem(CHECKOUT_FORM_KEY);
+    } catch {}
+  }, [cartCount]);
+
   if (cartCount === 0) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-6 bg-white">
@@ -108,42 +133,75 @@ export default function CheckoutPage() {
     );
   }
 
+  const formatTelefono = (value) => {
+    const digits = String(value || '').replace(SOLO_DIGITOS, '').slice(0, 10);
+    if (digits.length <= 3) return digits;
+    if (digits.length <= 6) return `${digits.slice(0, 3)} ${digits.slice(3)}`;
+    return `${digits.slice(0, 3)} ${digits.slice(3, 6)} ${digits.slice(6)}`;
+  };
+
+  const validateField = (field, value) => {
+    if (field === 'nombre') {
+      if (!String(value || '').trim()) return 'Escribe tu nombre y apellido.';
+      return '';
+    }
+    if (field === 'email') {
+      const email = String(value || '').trim();
+      if (!email) return 'Escribe tu correo para enviarte la confirmacion.';
+      if (!EMAIL_REGEX.test(email)) return 'Escribe un correo valido.';
+      return '';
+    }
+    if (field === 'telefono') {
+      const telefono = String(value || '').trim();
+      if (!telefono) return 'Escribe tu telefono o WhatsApp.';
+      if (telefono.replace(SOLO_DIGITOS, '').length < 10) return 'Revisa tu numero, parece incompleto.';
+      return '';
+    }
+    if (field === 'ciudad') {
+      if (!String(value || '').trim()) return 'Indicanos en que ciudad recibes el pedido.';
+      return '';
+    }
+    if (field === 'direccion') {
+      const direccion = String(value || '').trim();
+      if (!direccion) return 'Escribe una direccion de entrega.';
+      if (direccion.length < 6) return 'Tu direccion esta muy corta, agrega mas detalle.';
+      return '';
+    }
+    if (field === 'barrio') {
+      if (!String(value || '').trim()) return 'Escribe el barrio para facilitar la entrega.';
+      return '';
+    }
+    if (field === 'horario') {
+      if (!value) return 'Selecciona un horario de entrega.';
+      return '';
+    }
+    return '';
+  };
+
   const handleChange = (e) => {
-    setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
-    setErrors(prev => ({ ...prev, [e.target.name]: '' }));
+    const { name, value } = e.target;
+    const nextValue = name === 'telefono' ? formatTelefono(value) : value;
+    const nextForm = { ...form, [name]: nextValue };
+    setForm(nextForm);
+    setErrors((prev) => ({
+      ...prev,
+      general: '',
+      [name]: touched[name] ? validateField(name, nextValue) : '',
+    }));
+  };
+
+  const handleBlur = (e) => {
+    const { name, value } = e.target;
+    setTouched((prev) => ({ ...prev, [name]: true }));
+    setErrors((prev) => ({ ...prev, [name]: validateField(name, value) }));
   };
 
   const validar = () => {
     const nuevosErrores = {};
-    const telefonoDigits = form.telefono.replace(SOLO_DIGITOS, '');
-
-    if (!form.nombre.trim()) {
-      nuevosErrores.nombre = 'Escribe tu nombre y apellido.';
-    }
-    if (!form.email.trim()) {
-      nuevosErrores.email = 'Escribe tu correo para enviarte la confirmacion.';
-    } else if (!EMAIL_REGEX.test(form.email.trim())) {
-      nuevosErrores.email = 'Escribe un correo valido.';
-    }
-    if (!form.telefono.trim()) {
-      nuevosErrores.telefono = 'Escribe tu telefono o WhatsApp.';
-    } else if (telefonoDigits.length < 10) {
-      nuevosErrores.telefono = 'Revisa tu numero, parece incompleto.';
-    }
-    if (!form.ciudad.trim()) {
-      nuevosErrores.ciudad = 'Indicanos en que ciudad recibes el pedido.';
-    }
-    if (!form.direccion.trim()) {
-      nuevosErrores.direccion = 'Escribe una direccion de entrega.';
-    } else if (form.direccion.trim().length < 6) {
-      nuevosErrores.direccion = 'Tu direccion esta muy corta, agrega mas detalle.';
-    }
-    if (!form.barrio.trim()) {
-      nuevosErrores.barrio = 'Escribe el barrio para facilitar la entrega.';
-    }
-    if (!form.horario) {
-      nuevosErrores.horario = 'Selecciona un horario de entrega.';
-    }
+    ['nombre', 'email', 'telefono', 'ciudad', 'direccion', 'barrio', 'horario'].forEach((field) => {
+      const fieldError = validateField(field, form[field]);
+      if (fieldError) nuevosErrores[field] = fieldError;
+    });
     return nuevosErrores;
   };
 
@@ -151,6 +209,16 @@ export default function CheckoutPage() {
   const handlePagarOnline = async () => {
     const nuevosErrores = validar();
     if (Object.keys(nuevosErrores).length > 0) {
+      setTouched((prev) => ({
+        ...prev,
+        nombre: true,
+        email: true,
+        telefono: true,
+        ciudad: true,
+        direccion: true,
+        barrio: true,
+        horario: true,
+      }));
       setErrors(nuevosErrores);
       const primerError = document.querySelector('.error-field');
       if (primerError) primerError.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -290,31 +358,31 @@ export default function CheckoutPage() {
 
             <div className="flex flex-col gap-8">
               <div className={errors.nombre ? 'error-field' : ''}>
-                <CAMPO label="Nombre completo" name="nombre" value={form.nombre} onChange={handleChange} placeholder="Tu nombre y apellido" error={errors.nombre} />
+                <CAMPO label="Nombre completo" name="nombre" value={form.nombre} onChange={handleChange} onBlur={handleBlur} placeholder="Tu nombre y apellido" error={errors.nombre} />
               </div>
 
               <div className={errors.email ? 'error-field' : ''}>
-                <CAMPO label="Correo electrónico" name="email" value={form.email} onChange={handleChange} placeholder="tu@correo.com" type="email" required={true} error={errors.email} />
+                <CAMPO label="Correo electrónico" name="email" value={form.email} onChange={handleChange} onBlur={handleBlur} placeholder="tu@correo.com" type="email" required={true} error={errors.email} />
               </div>
 
               <div className={errors.telefono ? 'error-field' : ''}>
-                <CAMPO label="Teléfono / WhatsApp" name="telefono" value={form.telefono} onChange={handleChange} placeholder="3XX XXX XXXX" type="tel" error={errors.telefono} />
+                <CAMPO label="Teléfono / WhatsApp" name="telefono" value={form.telefono} onChange={handleChange} onBlur={handleBlur} placeholder="3XX XXX XXXX" type="tel" error={errors.telefono} />
               </div>
 
               <div className={errors.ciudad ? 'error-field' : ''}>
-                <CAMPO label="Ciudad" name="ciudad" value={form.ciudad} onChange={handleChange} placeholder="Ej: Medellín" error={errors.ciudad} />
+                <CAMPO label="Ciudad" name="ciudad" value={form.ciudad} onChange={handleChange} onBlur={handleBlur} placeholder="Ej: Medellín" error={errors.ciudad} />
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div className={errors.direccion ? 'error-field' : ''}>
-                  <CAMPO label="Dirección" name="direccion" value={form.direccion} onChange={handleChange} placeholder="Calle, Carrera, Av..." error={errors.direccion} />
+                  <CAMPO label="Dirección" name="direccion" value={form.direccion} onChange={handleChange} onBlur={handleBlur} placeholder="Calle, Carrera, Av..." error={errors.direccion} />
                 </div>
                 <div className={errors.barrio ? 'error-field' : ''}>
-                  <CAMPO label="Barrio" name="barrio" value={form.barrio} onChange={handleChange} placeholder="Nombre del barrio" error={errors.barrio} />
+                  <CAMPO label="Barrio" name="barrio" value={form.barrio} onChange={handleChange} onBlur={handleBlur} placeholder="Nombre del barrio" error={errors.barrio} />
                 </div>
               </div>
 
-              <CAMPO label="Punto de referencia" name="referencia" value={form.referencia} onChange={handleChange} placeholder="Ej: Frente al parque, casa azul..." required={false} />
+              <CAMPO label="Punto de referencia" name="referencia" value={form.referencia} onChange={handleChange} onBlur={handleBlur} placeholder="Ej: Frente al parque, casa azul..." required={false} />
 
               <div className={errors.horario ? 'error-field' : ''}>
                 <label className="text-[10px] font-bold tracking-[0.2em] text-stone-900 uppercase block mb-4">
@@ -322,7 +390,7 @@ export default function CheckoutPage() {
                 </label>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                   {HORARIOS.map(h => (
-                    <button key={h} type="button" onClick={() => { setForm(p => ({ ...p, horario: h })); setErrors(p => ({ ...p, horario: '' })); }}
+                    <button key={h} type="button" onClick={() => { setForm(p => ({ ...p, horario: h })); setTouched((p) => ({ ...p, horario: true })); setErrors(p => ({ ...p, horario: validateField('horario', h) })); }}
                       className={`py-3 px-4 border text-[10px] tracking-[0.1em] uppercase transition-all duration-200 ${form.horario === h ? 'border-stone-900 bg-stone-900 text-white' : 'border-stone-200 text-stone-600 hover:border-stone-900'}`}>
                       {h}
                     </button>
