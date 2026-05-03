@@ -1,5 +1,5 @@
 import React, { useState, useContext, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { CartContext } from '../App';
 import { trackBeginCheckout } from '../lib/analytics';
 import SEO from '../components/SEO';
@@ -43,6 +43,7 @@ const CAMPO = ({ label, name, value, onChange, onBlur, placeholder, type = 'text
 
 export default function CheckoutPage() {
   const { cartItems, cartTotal, cartCount } = useContext(CartContext);
+  const [searchParams] = useSearchParams();
 
   useEffect(() => {
     if (cartItems.length > 0) trackBeginCheckout(cartItems, cartTotal);
@@ -86,6 +87,8 @@ export default function CheckoutPage() {
   const [errors, setErrors]           = useState({});
   const [tieneDescuento, setTieneDescuento] = useState(false);
   const checkoutStep = cargandoPago ? 2 : 1;
+  const statusFromMP = (searchParams.get('status') || '').toLowerCase();
+  const statusDetailFromMP = (searchParams.get('status_detail') || '').toLowerCase();
 
   useEffect(() => {
     try {
@@ -121,6 +124,28 @@ export default function CheckoutPage() {
       sessionStorage.removeItem(CHECKOUT_FORM_KEY);
     } catch {}
   }, [cartCount]);
+
+  useEffect(() => {
+    const isRejected = statusFromMP === 'failure' || statusFromMP === 'rejected';
+    if (!isRejected) return;
+
+    sessionStorage.removeItem('pavoa-checkout-session');
+
+    const rejectionMessages = {
+      cc_rejected_insufficient_amount: 'Tu banco rechazo el pago por fondos o cupo insuficiente.',
+      cc_rejected_call_for_authorize: 'Tu banco requiere autorizacion para esta compra. Intenta de nuevo o llama a tu banco.',
+      cc_rejected_card_disabled: 'La tarjeta no esta habilitada para compras en linea.',
+      cc_rejected_duplicated_payment: 'MercadoPago detecto intento duplicado. Ya generamos una nueva sesion para reintentar.',
+      cc_rejected_high_risk: 'La operacion fue rechazada por validacion de seguridad. Intenta con otro medio de pago.',
+      cc_rejected_other_reason: 'El banco rechazo la operacion. Intenta con otro medio de pago.',
+      cc_rejected_max_attempts: 'Superaste el limite de intentos con este medio. Intenta con otro.',
+    };
+
+    setErrors((prev) => ({
+      ...prev,
+      general: rejectionMessages[statusDetailFromMP] || 'No se pudo procesar tu pago. Intenta nuevamente o usa otro medio.',
+    }));
+  }, [statusFromMP, statusDetailFromMP]);
 
   if (cartCount === 0) {
     return (
