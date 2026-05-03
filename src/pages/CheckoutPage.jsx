@@ -9,7 +9,17 @@ import { estaAutenticado, getCliente, getToken } from '../services/authService';
 
 const HORARIOS = ['Mañana (8am - 12pm)', 'Tarde (12pm - 6pm)', 'Noche (6pm - 9pm)'];
 
-const CAMPO = ({ label, name, value, onChange, placeholder, type = 'text', required = true }) => (
+const CHECKOUT_STEPS = [
+  { key: 'bag', label: 'Bolsa' },
+  { key: 'data', label: 'Datos' },
+  { key: 'payment', label: 'Pago' },
+  { key: 'done', label: 'Confirmacion' },
+];
+
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const SOLO_DIGITOS = /\D/g;
+
+const CAMPO = ({ label, name, value, onChange, placeholder, type = 'text', required = true, error = '' }) => (
   <div className="flex flex-col gap-2">
     <label className="text-[10px] font-bold tracking-[0.2em] text-stone-900 uppercase">
       {label} {required && <span className="text-stone-400">*</span>}
@@ -21,8 +31,11 @@ const CAMPO = ({ label, name, value, onChange, placeholder, type = 'text', requi
       onChange={onChange}
       placeholder={placeholder}
       required={required}
-      className="w-full border-b border-stone-200 focus:border-stone-900 outline-none py-3 text-[13px] text-stone-900 placeholder-stone-300 tracking-[0.05em] transition-colors bg-transparent"
+      className={`w-full border-b outline-none py-3 text-[13px] text-stone-900 placeholder-stone-300 tracking-[0.05em] transition-colors bg-transparent ${
+        error ? 'border-red-300 focus:border-red-500' : 'border-stone-200 focus:border-stone-900'
+      }`}
     />
+    {error && <p className="text-[10px] text-red-400 tracking-[0.08em]">{error}</p>}
   </div>
 );
 
@@ -60,6 +73,7 @@ export default function CheckoutPage() {
   const [cargandoPago, setCargandoPago] = useState(false);
   const [errors, setErrors]           = useState({});
   const [tieneDescuento, setTieneDescuento] = useState(false);
+  const checkoutStep = cargandoPago ? 2 : 1;
 
   useEffect(() => {
     if (!estaAutenticado()) return;
@@ -101,13 +115,35 @@ export default function CheckoutPage() {
 
   const validar = () => {
     const nuevosErrores = {};
-    if (!form.nombre.trim())    nuevosErrores.nombre    = 'Requerido';
-    if (!form.email.trim())     nuevosErrores.email     = 'Requerido';
-    if (!form.telefono.trim())  nuevosErrores.telefono  = 'Requerido';
-    if (!form.ciudad.trim())    nuevosErrores.ciudad    = 'Requerido';
-    if (!form.direccion.trim()) nuevosErrores.direccion = 'Requerido';
-    if (!form.barrio.trim())    nuevosErrores.barrio    = 'Requerido';
-    if (!form.horario)          nuevosErrores.horario   = 'Selecciona un horario';
+    const telefonoDigits = form.telefono.replace(SOLO_DIGITOS, '');
+
+    if (!form.nombre.trim()) {
+      nuevosErrores.nombre = 'Escribe tu nombre y apellido.';
+    }
+    if (!form.email.trim()) {
+      nuevosErrores.email = 'Escribe tu correo para enviarte la confirmacion.';
+    } else if (!EMAIL_REGEX.test(form.email.trim())) {
+      nuevosErrores.email = 'Escribe un correo valido.';
+    }
+    if (!form.telefono.trim()) {
+      nuevosErrores.telefono = 'Escribe tu telefono o WhatsApp.';
+    } else if (telefonoDigits.length < 10) {
+      nuevosErrores.telefono = 'Revisa tu numero, parece incompleto.';
+    }
+    if (!form.ciudad.trim()) {
+      nuevosErrores.ciudad = 'Indicanos en que ciudad recibes el pedido.';
+    }
+    if (!form.direccion.trim()) {
+      nuevosErrores.direccion = 'Escribe una direccion de entrega.';
+    } else if (form.direccion.trim().length < 6) {
+      nuevosErrores.direccion = 'Tu direccion esta muy corta, agrega mas detalle.';
+    }
+    if (!form.barrio.trim()) {
+      nuevosErrores.barrio = 'Escribe el barrio para facilitar la entrega.';
+    }
+    if (!form.horario) {
+      nuevosErrores.horario = 'Selecciona un horario de entrega.';
+    }
     return nuevosErrores;
   };
 
@@ -219,6 +255,29 @@ export default function CheckoutPage() {
           </span>
         </nav>
 
+        <div className="mb-12 border border-stone-100 bg-stone-50 px-4 md:px-6 py-4">
+          <div className="grid grid-cols-4 gap-2 md:gap-4">
+            {CHECKOUT_STEPS.map((step, idx) => {
+              const isDone = idx < checkoutStep;
+              const isActive = idx === checkoutStep;
+              return (
+                <div key={step.key} className="flex items-center gap-2 min-w-0">
+                  <span className={`w-5 h-5 md:w-6 md:h-6 border text-[9px] md:text-[10px] font-bold tracking-[0.08em] flex items-center justify-center flex-shrink-0 ${
+                    isDone || isActive ? 'border-stone-900 bg-stone-900 text-white' : 'border-stone-300 text-stone-400'
+                  }`}>
+                    {idx + 1}
+                  </span>
+                  <span className={`text-[9px] md:text-[10px] tracking-[0.14em] uppercase truncate ${
+                    isDone || isActive ? 'text-stone-900' : 'text-stone-400'
+                  }`}>
+                    {step.label}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
         <div className="flex flex-col lg:flex-row gap-12 lg:gap-20">
 
           <div className="flex-1">
@@ -231,33 +290,27 @@ export default function CheckoutPage() {
 
             <div className="flex flex-col gap-8">
               <div className={errors.nombre ? 'error-field' : ''}>
-                <CAMPO label="Nombre completo" name="nombre" value={form.nombre} onChange={handleChange} placeholder="Tu nombre y apellido" />
-                {errors.nombre && <p className="text-[10px] text-red-400 mt-1 tracking-[0.1em]">{errors.nombre}</p>}
+                <CAMPO label="Nombre completo" name="nombre" value={form.nombre} onChange={handleChange} placeholder="Tu nombre y apellido" error={errors.nombre} />
               </div>
 
               <div className={errors.email ? 'error-field' : ''}>
-                <CAMPO label="Correo electrónico" name="email" value={form.email} onChange={handleChange} placeholder="tu@correo.com" type="email" required={true} />
-                {errors.email && <p className="text-[10px] text-red-400 mt-1 tracking-[0.1em]">{errors.email}</p>}
+                <CAMPO label="Correo electrónico" name="email" value={form.email} onChange={handleChange} placeholder="tu@correo.com" type="email" required={true} error={errors.email} />
               </div>
 
               <div className={errors.telefono ? 'error-field' : ''}>
-                <CAMPO label="Teléfono / WhatsApp" name="telefono" value={form.telefono} onChange={handleChange} placeholder="3XX XXX XXXX" type="tel" />
-                {errors.telefono && <p className="text-[10px] text-red-400 mt-1 tracking-[0.1em]">{errors.telefono}</p>}
+                <CAMPO label="Teléfono / WhatsApp" name="telefono" value={form.telefono} onChange={handleChange} placeholder="3XX XXX XXXX" type="tel" error={errors.telefono} />
               </div>
 
               <div className={errors.ciudad ? 'error-field' : ''}>
-                <CAMPO label="Ciudad" name="ciudad" value={form.ciudad} onChange={handleChange} placeholder="Ej: Medellín" />
-                {errors.ciudad && <p className="text-[10px] text-red-400 mt-1 tracking-[0.1em]">{errors.ciudad}</p>}
+                <CAMPO label="Ciudad" name="ciudad" value={form.ciudad} onChange={handleChange} placeholder="Ej: Medellín" error={errors.ciudad} />
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div className={errors.direccion ? 'error-field' : ''}>
-                  <CAMPO label="Dirección" name="direccion" value={form.direccion} onChange={handleChange} placeholder="Calle, Carrera, Av..." />
-                  {errors.direccion && <p className="text-[10px] text-red-400 mt-1 tracking-[0.1em]">{errors.direccion}</p>}
+                  <CAMPO label="Dirección" name="direccion" value={form.direccion} onChange={handleChange} placeholder="Calle, Carrera, Av..." error={errors.direccion} />
                 </div>
                 <div className={errors.barrio ? 'error-field' : ''}>
-                  <CAMPO label="Barrio" name="barrio" value={form.barrio} onChange={handleChange} placeholder="Nombre del barrio" />
-                  {errors.barrio && <p className="text-[10px] text-red-400 mt-1 tracking-[0.1em]">{errors.barrio}</p>}
+                  <CAMPO label="Barrio" name="barrio" value={form.barrio} onChange={handleChange} placeholder="Nombre del barrio" error={errors.barrio} />
                 </div>
               </div>
 
