@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { X } from 'lucide-react';
+import useSiteSettings from '../hooks/useSiteSettings';
 
 const TALLAS = [
   { talla: 'XS',  busto: '76–80', cintura: '58–62', cadera: '84–88' },
@@ -11,6 +12,8 @@ const TALLAS = [
 ];
 
 export default function GuiaTallasModal({ onClose }) {
+  const settings = useSiteSettings();
+
   useEffect(() => {
     document.body.style.overflow = 'hidden';
     const handleKey = (e) => { if (e.key === 'Escape') onClose(); };
@@ -110,10 +113,10 @@ export default function GuiaTallasModal({ onClose }) {
           <p className="text-[10px] text-stone-400 tracking-[0.08em] mt-5 leading-relaxed">
             ¿Dudas sobre tu talla? Escríbenos a{' '}
             <a
-              href="mailto:hola@pavoa.co"
+              href={`mailto:${settings.contactEmail}`}
               className="text-stone-900 font-bold underline underline-offset-2 hover:text-stone-500 transition-colors"
             >
-              hola@pavoa.co
+              {settings.contactEmail}
             </a>{' '}
             y te ayudamos.
           </p>

@@ -3,9 +3,7 @@ import { Link } from 'react-router-dom';
 import { createClient } from '@supabase/supabase-js';
 import logo from '../assets/LOGO-PAVOA.svg';
 import { InstagramIcon, FacebookIcon } from '../components/Icons';
-
-const INSTAGRAM_URL = 'https://www.instagram.com/pavoacolombia/';
-const FACEBOOK_URL = 'https://facebook.com/pavoa';
+import useSiteSettings from '../hooks/useSiteSettings';
 
 const supabase = createClient(
   import.meta.env.VITE_SUPABASE_URL,
@@ -13,6 +11,7 @@ const supabase = createClient(
 );
 
 export default function Footer() {
+  const settings = useSiteSettings();
   const [email, setEmail] = useState('');
   const [subscribed, setSubscribed] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -109,8 +108,8 @@ export default function Footer() {
           </p>
           <div className="flex items-center gap-4">
             {/* ✅ aria-labels en links de redes sociales */}
-            <a href={INSTAGRAM_URL} target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors" aria-label="Síguenos en Instagram"><InstagramIcon /></a>
-            <a href={FACEBOOK_URL} target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors" aria-label="Síguenos en Facebook"><FacebookIcon /></a>
+            <a href={settings.instagramUrl} target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors" aria-label="Síguenos en Instagram"><InstagramIcon /></a>
+            <a href={settings.facebookUrl} target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors" aria-label="Síguenos en Facebook"><FacebookIcon /></a>
           </div>
         </div>
 
@@ -142,13 +141,13 @@ export default function Footer() {
         <div>
           <p style={{ letterSpacing: '0.2em' }} className="text-[10px] font-semibold text-white mb-6">CONTACTO</p>
           <ul className="space-y-3 text-[11px] font-light">
-            <li className="text-stone-400">Email: <a href="mailto:hola@pavoa.co" className="hover:text-white transition-colors">hola@pavoa.co</a></li>
+            <li className="text-stone-400">Email: <a href={`mailto:${settings.contactEmail}`} className="hover:text-white transition-colors">{settings.contactEmail}</a></li>
             {/* ✅ text-stone-600 → text-stone-400 para mejor contraste */}
             <li className="text-stone-400 text-[10px] leading-relaxed pt-1">
-              Lunes a sábado: 8am – 6pm
+              {settings.contactSchedule}
             </li>
             <li className="text-[9px] tracking-[0.18em] uppercase text-stone-500 border border-stone-800 bg-stone-900/40 px-3 py-2 inline-block">
-              Haz tu compra en línea 24/7h
+              {settings.contactNote}
             </li>
           </ul>
         </div>

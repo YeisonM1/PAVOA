@@ -1,6 +1,25 @@
+import { useEffect, useState } from 'react';
 import logoChampan from '../assets/Pavoa Logo Hueso Sin Fondo.svg';
+import { FILOSOFIA_SECTION_DEFAULTS, getFilosofiaSection } from '../services/productService';
 
 export default function Filosofia() {
+  const [content, setContent] = useState(FILOSOFIA_SECTION_DEFAULTS);
+
+  useEffect(() => {
+    let active = true;
+
+    getFilosofiaSection()
+      .then((data) => {
+        if (!active || !data) return;
+        setContent((prev) => ({ ...prev, ...data }));
+      })
+      .catch(() => {});
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
   return (
     <section className="w-full flex flex-col md:flex-row min-h-[80vh]">
 
@@ -17,16 +36,16 @@ export default function Filosofia() {
           style={{ letterSpacing: '0.28em' }}
           className="font-secondary text-[12px] md:text-[13px] font-medium text-stone-300 mb-8"
         >
-          NUESTRA FILOSOFIA
+          {content.tag}
         </p>
 
         {/* Frase principal */}
         <h2
           className="font-secondary text-4xl md:text-5xl lg:text-6xl font-[100] text-white leading-tight mb-6"
         >
-          No es ropa.
+          {content.headlineLine1}
           <br />
-          <span className="font-[100]">Es armadura.</span>
+          <span className="font-[100]">{content.headlineLine2}</span>
         </h2>
 
         {/* Línea decorativa */}
@@ -36,23 +55,23 @@ export default function Filosofia() {
         <p
           className="font-secondary text-stone-300 text-sm font-light leading-relaxed max-w-sm mb-12"
         >
-          Cada pieza de PAVOA nace de la conviccion de que la mujer que se mueve con intencion merece ropa que este a su altura. Elegancia natural. Presencia silenciosa.
+          {content.body}
         </p>
 
         {/* CTA */}
         <a
-          href="/nosotros"
+          href={content.ctaLink}
           style={{ letterSpacing: '0.2em' }}
           className="font-secondary inline-block text-[11px] font-semibold text-stone-900 bg-white px-8 py-4 hover:bg-stone-100 transition-colors duration-300 w-fit"
         >
-          SOBRE NOSOTROS
+          {content.ctaText}
         </a>
       </div>
 
       {/* DERECHA — Imagen */}
       <div className="w-full md:w-1/2 relative overflow-hidden min-h-[50vh] md:min-h-full">
         <img
-          src="https://cdn.shopify.com/s/files/1/0752/0436/2380/files/Filosofia.jpg?width=600&format=webp"
+          src={content.image}
           alt="PAVOA Filosofia"
           width={600}
           height={900}

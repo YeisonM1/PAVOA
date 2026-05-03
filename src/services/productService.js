@@ -2,6 +2,25 @@ const SHOPIFY_DOMAIN   = import.meta.env.VITE_SHOPIFY_DOMAIN;
 const SHOPIFY_TOKEN    = import.meta.env.VITE_SHOPIFY_TOKEN;
 const SHOPIFY_ENDPOINT = `https://${SHOPIFY_DOMAIN}/api/2026-04/graphql.json`;
 
+export const SITE_SETTINGS_DEFAULTS = {
+  contactEmail: 'hola@pavoa.co',
+  contactSchedule: 'Lunes a sábado: 8am – 6pm',
+  contactNote: 'Haz tu compra en línea 24/7h',
+  responseTime: 'Respondemos todos los mensajes en un máximo de 24 horas hábiles.',
+  instagramUrl: 'https://www.instagram.com/pavoacolombia/',
+  facebookUrl: 'https://facebook.com/pavoa',
+};
+
+export const FILOSOFIA_SECTION_DEFAULTS = {
+  tag: 'NUESTRA FILOSOFIA',
+  headlineLine1: 'No es ropa.',
+  headlineLine2: 'Es armadura.',
+  body: 'Cada pieza de PAVOA nace de la conviccion de que la mujer que se mueve con intencion merece ropa que este a su altura. Elegancia natural. Presencia silenciosa.',
+  ctaText: 'SOBRE NOSOTROS',
+  ctaLink: '/nosotros',
+  image: 'https://cdn.shopify.com/s/files/1/0752/0436/2380/files/Filosofia.jpg?width=600&format=webp',
+};
+
 // ── Caché en memoria con TTL ──────────────────────────
 const _cache = new Map();
 const CACHE_TTL = 60 * 1000; // 60 segundos
@@ -444,6 +463,103 @@ export const getInstagramPosts = () => {
   })();
 
   setCache('instagram-posts', promise);
+  return promise;
+};
+
+export const getSiteSettings = () => {
+  const cached = getCached('site-settings');
+  if (cached) return cached;
+
+  const promise = (async () => {
+    try {
+      const data = await shopifyFetch(`
+        query {
+          metaobjects(type: "site_settings", first: 1) {
+            edges {
+              node {
+                fields {
+                  key
+                  value
+                }
+              }
+            }
+          }
+        }
+      `);
+
+      const node = data.metaobjects.edges[0]?.node;
+      if (!node) return SITE_SETTINGS_DEFAULTS;
+
+      const get = (key) => node.fields.find((field) => field.key === key)?.value?.trim() || '';
+
+      return {
+        contactEmail: get('contact_email') || SITE_SETTINGS_DEFAULTS.contactEmail,
+        contactSchedule: get('contact_schedule') || SITE_SETTINGS_DEFAULTS.contactSchedule,
+        contactNote: get('contact_note') || SITE_SETTINGS_DEFAULTS.contactNote,
+        responseTime: get('response_time') || SITE_SETTINGS_DEFAULTS.responseTime,
+        instagramUrl: get('instagram_url') || SITE_SETTINGS_DEFAULTS.instagramUrl,
+        facebookUrl: get('facebook_url') || SITE_SETTINGS_DEFAULTS.facebookUrl,
+      };
+    } catch (err) {
+      console.error('Error getSiteSettings:', err);
+      return SITE_SETTINGS_DEFAULTS;
+    }
+  })();
+
+  setCache('site-settings', promise);
+  return promise;
+};
+
+export const getFilosofiaSection = () => {
+  const cached = getCached('filosofia-section');
+  if (cached) return cached;
+
+  const promise = (async () => {
+    try {
+      const data = await shopifyFetch(`
+        query {
+          metaobjects(type: "filosofia_section", first: 1) {
+            edges {
+              node {
+                fields {
+                  key
+                  value
+                  reference {
+                    ... on MediaImage {
+                      image {
+                        url
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      `);
+
+      const node = data.metaobjects.edges[0]?.node;
+      if (!node) return FILOSOFIA_SECTION_DEFAULTS;
+
+      const get = (key) => node.fields.find((field) => field.key === key)?.value?.trim() || '';
+      const getImage = (key) => node.fields.find((field) => field.key === key)?.reference?.image?.url || '';
+
+      return {
+        tag: get('tag') || FILOSOFIA_SECTION_DEFAULTS.tag,
+        headlineLine1: get('headline_line_1') || FILOSOFIA_SECTION_DEFAULTS.headlineLine1,
+        headlineLine2: get('headline_line_2') || FILOSOFIA_SECTION_DEFAULTS.headlineLine2,
+        body: get('body') || FILOSOFIA_SECTION_DEFAULTS.body,
+        ctaText: get('cta_text') || FILOSOFIA_SECTION_DEFAULTS.ctaText,
+        ctaLink: get('cta_link') || FILOSOFIA_SECTION_DEFAULTS.ctaLink,
+        image: getImage('image') || FILOSOFIA_SECTION_DEFAULTS.image,
+      };
+    } catch (err) {
+      console.error('Error getFilosofiaSection:', err);
+      return FILOSOFIA_SECTION_DEFAULTS;
+    }
+  })();
+
+  setCache('filosofia-section', promise);
   return promise;
 };
 

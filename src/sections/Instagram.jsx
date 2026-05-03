@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { getInstagramPosts } from '../services/productService';
+import useSiteSettings from '../hooks/useSiteSettings';
 
 // ── Fallback mientras carga o si Shopify falla ──────────
 const POSTS_FALLBACK = [
@@ -20,8 +21,8 @@ const InstagramIcon = () => (
 );
 
 export default function Instagram() {
+  const settings = useSiteSettings();
   const [posts, setPosts] = useState(POSTS_FALLBACK);
-  const instagramUrl = 'https://www.instagram.com/pavoacolombia/';
 
   useEffect(() => {
     getInstagramPosts()
@@ -52,7 +53,7 @@ export default function Instagram() {
         {posts.map((post) => (
           <a
             key={post.id}
-            href={instagramUrl}
+            href={settings.instagramUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="group relative overflow-hidden"
@@ -80,7 +81,7 @@ export default function Instagram() {
       {/* Link al perfil */}
       <div className="text-center mt-10">
         <a
-          href={instagramUrl}
+          href={settings.instagramUrl}
           target="_blank"
           rel="noopener noreferrer"
           style={{ letterSpacing: '0.2em' }}

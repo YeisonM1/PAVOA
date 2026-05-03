@@ -20,11 +20,10 @@ import MegaMenu from './header/MegaMenu';
 import MobileMenu from './header/MobileMenu';
 import { InstagramIcon, FacebookIcon } from '../components/Icons';
 import { estaAutenticado, getCliente, cerrarSesion } from '../services/authService';
-
-const INSTAGRAM_URL = 'https://www.instagram.com/pavoacolombia/';
-const FACEBOOK_URL = 'https://facebook.com/pavoa';
+import useSiteSettings from '../hooks/useSiteSettings';
 
 const Header = () => {
+  const settings = useSiteSettings();
   const { cartCount, isCartAnimating } = useContext(CartContext);
   const [cartOpen, setCartOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -218,20 +217,20 @@ const Header = () => {
 
           <div className="flex-1 flex items-center justify-end gap-5 text-stone-900">
             <div className="hidden sm:flex items-center gap-4">
-              <a
-                href={INSTAGRAM_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="hover:text-stone-900 transition-colors"
+                <a
+                  href={settings.instagramUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-stone-900 transition-colors"
                 aria-label="Siguenos en Instagram"
               >
                 <InstagramIcon />
               </a>
-              <a
-                href={FACEBOOK_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="hover:text-stone-900 transition-colors"
+                <a
+                  href={settings.facebookUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-stone-900 transition-colors"
                 aria-label="Siguenos en Facebook"
               >
                 <FacebookIcon />
@@ -355,7 +354,12 @@ const Header = () => {
       </header>
 
       <MegaMenu catalogoOpen={catalogoOpen} setCatalogoOpen={setCatalogoOpen} isScrolled={isScrolled} panelRef={panelRef} />
-      <MobileMenu menuOpen={menuOpen} setMenuOpen={setMenuOpen} />
+      <MobileMenu
+        menuOpen={menuOpen}
+        setMenuOpen={setMenuOpen}
+        instagramUrl={settings.instagramUrl}
+        facebookUrl={settings.facebookUrl}
+      />
 
       <CartDrawer cartOpen={cartOpen} setCartOpen={setCartOpen} />
       <SearchOverlay isSearchOpen={isSearchOpen} setIsSearchOpen={setIsSearchOpen} />

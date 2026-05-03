@@ -2,12 +2,14 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { InstagramIcon, FacebookIcon } from '../../components/Icons';
 
-const INSTAGRAM_URL = 'https://instagram.com/pavoa';
-const FACEBOOK_URL = 'https://facebook.com/pavoa';
-
 const hombreItems = ['Pantalonetas', 'Camisetas', 'Buzos', 'Joggers'];
 
-export default function MobileMenu({ menuOpen, setMenuOpen }) {
+export default function MobileMenu({
+  menuOpen,
+  setMenuOpen,
+  instagramUrl = 'https://www.instagram.com/pavoacolombia/',
+  facebookUrl = 'https://facebook.com/pavoa',
+}) {
   const [mobileCatalogoOpen, setMobileCatalogoOpen] = useState(false);
   const [mobileTab, setMobileTab] = useState('mujer');
 
@@ -37,8 +39,8 @@ export default function MobileMenu({ menuOpen, setMenuOpen }) {
           </Link>
         </nav>
         <div className="flex items-center gap-5 mt-10" style={{ color: 'var(--color-charcoal)' }}>
-          <a href={INSTAGRAM_URL} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--color-charcoal)' }} aria-label="Síguenos en Instagram"><InstagramIcon /></a>
-          <a href={FACEBOOK_URL} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--color-charcoal)' }} aria-label="Síguenos en Facebook"><FacebookIcon /></a>
+          <a href={instagramUrl} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--color-charcoal)' }} aria-label="Síguenos en Instagram"><InstagramIcon /></a>
+          <a href={facebookUrl} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--color-charcoal)' }} aria-label="Síguenos en Facebook"><FacebookIcon /></a>
         </div>
       </div>
 

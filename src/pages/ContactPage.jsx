@@ -3,6 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import SEO from '../components/SEO';
 import { enviarContacto } from '../services/productService';
 import { MailIcon, ClockIcon } from '../components/Icons';
+import useSiteSettings from '../hooks/useSiteSettings';
 
 const ASUNTOS = [
   'Selecciona un asunto',
@@ -14,6 +15,7 @@ const ASUNTOS = [
 ];
 
 export default function ContactPage() {
+  const settings = useSiteSettings();
   const [searchParams] = useSearchParams();
   const [form, setForm] = useState({
     nombre: '',
@@ -148,9 +150,9 @@ export default function ContactPage() {
                   </div>
                   <div>
                     <p className="text-[10px] font-bold tracking-[0.15em] uppercase text-stone-900 mb-1">Email</p>
-                    <a href="mailto:hola@pavoa.co"
+                    <a href={`mailto:${settings.contactEmail}`}
                       className="text-[12px] text-stone-500 hover:text-stone-900 transition-colors">
-                      hola@pavoa.co
+                      {settings.contactEmail}
                     </a>
                   </div>
                 </div>
@@ -161,14 +163,14 @@ export default function ContactPage() {
                   <div>
                     <p className="text-[10px] font-bold tracking-[0.15em] uppercase text-stone-900 mb-1">Horario</p>
                     <p className="text-[12px] text-stone-500 leading-relaxed">
-                      Lunes a sábado: 8am – 6pm
+                      {settings.contactSchedule}
                     </p>
                     <div className="mt-3 inline-flex flex-col gap-1 border border-stone-200 bg-stone-50 px-4 py-3">
                       <p className="text-[8px] font-bold tracking-[0.28em] uppercase text-stone-400">
                         Observación
                       </p>
                       <p className="text-[10px] tracking-[0.16em] uppercase text-stone-700">
-                        Haz tu compra en línea 24/7h
+                        {settings.contactNote}
                       </p>
                     </div>
                   </div>
@@ -179,7 +181,7 @@ export default function ContactPage() {
             <div>
               <p className="text-[9px] font-bold tracking-[0.3em] uppercase text-stone-400 mb-3">Tiempo de respuesta</p>
               <p className="text-[12px] text-stone-500 leading-relaxed">
-                Respondemos todos los mensajes en un máximo de <strong className="text-stone-900">24 horas hábiles</strong>.
+                {settings.responseTime}
               </p>
             </div>
           </aside>
