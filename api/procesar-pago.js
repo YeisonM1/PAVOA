@@ -41,6 +41,80 @@ const mpFetchJson = async (url) => {
   return { ok: true, status: res.status, data };
 };
 
+const buildMpDiagnosticSummary = ({ userInfo, preferenceInfo }) => {
+  const summary = [];
+
+  if (!userInfo?.ok) {
+    summary.push({
+      level: 'error',
+      code: 'mp_user_unavailable',
+      message: 'No se pudo consultar el estado de la cuenta de Mercado Pago.',
+      detail: userInfo?.error || null,
+    });
+    return summary;
+  }
+
+  const status = userInfo.data?.status || {};
+  const billingAllow = status?.billing?.allow;
+  const billingCodes = Array.isArray(status?.billing?.codes) ? status.billing.codes : [];
+  const siteStatus = status?.site_status || null;
+
+  if (siteStatus && siteStatus !== 'active') {
+    summary.push({
+      level: 'error',
+      code: 'mp_site_inactive',
+      message: `La cuenta de Mercado Pago no está activa (${siteStatus}).`,
+      detail: 'Revisa el estado de la cuenta en Mercado Pago Developers.',
+    });
+  }
+
+  if (billingAllow === false) {
+    if (billingCodes.includes('address_pending')) {
+      summary.push({
+        level: 'error',
+        code: 'address_pending',
+        message: 'La cuenta tiene bloqueo de facturación por dirección pendiente.',
+        detail: 'Completa y valida dirección/datos fiscales en la cuenta receptora de cobros.',
+      });
+    } else {
+      summary.push({
+        level: 'error',
+        code: 'billing_blocked',
+        message: 'La cuenta no tiene permitido cobrar (billing.allow=false).',
+        detail: billingCodes.join(', ') || 'Sin código específico',
+      });
+    }
+  }
+
+  if (preferenceInfo?.ok) {
+    const preference = preferenceInfo.data || {};
+    summary.push({
+      level: 'info',
+      code: 'preference_created',
+      message: 'La preferencia se creó correctamente.',
+      detail: `collector_id=${preference.collector_id || 'n/a'} | id=${preference.id || 'n/a'}`,
+    });
+  } else {
+    summary.push({
+      level: 'warn',
+      code: 'preference_unavailable',
+      message: 'No se pudo consultar la preferencia con ese ID.',
+      detail: preferenceInfo?.error || null,
+    });
+  }
+
+  if (summary.length === 0) {
+    summary.push({
+      level: 'info',
+      code: 'no_blockers_detected',
+      message: 'No se detectaron bloqueos básicos en credenciales o cuenta.',
+      detail: null,
+    });
+  }
+
+  return summary;
+};
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
@@ -57,11 +131,13 @@ export default async function handler(req, res) {
     const preferenceInfo = preferenceId
       ? await mpFetchJson(`https://api.mercadopago.com/checkout/preferences/${encodeURIComponent(preferenceId)}`)
       : { ok: false, status: 400, error: 'No se recibio preferenceId', data: null };
+    const resumen = buildMpDiagnosticSummary({ userInfo, preferenceInfo });
 
     return res.status(200).json({
       ok: true,
       diagnostico: {
         now: new Date().toISOString(),
+        resumen,
         mp_user: userInfo.ok ? {
           id: userInfo.data?.id,
           nickname: userInfo.data?.nickname,

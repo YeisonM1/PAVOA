@@ -485,9 +485,24 @@ export default function CheckoutPage() {
                 </button>
 
                 {diagnosticResult && (
+                  <>
+                  {Array.isArray(diagnosticResult.resumen) && diagnosticResult.resumen.length > 0 && (
+                    <div className="mt-3 bg-white border border-stone-200 p-3">
+                      <p className="text-[10px] font-bold tracking-[0.14em] uppercase text-stone-900 mb-2">Resumen</p>
+                      <div className="flex flex-col gap-2">
+                        {diagnosticResult.resumen.map((item, idx) => (
+                          <div key={`${item.code || 'item'}-${idx}`} className="text-[10px] text-stone-700">
+                            <p className="font-semibold text-stone-900">{item.message}</p>
+                            {item.detail && <p className="text-stone-500">{item.detail}</p>}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                   <pre className="mt-3 text-[10px] text-stone-700 bg-white border border-stone-200 p-3 overflow-auto max-h-[220px] whitespace-pre-wrap break-words">
 {JSON.stringify(diagnosticResult, null, 2)}
                   </pre>
+                  </>
                 )}
               </div>
             )}
