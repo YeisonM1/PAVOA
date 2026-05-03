@@ -12,8 +12,11 @@ const supabase = createClient(
   process.env.VITE_SUPABASE_ANON_KEY
 );
 
-const APP_URL      = process.env.VITE_APP_URL || 'https://pavoa.vercel.app';
+const APP_URL = process.env.VITE_APP_URL || 'https://pavoa.vercel.app';
 const SHOPIFY_DOMAIN = process.env.VITE_SHOPIFY_DOMAIN;
+const MP_EXPECTED_USER_ID = String(
+  process.env.MP_EXPECTED_USER_ID || process.env.MP_SELLER_USER_ID || ''
+).trim();
 
 const requiredEnvError = () => {
   if (!process.env.MP_ACCESS_TOKEN) return 'Falta MP_ACCESS_TOKEN en variables de entorno de Vercel.';
@@ -29,7 +32,10 @@ const mpFetchJson = async (url) => {
   });
   const raw = await res.text();
   let data = null;
-  try { data = JSON.parse(raw); } catch {}
+  try {
+    data = JSON.parse(raw);
+  } catch {}
+
   if (!res.ok) {
     return {
       ok: false,
@@ -38,7 +44,47 @@ const mpFetchJson = async (url) => {
       data,
     };
   }
+
   return { ok: true, status: res.status, data };
+};
+
+const getTokenUserIdHint = () => {
+  const token = String(process.env.MP_ACCESS_TOKEN || '').trim();
+  const tail = token.split('-').pop() || '';
+  return /^\d+$/.test(tail) ? tail : null;
+};
+
+const validateExpectedSeller = async () => {
+  if (!MP_EXPECTED_USER_ID) return { ok: true, skipped: true };
+
+  const userInfo = await mpFetchJson('https://api.mercadopago.com/users/me');
+  if (!userInfo.ok) {
+    return {
+      ok: false,
+      status: 502,
+      error: `No se pudo validar la cuenta activa de Mercado Pago: ${userInfo.error || 'sin detalle'}`,
+      detail: {
+        expected_user_id: MP_EXPECTED_USER_ID,
+        token_user_id_hint: getTokenUserIdHint(),
+      },
+    };
+  }
+
+  const activeUserId = String(userInfo.data?.id || '').trim();
+  if (activeUserId !== MP_EXPECTED_USER_ID) {
+    return {
+      ok: false,
+      status: 409,
+      error: `Mercado Pago activo distinto al esperado. Esperado: ${MP_EXPECTED_USER_ID}. Activo: ${activeUserId || 'desconocido'}. Revisa variables de Vercel y redeploy.`,
+      detail: {
+        expected_user_id: MP_EXPECTED_USER_ID,
+        active_user_id: activeUserId || null,
+        token_user_id_hint: getTokenUserIdHint(),
+      },
+    };
+  }
+
+  return { ok: true, active_user_id: activeUserId };
 };
 
 const buildMpDiagnosticSummary = ({ userInfo, preferenceInfo }) => {
@@ -54,16 +100,38 @@ const buildMpDiagnosticSummary = ({ userInfo, preferenceInfo }) => {
     return summary;
   }
 
+  const activeUserId = String(userInfo.data?.id || '').trim() || null;
+  const preferenceCollectorId = preferenceInfo?.ok
+    ? String(preferenceInfo.data?.collector_id || '').trim() || null
+    : null;
   const status = userInfo.data?.status || {};
   const billingAllow = status?.billing?.allow;
   const billingCodes = Array.isArray(status?.billing?.codes) ? status.billing.codes : [];
   const siteStatus = status?.site_status || null;
 
+  if (MP_EXPECTED_USER_ID) {
+    if (activeUserId === MP_EXPECTED_USER_ID) {
+      summary.push({
+        level: 'info',
+        code: 'expected_seller_match',
+        message: 'La cuenta activa coincide con el seller esperado.',
+        detail: `expected=${MP_EXPECTED_USER_ID} | active=${activeUserId}`,
+      });
+    } else {
+      summary.push({
+        level: 'error',
+        code: 'expected_seller_mismatch',
+        message: 'La cuenta activa no coincide con el seller esperado.',
+        detail: `expected=${MP_EXPECTED_USER_ID} | active=${activeUserId || 'n/a'}`,
+      });
+    }
+  }
+
   if (siteStatus && siteStatus !== 'active') {
     summary.push({
       level: 'error',
       code: 'mp_site_inactive',
-      message: `La cuenta de Mercado Pago no está activa (${siteStatus}).`,
+      message: `La cuenta de Mercado Pago no esta activa (${siteStatus}).`,
       detail: 'Revisa el estado de la cuenta en Mercado Pago Developers.',
     });
   }
@@ -73,15 +141,15 @@ const buildMpDiagnosticSummary = ({ userInfo, preferenceInfo }) => {
       summary.push({
         level: 'error',
         code: 'address_pending',
-        message: 'La cuenta tiene bloqueo de facturación por dirección pendiente.',
-        detail: 'Completa y valida dirección/datos fiscales en la cuenta receptora de cobros.',
+        message: 'La cuenta tiene bloqueo de facturacion por direccion pendiente.',
+        detail: 'Completa y valida direccion y datos fiscales en la cuenta receptora de cobros.',
       });
     } else {
       summary.push({
         level: 'error',
         code: 'billing_blocked',
         message: 'La cuenta no tiene permitido cobrar (billing.allow=false).',
-        detail: billingCodes.join(', ') || 'Sin código específico',
+        detail: billingCodes.join(', ') || 'Sin codigo especifico',
       });
     }
   }
@@ -91,9 +159,18 @@ const buildMpDiagnosticSummary = ({ userInfo, preferenceInfo }) => {
     summary.push({
       level: 'info',
       code: 'preference_created',
-      message: 'La preferencia se creó correctamente.',
+      message: 'La preferencia se creo correctamente.',
       detail: `collector_id=${preference.collector_id || 'n/a'} | id=${preference.id || 'n/a'}`,
     });
+
+    if (activeUserId && preferenceCollectorId && activeUserId !== preferenceCollectorId) {
+      summary.push({
+        level: 'error',
+        code: 'collector_mismatch',
+        message: 'La preferencia quedo asociada a un collector distinto de la cuenta activa.',
+        detail: `active=${activeUserId} | collector=${preferenceCollectorId}`,
+      });
+    }
   } else {
     summary.push({
       level: 'warn',
@@ -107,7 +184,7 @@ const buildMpDiagnosticSummary = ({ userInfo, preferenceInfo }) => {
     summary.push({
       level: 'info',
       code: 'no_blockers_detected',
-      message: 'No se detectaron bloqueos básicos en credenciales o cuenta.',
+      message: 'No se detectaron bloqueos basicos en credenciales o cuenta.',
       detail: null,
     });
   }
@@ -120,11 +197,10 @@ export default async function handler(req, res) {
 
   const envError = requiredEnvError();
   if (envError) {
-    console.error('❌ Configuración incompleta en /api/procesar-pago:', envError);
+    console.error('Configuracion incompleta en /api/procesar-pago:', envError);
     return res.status(500).json({ error: envError });
   }
 
-  // Diagnostico guiado para soporte (sin consola)
   if (req.body?.type === 'mp-diagnostico') {
     const preferenceId = String(req.body?.preferenceId || '').trim();
     const userInfo = await mpFetchJson('https://api.mercadopago.com/users/me');
@@ -137,29 +213,37 @@ export default async function handler(req, res) {
       ok: true,
       diagnostico: {
         now: new Date().toISOString(),
+        checkout_flow: 'redirect_checkout_pro',
+        uses_public_key: false,
+        expected_user_id: MP_EXPECTED_USER_ID || null,
+        token_user_id_hint: getTokenUserIdHint(),
         resumen,
-        mp_user: userInfo.ok ? {
-          id: userInfo.data?.id,
-          nickname: userInfo.data?.nickname,
-          site_id: userInfo.data?.site_id,
-          country_id: userInfo.data?.country_id,
-          status: userInfo.data?.status,
-        } : {
-          error: userInfo.error,
-          status: userInfo.status,
-        },
-        preference: preferenceInfo.ok ? {
-          id: preferenceInfo.data?.id,
-          collector_id: preferenceInfo.data?.collector_id,
-          init_point: preferenceInfo.data?.init_point,
-          sandbox_init_point: preferenceInfo.data?.sandbox_init_point,
-          external_reference: preferenceInfo.data?.external_reference,
-          date_created: preferenceInfo.data?.date_created,
-          expiration_date_to: preferenceInfo.data?.expiration_date_to,
-        } : {
-          error: preferenceInfo.error,
-          status: preferenceInfo.status,
-        },
+        mp_user: userInfo.ok
+          ? {
+              id: userInfo.data?.id,
+              nickname: userInfo.data?.nickname,
+              site_id: userInfo.data?.site_id,
+              country_id: userInfo.data?.country_id,
+              status: userInfo.data?.status,
+            }
+          : {
+              error: userInfo.error,
+              status: userInfo.status,
+            },
+        preference: preferenceInfo.ok
+          ? {
+              id: preferenceInfo.data?.id,
+              collector_id: preferenceInfo.data?.collector_id,
+              init_point: preferenceInfo.data?.init_point,
+              sandbox_init_point: preferenceInfo.data?.sandbox_init_point,
+              external_reference: preferenceInfo.data?.external_reference,
+              date_created: preferenceInfo.data?.date_created,
+              expiration_date_to: preferenceInfo.data?.expiration_date_to,
+            }
+          : {
+              error: preferenceInfo.error,
+              status: preferenceInfo.status,
+            },
       },
     });
   }
@@ -171,6 +255,14 @@ export default async function handler(req, res) {
   }
 
   try {
+    const sellerCheck = await validateExpectedSeller();
+    if (!sellerCheck.ok) {
+      return res.status(sellerCheck.status || 409).json({
+        error: sellerCheck.error,
+        detail: sellerCheck.detail || null,
+      });
+    }
+
     const preferenceClient = new mercadopago.Preference(client);
 
     const { trustedItems, total } = await validateCartWithShopify(cartItems);
@@ -179,15 +271,14 @@ export default async function handler(req, res) {
       return res.status(409).json({ error: 'El precio del carrito cambio. Actualiza la bolsa e intenta de nuevo.' });
     }
 
-    let itemsMapped = trustedItems.map(item => ({
-      id:          String(item.variantId),
-      title:       item.title,
-      quantity:    item.quantity,
-      unit_price:  item.unitPrice,
+    let itemsMapped = trustedItems.map((item) => ({
+      id: String(item.variantId),
+      title: item.title,
+      quantity: item.quantity,
+      unit_price: item.unitPrice,
       currency_id: 'COP',
     }));
 
-    // Verificar descuento de bienvenida — solo aplica al precio, NO marca en Supabase todavía
     let descuentoAplicado = false;
     try {
       const { data: usuario } = await supabase
@@ -198,18 +289,17 @@ export default async function handler(req, res) {
         .single();
 
       if (usuario && !usuario.descuento_bienvenida_usado) {
-        itemsMapped = itemsMapped.map(item => ({
+        itemsMapped = itemsMapped.map((item) => ({
           ...item,
           unit_price: Math.round(item.unit_price * 0.9),
         }));
         descuentoAplicado = true;
-        console.log(`🎁 Descuento bienvenida 10% aplicado a: ${form.email}`);
+        console.log(`Descuento bienvenida 10% aplicado a: ${form.email}`);
       }
     } catch (descErr) {
-      console.warn('⚠️ No se pudo verificar descuento:', descErr.message);
+      console.warn('No se pudo verificar descuento:', descErr.message);
     }
 
-    // Aplicar descuento en el draft order de Shopify para que quede registrado
     if (descuentoAplicado) {
       try {
         const shopifyToken = await getShopifyToken();
@@ -225,14 +315,12 @@ export default async function handler(req, res) {
             }),
           }
         );
-        console.log(`🏷️ Descuento aplicado en Shopify draft order: ${draftOrderId}`);
+        console.log(`Descuento aplicado en Shopify draft order: ${draftOrderId}`);
       } catch (shopifyErr) {
-        console.warn('⚠️ No se pudo aplicar descuento en Shopify:', shopifyErr.message);
+        console.warn('No se pudo aplicar descuento en Shopify:', shopifyErr.message);
       }
     }
 
-    // El flag se guarda en external_reference para que el webhook lo marque
-    // solo cuando el pago sea confirmado (approved)
     const externalRef = `${draftOrderId}|${form.email.toLowerCase()}|${descuentoAplicado ? '1' : '0'}`;
 
     const preference = await preferenceClient.create({
@@ -244,15 +332,15 @@ export default async function handler(req, res) {
           failure: `${APP_URL}/checkout`,
           pending: `${APP_URL}/orden-confirmada`,
         },
-        auto_return:          'approved',
-        external_reference:   externalRef,
-        notification_url:     `${APP_URL}/api/webhook-mercadopago`,
+        auto_return: 'approved',
+        external_reference: externalRef,
+        notification_url: `${APP_URL}/api/webhook-mercadopago`,
         statement_descriptor: 'PAVOA',
       },
     });
 
     console.log(
-      `✅ Preferencia MP creada: ${preference.id} | collector: ${preference.collector_id} | live_mode: ${preference.live_mode} | draft: ${draftOrderId} | descuento: ${descuentoAplicado}`
+      `Preferencia MP creada: ${preference.id} | collector: ${preference.collector_id} | live_mode: ${preference.live_mode} | draft: ${draftOrderId} | descuento: ${descuentoAplicado}`
     );
 
     return res.status(200).json({
@@ -263,11 +351,13 @@ export default async function handler(req, res) {
         preference_id: preference.id,
         collector_id: preference.collector_id,
         live_mode: preference.live_mode,
+        expected_user_id: MP_EXPECTED_USER_ID || null,
+        active_user_id: sellerCheck.active_user_id || null,
+        token_user_id_hint: getTokenUserIdHint(),
       },
     });
-
   } catch (error) {
-    console.error('❌ Error creando preferencia MP:', error?.message);
+    console.error('Error creando preferencia MP:', error?.message);
     await eliminarDraftOrder(draftOrderId);
     return res.status(500).json({ error: error?.message || 'Error al crear la preferencia de pago' });
   }
