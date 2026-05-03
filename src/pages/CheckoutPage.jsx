@@ -250,19 +250,14 @@ export default function CheckoutPage() {
       return;
     }
 
-    // Protección doble pago: reutilizar init_point si el carrito no cambió
+    // Proteccion doble pago: siempre crear una preferencia nueva.
+    // Reutilizar init_point estaba generando redirecciones a sesiones viejas de MP.
     const cartHash = cartItems.map(i => `${i.producto.id}|${i.talla}|${i.cantidad}`).join(',');
     // Clave de idempotencia por minuto: evita crear dos Draft Orders por doble-click o retry rápido
     const minuteBucket    = Math.floor(Date.now() / 60000);
     const idempotencyKey  = `${form.email || 'anon'}-${cartHash}-${minuteBucket}`;
 
-    try {
-      const existing = JSON.parse(sessionStorage.getItem('pavoa-checkout-session') || 'null');
-      if (existing && existing.cartHash === cartHash && Date.now() - existing.ts < 30 * 60 * 1000) {
-        window.location.href = existing.initPoint;
-        return;
-      }
-    } catch {}
+    sessionStorage.removeItem('pavoa-checkout-session');
 
     setCargandoPago(true);
 
