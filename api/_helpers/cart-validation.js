@@ -10,6 +10,60 @@ const variantNumericId = (variantId) => {
 };
 
 const normalizeMoney = (value) => Math.round(Number(value || 0));
+const isReadProductsScopeError = (message = '') =>
+  /read_products scope|merchant approval/i.test(String(message));
+
+const parseCartUnitPrice = (item) => {
+  const direct = Number(item?.producto?.precioNumerico);
+  if (Number.isFinite(direct) && direct > 0) return Math.round(direct);
+
+  const raw = String(item?.producto?.precio || '').trim();
+  const digits = raw.replace(/[^\d]/g, '');
+  const parsed = Number(digits);
+  if (Number.isFinite(parsed) && parsed > 0) return parsed;
+
+  return 0;
+};
+
+const buildFallbackFromCart = (cartItems = []) => {
+  const trustedItems = [];
+
+  for (const item of cartItems) {
+    const quantity = Number(item?.cantidad || 0);
+    if (!Number.isInteger(quantity) || quantity <= 0) {
+      throw new Error('Cantidad invalida en el carrito');
+    }
+
+    const selectedVariantId = item?.producto?.selectedVariantId;
+    if (!selectedVariantId) {
+      throw new Error(`Selecciona nuevamente talla/color para "${item?.producto?.nombre || 'un producto'}"`);
+    }
+
+    const numericId = variantNumericId(selectedVariantId);
+    if (!numericId) {
+      throw new Error('Variante invalida en el carrito');
+    }
+
+    const unitPrice = parseCartUnitPrice(item);
+    if (!unitPrice) {
+      throw new Error(`No se pudo validar el precio de "${item?.producto?.nombre || 'un producto'}"`);
+    }
+
+    trustedItems.push({
+      variantId: numericId,
+      storefrontVariantId: selectedVariantId,
+      title: item?.producto?.nombre || `Variante ${numericId}`,
+      quantity,
+      unitPrice,
+      talla: item?.talla || '',
+      color: item?.producto?.colorSeleccionado || '',
+      image: item?.producto?.imagen1 || '',
+    });
+  }
+
+  const total = trustedItems.reduce((sum, current) => sum + current.unitPrice * current.quantity, 0);
+  return { trustedItems, total };
+};
 
 const fetchVariant = async (token, variantId) => {
   const numericId = variantNumericId(variantId);
@@ -35,45 +89,54 @@ export const validateCartWithShopify = async (cartItems = []) => {
     throw new Error('El carrito esta vacio');
   }
 
-  const token = await getShopifyToken();
-  const trustedItems = [];
+  try {
+    const token = await getShopifyToken();
+    const trustedItems = [];
 
-  for (const item of cartItems) {
-    const quantity = Number(item?.cantidad || 0);
-    if (!Number.isInteger(quantity) || quantity <= 0) {
-      throw new Error('Cantidad invalida en el carrito');
+    for (const item of cartItems) {
+      const quantity = Number(item?.cantidad || 0);
+      if (!Number.isInteger(quantity) || quantity <= 0) {
+        throw new Error('Cantidad invalida en el carrito');
+      }
+
+      const selectedVariantId = item?.producto?.selectedVariantId;
+      if (!selectedVariantId) {
+        throw new Error(`Selecciona nuevamente talla/color para "${item?.producto?.nombre || 'un producto'}"`);
+      }
+
+      const variant = await fetchVariant(token, selectedVariantId);
+      const stock = Number(variant.inventory_quantity ?? 0);
+      const title = item?.producto?.nombre || variant.title || `Variante ${variant.numericId}`;
+      const unitPrice = normalizeMoney(variant.price);
+
+      if (stock < quantity) {
+        throw new Error(
+          stock <= 0
+            ? `"${title}" ya no tiene stock disponible.`
+            : `"${title}" solo tiene ${stock} unidad${stock === 1 ? '' : 'es'} disponible${stock === 1 ? '' : 's'}.`
+        );
+      }
+
+      trustedItems.push({
+        variantId: variant.numericId,
+        storefrontVariantId: selectedVariantId,
+        title,
+        quantity,
+        unitPrice,
+        talla: item?.talla || '',
+        color: item?.producto?.colorSeleccionado || '',
+        image: item?.producto?.imagen1 || '',
+      });
     }
 
-    const selectedVariantId = item?.producto?.selectedVariantId;
-    if (!selectedVariantId) {
-      throw new Error(`Selecciona nuevamente talla/color para "${item?.producto?.nombre || 'un producto'}"`);
+    const total = trustedItems.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
+    return { trustedItems, total };
+  } catch (error) {
+    if (!isReadProductsScopeError(error?.message)) {
+      throw error;
     }
 
-    const variant = await fetchVariant(token, selectedVariantId);
-    const stock = Number(variant.inventory_quantity ?? 0);
-    const title = item?.producto?.nombre || variant.title || `Variante ${variant.numericId}`;
-    const unitPrice = normalizeMoney(variant.price);
-
-    if (stock < quantity) {
-      throw new Error(
-        stock <= 0
-          ? `"${title}" ya no tiene stock disponible.`
-          : `"${title}" solo tiene ${stock} unidad${stock === 1 ? '' : 'es'} disponible${stock === 1 ? '' : 's'}.`
-      );
-    }
-
-    trustedItems.push({
-      variantId: variant.numericId,
-      storefrontVariantId: selectedVariantId,
-      title,
-      quantity,
-      unitPrice,
-      talla: item?.talla || '',
-      color: item?.producto?.colorSeleccionado || '',
-      image: item?.producto?.imagen1 || '',
-    });
+    console.warn('[PAVOA] read_products no aprobado; usando validacion fallback desde carrito.');
+    return buildFallbackFromCart(cartItems);
   }
-
-  const total = trustedItems.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
-  return { trustedItems, total };
 };
