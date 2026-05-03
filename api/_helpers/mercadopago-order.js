@@ -8,6 +8,30 @@ const client = new mercadopago.MercadoPagoConfig({ accessToken: process.env.MP_A
 const SHOPIFY_DOMAIN = process.env.VITE_SHOPIFY_DOMAIN;
 const resend = new Resend(process.env.RESEND_API_KEY);
 const supabase = createClient(process.env.VITE_SUPABASE_URL, process.env.VITE_SUPABASE_ANON_KEY);
+const _paymentInflight = new Map();
+
+const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+const isDraftAlreadyProcessingError = (message = '') =>
+  /another staff member is processing this draft order/i.test(String(message));
+
+const isDuplicatePaymentError = (message = '') =>
+  /duplicate key value violates unique constraint "pedidos_payment_id_key"/i.test(String(message));
+
+const getExistingOrderByPaymentId = async (paymentId) => {
+  const { data, error } = await supabase
+    .from('pedidos')
+    .select('payment_id, shopify_order_name, shopify_order_id')
+    .eq('payment_id', String(paymentId))
+    .maybeSingle();
+
+  if (error) {
+    console.error('Error verificando pedido existente en Supabase:', error.message);
+    return null;
+  }
+
+  return data || null;
+};
 
 const completarDraftOrder = async (draftOrderId) => {
   const token = await getShopifyToken();
@@ -66,7 +90,7 @@ const enviarEmailConfirmacion = async (order, paymentId, totalReal, descuentoApl
   });
 };
 
-export const processMercadoPagoPayment = async (paymentId) => {
+const processMercadoPagoPaymentInternal = async (paymentId) => {
   const paymentClient = new mercadopago.Payment(client);
   const pagoInfo = await paymentClient.get({ id: paymentId });
   const [draftOrderId, emailRef, descuentoRef] = (pagoInfo.external_reference || '').split('|');
@@ -81,15 +105,7 @@ export const processMercadoPagoPayment = async (paymentId) => {
   }
 
   if (pagoInfo.status === 'approved') {
-    const { data: existingOrder, error: existingOrderError } = await supabase
-      .from('pedidos')
-      .select('payment_id, shopify_order_name')
-      .eq('payment_id', String(pagoInfo.id))
-      .maybeSingle();
-
-    if (existingOrderError) {
-      console.error('Error verificando pedido existente en Supabase:', existingOrderError.message);
-    }
+    const existingOrder = await getExistingOrderByPaymentId(pagoInfo.id);
 
     if (existingOrder) {
       return {
@@ -117,41 +133,58 @@ export const processMercadoPagoPayment = async (paymentId) => {
 
     let order = null;
     let emailCliente = emailMP;
+    let shouldPersistOrder = true;
     try {
       const shopifyResponse = await completarDraftOrder(draftOrderId);
       order = shopifyResponse.draft_order || shopifyResponse.order;
       emailCliente = shopifyResponse._emailCliente || emailMP;
       await eliminarDraftOrder(draftOrderId);
     } catch (shopifyErr) {
-      console.error(`Shopify fallo al completar draft ${draftOrderId}: ${shopifyErr.message}`);
+      if (isDraftAlreadyProcessingError(shopifyErr.message)) {
+        console.info(`Shopify ya esta completando el draft ${draftOrderId} desde otro request.`);
+        shouldPersistOrder = false;
+        await wait(1200);
+      } else {
+        console.error(`Shopify fallo al completar draft ${draftOrderId}: ${shopifyErr.message}`);
+      }
     }
 
+    let insertedOrder = false;
     if (emailCliente) {
       const itemsFinales = order?.line_items
         ? order.line_items.map((i) => ({ nombre: i.title, cantidad: i.quantity, precio: i.price }))
         : itemsMP;
       const addr = order?.shipping_address;
-      const { error: sbError } = await supabase.from('pedidos').insert({
-        email: emailCliente.toLowerCase(),
-        payment_id: String(pagoInfo.id),
-        shopify_order_name: order?.name || `MP-${pagoInfo.id}`,
-        shopify_order_id: String(order?.order_id || order?.id || ''),
-        total: totalPagado,
-        total_original: totalOriginalV,
-        descuento_aplicado: esDescuento,
-        status: 'approved',
-        fulfillment_status: 'unfulfilled',
-        nombre: addr ? `${addr.first_name || ''} ${addr.last_name || ''}`.trim() : primerNombre,
-        telefono: addr?.phone || order?.phone || '',
-        ciudad: addr?.city || '',
-        direccion: addr ? [addr.address1, addr.address2].filter(Boolean).join(', ') : '',
-        items: itemsFinales,
-      });
-      if (sbError) {
-        console.error('Error guardando pedido en Supabase:', sbError.message);
+      if (shouldPersistOrder) {
+        const { error: sbError } = await supabase.from('pedidos').insert({
+          email: emailCliente.toLowerCase(),
+          payment_id: String(pagoInfo.id),
+          shopify_order_name: order?.name || `MP-${pagoInfo.id}`,
+          shopify_order_id: String(order?.order_id || order?.id || ''),
+          total: totalPagado,
+          total_original: totalOriginalV,
+          descuento_aplicado: esDescuento,
+          status: 'approved',
+          fulfillment_status: 'unfulfilled',
+          nombre: addr ? `${addr.first_name || ''} ${addr.last_name || ''}`.trim() : primerNombre,
+          telefono: addr?.phone || order?.phone || '',
+          ciudad: addr?.city || '',
+          direccion: addr ? [addr.address1, addr.address2].filter(Boolean).join(', ') : '',
+          items: itemsFinales,
+        });
+        if (sbError) {
+          if (isDuplicatePaymentError(sbError.message)) {
+            console.info(`Pedido ya persistido para payment ${pagoInfo.id}; omitiendo insercion duplicada.`);
+            shouldPersistOrder = false;
+          } else {
+            console.error('Error guardando pedido en Supabase:', sbError.message);
+          }
+        } else {
+          insertedOrder = true;
+        }
       }
 
-      if (descuentoRef === '1') {
+      if (descuentoRef === '1' && insertedOrder) {
         const { error: descErr } = await supabase
           .from('usuarios')
           .update({ descuento_bienvenida_usado: true })
@@ -162,34 +195,38 @@ export const processMercadoPagoPayment = async (paymentId) => {
       }
     }
 
-    try {
-      const orderParaEmail = order
-        ? { ...order, email: emailCliente || order.email }
-        : {
-            email: emailCliente,
-            name: `MP-${pagoInfo.id}`,
-            total_price: totalPagado,
-            line_items: (pagoInfo.additional_info?.items || []).map((i) => ({
-              title: i.title,
-              quantity: i.quantity,
-              price: i.unit_price,
-              variant_title: null,
-            })),
-            shipping_address: null,
-            customer: { first_name: primerNombre },
-          };
-      await enviarEmailConfirmacion(orderParaEmail, pagoInfo.id, totalPagado, esDescuento);
-    } catch (emailErr) {
-      console.error('Email no enviado:', emailErr.message);
+    if (insertedOrder) {
+      try {
+        const orderParaEmail = order
+          ? { ...order, email: emailCliente || order.email }
+          : {
+              email: emailCliente,
+              name: `MP-${pagoInfo.id}`,
+              total_price: totalPagado,
+              line_items: (pagoInfo.additional_info?.items || []).map((i) => ({
+                title: i.title,
+                quantity: i.quantity,
+                price: i.unit_price,
+                variant_title: null,
+              })),
+              shipping_address: null,
+              customer: { first_name: primerNombre },
+            };
+        await enviarEmailConfirmacion(orderParaEmail, pagoInfo.id, totalPagado, esDescuento);
+      } catch (emailErr) {
+        console.error('Email no enviado:', emailErr.message);
+      }
     }
 
+    const latestOrder = await getExistingOrderByPaymentId(pagoInfo.id);
     return {
       ok: true,
       status: 'approved',
       paymentId: String(pagoInfo.id),
       draftOrderId,
-      shopifyCompleted: Boolean(order),
-      shopifyOrderName: order?.name || null,
+      shopifyCompleted: Boolean(order || latestOrder?.shopify_order_id),
+      shopifyOrderName: order?.name || latestOrder?.shopify_order_name || null,
+      alreadyProcessed: !insertedOrder,
     };
   }
 
@@ -209,4 +246,19 @@ export const processMercadoPagoPayment = async (paymentId) => {
     paymentId: String(pagoInfo.id),
     draftOrderId,
   };
+};
+
+export const processMercadoPagoPayment = async (paymentId) => {
+  const key = String(paymentId);
+  if (_paymentInflight.has(key)) {
+    return _paymentInflight.get(key);
+  }
+
+  const promise = processMercadoPagoPaymentInternal(key)
+    .finally(() => {
+      _paymentInflight.delete(key);
+    });
+
+  _paymentInflight.set(key, promise);
+  return promise;
 };

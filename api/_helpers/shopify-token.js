@@ -79,14 +79,25 @@ export const getShopifyToken = async (preferred = 'app') => {
 export const eliminarDraftOrder = async (draftOrderId) => {
   try {
     const token = await getShopifyToken('app');
-    await fetch(
+    const res = await fetch(
       `https://${SHOPIFY_DOMAIN}/admin/api/2026-04/draft_orders/${draftOrderId}.json`,
       {
         method: 'DELETE',
         headers: { 'X-Shopify-Access-Token': token },
       }
     );
-    console.log(`Draft order eliminado: ${draftOrderId}`);
+    if (res.ok) {
+      console.log(`Draft order eliminado: ${draftOrderId}`);
+      return;
+    }
+
+    if (res.status === 404) {
+      console.info(`Draft order ya no existe o ya fue cerrado: ${draftOrderId}`);
+      return;
+    }
+
+    const err = await res.text();
+    console.error(`No se pudo eliminar draft order ${draftOrderId}:`, err);
   } catch (err) {
     console.error(`No se pudo eliminar draft order ${draftOrderId}:`, err.message);
   }
