@@ -3,13 +3,20 @@ import { validateCartWithShopify } from './_helpers/cart-validation.js';
 
 const SHOPIFY_DOMAIN = process.env.VITE_SHOPIFY_DOMAIN;
 
-// Rate limiter — 10 pedidos por IP cada 15 minutos
+const requiredEnvError = () => {
+  if (!SHOPIFY_DOMAIN) return 'Falta VITE_SHOPIFY_DOMAIN en variables de entorno de Vercel.';
+  if (!process.env.SHOPIFY_CLIENT_ID) return 'Falta SHOPIFY_CLIENT_ID en variables de entorno de Vercel.';
+  if (!process.env.SHOPIFY_CLIENT_SECRET) return 'Falta SHOPIFY_CLIENT_SECRET en variables de entorno de Vercel.';
+  return null;
+};
+
+// Rate limiter: 10 pedidos por IP cada 15 minutos
 const _pedidoAttempts = new Map();
-const PEDIDO_LIMIT  = 10;
+const PEDIDO_LIMIT = 10;
 const PEDIDO_WINDOW = 15 * 60 * 1000;
 
 function isRateLimited(ip) {
-  const now   = Date.now();
+  const now = Date.now();
   const entry = _pedidoAttempts.get(ip) || { count: 0, resetAt: now + PEDIDO_WINDOW };
   if (now > entry.resetAt) {
     _pedidoAttempts.set(ip, { count: 1, resetAt: now + PEDIDO_WINDOW });
@@ -20,14 +27,14 @@ function isRateLimited(ip) {
   return false;
 }
 
-// Caché de idempotencia: evita crear un Draft Order duplicado si el mismo request llega dos veces
-const _pedidoCache = new Map(); // idempotencyKey → { draftOrderId, name, ts }
+// Cache de idempotencia: evita crear un Draft Order duplicado si el mismo request llega dos veces
+const _pedidoCache = new Map(); // idempotencyKey -> { draftOrderId, name, ts }
 const IDEM_TTL = 30 * 60 * 1000; // 30 minutos
 
 const crearDraftOrder = async (token, { form, trustedItems }) => {
-  const lineItems = trustedItems.map(item => ({
+  const lineItems = trustedItems.map((item) => ({
     variant_id: item.variantId,
-    quantity:   item.quantity,
+    quantity: item.quantity,
   }));
 
   const nota = [
@@ -43,27 +50,27 @@ const crearDraftOrder = async (token, { form, trustedItems }) => {
   const body = {
     draft_order: {
       line_items: lineItems,
-      phone:        telFormateado,
+      phone: telFormateado,
       shipping_address: {
         first_name: firstName,
-        last_name:  lastName,
-        phone:      telFormateado,
-        address1:   form.direccion,
-        address2:   form.barrio,
-        city:       form.ciudad,
-        country:    'CO',
+        last_name: lastName,
+        phone: telFormateado,
+        address1: form.direccion,
+        address2: form.barrio,
+        city: form.ciudad,
+        country: 'CO',
       },
       billing_address: {
         first_name: firstName,
-        last_name:  lastName,
-        phone:      telFormateado,
-        address1:   form.direccion,
-        address2:   form.barrio,
-        city:       form.ciudad,
-        country:    'CO',
+        last_name: lastName,
+        phone: telFormateado,
+        address1: form.direccion,
+        address2: form.barrio,
+        city: form.ciudad,
+        country: 'CO',
       },
-      note:         nota,
-      tags:         'pavoa-web,mercadopago',
+      note: nota,
+      tags: 'pavoa-web,mercadopago',
       send_receipt: false,
       note_attributes: [
         { name: 'customer_email', value: form.email || '' },
@@ -76,7 +83,7 @@ const crearDraftOrder = async (token, { form, trustedItems }) => {
     {
       method: 'POST',
       headers: {
-        'Content-Type':           'application/json',
+        'Content-Type': 'application/json',
         'X-Shopify-Access-Token': token,
       },
       body: JSON.stringify(body),
@@ -90,7 +97,13 @@ const crearDraftOrder = async (token, { form, trustedItems }) => {
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Método no permitido' });
+    return res.status(405).json({ error: 'Metodo no permitido' });
+  }
+
+  const envError = requiredEnvError();
+  if (envError) {
+    console.error('[PAVOA] Configuracion incompleta en /api/pedido:', envError);
+    return res.status(500).json({ error: envError });
   }
 
   const ip = (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || req.socket?.remoteAddress || 'unknown';
@@ -101,34 +114,34 @@ export default async function handler(req, res) {
   const { form, cartItems, idempotencyKey } = req.body;
 
   if (!form?.nombre?.trim() || !form?.telefono?.trim()) {
-    return res.status(400).json({ error: 'Nombre y teléfono son requeridos' });
+    return res.status(400).json({ error: 'Nombre y telefono son requeridos' });
   }
   if (!Array.isArray(cartItems) || cartItems.length === 0) {
-    return res.status(400).json({ error: 'El carrito está vacío' });
+    return res.status(400).json({ error: 'El carrito esta vacio' });
   }
 
   // Devolver el mismo Draft Order si el mismo request llega dos veces (doble-click, retry)
   if (idempotencyKey) {
     const cached = _pedidoCache.get(idempotencyKey);
     if (cached && Date.now() - cached.ts < IDEM_TTL) {
-      console.log(`♻️ Draft Order reutilizado (idempotency): ${cached.name}`);
+      console.log(`Draft Order reutilizado (idempotency): ${cached.name}`);
       return res.status(200).json({ ok: true, draftOrderId: cached.draftOrderId, name: cached.name });
     }
   }
 
   try {
     const { trustedItems } = await validateCartWithShopify(cartItems);
-    const token      = await getShopifyToken();
+    const token = await getShopifyToken();
     const draftOrder = await crearDraftOrder(token, { form, trustedItems });
 
     if (idempotencyKey) {
       _pedidoCache.set(idempotencyKey, { draftOrderId: draftOrder.id, name: draftOrder.name, ts: Date.now() });
     }
 
-    console.log(`✅ Draft Order creado: ${draftOrder.name} — ${draftOrder.id}`);
+    console.log(`Draft Order creado: ${draftOrder.name} - ${draftOrder.id}`);
     return res.status(200).json({ ok: true, draftOrderId: draftOrder.id, name: draftOrder.name });
   } catch (err) {
-    console.error('❌ Error creando draft order:', err.message);
+    console.error('Error creando draft order:', err.message);
     return res.status(500).json({ error: 'Error al crear el pedido en Shopify' });
   }
 }

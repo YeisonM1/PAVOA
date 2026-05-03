@@ -15,8 +15,22 @@ const supabase = createClient(
 const APP_URL      = process.env.VITE_APP_URL || 'https://pavoa.vercel.app';
 const SHOPIFY_DOMAIN = process.env.VITE_SHOPIFY_DOMAIN;
 
+const requiredEnvError = () => {
+  if (!process.env.MP_ACCESS_TOKEN) return 'Falta MP_ACCESS_TOKEN en variables de entorno de Vercel.';
+  if (!process.env.VITE_SUPABASE_URL) return 'Falta VITE_SUPABASE_URL en variables de entorno de Vercel.';
+  if (!process.env.VITE_SUPABASE_ANON_KEY) return 'Falta VITE_SUPABASE_ANON_KEY en variables de entorno de Vercel.';
+  if (!SHOPIFY_DOMAIN) return 'Falta VITE_SHOPIFY_DOMAIN en variables de entorno de Vercel.';
+  return null;
+};
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+
+  const envError = requiredEnvError();
+  if (envError) {
+    console.error('❌ Configuración incompleta en /api/procesar-pago:', envError);
+    return res.status(500).json({ error: envError });
+  }
 
   const { form, cartItems, cartTotal, draftOrderId } = req.body;
 
