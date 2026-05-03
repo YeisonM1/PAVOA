@@ -339,18 +339,25 @@ export default async function handler(req, res) {
       },
     });
 
+    const checkoutUrl = preference.sandbox_init_point || preference.init_point;
+    const checkoutMode = preference.sandbox_init_point ? 'sandbox' : 'live';
+
     console.log(
-      `Preferencia MP creada: ${preference.id} | collector: ${preference.collector_id} | live_mode: ${preference.live_mode} | draft: ${draftOrderId} | descuento: ${descuentoAplicado}`
+      `Preferencia MP creada: ${preference.id} | collector: ${preference.collector_id} | live_mode: ${preference.live_mode} | checkout_mode: ${checkoutMode} | draft: ${draftOrderId} | descuento: ${descuentoAplicado}`
     );
 
     return res.status(200).json({
       ok: true,
-      init_point: preference.init_point,
+      init_point: checkoutUrl,
       descuento_aplicado: descuentoAplicado,
       debug: {
         preference_id: preference.id,
         collector_id: preference.collector_id,
         live_mode: preference.live_mode,
+        checkout_mode: checkoutMode,
+        checkout_url: checkoutUrl,
+        sandbox_init_point: preference.sandbox_init_point || null,
+        init_point: preference.init_point,
         expected_user_id: MP_EXPECTED_USER_ID || null,
         active_user_id: sellerCheck.active_user_id || null,
         token_user_id_hint: getTokenUserIdHint(),
