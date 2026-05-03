@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import SEO from '../components/SEO';
 import { enviarContacto } from '../services/productService';
 import { WhatsAppIcon, MailIcon, ClockIcon } from '../components/Icons';
@@ -14,6 +14,7 @@ const ASUNTOS = [
 ];
 
 export default function ContactPage() {
+  const [searchParams] = useSearchParams();
   const [form, setForm] = useState({
     nombre: '',
     contacto: '',
@@ -23,6 +24,10 @@ export default function ContactPage() {
   const [estado, setEstado] = useState('idle');
   const [errores, setErrores] = useState({});
   const [asuntoOpen, setAsuntoOpen] = useState(false); // ✅ NUEVO
+  const pedidoParam = (searchParams.get('pedido') || '').trim();
+  const motivoParam = (searchParams.get('motivo') || '').trim();
+  const asuntoParam = (searchParams.get('asunto') || '').trim();
+  const mensajeParam = (searchParams.get('mensaje') || '').trim();
 
   // ✅ Cierra el dropdown al hacer clic fuera
   useEffect(() => {
@@ -32,6 +37,29 @@ export default function ContactPage() {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  useEffect(() => {
+    if (!pedidoParam && !motivoParam && !asuntoParam && !mensajeParam) return;
+
+    setForm((prev) => {
+      const next = { ...prev };
+
+      if (ASUNTOS.includes(asuntoParam) && prev.asunto === 'Selecciona un asunto') {
+        next.asunto = asuntoParam;
+      }
+
+      if (!prev.mensaje.trim()) {
+        const bloques = [];
+        if (pedidoParam) bloques.push(`Pedido: ${pedidoParam}`);
+        if (motivoParam) bloques.push(`Motivo: ${motivoParam}`);
+        if (mensajeParam) bloques.push(`Detalle: ${mensajeParam}`);
+        bloques.push('Contexto adicional:');
+        next.mensaje = bloques.join('\n');
+      }
+
+      return next;
+    });
+  }, [pedidoParam, motivoParam, asuntoParam, mensajeParam]);
 
   const handleChange = (e) => {
     setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
@@ -166,6 +194,24 @@ export default function ContactPage() {
             <p className="text-[9px] font-bold tracking-[0.3em] uppercase text-stone-400 mb-10">
               Envíanos un mensaje
             </p>
+
+            {(pedidoParam || motivoParam) && (
+              <div className="mb-8 border border-stone-100 bg-stone-50 px-5 py-4">
+                <p className="text-[9px] font-bold tracking-[0.2em] uppercase text-stone-500 mb-2">
+                  Solicitud guiada
+                </p>
+                {pedidoParam && (
+                  <p className="text-[11px] text-stone-700 tracking-[0.06em]">
+                    Pedido: <span className="font-semibold text-stone-900">{pedidoParam}</span>
+                  </p>
+                )}
+                {motivoParam && (
+                  <p className="text-[11px] text-stone-700 tracking-[0.06em] mt-1">
+                    Motivo: <span className="font-semibold text-stone-900">{motivoParam}</span>
+                  </p>
+                )}
+              </div>
+            )}
 
             {estado === 'success' ? (
               <div className="flex flex-col items-center justify-center py-20 gap-6 text-center border border-stone-100">
