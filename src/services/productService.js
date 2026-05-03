@@ -21,6 +21,52 @@ export const FILOSOFIA_SECTION_DEFAULTS = {
   image: 'https://cdn.shopify.com/s/files/1/0752/0436/2380/files/Filosofia.jpg?width=600&format=webp',
 };
 
+export const NOSOTROS_PAGE_DEFAULTS = {
+  internalName: 'Nosotros',
+  eyebrow: 'Filosofia PAVOA',
+  title: 'Una marca con intencion, diseno y vision',
+  ctaEyebrow: 'Siguiente paso',
+  ctaTitle: 'Explorar coleccion o hablar con nosotros',
+  ctaLink1Text: 'Explorar coleccion',
+  ctaLink1Url: '/categoria',
+  ctaLink2Text: 'Contacto',
+  ctaLink2Url: '/contacto',
+  blocks: [
+    {
+      id: 'creemos',
+      internalName: 'Creemos',
+      order: 1,
+      label: '01',
+      title: 'Que creemos',
+      body: 'Creemos en vestirnos como vivimos: con intencion. PAVOA nace para mujeres que sostienen muchas cosas al mismo tiempo y no necesitan elegir entre verse bien y sentirse capaces. No hacemos ropa para verse deportiva; hacemos piezas para habitar el dia con presencia, desde un entrenamiento temprano hasta una reunion tarde.',
+    },
+    {
+      id: 'materializamos',
+      internalName: 'Materializamos',
+      order: 2,
+      label: '02',
+      title: 'Como lo materializamos',
+      body: 'Disenamos menos, pero mejor. Cada prenda tiene que pasar una prueba simple: acompanar cuando te mueves de verdad. Trabajamos con siluetas limpias, telas comodas y decisiones que no gritan, pero se notan. Lo funcional no esta peleado con lo elegante; para nosotros, van juntos.',
+    },
+    {
+      id: 'vestimos',
+      internalName: 'Vestimos',
+      order: 3,
+      label: '03',
+      title: 'A quien vestimos',
+      body: 'Vestimos a la mujer que se cumple a si misma. La que entrena aunque este cansada. La que trabaja con foco. La que no necesita llamar la atencion para tener presencia. PAVOA es para ella: una mujer disciplinada, sensible al detalle y clara con lo que quiere proyectar.',
+    },
+    {
+      id: 'vision',
+      internalName: 'Vision',
+      order: 4,
+      label: '04',
+      title: 'Hacia donde vamos',
+      body: 'Queremos construir una marca latinoamericana con identidad propia. No perseguimos volumen por volumen. Queremos crecer cuidando el criterio, la calidad y la coherencia de cada coleccion. Nuestra vision es simple: que cuando una mujer piense en activewear premium con caracter, piense en PAVOA.',
+    },
+  ],
+};
+
 // ── Caché en memoria con TTL ──────────────────────────
 const _cache = new Map();
 const CACHE_TTL = 60 * 1000; // 60 segundos
@@ -30,6 +76,16 @@ const normalizeAnnouncementMessage = (value) =>
     .replace(/piezas limitadas/gi, 'Ediciones limitadas')
     .replace(/\s+/g, ' ')
     .trim();
+
+const getMetaobjectFieldValue = (fields, ...keys) =>
+  keys
+    .map((key) => fields.find((field) => field.key === key)?.value?.trim() || '')
+    .find(Boolean) || '';
+
+const getMetaobjectFieldReferences = (fields, ...keys) =>
+  keys
+    .map((key) => fields.find((field) => field.key === key)?.references?.nodes || [])
+    .find((references) => references.length > 0) || [];
 
 const getCached = (key) => {
   const entry = _cache.get(key);
@@ -566,6 +622,98 @@ export const getFilosofiaSection = () => {
 // ── Verifica stock de los items del carrito antes del pago ─
 // Recibe array de { selectedVariantId, cantidad, nombre }
 // Devuelve array de errores (vacío = todo OK)
+export const getNosotrosPage = () => {
+  const cached = getCached('nosotros-page');
+  if (cached) return cached;
+
+  const mapNosotrosBlock = (node, index = 0) => {
+    const fields = node?.fields || [];
+    const order = Number(getMetaobjectFieldValue(fields, 'order'));
+
+    return {
+      id: node?.id || getMetaobjectFieldValue(fields, 'internal_name') || `nosotros-block-${index + 1}`,
+      internalName: getMetaobjectFieldValue(fields, 'internal_name'),
+      order: Number.isFinite(order) && order > 0 ? order : index + 1,
+      label: getMetaobjectFieldValue(fields, 'label') || String(index + 1).padStart(2, '0'),
+      title: getMetaobjectFieldValue(fields, 'title'),
+      body: getMetaobjectFieldValue(fields, 'body'),
+    };
+  };
+
+  const promise = (async () => {
+    try {
+      const data = await shopifyFetch(`
+        query {
+          nosotrosPage: metaobjects(type: "nosotros_page", first: 1) {
+            edges {
+              node {
+                fields {
+                  key
+                  value
+                  references(first: 20) {
+                    nodes {
+                      ... on Metaobject {
+                        id
+                        fields {
+                          key
+                          value
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+          nosotrosBlocks: metaobjects(type: "nosotros_block", first: 20) {
+            edges {
+              node {
+                id
+                fields {
+                  key
+                  value
+                }
+              }
+            }
+          }
+        }
+      `);
+
+      const pageNode = data.nosotrosPage.edges[0]?.node;
+      const pageFields = pageNode?.fields || [];
+      const referencedBlocks = getMetaobjectFieldReferences(pageFields, 'blocks', 'nosotros_blocks');
+      const fallbackBlocks = data.nosotrosBlocks.edges.map(({ node }, index) => mapNosotrosBlock(node, index));
+      const blocksSource = referencedBlocks.length > 0
+        ? referencedBlocks.map((node, index) => mapNosotrosBlock(node, index))
+        : fallbackBlocks;
+      const blocks = blocksSource
+        .filter((block) => block.title || block.body || block.label)
+        .sort((a, b) => a.order - b.order);
+
+      if (!pageNode && blocks.length === 0) return NOSOTROS_PAGE_DEFAULTS;
+
+      return {
+        internalName: getMetaobjectFieldValue(pageFields, 'internal_name') || NOSOTROS_PAGE_DEFAULTS.internalName,
+        eyebrow: getMetaobjectFieldValue(pageFields, 'eyebrow') || NOSOTROS_PAGE_DEFAULTS.eyebrow,
+        title: getMetaobjectFieldValue(pageFields, 'title') || NOSOTROS_PAGE_DEFAULTS.title,
+        ctaEyebrow: getMetaobjectFieldValue(pageFields, 'cta_eyebrow') || NOSOTROS_PAGE_DEFAULTS.ctaEyebrow,
+        ctaTitle: getMetaobjectFieldValue(pageFields, 'cta_title') || NOSOTROS_PAGE_DEFAULTS.ctaTitle,
+        ctaLink1Text: getMetaobjectFieldValue(pageFields, 'cta_link_1_text') || NOSOTROS_PAGE_DEFAULTS.ctaLink1Text,
+        ctaLink1Url: getMetaobjectFieldValue(pageFields, 'cta_link_1_url') || NOSOTROS_PAGE_DEFAULTS.ctaLink1Url,
+        ctaLink2Text: getMetaobjectFieldValue(pageFields, 'cta_link_2_text') || NOSOTROS_PAGE_DEFAULTS.ctaLink2Text,
+        ctaLink2Url: getMetaobjectFieldValue(pageFields, 'cta_link_2_url') || NOSOTROS_PAGE_DEFAULTS.ctaLink2Url,
+        blocks: blocks.length > 0 ? blocks : NOSOTROS_PAGE_DEFAULTS.blocks,
+      };
+    } catch (err) {
+      console.error('Error getNosotrosPage:', err);
+      return NOSOTROS_PAGE_DEFAULTS;
+    }
+  })();
+
+  setCache('nosotros-page', promise);
+  return promise;
+};
+
 export const verificarStock = async (cartItems) => {
   const itemsConVariante = cartItems.filter(i => i.producto?.selectedVariantId);
   if (itemsConVariante.length === 0) return [];
