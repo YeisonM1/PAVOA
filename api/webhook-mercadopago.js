@@ -1,7 +1,36 @@
 import crypto from 'crypto';
 import { processMercadoPagoPayment } from './_helpers/mercadopago-order.js';
 
-const validarFirma = (req) => {
+const getQueryValue = (value) => {
+  if (Array.isArray(value)) return value[0] || '';
+  return value || '';
+};
+
+const extractNotification = (req) => {
+  const bodyType = String(req.body?.type || '').trim();
+  const bodyDataId = String(req.body?.data?.id || '').trim();
+  const queryType = String(
+    getQueryValue(req.query?.type) ||
+    getQueryValue(req.query?.topic)
+  ).trim();
+  const queryDataId = String(
+    getQueryValue(req.query?.['data.id']) ||
+    getQueryValue(req.query?.id) ||
+    getQueryValue(req.query?.['data[id]'])
+  ).trim();
+
+  if (bodyType && bodyDataId) {
+    return { source: 'webhook', type: bodyType, dataId: bodyDataId };
+  }
+
+  if (queryType && queryDataId) {
+    return { source: 'ipn', type: queryType, dataId: queryDataId };
+  }
+
+  return { source: 'unknown', type: bodyType || queryType, dataId: bodyDataId || queryDataId };
+};
+
+const validarFirmaWebhook = (req) => {
   const secret = process.env.MP_WEBHOOK_SECRET;
   if (!secret) return true;
 
@@ -29,20 +58,20 @@ const validarFirma = (req) => {
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).send('Method not allowed');
 
-  if (!validarFirma(req)) {
-    console.warn('Webhook: firma invalida, request descartado');
+  const notification = extractNotification(req);
+  if (notification.source === 'webhook' && !validarFirmaWebhook(req)) {
+    console.warn('Webhook MP: firma invalida, request descartado');
     return res.status(200).send('OK');
   }
 
-  const { type, data } = req.body;
-  if (type !== 'payment' || !data?.id) {
+  if (notification.type !== 'payment' || !notification.dataId) {
     return res.status(200).send('OK');
   }
 
   try {
-    const result = await processMercadoPagoPayment(data.id);
+    const result = await processMercadoPagoPayment(notification.dataId);
     console.log(
-      `Webhook MP procesado | payment: ${data.id} | status: ${result.status || 'unknown'} | draft: ${result.draftOrderId || 'n/a'}`
+      `Webhook MP procesado | source: ${notification.source} | payment: ${notification.dataId} | status: ${result.status || 'unknown'} | draft: ${result.draftOrderId || 'n/a'}`
     );
   } catch (error) {
     console.error('Error en webhook Mercado Pago:', error.message);
