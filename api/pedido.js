@@ -35,6 +35,15 @@ function isRateLimited(ip) {
 const _pedidoCache = new Map(); // idempotencyKey -> { draftOrderId, name, ts }
 const IDEM_TTL = 30 * 60 * 1000; // 30 minutos
 
+const parseShopifyError = (message = '') => {
+  try {
+    const parsed = JSON.parse(message);
+    return parsed?.errors || parsed?.error || parsed?.draft_order || parsed || message;
+  } catch {
+    return message;
+  }
+};
+
 const crearDraftOrder = async (token, { form, trustedItems }) => {
   const lineItems = trustedItems.map((item) => ({
     variant_id: item.variantId,
@@ -135,8 +144,26 @@ export default async function handler(req, res) {
 
   try {
     const { trustedItems } = await validateCartWithShopify(cartItems);
-    const token = await getShopifyToken();
-    const draftOrder = await crearDraftOrder(token, { form, trustedItems });
+    let draftOrder = null;
+    let lastError = null;
+
+    for (const preferredToken of ['app', 'admin']) {
+      try {
+        const token = await getShopifyToken(preferredToken);
+        draftOrder = await crearDraftOrder(token, { form, trustedItems });
+        if (preferredToken === 'admin') {
+          console.warn('[PAVOA] Draft Order creado usando fallback con SHOPIFY_ADMIN_TOKEN.');
+        }
+        break;
+      } catch (tokenErr) {
+        lastError = tokenErr;
+        console.warn(`[PAVOA] Fallo creando draft con token ${preferredToken}:`, tokenErr.message);
+      }
+    }
+
+    if (!draftOrder) {
+      throw lastError || new Error('No se pudo crear el draft order con ningun token de Shopify.');
+    }
 
     if (idempotencyKey) {
       _pedidoCache.set(idempotencyKey, { draftOrderId: draftOrder.id, name: draftOrder.name, ts: Date.now() });
@@ -146,6 +173,9 @@ export default async function handler(req, res) {
     return res.status(200).json({ ok: true, draftOrderId: draftOrder.id, name: draftOrder.name });
   } catch (err) {
     console.error('Error creando draft order:', err.message);
-    return res.status(500).json({ error: 'Error al crear el pedido en Shopify' });
+    return res.status(500).json({
+      error: 'Error al crear el pedido en Shopify',
+      detail: parseShopifyError(err.message),
+    });
   }
 }

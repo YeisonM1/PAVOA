@@ -20,6 +20,17 @@ const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const SOLO_DIGITOS = /\D/g;
 const CHECKOUT_FORM_KEY = 'pavoa-checkout-form-v1';
 
+const formatBackendError = (error, detail) => {
+  const base = String(error || '').trim();
+  if (!detail) return base || 'Ocurrio un error.';
+  if (typeof detail === 'string') return [base, detail].filter(Boolean).join(' ');
+  try {
+    return [base, JSON.stringify(detail)].filter(Boolean).join(' ');
+  } catch {
+    return base || 'Ocurrio un error.';
+  }
+};
+
 const limpiarDraftPendiente = async (draftOrderId) => {
   const id = String(draftOrderId || '').trim();
   if (!id) return false;
@@ -319,7 +330,7 @@ export default function CheckoutPage() {
       });
       const dataPedido = await resPedido.json();
       if (!resPedido.ok || !dataPedido.ok || !dataPedido.draftOrderId) {
-        setErrors({ general: dataPedido?.error || 'No se pudo registrar el pedido.' });
+        setErrors({ general: formatBackendError(dataPedido?.error || 'No se pudo registrar el pedido.', dataPedido?.detail) });
         setCargandoPago(false);
         return;
       }
