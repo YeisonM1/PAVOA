@@ -1,297 +1,319 @@
-const APP_URL  = process.env.VITE_APP_URL || 'https://pavoa.vercel.app';
+const APP_URL = process.env.VITE_APP_URL || "https://pavoa.vercel.app";
 const LOGO_URL = `${APP_URL}/logo-pavoa.png`;
 
-/**
- * Wrapper de email HTML con el branding de PAVOA.
- */
-const emailWrapper = (bodyHTML) => `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-</head>
-<body style="margin:0;padding:0;background-color:#F2E4E1;font-family:Georgia,serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#F2E4E1;padding:40px 20px;">
+const escapeHtml = (value) =>
+  String(value || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+
+const formatMoney = (value) => Number(value || 0).toLocaleString("es-CO");
+
+const formatVariantLabel = (value) => {
+  const normalized = String(value || "").trim();
+  return normalized && normalized !== "Default Title" ? normalized : "";
+};
+
+const renderButton = (href, label) => `
+  <a href="${href}"
+    style="display:inline-block;background-color:#111111;color:#ffffff;text-decoration:none;font-size:12px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;padding:14px 24px;border-radius:999px;">
+    ${escapeHtml(label)}
+  </a>
+`;
+
+const renderRow = (label, value, options = {}) => `
+  <tr>
+    <td style="padding:${options.padding || "12px 0"};${options.border === false ? "" : "border-bottom:1px solid #eee7dd;"}font-size:12px;letter-spacing:0.12em;text-transform:uppercase;color:#8a8175;width:38%;vertical-align:top;">
+      ${escapeHtml(label)}
+    </td>
+    <td style="padding:${options.padding || "12px 0"};${options.border === false ? "" : "border-bottom:1px solid #eee7dd;"}font-size:14px;line-height:1.6;color:#161616;text-align:right;vertical-align:top;">
+      ${value}
+    </td>
+  </tr>
+`;
+
+const renderSection = (title, content) => `
+  <tr>
+    <td style="padding:28px 40px 0;">
+      <div style="border-top:1px solid #eee7dd;padding-top:24px;">
+        <p style="margin:0 0 14px;font-size:11px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:#6f665b;">
+          ${escapeHtml(title)}
+        </p>
+        ${content}
+      </div>
+    </td>
+  </tr>
+`;
+
+const renderInfoCard = (content) => `
+  <table width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #eee7dd;background-color:#faf7f2;border-radius:16px;">
     <tr>
-      <td align="center">
-        <table width="520" cellpadding="0" cellspacing="0" style="background-color:#ffffff;">
-
-          <!-- HEADER CON LOGO -->
-          <tr>
-            <td align="center" style="padding:40px 40px 32px;border-bottom:1px solid #F2E4E1;">
-              <img src="${LOGO_URL}" alt="PAVOA" width="120" style="display:block;height:auto;max-height:48px;object-fit:contain;" />
-            </td>
-          </tr>
-
-          ${bodyHTML}
-
-          <!-- FOOTER -->
-          <tr>
-            <td align="center" style="padding:32px 40px 40px;">
-              <div style="border-top:1px solid #F2E4E1;padding-top:28px;">
-                <img src="${LOGO_URL}" alt="PAVOA" width="72" style="display:block;margin:0 auto 16px;height:auto;opacity:0.4;" />
-                <p style="font-size:9px;letter-spacing:0.2em;color:#d1d5db;text-transform:uppercase;margin:0;">
-                  © 2026 PAVOA. Todos los derechos reservados.
-                </p>
-              </div>
-            </td>
-          </tr>
-
-        </table>
+      <td style="padding:20px 22px;">
+        ${content}
       </td>
     </tr>
   </table>
-</body>
+`;
+
+const renderLayout = ({
+  preheader,
+  eyebrow,
+  title,
+  body,
+  primaryCta,
+  afterHero = "",
+  footerNote = "Si necesitas ayuda, responde a este correo o escribenos desde PAVOA.",
+}) => `
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PAVOA</title>
+  </head>
+  <body style="margin:0;padding:0;background-color:#f5f1ea;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;color:#161616;">
+    <div style="display:none;max-height:0;overflow:hidden;opacity:0;mso-hide:all;">
+      ${escapeHtml(preheader || "")}
+    </div>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f5f1ea;padding:32px 16px;">
+      <tr>
+        <td align="center">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;background-color:#ffffff;border:1px solid #e9e2d8;">
+            <tr>
+              <td align="center" style="padding:28px 32px 24px;border-bottom:1px solid #eee7dd;">
+                <img src="${LOGO_URL}" alt="PAVOA" width="118" style="display:block;height:auto;max-height:48px;object-fit:contain;">
+              </td>
+            </tr>
+
+            <tr>
+              <td style="padding:36px 40px 8px;">
+                <p style="margin:0 0 12px;font-size:11px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:#8a8175;">
+                  ${escapeHtml(eyebrow)}
+                </p>
+                <h1 style="margin:0 0 16px;font-size:30px;line-height:1.15;font-weight:600;color:#161616;">
+                  ${escapeHtml(title)}
+                </h1>
+                <div style="width:36px;height:2px;background-color:#dbc7ae;margin:0 0 20px;"></div>
+                <p style="margin:0;font-size:15px;line-height:1.8;color:#4f4a44;">
+                  ${body}
+                </p>
+              </td>
+            </tr>
+
+            ${primaryCta ? `
+            <tr>
+              <td style="padding:28px 40px 0;">
+                ${renderButton(primaryCta.href, primaryCta.label)}
+              </td>
+            </tr>` : ""}
+
+            ${afterHero}
+
+            <tr>
+              <td style="padding:32px 40px 40px;">
+                <div style="border-top:1px solid #eee7dd;padding-top:24px;">
+                  <p style="margin:0;font-size:12px;line-height:1.7;color:#7b746b;">
+                    ${footerNote}
+                  </p>
+                  <p style="margin:18px 0 0;font-size:10px;letter-spacing:0.18em;text-transform:uppercase;color:#b4aca2;">
+                    PAVOA
+                  </p>
+                </div>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
 </html>`;
 
-/**
- * Email de confirmación de pedido.
- */
-export const emailConfirmacion = ({ firstName, orderName, paymentId, lineItems, total, totalOriginal, descuentoAplicado, direccion }) => {
-  const lineItemsHTML = (lineItems || []).map(item => `
-    <tr>
-      <td style="padding:12px 0;border-bottom:1px solid #f5f0eb;">
-        <p style="margin:0;font-size:12px;color:#0B0B0B;letter-spacing:0.05em;">${item.title}</p>
-        ${item.variant_title && item.variant_title !== 'Default Title'
-          ? `<p style="margin:4px 0 0;font-size:10px;color:#9ca3af;letter-spacing:0.1em;text-transform:uppercase;">${item.variant_title}</p>`
-          : ''}
-      </td>
-      <td style="padding:12px 0;border-bottom:1px solid #f5f0eb;text-align:center;font-size:11px;color:#6b7280;">
-        × ${item.quantity}
-      </td>
-      <td style="padding:12px 0;border-bottom:1px solid #f5f0eb;text-align:right;font-size:12px;color:#0B0B0B;font-weight:600;">
-        $${Number(item.price).toLocaleString('es-CO')}
-      </td>
-    </tr>
-  `).join('');
+export const emailConfirmacion = ({
+  firstName,
+  orderName,
+  paymentId,
+  lineItems,
+  total,
+  totalOriginal,
+  descuentoAplicado,
+  direccion,
+}) => {
+  const itemsHtml = (lineItems || [])
+    .map((item) => {
+      const variantLabel = formatVariantLabel(item.variant_title);
 
-  const body = `
-          <!-- SALUDO -->
-          <tr>
-            <td style="padding:36px 40px 8px;">
-              <p style="font-size:10px;letter-spacing:0.3em;color:#9ca3af;text-transform:uppercase;margin:0 0 12px 0;">Confirmación de pedido</p>
-              <h1 style="font-size:22px;font-weight:300;color:#0B0B0B;letter-spacing:0.1em;text-transform:uppercase;margin:0 0 16px 0;">
-                Hola, ${firstName}
-              </h1>
-              <div style="width:32px;height:1px;background-color:#DFCDB4;margin-bottom:20px;"></div>
-              <p style="font-size:13px;color:#6b7280;line-height:1.8;margin:0;">
-                Tu pago fue aprobado y tu pedido está confirmado. Pronto nos pondremos en contacto para coordinar la entrega.
-              </p>
-            </td>
-          </tr>
+      return `
+        <tr>
+          <td style="padding:14px 0;border-bottom:1px solid #eee7dd;">
+            <p style="margin:0;font-size:14px;font-weight:600;color:#161616;">
+              ${escapeHtml(item.title)}
+            </p>
+            ${variantLabel ? `
+              <p style="margin:5px 0 0;font-size:12px;color:#7b746b;">
+                ${escapeHtml(variantLabel)}
+              </p>` : ""}
+          </td>
+          <td style="padding:14px 0;border-bottom:1px solid #eee7dd;text-align:center;font-size:13px;color:#5d5852;">
+            x ${item.quantity}
+          </td>
+          <td style="padding:14px 0;border-bottom:1px solid #eee7dd;text-align:right;font-size:14px;font-weight:600;color:#161616;">
+            $${formatMoney(item.price)}
+          </td>
+        </tr>
+      `;
+    })
+    .join("");
 
-          <!-- NÚMERO DE ORDEN -->
-          <tr>
-            <td style="padding:24px 40px 0;">
-              <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#F2E4E1;padding:16px 20px;">
-                <tr>
-                  <td>
-                    <p style="font-size:10px;letter-spacing:0.2em;color:#9ca3af;text-transform:uppercase;margin:0 0 4px 0;">Número de pedido</p>
-                    <p style="font-size:16px;font-weight:600;color:#0B0B0B;letter-spacing:0.1em;margin:0;">${orderName}</p>
-                  </td>
-                  <td align="right">
-                    <p style="font-size:10px;letter-spacing:0.2em;color:#9ca3af;text-transform:uppercase;margin:0 0 4px 0;">Pago</p>
-                    <p style="font-size:12px;color:#0B0B0B;letter-spacing:0.05em;margin:0;">MP #${paymentId}</p>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
+  const summaryCard = renderInfoCard(`
+    <table width="100%" cellpadding="0" cellspacing="0">
+      ${renderRow("Pedido", `<strong style="font-size:16px;color:#161616;">${escapeHtml(orderName)}</strong>`)}
+      ${renderRow("Pago", `MP #${escapeHtml(paymentId)}`)}
+      ${descuentoAplicado
+        ? renderRow("Subtotal", `<span style="text-decoration:line-through;color:#8a8175;">$${escapeHtml(totalOriginal)}</span>`)
+        : ""}
+      ${descuentoAplicado
+        ? renderRow("Beneficio", `<span style="color:#9b8158;font-weight:600;">Descuento bienvenida aplicado</span>`)
+        : ""}
+      ${renderRow("Total pagado", `<strong style="font-size:18px;color:#161616;">$${escapeHtml(total)}</strong>`, { border: false })}
+    </table>
+  `);
 
-          <!-- PRODUCTOS -->
-          <tr>
-            <td style="padding:28px 40px 0;">
-              <p style="font-size:10px;letter-spacing:0.3em;color:#0B0B0B;text-transform:uppercase;margin:0 0 16px 0;font-weight:700;">Detalle del pedido</p>
-              <table width="100%" cellpadding="0" cellspacing="0">
-                ${lineItemsHTML}
-                ${descuentoAplicado ? `
-                <tr>
-                  <td colspan="2" style="padding-top:12px;">
-                    <p style="font-size:10px;letter-spacing:0.2em;color:#9ca3af;text-transform:uppercase;margin:0;">Subtotal</p>
-                  </td>
-                  <td style="padding-top:12px;text-align:right;">
-                    <p style="font-size:13px;color:#9ca3af;margin:0;text-decoration:line-through;">$${totalOriginal}</p>
-                  </td>
-                </tr>
-                <tr>
-                  <td colspan="2" style="padding-top:6px;">
-                    <p style="font-size:10px;letter-spacing:0.2em;color:#DFCDB4;text-transform:uppercase;margin:0;">✦ Descuento bienvenida (−10%)</p>
-                  </td>
-                  <td style="padding-top:6px;text-align:right;">
-                    <p style="font-size:13px;color:#DFCDB4;margin:0;">−$${Math.round(Number(total.replace(/[^0-9]/g, '')) / 0.9 * 0.1).toLocaleString('es-CO')}</p>
-                  </td>
-                </tr>` : ''}
-                <tr>
-                  <td colspan="2" style="padding-top:16px;">
-                    <p style="font-size:10px;letter-spacing:0.2em;color:#9ca3af;text-transform:uppercase;margin:0;">Total pagado</p>
-                  </td>
-                  <td style="padding-top:16px;text-align:right;">
-                    <p style="font-size:18px;font-weight:700;color:#0B0B0B;margin:0;">$${total}</p>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
+  const orderTable = `
+    <table width="100%" cellpadding="0" cellspacing="0">
+      <tr>
+        <td style="padding-bottom:10px;font-size:12px;letter-spacing:0.12em;text-transform:uppercase;color:#8a8175;">Producto</td>
+        <td style="padding-bottom:10px;text-align:center;font-size:12px;letter-spacing:0.12em;text-transform:uppercase;color:#8a8175;">Cant.</td>
+        <td style="padding-bottom:10px;text-align:right;font-size:12px;letter-spacing:0.12em;text-transform:uppercase;color:#8a8175;">Valor</td>
+      </tr>
+      ${itemsHtml}
+    </table>
+  `;
 
-          ${direccion ? `
-          <tr>
-            <td style="padding:28px 40px 0;">
-              <div style="border-top:1px solid #F2E4E1;padding-top:24px;">
-                <p style="font-size:10px;letter-spacing:0.3em;color:#0B0B0B;text-transform:uppercase;margin:0 0 10px 0;font-weight:700;">Dirección de entrega</p>
-                <p style="font-size:13px;color:#6b7280;line-height:1.8;margin:0;">${direccion}</p>
-              </div>
-            </td>
-          </tr>` : ''}
+  const shippingSection = direccion
+    ? renderSection(
+        "Direccion de entrega",
+        `<p style="margin:0;font-size:14px;line-height:1.7;color:#4f4a44;">${escapeHtml(direccion)}</p>`,
+      )
+    : "";
 
-          <!-- MENSAJE FINAL -->
-          <tr>
-            <td style="padding:28px 40px 0;">
-              <div style="border-top:1px solid #F2E4E1;padding-top:24px;">
-                <p style="font-size:13px;color:#6b7280;line-height:1.8;margin:0;">
-                  Si tienes alguna pregunta sobre tu pedido, escríbenos por WhatsApp y con gusto te ayudamos.
-                </p>
-              </div>
-            </td>
-          </tr>`;
-
-  return emailWrapper(body);
+  return renderLayout({
+    preheader: `Pedido ${orderName} confirmado`,
+    eyebrow: "Confirmacion de pedido",
+    title: `Hola, ${firstName}`,
+    body:
+      "Tu pago fue aprobado y ya dejamos registrado tu pedido. A partir de aqui nos encargamos de coordinar la entrega y mantenerte al tanto.",
+    afterHero:
+      renderSection("Resumen", summaryCard) +
+      renderSection("Detalle del pedido", orderTable) +
+      shippingSection +
+      renderSection(
+        "Que sigue",
+        `
+          <div style="display:grid;gap:10px;">
+            <p style="margin:0;font-size:14px;line-height:1.7;color:#4f4a44;">1. Validamos tu pedido y alistamos la entrega.</p>
+            <p style="margin:0;font-size:14px;line-height:1.7;color:#4f4a44;">2. Cuando se despache, te compartiremos la guia.</p>
+            <p style="margin:0;font-size:14px;line-height:1.7;color:#4f4a44;">3. Si necesitas ayuda antes de eso, estamos disponibles.</p>
+          </div>
+        `,
+      ),
+    footerNote:
+      "Si tienes dudas sobre tu pedido, puedes escribirnos y te ayudamos a resolverlo rapidamente.",
+  });
 };
 
-/**
- * Email de despacho / actualización de guía.
- */
-export const emailDespacho = ({ nombreCliente, orderName, subtitulo, cuerpo, trackingCompany, trackingNumber, trackingUrl }) => {
-  const body = `
-          <tr>
-            <td style="padding:36px 40px 8px;">
-              <p style="font-size:10px;letter-spacing:0.3em;color:#9ca3af;text-transform:uppercase;margin:0 0 12px 0;">${subtitulo}</p>
-              <h1 style="font-size:22px;font-weight:300;color:#0B0B0B;letter-spacing:0.1em;text-transform:uppercase;margin:0 0 16px 0;">
-                Hola, ${nombreCliente}
-              </h1>
-              <p style="font-size:11px;letter-spacing:0.2em;color:#9ca3af;text-transform:uppercase;margin:0 0 16px 0;">Pedido ${orderName}</p>
-              <div style="width:32px;height:1px;background-color:#DFCDB4;margin-bottom:20px;"></div>
-              <p style="font-size:13px;color:#6b7280;line-height:1.8;margin:0;">${cuerpo}</p>
-            </td>
-          </tr>
+export const emailDespacho = ({
+  nombreCliente,
+  orderName,
+  subtitulo,
+  cuerpo,
+  trackingCompany,
+  trackingNumber,
+  trackingUrl,
+}) =>
+  renderLayout({
+    preheader: `Tu pedido ${orderName} ya va en camino`,
+    eyebrow: subtitulo || "Actualizacion de envio",
+    title: `Hola, ${nombreCliente}`,
+    body: cuerpo,
+    primaryCta: trackingUrl
+      ? {
+          href: trackingUrl,
+          label: "Rastrear pedido",
+        }
+      : null,
+    afterHero:
+      renderSection(
+        "Datos de envio",
+        renderInfoCard(`
+          <table width="100%" cellpadding="0" cellspacing="0">
+            ${renderRow("Pedido", `<strong style="font-size:16px;color:#161616;">${escapeHtml(orderName)}</strong>`)}
+            ${renderRow("Transportadora", escapeHtml(trackingCompany || "Pendiente"))}
+            ${renderRow("Guia", `<strong style="font-size:16px;color:#161616;">${escapeHtml(trackingNumber || "Pendiente")}</strong>`, { border: false })}
+          </table>
+        `),
+      ) +
+      renderSection(
+        "Recordatorio",
+        `<p style="margin:0;font-size:14px;line-height:1.7;color:#4f4a44;">Tambien puedes consultar el estado del pedido desde tu cuenta en PAVOA cuando quieras.</p>`,
+      ),
+    footerNote:
+      "Te recomendamos guardar este correo hasta que recibas tu pedido.",
+  });
 
-          <tr>
-            <td style="padding:28px 40px 0;">
-              <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#F2E4E1;padding:20px;">
-                <tr>
-                  <td>
-                    <p style="font-size:10px;letter-spacing:0.2em;color:#9ca3af;text-transform:uppercase;margin:0 0 6px 0;">Transportadora</p>
-                    <p style="font-size:15px;font-weight:600;color:#0B0B0B;letter-spacing:0.05em;margin:0;">${trackingCompany}</p>
-                  </td>
-                </tr>
-                <tr>
-                  <td style="padding-top:16px;">
-                    <p style="font-size:10px;letter-spacing:0.2em;color:#9ca3af;text-transform:uppercase;margin:0 0 6px 0;">Número de guía</p>
-                    <p style="font-size:20px;font-weight:700;color:#0B0B0B;letter-spacing:0.1em;margin:0;">${trackingNumber}</p>
-                  </td>
-                </tr>
-                ${trackingUrl ? `
-                <tr>
-                  <td style="padding-top:20px;">
-                    <a href="${trackingUrl}" style="display:inline-block;background-color:#0B0B0B;color:#ffffff;text-decoration:none;font-size:10px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;padding:12px 24px;">
-                      Rastrear pedido →
-                    </a>
-                  </td>
-                </tr>` : ''}
-              </table>
-            </td>
-          </tr>
+export const emailEntregado = ({ nombreCliente, orderName }) =>
+  renderLayout({
+    preheader: `Tu pedido ${orderName} fue entregado`,
+    eyebrow: "Pedido entregado",
+    title: `Hola, ${nombreCliente}`,
+    body: `Tu pedido <strong style="color:#161616;">${escapeHtml(orderName)}</strong> ya fue entregado. Esperamos que disfrutes mucho tu compra.`,
+    afterHero:
+      renderSection(
+        "Pedido",
+        renderInfoCard(`
+          <table width="100%" cellpadding="0" cellspacing="0">
+            ${renderRow("Numero", `<strong style="font-size:16px;color:#161616;">${escapeHtml(orderName)}</strong>`, { border: false })}
+          </table>
+        `),
+      ) +
+      renderSection(
+        "Gracias por elegirnos",
+        `<p style="margin:0;font-size:14px;line-height:1.7;color:#4f4a44;">Si necesitas soporte con tu compra o quieres gestionar un cambio, puedes escribirnos y te guiaremos.</p>`,
+      ),
+  });
 
-          <tr>
-            <td style="padding:28px 40px 0;">
-              <div style="border-top:1px solid #F2E4E1;padding-top:24px;">
-                <p style="font-size:13px;color:#6b7280;line-height:1.8;margin:0;">
-                  También puedes ver el estado de tu pedido en cualquier momento desde tu cuenta en PAVOA.
-                </p>
-              </div>
-            </td>
-          </tr>`;
+export const emailVerificacion = ({ firstName, verifyLink }) =>
+  renderLayout({
+    preheader: "Verifica tu correo para activar tu cuenta PAVOA",
+    eyebrow: "Bienvenida",
+    title: `Hola, ${firstName}`,
+    body:
+      "Gracias por unirte a PAVOA. Verifica tu correo para activar tu cuenta y comenzar a gestionar tus pedidos, wishlist y beneficios.",
+    primaryCta: {
+      href: verifyLink,
+      label: "Verificar correo",
+    },
+    afterHero: renderSection(
+      "Seguridad",
+      `<p style="margin:0;font-size:14px;line-height:1.7;color:#4f4a44;">Este enlace expira en 24 horas. Si no creaste esta cuenta, puedes ignorar este correo.</p>`,
+    ),
+  });
 
-  return emailWrapper(body);
-};
-
-/**
- * Email de entrega confirmada.
- */
-export const emailEntregado = ({ nombreCliente, orderName }) => {
-  const body = `
-          <tr>
-            <td style="padding:36px 40px 8px;">
-              <p style="font-size:10px;letter-spacing:0.3em;color:#9ca3af;text-transform:uppercase;margin:0 0 12px 0;">Pedido entregado</p>
-              <h1 style="font-size:22px;font-weight:300;color:#0B0B0B;letter-spacing:0.1em;text-transform:uppercase;margin:0 0 16px 0;">
-                Hola, ${nombreCliente}
-              </h1>
-              <div style="width:32px;height:1px;background-color:#DFCDB4;margin-bottom:20px;"></div>
-              <p style="font-size:13px;color:#6b7280;line-height:1.8;margin:0;">
-                Tu pedido <strong>${orderName}</strong> ha sido entregado. Esperamos que lo disfrutes mucho.
-              </p>
-            </td>
-          </tr>
-
-          <tr>
-            <td style="padding:28px 40px 0;">
-              <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#F2E4E1;padding:24px;">
-                <tr>
-                  <td align="center">
-                    <p style="font-size:10px;letter-spacing:0.3em;color:#9ca3af;text-transform:uppercase;margin:0 0 10px 0;">Número de pedido</p>
-                    <p style="font-size:20px;font-weight:700;color:#0B0B0B;letter-spacing:0.15em;margin:0;">${orderName}</p>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-
-          <tr>
-            <td style="padding:28px 40px 0;">
-              <div style="border-top:1px solid #F2E4E1;padding-top:24px;">
-                <p style="font-size:13px;color:#6b7280;line-height:1.8;margin:0;">
-                  Gracias por confiar en PAVOA. Si tienes alguna duda sobre tu pedido no dudes en contactarnos.
-                </p>
-              </div>
-            </td>
-          </tr>`;
-
-  return emailWrapper(body);
-};
-
-/**
- * Email de verificación de cuenta.
- */
-export const emailVerificacion = ({ firstName, verifyLink }) => {
-  const body = `
-          <tr>
-            <td style="padding-top:32px;padding-bottom:24px;padding-left:40px;padding-right:40px;">
-              <p style="font-size:10px;letter-spacing:0.3em;color:#9ca3af;text-transform:uppercase;margin:0 0 12px 0;">Bienvenida</p>
-              <h1 style="font-size:22px;font-weight:300;color:#0B0B0B;letter-spacing:0.1em;text-transform:uppercase;margin:0 0 16px 0;">
-                Hola, ${firstName}
-              </h1>
-              <div style="width:32px;height:1px;background-color:#DFCDB4;margin-bottom:24px;"></div>
-              <p style="font-size:13px;color:#6b7280;line-height:1.8;margin:0 0 32px 0;">
-                Gracias por unirte a PAVOA. Para activar tu cuenta y comenzar a explorar nuestra colección, verifica tu dirección de correo electrónico.
-              </p>
-            </td>
-          </tr>
-          <tr>
-            <td align="center" style="padding-bottom:32px;">
-              <a href="${verifyLink}"
-                 style="display:inline-block;background-color:#0B0B0B;color:#ffffff;text-decoration:none;font-size:10px;font-weight:700;letter-spacing:0.3em;text-transform:uppercase;padding:16px 40px;">
-                Verificar correo
-              </a>
-            </td>
-          </tr>
-          <tr>
-            <td style="border-top:1px solid #F2E4E1;padding-top:24px;padding-left:40px;padding-right:40px;">
-              <p style="font-size:11px;color:#9ca3af;line-height:1.6;margin:0;text-align:center;">
-                Este enlace expira en 24 horas.<br>
-                Si no creaste esta cuenta, ignora este correo.
-              </p>
-            </td>
-          </tr>`;
-
-  return emailWrapper(body);
-};
+export const emailResetPassword = ({ firstName, resetLink }) =>
+  renderLayout({
+    preheader: "Restablece tu contrasena de PAVOA",
+    eyebrow: "Seguridad",
+    title: `Hola, ${firstName}`,
+    body:
+      "Recibimos una solicitud para cambiar tu contrasena. Si fuiste tu, usa el siguiente boton para crear una nueva de forma segura.",
+    primaryCta: {
+      href: resetLink,
+      label: "Restablecer contrasena",
+    },
+    afterHero: renderSection(
+      "Importante",
+      `<p style="margin:0;font-size:14px;line-height:1.7;color:#4f4a44;">Este enlace expira en 1 hora. Si no solicitaste este cambio, puedes ignorar este correo sin problema.</p>`,
+    ),
+  });
