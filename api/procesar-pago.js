@@ -248,6 +248,16 @@ export default async function handler(req, res) {
     });
   }
 
+  if (req.body?.type === 'cancel-draft-order') {
+    const draftOrderId = String(req.body?.draftOrderId || '').trim();
+    if (!draftOrderId) {
+      return res.status(400).json({ error: 'Falta draftOrderId' });
+    }
+
+    await eliminarDraftOrder(draftOrderId);
+    return res.status(200).json({ ok: true, draftOrderId });
+  }
+
   const { form, cartItems, cartTotal, draftOrderId } = req.body;
 
   if (!form || !cartItems?.length || !draftOrderId || !cartTotal) {

@@ -20,6 +20,29 @@ const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const SOLO_DIGITOS = /\D/g;
 const CHECKOUT_FORM_KEY = 'pavoa-checkout-form-v1';
 
+const limpiarDraftPendiente = async (draftOrderId) => {
+  const id = String(draftOrderId || '').trim();
+  if (!id) return false;
+
+  try {
+    const res = await fetch('/api/procesar-pago', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'cancel-draft-order', draftOrderId: id }),
+    });
+    const data = await res.json().catch(() => null);
+    if (!res.ok || !data?.ok) {
+      console.warn('[PAVOA] No se pudo limpiar draft order pendiente:', id, data?.error || res.status);
+      return false;
+    }
+    console.info('[PAVOA] Draft order limpiado tras fallo de pago:', id);
+    return true;
+  } catch (err) {
+    console.warn('[PAVOA] Error limpiando draft order pendiente:', id, err);
+    return false;
+  }
+};
+
 const CAMPO = ({ label, name, value, onChange, onBlur, placeholder, type = 'text', required = true, error = '' }) => (
   <div className="flex flex-col gap-2">
     <label className="text-[10px] font-bold tracking-[0.2em] text-stone-900 uppercase">
@@ -131,6 +154,14 @@ export default function CheckoutPage() {
     const isRejected = statusFromMP === 'failure' || statusFromMP === 'rejected';
     if (!isRejected) return;
 
+    try {
+      const checkoutSession = JSON.parse(sessionStorage.getItem('pavoa-checkout-session') || 'null');
+      const draftOrderId = checkoutSession?.draftOrderId || '';
+      if (draftOrderId) {
+        limpiarDraftPendiente(draftOrderId);
+      }
+    } catch {}
+
     sessionStorage.removeItem('pavoa-checkout-session');
 
     const rejectionMessages = {
@@ -241,6 +272,7 @@ export default function CheckoutPage() {
 
   // ── PAGO EN LÍNEA (Checkout Pro) ──
   const handlePagarOnline = async () => {
+    let draftOrderIdCreado = '';
     const nuevosErrores = validar();
     if (Object.keys(nuevosErrores).length > 0) {
       setTouched((prev) => ({
@@ -291,15 +323,17 @@ export default function CheckoutPage() {
         setCargandoPago(false);
         return;
       }
+      draftOrderIdCreado = dataPedido.draftOrderId;
 
       // Paso 3 — Crear preferencia en MercadoPago
       const resPref = await fetch('/api/procesar-pago', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ form, cartItems, cartTotal, draftOrderId: dataPedido.draftOrderId }),
+        body: JSON.stringify({ form, cartItems, cartTotal, draftOrderId: draftOrderIdCreado }),
       });
       const dataPref = await resPref.json();
       if (!resPref.ok || !dataPref.init_point) {
+        await limpiarDraftPendiente(draftOrderIdCreado);
         setErrors({ general: dataPref?.error || 'No se pudo iniciar el pago.' });
         setCargandoPago(false);
         return;
@@ -326,7 +360,7 @@ export default function CheckoutPage() {
       }));
       sessionStorage.setItem('pavoa-checkout-session', JSON.stringify({
         initPoint:    dataPref.init_point,
-        draftOrderId: dataPedido.draftOrderId,
+        draftOrderId: draftOrderIdCreado,
         cartHash,
         ts:           Date.now(),
       }));
@@ -335,6 +369,9 @@ export default function CheckoutPage() {
       window.location.href = dataPref.init_point;
 
     } catch (err) {
+      if (draftOrderIdCreado) {
+        await limpiarDraftPendiente(draftOrderIdCreado);
+      }
       console.error('[PAVOA] Error al iniciar pago:', err);
       setErrors({ general: 'Error inesperado. Intenta de nuevo.' });
       setCargandoPago(false);
