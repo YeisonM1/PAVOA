@@ -20,6 +20,12 @@ const normalizeOptional = (value) => {
   return normalized || null;
 };
 
+const applyOptionalFilter = (query, column, value) => (
+  value === null
+    ? query.is(column, null)
+    : query.eq(column, value)
+);
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Metodo no permitido' });
@@ -27,32 +33,48 @@ export default async function handler(req, res) {
 
   // Stock alert branch
   if (req.body?.type === 'stock-alert') {
-    const { email, productId, productNombre, talla, color } = req.body;
+    const { email, productId, productNombre, talla, color, variantId } = req.body;
     if (!email || !productId) return res.status(400).json({ error: 'email y productId son requeridos.' });
     if (!isValidEmail(email)) return res.status(400).json({ error: 'Email invalido.' });
 
     const normalizedEmail = email.toLowerCase().trim();
     const normalizedTalla = normalizeOptional(talla);
     const normalizedColor = normalizeOptional(color);
+    const normalizedVariantId = normalizeOptional(variantId);
 
     try {
       let existingQuery = supabase
         .from('stock_alerts')
         .select('id')
         .eq('email', normalizedEmail)
-        .eq('product_id', productId);
+        .eq('product_id', productId)
+        .eq('notified', false);
 
-      existingQuery = normalizedTalla === null
-        ? existingQuery.is('talla', null)
-        : existingQuery.eq('talla', normalizedTalla);
+      existingQuery = applyOptionalFilter(existingQuery, 'talla', normalizedTalla);
+      existingQuery = applyOptionalFilter(existingQuery, 'color', normalizedColor);
+      existingQuery = applyOptionalFilter(existingQuery, 'variant_id', normalizedVariantId);
 
-      existingQuery = normalizedColor === null
-        ? existingQuery.is('color', null)
-        : existingQuery.eq('color', normalizedColor);
-
-      const { data: existingAlert, error: existingError } = await existingQuery.limit(1).maybeSingle();
+      const { data: existingAlerts, error: existingError } = await existingQuery.limit(2);
       if (existingError) throw existingError;
-      if (existingAlert) return res.status(200).json({ ok: true, duplicate: true });
+      if ((existingAlerts || []).length > 0) return res.status(200).json({ ok: true, duplicate: true });
+
+      // Compatibilidad con alertas viejas creadas antes de guardar variant_id.
+      if (normalizedVariantId !== null) {
+        let legacyQuery = supabase
+          .from('stock_alerts')
+          .select('id')
+          .eq('email', normalizedEmail)
+          .eq('product_id', productId)
+          .eq('notified', false)
+          .is('variant_id', null);
+
+        legacyQuery = applyOptionalFilter(legacyQuery, 'talla', normalizedTalla);
+        legacyQuery = applyOptionalFilter(legacyQuery, 'color', normalizedColor);
+
+        const { data: legacyAlerts, error: legacyError } = await legacyQuery.limit(2);
+        if (legacyError) throw legacyError;
+        if ((legacyAlerts || []).length > 0) return res.status(200).json({ ok: true, duplicate: true });
+      }
 
       const { error } = await supabase.from('stock_alerts').insert({
         email: normalizedEmail,
@@ -60,7 +82,9 @@ export default async function handler(req, res) {
         product_nombre: productNombre || '',
         talla: normalizedTalla,
         color: normalizedColor,
+        variant_id: normalizedVariantId,
         notified: false,
+        notified_at: null,
         created_at: new Date().toISOString(),
       });
 

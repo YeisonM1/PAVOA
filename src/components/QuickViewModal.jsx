@@ -75,6 +75,11 @@ export default function QuickViewModal({ productoId, onClose }) {
     return v?.stock ?? 0;
   }, [variantes, colorSeleccionado, tallaSeleccionada]);
 
+  const varianteSeleccionada = useMemo(() => {
+    if (!colorSeleccionado || !tallaSeleccionada) return null;
+    return variantes.find(v => v.color === colorSeleccionado && v.talla === tallaSeleccionada) || null;
+  }, [variantes, colorSeleccionado, tallaSeleccionada]);
+
   const handleAddToCart = () => {
     if (!colorSeleccionado || (!esTallaUnica && !tallaSeleccionada)) return;
     setAdding(true);
@@ -98,6 +103,7 @@ export default function QuickViewModal({ productoId, onClose }) {
           productNombre: producto.nombre,
           talla: tallaSeleccionada,
           color: colorSeleccionado,
+          variantId: varianteSeleccionada?.variantId || null,
         }),
       });
       setAlertSent(true);

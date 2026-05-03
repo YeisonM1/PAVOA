@@ -89,6 +89,11 @@ export default function ProductPage() {
     return v?.stock ?? 0;
   }, [variantes, colorSeleccionado, tallaSeleccionada]);
 
+  const varianteSeleccionada = useMemo(() => {
+    if (!colorSeleccionado || !tallaSeleccionada) return null;
+    return variantes.find(v => v.color === colorSeleccionado && v.talla === tallaSeleccionada) || null;
+  }, [variantes, colorSeleccionado, tallaSeleccionada]);
+
   const esTallaUnica   = tallasDisponibles.length === 1 && tallasDisponibles[0]?.talla === 'ÚNICA';
   const tieneVariantes = variantes.length > 0;
   const puedeSeleccionarCantidad = tieneVariantes ? (colorSeleccionado && (esTallaUnica || tallaSeleccionada)) : true;
@@ -175,7 +180,15 @@ export default function ProductPage() {
       await fetch('/api/contacto', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ type: 'stock-alert', email: alertEmail, productId: producto.id, productNombre: producto.nombre, talla: tallaSeleccionada, color: colorSeleccionado }),
+        body: JSON.stringify({
+          type: 'stock-alert',
+          email: alertEmail,
+          productId: producto.id,
+          productNombre: producto.nombre,
+          talla: tallaSeleccionada,
+          color: colorSeleccionado,
+          variantId: varianteSeleccionada?.variantId || null,
+        }),
       });
       setAlertSent(true);
     } catch {} finally { setAlertLoading(false); }
