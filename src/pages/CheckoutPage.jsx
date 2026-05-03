@@ -86,6 +86,8 @@ export default function CheckoutPage() {
   const [cargandoPago, setCargandoPago] = useState(false);
   const [errors, setErrors]           = useState({});
   const [tieneDescuento, setTieneDescuento] = useState(false);
+  const [diagnosticLoading, setDiagnosticLoading] = useState(false);
+  const [diagnosticResult, setDiagnosticResult] = useState(null);
   const checkoutStep = cargandoPago ? 2 : 1;
   const statusFromMP = (searchParams.get('status') || '').toLowerCase();
   const statusDetailFromMP = (searchParams.get('status_detail') || '').toLowerCase();
@@ -339,6 +341,32 @@ export default function CheckoutPage() {
     }
   };
 
+  const ejecutarDiagnosticoPago = async () => {
+    setDiagnosticResult(null);
+    setDiagnosticLoading(true);
+    try {
+      const debugRaw = sessionStorage.getItem('pavoa-last-mp-debug');
+      const debug = debugRaw ? JSON.parse(debugRaw) : null;
+      const preferenceId = debug?.preference_id || '';
+
+      const res = await fetch('/api/procesar-pago', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'mp-diagnostico', preferenceId }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data?.ok) {
+        setDiagnosticResult({ error: data?.error || 'No se pudo ejecutar el diagnostico.' });
+        return;
+      }
+      setDiagnosticResult(data.diagnostico || { error: 'Sin datos de diagnostico.' });
+    } catch {
+      setDiagnosticResult({ error: 'Error de red al ejecutar diagnostico.' });
+    } finally {
+      setDiagnosticLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-white pt-[88px] md:pt-[104px]">
       <SEO title="Checkout" url="/checkout" noIndex />
@@ -441,6 +469,27 @@ export default function CheckoutPage() {
 
             {errors.general && (
               <p className="text-[10px] text-red-500 tracking-[0.08em] text-center mt-4">{errors.general}</p>
+            )}
+
+            {(errors.general || statusFromMP === 'failure' || statusFromMP === 'rejected') && (
+              <div className="mt-4 border border-stone-200 bg-stone-50 p-4">
+                <button
+                  type="button"
+                  onClick={ejecutarDiagnosticoPago}
+                  disabled={diagnosticLoading}
+                  className={`w-full h-11 text-[10px] font-bold tracking-[0.2em] uppercase transition-colors ${
+                    diagnosticLoading ? 'bg-stone-300 text-stone-500 cursor-not-allowed' : 'bg-stone-900 text-white hover:bg-stone-800'
+                  }`}
+                >
+                  {diagnosticLoading ? 'Ejecutando diagnostico...' : 'Diagnosticar pago'}
+                </button>
+
+                {diagnosticResult && (
+                  <pre className="mt-3 text-[10px] text-stone-700 bg-white border border-stone-200 p-3 overflow-auto max-h-[220px] whitespace-pre-wrap break-words">
+{JSON.stringify(diagnosticResult, null, 2)}
+                  </pre>
+                )}
+              </div>
             )}
           </div>
 

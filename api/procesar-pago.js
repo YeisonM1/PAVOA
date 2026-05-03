@@ -23,6 +23,24 @@ const requiredEnvError = () => {
   return null;
 };
 
+const mpFetchJson = async (url) => {
+  const res = await fetch(url, {
+    headers: { Authorization: `Bearer ${process.env.MP_ACCESS_TOKEN}` },
+  });
+  const raw = await res.text();
+  let data = null;
+  try { data = JSON.parse(raw); } catch {}
+  if (!res.ok) {
+    return {
+      ok: false,
+      status: res.status,
+      error: data?.message || data?.error || raw?.slice(0, 240) || 'Error consultando MercadoPago',
+      data,
+    };
+  }
+  return { ok: true, status: res.status, data };
+};
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
@@ -30,6 +48,44 @@ export default async function handler(req, res) {
   if (envError) {
     console.error('❌ Configuración incompleta en /api/procesar-pago:', envError);
     return res.status(500).json({ error: envError });
+  }
+
+  // Diagnostico guiado para soporte (sin consola)
+  if (req.body?.type === 'mp-diagnostico') {
+    const preferenceId = String(req.body?.preferenceId || '').trim();
+    const userInfo = await mpFetchJson('https://api.mercadopago.com/users/me');
+    const preferenceInfo = preferenceId
+      ? await mpFetchJson(`https://api.mercadopago.com/checkout/preferences/${encodeURIComponent(preferenceId)}`)
+      : { ok: false, status: 400, error: 'No se recibio preferenceId', data: null };
+
+    return res.status(200).json({
+      ok: true,
+      diagnostico: {
+        now: new Date().toISOString(),
+        mp_user: userInfo.ok ? {
+          id: userInfo.data?.id,
+          nickname: userInfo.data?.nickname,
+          site_id: userInfo.data?.site_id,
+          country_id: userInfo.data?.country_id,
+          status: userInfo.data?.status,
+        } : {
+          error: userInfo.error,
+          status: userInfo.status,
+        },
+        preference: preferenceInfo.ok ? {
+          id: preferenceInfo.data?.id,
+          collector_id: preferenceInfo.data?.collector_id,
+          init_point: preferenceInfo.data?.init_point,
+          sandbox_init_point: preferenceInfo.data?.sandbox_init_point,
+          external_reference: preferenceInfo.data?.external_reference,
+          date_created: preferenceInfo.data?.date_created,
+          expiration_date_to: preferenceInfo.data?.expiration_date_to,
+        } : {
+          error: preferenceInfo.error,
+          status: preferenceInfo.status,
+        },
+      },
+    });
   }
 
   const { form, cartItems, cartTotal, draftOrderId } = req.body;
