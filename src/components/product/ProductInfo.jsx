@@ -3,38 +3,7 @@ import { useWishlist } from '../../context/WishlistContext';
 
 export default function ProductInfo({ producto }) {
   const { isWished, toggle } = useWishlist();
-  const categoria = String(producto.categoria || '').toLowerCase();
   const descripcionRaw = String(producto.descripcion || '').trim();
-  const decisionSummary = (() => {
-    const benefitPrimary = String(producto.benefitPrimary || '').trim();
-    const fitNote = String(producto.fitNote || '').trim();
-    const modelInfo = String(producto.modelInfo || '').trim();
-
-    const inferredBenefit = (() => {
-      if (categoria.includes('top') || categoria.includes('camiseta')) {
-        return 'Ligereza y soporte limpio para entrenar o moverte todo el día.';
-      }
-      if (categoria.includes('licra') || categoria.includes('biker')) {
-        return 'Compresión cómoda que acompaña el cuerpo sin restringir el movimiento.';
-      }
-      if (categoria.includes('enterizo')) {
-        return 'Ajuste continuo y estilizado para entrenar con presencia.';
-      }
-      if (categoria.includes('accesorio')) {
-        return 'Diseñado para complementar el movimiento diario con intención.';
-      }
-      return 'Diseñada para verse pulida y sentirse cómoda en movimiento.';
-    })();
-
-    return {
-      benefit: benefitPrimary || inferredBenefit,
-      fit:
-        fitNote ||
-        'Fit pensado para acompañar el movimiento con una silueta limpia y femenina.',
-      shipping: 'Ciudades principales: 2 a 5 días hábiles. Cambios dentro de 5 días hábiles.',
-      modelInfo,
-    };
-  })();
   const descripcionParrafos = (() => {
     if (!descripcionRaw) return [];
 
@@ -95,44 +64,6 @@ export default function ProductInfo({ producto }) {
             <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
           </svg>
         </button>
-      </div>
-      <div className="mb-6 md:mb-10 border border-stone-200 bg-stone-50/80 px-4 py-4 md:px-5 md:py-5">
-        <div className="grid gap-3">
-          <div>
-            <p className="text-[9px] font-bold tracking-[0.18em] text-stone-900 uppercase mb-1">
-              Beneficio principal
-            </p>
-            <p className="text-[11px] md:text-[12px] text-stone-600 leading-relaxed">
-              {decisionSummary.benefit}
-            </p>
-          </div>
-          <div>
-            <p className="text-[9px] font-bold tracking-[0.18em] text-stone-900 uppercase mb-1">
-              Sensación y fit
-            </p>
-            <p className="text-[11px] md:text-[12px] text-stone-600 leading-relaxed">
-              {decisionSummary.fit}
-            </p>
-          </div>
-          <div>
-            <p className="text-[9px] font-bold tracking-[0.18em] text-stone-900 uppercase mb-1">
-              Envío y cambios
-            </p>
-            <p className="text-[11px] md:text-[12px] text-stone-600 leading-relaxed">
-              {decisionSummary.shipping}
-            </p>
-          </div>
-        </div>
-        {decisionSummary.modelInfo && (
-          <div className="mt-4 border-t border-stone-200 pt-4">
-            <p className="text-[9px] font-bold tracking-[0.18em] text-stone-900 uppercase mb-1">
-              Talla y referencia
-            </p>
-            <p className="text-[11px] md:text-[12px] text-stone-600 leading-relaxed">
-              {decisionSummary.modelInfo}
-            </p>
-          </div>
-        )}
       </div>
       <div className="mb-6 md:mb-12 w-full max-w-[36rem]">
         <div className="flex flex-col gap-4 md:gap-5">
