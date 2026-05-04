@@ -191,6 +191,9 @@ const mapProducto = (node) => {
     tag:         node.tags[0] || '',
     detalles:    node.detallesField?.value || '',
     cuidados:    node.cuidadosField?.value || '',
+    benefitPrimary: node.benefitPrimaryField?.value || '',
+    fitNote:     node.fitNoteField?.value || '',
+    modelInfo:   node.modelInfoField?.value || '',
     variantes,
   };
 };
@@ -202,6 +205,9 @@ const PRODUCT_FIELDS = `
   images(first: 10) { edges { node { url } } }
   detallesField: metafield(namespace: "pavoa", key: "detalles") { value }
   cuidadosField: metafield(namespace: "pavoa", key: "cuidados") { value }
+  benefitPrimaryField: metafield(namespace: "pavoa", key: "benefit_primary") { value }
+  fitNoteField: metafield(namespace: "pavoa", key: "fit_note") { value }
+  modelInfoField: metafield(namespace: "pavoa", key: "model_info") { value }
   variants(first: 20) {
     edges {
       node {
