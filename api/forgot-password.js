@@ -1,14 +1,13 @@
 import { createClient } from '@supabase/supabase-js';
-import { Resend } from 'resend';
 import crypto from 'crypto';
 import { emailResetPassword } from './_helpers/email-templates.js';
+import { sendTransactionalEmail } from './_helpers/mail.js';
 
 const supabase = createClient(
   process.env.VITE_SUPABASE_URL,
   process.env.VITE_SUPABASE_ANON_KEY
 );
 
-const resend = new Resend(process.env.RESEND_API_KEY);
 const APP_URL = process.env.VITE_APP_URL || 'https://pavoa.vercel.app';
 
 const _forgotAttempts = new Map();
@@ -70,7 +69,7 @@ export default async function handler(req, res) {
 
     const resetLink = `${APP_URL}/reset-password?token=${reset_token}&email=${encodeURIComponent(email)}`;
 
-    await resend.emails.send({
+    await sendTransactionalEmail({
       from: 'PAVOA <onboarding@resend.dev>',
       to: email,
       subject: 'Recupera tu contrasena - PAVOA',

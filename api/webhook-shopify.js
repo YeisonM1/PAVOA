@@ -1,13 +1,12 @@
 import crypto from 'crypto';
 import { createClient } from '@supabase/supabase-js';
-import { Resend } from 'resend';
 import { emailDespacho, emailEntregado } from './_helpers/email-templates.js';
 import { getShopifyToken } from './_helpers/shopify-token.js';
+import { sendTransactionalEmail } from './_helpers/mail.js';
 
 const SHOPIFY_DOMAIN = process.env.VITE_SHOPIFY_DOMAIN;
 const SHOPIFY_SECRET = process.env.SHOPIFY_WEBHOOK_SECRET;
 const supabase = createClient(process.env.VITE_SUPABASE_URL, process.env.VITE_SUPABASE_ANON_KEY);
-const resend = new Resend(process.env.RESEND_API_KEY);
 
 const TRANSPORTADORAS = [
   { nombre: 'Servientrega',    dominios: ['servientrega.com.co', 'servientrega.com'],     claves: ['servientrega']                       },
@@ -136,7 +135,7 @@ export default async function handler(req, res) {
           const nombreCliente = pedido.nombre || 'Cliente';
           const orderName     = pedido.shopify_order_name || shopifyOrderId;
           try {
-            await resend.emails.send({
+            await sendTransactionalEmail({
               from:    'PAVOA <onboarding@resend.dev>',
               to:      pedido.email,
               subject: `Tu pedido ${orderName} ha llegado — PAVOA`,
@@ -221,7 +220,7 @@ export default async function handler(req, res) {
         : `Tu pedido <strong>${orderName}</strong> ha sido despachado y está en camino hacia ti.`;
 
       try {
-        await resend.emails.send({
+        await sendTransactionalEmail({
           from:    'PAVOA <onboarding@resend.dev>',
           to:      pedidoActual.email,
           subject: `${encabezado} ${orderName} — PAVOA`,

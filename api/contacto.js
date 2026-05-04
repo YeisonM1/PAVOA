@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { sendTransactionalEmail } from './_helpers/mail.js';
 
 const supabase = createClient(
   process.env.VITE_SUPABASE_URL,
@@ -110,17 +111,11 @@ export default async function handler(req, res) {
 
   try {
     // Email a la duena (notificacion del mensaje)
-    await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${process.env.RESEND_API_KEY}`,
-      },
-      body: JSON.stringify({
-        from: 'PAVOA Contacto <onboarding@resend.dev>',
-        to: ['gyeison184@gmail.com'],
-        subject: `Nuevo mensaje - ${safeAsunto}`,
-        html: `
+    await sendTransactionalEmail({
+      from: 'PAVOA Contacto <onboarding@resend.dev>',
+      to: ['gyeison184@gmail.com'],
+      subject: `Nuevo mensaje - ${safeAsunto}`,
+      html: `
           <div style="font-family: 'Helvetica Neue', sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff;">
             <div style="background: #0e0e0e; padding: 32px 40px; text-align: center;">
               <h1 style="color: #ffffff; font-size: 28px; font-weight: 300; letter-spacing: 0.3em; margin: 0;">PAVOA</h1>
@@ -158,18 +153,11 @@ export default async function handler(req, res) {
             </div>
           </div>
         `,
-      }),
     });
 
     if (contactoEmail) {
       // Email al cliente (confirmacion)
-      await fetch('https://api.resend.com/emails', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${process.env.RESEND_API_KEY}`,
-        },
-        body: JSON.stringify({
+      await sendTransactionalEmail({
           from: 'PAVOA <onboarding@resend.dev>',
           to: [contactoEmail],
           subject: 'Recibimos tu mensaje - PAVOA',
@@ -206,7 +194,6 @@ export default async function handler(req, res) {
               </div>
             </div>
           `,
-        }),
       });
     }
 

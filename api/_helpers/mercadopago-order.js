@@ -1,12 +1,11 @@
 import mercadopago from 'mercadopago';
-import { Resend } from 'resend';
 import { createClient } from '@supabase/supabase-js';
 import { getShopifyToken, eliminarDraftOrder } from './shopify-token.js';
 import { emailConfirmacion } from './email-templates.js';
+import { sendTransactionalEmail } from './mail.js';
 
 const client = new mercadopago.MercadoPagoConfig({ accessToken: process.env.MP_ACCESS_TOKEN });
 const SHOPIFY_DOMAIN = process.env.VITE_SHOPIFY_DOMAIN;
-const resend = new Resend(process.env.RESEND_API_KEY);
 const supabase = createClient(process.env.VITE_SUPABASE_URL, process.env.VITE_SUPABASE_ANON_KEY);
 const _paymentInflight = new Map();
 
@@ -73,7 +72,7 @@ const enviarEmailConfirmacion = async (order, paymentId, totalReal, descuentoApl
     ? `${order.shipping_address.address1}, ${order.shipping_address.address2 || ''} - ${order.shipping_address.city}`
     : '';
 
-  await resend.emails.send({
+  await sendTransactionalEmail({
     from: 'PAVOA <onboarding@resend.dev>',
     to: email,
     subject: `Pedido confirmado ${orderName} - PAVOA`,
