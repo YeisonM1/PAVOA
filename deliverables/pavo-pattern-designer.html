@@ -1,0 +1,385 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PAVOA Pattern Designer</title>
+    <style>
+      @page {
+        size: A4 portrait;
+        margin: 0;
+      }
+
+      :root {
+        color-scheme: light;
+        --paper: #f5f5f2;
+        --ink: #111111;
+        --tile-w: 3.4cm;
+        --tile-h: 4.3cm;
+        --bird-w: 3cm;
+        --bird-h: 4cm;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        background: #d9d9d4;
+        font-family: Arial, Helvetica, sans-serif;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+
+      .toolbar {
+        position: sticky;
+        top: 0;
+        z-index: 20;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 14px 18px;
+        background: rgba(17, 17, 17, 0.94);
+        color: #f5f5f2;
+        backdrop-filter: blur(8px);
+      }
+
+      .toolbar h1 {
+        margin: 0;
+        font-size: 14px;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+      }
+
+      .toolbar p {
+        margin: 0;
+        font-size: 12px;
+        opacity: 0.8;
+      }
+
+      .actions {
+        display: flex;
+        gap: 10px;
+      }
+
+      .actions button {
+        border: 1px solid #f5f5f2;
+        background: transparent;
+        color: #f5f5f2;
+        padding: 10px 14px;
+        font-size: 12px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        cursor: pointer;
+      }
+
+      .workspace {
+        padding: 20px 0 32px;
+      }
+
+      .sheet {
+        position: relative;
+        width: 210mm;
+        height: 297mm;
+        margin: 0 auto 18px;
+        overflow: hidden;
+        background: var(--sheet-bg, var(--paper));
+        box-shadow: 0 16px 40px rgba(0, 0, 0, 0.14);
+      }
+
+      .sheet.dark {
+        --sheet-bg: #111111;
+      }
+
+      .sheet.split {
+        background:
+          linear-gradient(
+            90deg,
+            #f5f5f2 0 32%,
+            #111111 32% 68%,
+            #f5f5f2 68% 100%
+          );
+      }
+
+      .meta {
+        position: absolute;
+        left: 10mm;
+        bottom: 7mm;
+        z-index: 3;
+        font-size: 9px;
+        letter-spacing: 0.26em;
+        text-transform: uppercase;
+        color: #171717;
+      }
+
+      .sheet.dark .meta {
+        color: #f5f5f2;
+      }
+
+      .pattern {
+        position: absolute;
+        inset: 12mm 10mm 16mm;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+      }
+
+      .row {
+        display: flex;
+        gap: 0;
+      }
+
+      .row.offset {
+        margin-left: 1.7cm;
+      }
+
+      .row.center {
+        justify-content: center;
+      }
+
+      .tile {
+        width: var(--tile-w);
+        height: var(--tile-h);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: visible;
+      }
+
+      .bird {
+        width: var(--bird-w);
+        height: var(--bird-h);
+        object-fit: contain;
+        object-position: center;
+        display: block;
+        transform: rotate(var(--rot, 0deg)) scaleX(var(--flip, 1));
+        transform-origin: center;
+      }
+
+      .bird.white {
+        filter: brightness(0) invert(1);
+      }
+
+      @media print {
+        body {
+          background: transparent;
+        }
+
+        .toolbar {
+          display: none;
+        }
+
+        .workspace {
+          padding: 0;
+        }
+
+        .sheet {
+          margin: 0;
+          box-shadow: none;
+          page-break-after: always;
+        }
+
+        .sheet:last-child {
+          page-break-after: auto;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="toolbar">
+      <div>
+        <h1>PAVOA Pattern Designer</h1>
+        <p>PDF A4 en blanco y negro. Pavo fijo a 4 x 3 cm.</p>
+      </div>
+      <div class="actions">
+        <button type="button" id="printPdf">Exportar PDF</button>
+      </div>
+    </header>
+
+    <main class="workspace">
+      <section class="sheet" data-theme="light">
+        <div class="pattern" id="pattern-light"></div>
+        <div class="meta">PAVOA / trama clara / 4 x 3 cm</div>
+      </section>
+
+      <section class="sheet dark" data-theme="dark">
+        <div class="pattern" id="pattern-dark"></div>
+        <div class="meta">PAVOA / trama oscura / 4 x 3 cm</div>
+      </section>
+
+      <section class="sheet split" data-theme="split">
+        <div class="pattern" id="pattern-split"></div>
+        <div class="meta">PAVOA / bloque central / 4 x 3 cm</div>
+      </section>
+    </main>
+
+    <script>
+      const blackBird = "./pavo-bird-black.png";
+      const whiteBird = "./pavo-bird-white.png";
+
+      function createBird({ src, rotation, flip, white = false }) {
+        const tile = document.createElement("div");
+        tile.className = "tile";
+
+        const img = document.createElement("img");
+        img.className = `bird${white ? " white" : ""}`;
+        img.src = src;
+        img.alt = "";
+        img.draggable = false;
+        img.style.setProperty("--rot", `${rotation}deg`);
+        img.style.setProperty("--flip", flip);
+
+        tile.appendChild(img);
+        return tile;
+      }
+
+      function mountRows(target, rows) {
+        rows.forEach((row) => {
+          const rowEl = document.createElement("div");
+          rowEl.className = `row${row.offset ? " offset" : ""}${row.center ? " center" : ""}`;
+
+          row.items.forEach((item) => {
+            rowEl.appendChild(createBird(item));
+          });
+
+          target.appendChild(rowEl);
+        });
+      }
+
+      const lightRows = [
+        { offset: false, items: [
+          { src: blackBird, rotation: -4, flip: 1 },
+          { src: blackBird, rotation: 4, flip: -1 },
+          { src: blackBird, rotation: -4, flip: 1 },
+          { src: blackBird, rotation: 4, flip: -1 },
+          { src: blackBird, rotation: -4, flip: 1 },
+        ]},
+        { offset: true, items: [
+          { src: blackBird, rotation: 4, flip: -1 },
+          { src: blackBird, rotation: -4, flip: 1 },
+          { src: blackBird, rotation: 4, flip: -1 },
+          { src: blackBird, rotation: -4, flip: 1 },
+          { src: blackBird, rotation: 4, flip: -1 },
+        ]},
+        { offset: false, items: [
+          { src: blackBird, rotation: -4, flip: 1 },
+          { src: blackBird, rotation: 4, flip: -1 },
+          { src: blackBird, rotation: -4, flip: 1 },
+          { src: blackBird, rotation: 4, flip: -1 },
+          { src: blackBird, rotation: -4, flip: 1 },
+        ]},
+        { offset: true, items: [
+          { src: blackBird, rotation: 4, flip: -1 },
+          { src: blackBird, rotation: -4, flip: 1 },
+          { src: blackBird, rotation: 4, flip: -1 },
+          { src: blackBird, rotation: -4, flip: 1 },
+          { src: blackBird, rotation: 4, flip: -1 },
+        ]},
+        { offset: false, items: [
+          { src: blackBird, rotation: -4, flip: 1 },
+          { src: blackBird, rotation: 4, flip: -1 },
+          { src: blackBird, rotation: -4, flip: 1 },
+          { src: blackBird, rotation: 4, flip: -1 },
+          { src: blackBird, rotation: -4, flip: 1 },
+        ]},
+        { offset: true, items: [
+          { src: blackBird, rotation: 4, flip: -1 },
+          { src: blackBird, rotation: -4, flip: 1 },
+          { src: blackBird, rotation: 4, flip: -1 },
+          { src: blackBird, rotation: -4, flip: 1 },
+          { src: blackBird, rotation: 4, flip: -1 },
+        ]},
+      ];
+
+      const darkRows = [
+        { offset: true, items: [
+          { src: whiteBird, rotation: -3, flip: 1 },
+          { src: whiteBird, rotation: 3, flip: -1 },
+          { src: whiteBird, rotation: -3, flip: 1 },
+          { src: whiteBird, rotation: 3, flip: -1 },
+          { src: whiteBird, rotation: -3, flip: 1 },
+        ]},
+        { offset: false, items: [
+          { src: whiteBird, rotation: 3, flip: -1 },
+          { src: whiteBird, rotation: -3, flip: 1 },
+          { src: whiteBird, rotation: 3, flip: -1 },
+          { src: whiteBird, rotation: -3, flip: 1 },
+          { src: whiteBird, rotation: 3, flip: -1 },
+        ]},
+        { offset: true, items: [
+          { src: whiteBird, rotation: -3, flip: 1 },
+          { src: whiteBird, rotation: 3, flip: -1 },
+          { src: whiteBird, rotation: -3, flip: 1 },
+          { src: whiteBird, rotation: 3, flip: -1 },
+          { src: whiteBird, rotation: -3, flip: 1 },
+        ]},
+        { offset: false, items: [
+          { src: whiteBird, rotation: 3, flip: -1 },
+          { src: whiteBird, rotation: -3, flip: 1 },
+          { src: whiteBird, rotation: 3, flip: -1 },
+          { src: whiteBird, rotation: -3, flip: 1 },
+          { src: whiteBird, rotation: 3, flip: -1 },
+        ]},
+        { offset: true, items: [
+          { src: whiteBird, rotation: -3, flip: 1 },
+          { src: whiteBird, rotation: 3, flip: -1 },
+          { src: whiteBird, rotation: -3, flip: 1 },
+          { src: whiteBird, rotation: 3, flip: -1 },
+          { src: whiteBird, rotation: -3, flip: 1 },
+        ]},
+        { offset: false, items: [
+          { src: whiteBird, rotation: 3, flip: -1 },
+          { src: whiteBird, rotation: -3, flip: 1 },
+          { src: whiteBird, rotation: 3, flip: -1 },
+          { src: whiteBird, rotation: -3, flip: 1 },
+          { src: whiteBird, rotation: 3, flip: -1 },
+        ]},
+      ];
+
+      const splitRows = [
+        { center: true, items: [
+          { src: blackBird, rotation: -2, flip: 1 },
+          { src: whiteBird, rotation: 0, flip: -1 },
+          { src: blackBird, rotation: 2, flip: 1 },
+        ]},
+        { center: true, items: [
+          { src: blackBird, rotation: 2, flip: -1 },
+          { src: whiteBird, rotation: 0, flip: 1 },
+          { src: blackBird, rotation: -2, flip: -1 },
+        ]},
+        { center: true, items: [
+          { src: blackBird, rotation: -2, flip: 1 },
+          { src: whiteBird, rotation: 0, flip: -1 },
+          { src: blackBird, rotation: 2, flip: 1 },
+        ]},
+        { center: true, items: [
+          { src: blackBird, rotation: 2, flip: -1 },
+          { src: whiteBird, rotation: 0, flip: 1 },
+          { src: blackBird, rotation: -2, flip: -1 },
+        ]},
+        { center: true, items: [
+          { src: blackBird, rotation: -2, flip: 1 },
+          { src: whiteBird, rotation: 0, flip: -1 },
+          { src: blackBird, rotation: 2, flip: 1 },
+        ]},
+        { center: true, items: [
+          { src: blackBird, rotation: 2, flip: -1 },
+          { src: whiteBird, rotation: 0, flip: 1 },
+          { src: blackBird, rotation: -2, flip: -1 },
+        ]},
+      ];
+
+      mountRows(document.getElementById("pattern-light"), lightRows);
+      mountRows(document.getElementById("pattern-dark"), darkRows);
+      mountRows(document.getElementById("pattern-split"), splitRows);
+
+      document.getElementById("printPdf").addEventListener("click", () => {
+        window.print();
+      });
+    </script>
+  </body>
+</html>

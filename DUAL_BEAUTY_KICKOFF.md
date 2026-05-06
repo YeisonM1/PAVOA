@@ -1,55 +1,53 @@
 # DUAL_BEAUTY_KICKOFF.md
 
-Documento de arranque para abrir un proyecto nuevo de `Dual Beauty` desde cero.
+Documento de arranque para crear `Dual Beauty` desde cero en un proyecto aparte.
 
-La idea es que cualquier agente nuevo entre, lea este archivo y pueda empezar a construir el sistema con contexto suficiente, sin mezclarlo con `PAVOA`.
+Este archivo debe servir para que un agente nuevo entre con contexto claro y empiece a construir un sistema serio, ordenado y sostenible.
+
+No depende de ninguna otra conversacion.
 
 ---
 
 ## Objetivo
 
-Construir el sistema digital de `Dual Beauty` con buena base operativa desde el inicio:
+Construir el sistema digital de `Dual Beauty` con base solida:
 
-- marca clara
-- estructura tecnica limpia
-- sistema facil de mantener
-- foco en conversion
+- identidad clara
+- conversion clara
+- arquitectura limpia
 - automatizaciones utiles
-- posibilidad de crecer sin rehacer todo
+- operacion facil de mantener
+- capacidad de crecer sin rehacer todo
 
 ---
 
 ## Regla principal
 
-`Dual Beauty` es un proyecto aparte.
+Este proyecto debe tratarse como un sistema independiente.
 
-No mezclar:
-- tono de marca de `PAVOA`
-- arquitectura de `PAVOA`
-- decisiones visuales de `PAVOA`
-- flujos operativos de `PAVOA`
+No asumir:
+- stack
+- branding final
+- flujo comercial
+- tipo de negocio
+- herramientas
 
-Puede reutilizarse metodologia, pero no identidad.
-
----
-
-## Lo que debe hacer el agente al empezar
-
-1. Entender que este proyecto arranca desde cero
-2. No asumir stack ni arquitectura sin validarlo
-3. Proponer primero una estructura clara
-4. Priorizar sistema, conversion y operacion antes que adornos
-5. Separar:
-   - marca
-   - contenido
-   - tienda
-   - automatizaciones
-   - analitica
-   - backoffice
+Primero se diagnostica. Luego se diseña. Luego se construye.
 
 ---
 
-## Primeras preguntas que debe resolver el agente
+## Como debe trabajar el agente
+
+1. Entender el negocio antes de proponer herramientas
+2. Separar bien marca, ventas, operaciones y automatizaciones
+3. No construir cosas complejas antes de definir el recorrido de conversion
+4. Priorizar siempre claridad, conversion y mantenibilidad
+5. Documentar decisiones importantes
+6. Dejar handoff claro al cerrar cada sesion
+
+---
+
+## Primeras preguntas que el agente debe resolver
 
 Antes de construir, debe aclarar:
 
@@ -58,111 +56,350 @@ Antes de construir, debe aclarar:
    - servicios
    - ambos
 
-2. La web sera:
+2. El canal principal sera:
    - ecommerce
-   - landing comercial
+   - landing con captura
+   - agenda/reservas
+   - WhatsApp como cierre
    - sistema mixto
 
-3. El canal principal sera:
-   - Shopify
-   - sitio propio con checkout externo
-   - agenda / reservas
-   - WhatsApp como cierre
-
-4. Se necesita o no:
+3. El negocio necesita o no:
    - login de clientes
    - panel interno
    - CRM
    - automatizacion de correos
+   - automatizacion de WhatsApp
+   - integracion con pagos
    - integracion con inventario
 
+4. La prioridad inmediata es:
+   - vender
+   - captar leads
+   - mostrar portafolio
+   - agendar citas
+   - construir marca
+
 ---
 
-## Prioridades sugeridas
+## Prioridades de construccion
 
-Orden recomendado de construccion:
+Orden recomendado:
 
-1. Definir identidad funcional de marca
-2. Definir arquitectura del proyecto
+1. Definir marca funcional
+2. Definir oferta principal
 3. Definir recorrido de conversion
 4. Definir stack
-5. Construir version minima util
+5. Construir MVP util
 6. Medir
 7. Automatizar
+8. Escalar
 
 ---
 
-## Skills recomendadas para Dual Beauty
+## Skills que queremos crear
 
-### 1. DualBeauty Brand Voice
+Estas son las skills clave para construir algo solido.
 
-Para fijar:
-- tono
-- vocabulario
-- estilo
-- palabras que si usar
-- palabras que no usar
+No son nombres decorativos. Cada una debe tener una funcion operativa clara.
 
-Debe servir para:
+### 1. `DualBeauty Brand Voice`
+
+#### Para que sirve
+Definir como habla la marca en todos los canales.
+
+#### Cuando usarla
 - home
-- producto/servicio
+- textos de producto o servicio
 - captions
 - correos
 - WhatsApp
 - respuestas de soporte
+- landings
 
-### 2. DualBeauty Operator
+#### Que debe resolver
+- tono
+- nivel de cercania
+- vocabulario permitido
+- vocabulario prohibido
+- forma de vender sin sonar generico
+- como sonar premium, confiable y humano
 
-Para tomar decisiones operativas:
-- que construir primero
-- que automatizar
-- que es deuda tecnica
-- que mueve conversion
-- que no vale la pena tocar todavia
+#### Input esperado
+- descripcion de la marca
+- tipo de cliente
+- propuesta de valor
+- ejemplos de tono deseado
 
-### 3. DualBeauty Content Engine
+#### Output esperado
+- guia de tono
+- ejemplos de mensajes
+- reglas de copy
+- frases base reutilizables
 
-Para:
+#### Resultado real
+Todo el sistema habla igual.
+
+---
+
+### 2. `DualBeauty Operator`
+
+#### Para que sirve
+Tomar decisiones de producto digital, operaciones y prioridades.
+
+#### Cuando usarla
+- decidir que construir primero
+- definir backlog
+- ordenar mejoras
+- detectar deuda tecnica
+- decidir que automatizar y que no
+
+#### Que debe resolver
+- prioridad
+- riesgo
+- impacto
+- dependencia entre tareas
+- orden correcto de ejecucion
+
+#### Input esperado
+- estado actual del proyecto
+- objetivo de negocio
+- recursos disponibles
+- limitaciones tecnicas o de tiempo
+
+#### Output esperado
+- plan claro
+- prioridades ordenadas
+- advertencias
+- siguiente paso recomendado
+
+#### Resultado real
+No se construye por impulso. Se construye con criterio.
+
+---
+
+### 3. `DualBeauty Funnel Architect`
+
+#### Para que sirve
+Diseñar el recorrido de conversion.
+
+#### Cuando usarla
+- definir home
+- definir CTA principal
+- definir lead magnet
+- definir landing
+- definir checkout o cierre
+- definir post-conversion
+
+#### Que debe resolver
+- por donde entra el trafico
+- que mensaje ve primero
+- que accion debe tomar
+- que objeciones hay que resolver
+- como cerrar mejor
+
+#### Input esperado
+- tipo de negocio
+- canal principal
+- oferta principal
+- objeciones del cliente
+
+#### Output esperado
+- mapa de conversion
+- estructura de pagina
+- CTA principal
+- CTA secundarios
+- fricciones a eliminar
+
+#### Resultado real
+El sitio no solo se ve bien: convierte con logica.
+
+---
+
+### 4. `DualBeauty Offer Builder`
+
+#### Para que sirve
+Diseñar ofertas que vendan mejor.
+
+#### Cuando usarla
+- promociones
+- bundles
+- upsells
+- lanzamientos
+- descuentos
+- paquetes de servicios
+
+#### Que debe resolver
+- como presentar la oferta
+- como aumentar ticket
+- como hacerla clara
+- como evitar descuentos mal planteados
+
+#### Input esperado
+- producto o servicio
+- margen
+- publico
+- objetivo de campaña
+
+#### Output esperado
+- estructura de oferta
+- copy comercial
+- posicionamiento de valor
+- propuesta de bundle o promo
+
+#### Resultado real
+Las ofertas dejan de ser improvisadas.
+
+---
+
+### 5. `DualBeauty Content Engine`
+
+#### Para que sirve
+Crear contenido consistente que apoye marca y ventas.
+
+#### Cuando usarla
 - reels
-- guiones
 - hooks
 - carruseles
-- campañas
-- calendario de contenido
+- historias
+- correos
+- contenido educativo
 
-### 4. DualBeauty Offer Builder
+#### Que debe resolver
+- ideas
+- angulos
+- guiones
+- calendario
+- relacion entre contenido y conversion
 
-Para:
-- bundles
-- promos
-- lanzamientos
-- upsells
-- ofertas por temporada
+#### Input esperado
+- objetivo del contenido
+- etapa del cliente
+- producto/servicio relacionado
+- tono de marca
 
-### 5. DualBeauty Support System
+#### Output esperado
+- piezas listas para producir
+- hooks
+- guiones
+- CTA
+- calendario
 
-Para:
-- respuestas
-- objeciones
-- tiempos
-- politicas
+#### Resultado real
+Hay un motor de contenido, no improvisacion.
+
+---
+
+### 6. `DualBeauty Support System`
+
+#### Para que sirve
+Ordenar la comunicacion con clientes.
+
+#### Cuando usarla
+- dudas frecuentes
 - seguimiento
+- politicas
+- objeciones
+- reclamaciones
+- mensajes por WhatsApp o email
 
-### 6. DualBeauty Researcher
+#### Que debe resolver
+- respuestas claras
+- tiempos
+- tono correcto
+- consistencia
+- reduccion de friccion
 
-Para investigar:
-- competidores
-- packaging
+#### Input esperado
+- caso
+- canal
+- politica aplicable
+- tono deseado
+
+#### Output esperado
+- respuesta lista
+- flujo de seguimiento
+- criterio de escalacion
+
+#### Resultado real
+El soporte deja de depender del humor o improvisacion del dia.
+
+---
+
+### 7. `DualBeauty Automations Planner`
+
+#### Para que sirve
+Definir que automatizar y como hacerlo sin sobrecomplicar el negocio.
+
+#### Cuando usarla
+- bienvenida
+- abandono
+- seguimiento
+- reactivacion
+- recordatorios
+- recompra
+
+#### Que debe resolver
+- que automatizacion vale la pena
+- trigger
+- mensaje
+- timing
+- canal
+- impacto esperado
+
+#### Input esperado
+- funnel actual
+- herramientas disponibles
+- puntos de fuga
+- base de clientes o leads
+
+#### Output esperado
+- mapa de automatizaciones
+- orden de implementacion
+- copy base
+- dependencias tecnicas
+
+#### Resultado real
+Las automatizaciones existen por negocio, no por moda.
+
+---
+
+### 8. `DualBeauty Researcher`
+
+#### Para que sirve
+Investigar mercado, competidores, pricing y referencias.
+
+#### Cuando usarla
+- benchmark
+- tendencias
+- empaque
+- experiencia de compra
 - pricing
-- tendencias de beauty
-- ofertas
 - herramientas
+
+#### Que debe resolver
+- quien lo hace mejor
+- que patrones funcionan
+- que oportunidades hay
+- que no vale la pena copiar
+
+#### Input esperado
+- tema a investigar
+- geografia
+- tipo de competencia
+- objetivo
+
+#### Output esperado
+- resumen util
+- hallazgos accionables
+- comparaciones claras
+- recomendacion defensible
+
+#### Resultado real
+Las decisiones se apoyan en informacion, no intuicion sola.
 
 ---
 
 ## Estructura recomendada del proyecto
-
-Si el proyecto se crea en repo nuevo, usar algo asi:
 
 ```txt
 dual-beauty/
@@ -171,12 +408,12 @@ dual-beauty/
   README.md
   docs/
     brand.md
+    business-model.md
     offers.md
     funnels.md
     automations.md
-    integrations.md
-  src/
-  api/
+    support.md
+    research.md
 ```
 
 ---
@@ -184,121 +421,126 @@ dual-beauty/
 ## Archivos base recomendados
 
 ### `AGENTS.md`
-Guia operativa activa del proyecto.
+Guia activa de trabajo:
+- reglas
+- prioridades
+- estilo de ejecucion
+- limites
 
 ### `CODEX_HANDOFF.md`
-Estado real del proyecto al cerrar cada sesion.
+Estado real del proyecto al cerrar cada sesion:
+- que se hizo
+- que se probo
+- que sigue
+- riesgos
 
 ### `docs/brand.md`
-Definicion de marca:
+Define:
+- cliente ideal
 - tono
-- publico
-- promesa
+- propuesta de valor
 - objeciones
 - posicionamiento
 
+### `docs/business-model.md`
+Define:
+- que vende
+- como gana dinero
+- ticket
+- canal de cierre
+- dependencias operativas
+
 ### `docs/funnels.md`
-Como convierte:
-- trafico
-- pagina
+Define:
+- flujo de conversion
 - CTA
-- checkout
-- post compra
+- paginas
+- objeciones
+- puntos de fuga
 
 ### `docs/automations.md`
-Flujos:
-- bienvenida
-- abandono
-- recordatorios
-- seguimiento
-- recompra
+Define:
+- flujos
+- triggers
+- canales
+- mensajes
+- prioridad
+
+### `docs/support.md`
+Define:
+- politicas
+- respuestas
+- tiempos
+- escalaciones
+
+### `docs/research.md`
+Define:
+- competidores
+- referencias
+- comparativas
+- aprendizajes
 
 ---
 
-## Arquitectura sugerida segun escenario
+## Metodo de trabajo recomendado
 
-### Si es tienda de productos
+### Fase 1: Diagnostico
+- entender negocio
+- definir oferta
+- definir cliente
+- definir objetivo principal
 
-Base sugerida:
-- Shopify o headless simple
-- panel interno solo si hace falta
-- email transaccional bien definido
-- analytics desde el dia 1
+### Fase 2: Sistema base
+- definir estructura
+- definir funnel
+- definir stack
+- definir docs base
 
-### Si es beauty con servicios/reservas
+### Fase 3: Ejecucion
+- construir MVP
+- probar
+- medir
+- corregir
 
-Base sugerida:
-- landing + sistema de citas
-- WhatsApp y agenda integrados
-- CRM liviano
-- automatizaciones de recordatorio
-
-### Si es mixto
-
-Separar claramente:
-- producto
-- servicio
-- educacion de marca
-- seguimiento del cliente
-
----
-
-## Sistema minimo que deberia existir
-
-El agente debe empujar primero a un MVP serio, no a un sistema inflado.
-
-MVP recomendado:
-
-1. Home clara
-2. Oferta principal clara
-3. CTA visible
-4. Captura de leads o ventas
-5. Medicion
-6. Correos base
-7. Soporte de confianza
+### Fase 4: Escala
+- automatizar
+- optimizar conversion
+- mejorar operaciones
+- profundizar contenido
 
 ---
 
 ## Lo que no conviene hacer al inicio
 
-- no sobrecargar diseño
-- no meter demasiadas apps
+- no inflar el diseño antes del funnel
+- no meter demasiadas herramientas
+- no automatizar sin logica
 - no construir paneles complejos sin necesidad
-- no crear automatizaciones sin definir antes el funnel
-- no copiar `PAVOA` por inercia
+- no abrir demasiados frentes al mismo tiempo
 
 ---
 
-## Forma de trabajar recomendada para el agente
+## Prompt de arranque para otro agente
 
-1. Primero diagnosticar
-2. Luego proponer
-3. Luego construir por capas
-4. Validar cada capa
-5. Dejar handoff claro
-
----
-
-## Prompt corto para arrancar otro agente
-
-Usa algo como esto:
+Usar algo como esto:
 
 ```txt
-Lee DUAL_BEAUTY_KICKOFF.md y luego ayúdame a diseñar Dual Beauty desde cero.
-No mezcles este proyecto con PAVOA.
-Quiero empezar por estructura, conversion, stack recomendado y sistema base.
+Lee DUAL_BEAUTY_KICKOFF.md.
+Quiero construir Dual Beauty desde cero en un proyecto aparte.
+Empieza por diagnosticar el negocio, proponer estructura, definir las skills que vamos a crear y recomendar el sistema base mas solido.
+No asumas stack ni arquitectura hasta entender primero conversion, operacion y oferta.
 ```
 
 ---
 
 ## Resultado esperado
 
-Cuando este proyecto avance bien, debe terminar con:
+Al avanzar bien, este proyecto debe terminar con:
 
 - marca consistente
-- sistema liviano
-- conversion clara
+- sistema claro
+- embudo entendible
 - automatizaciones utiles
-- buen handoff entre sesiones
-- crecimiento ordenado
+- operacion ordenada
+- handoff limpio entre sesiones
 
