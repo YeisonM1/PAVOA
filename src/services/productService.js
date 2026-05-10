@@ -343,6 +343,7 @@ const mapProducto = (node) => {
     shopifyId:   node.id,
     nombre:      node.title,
     descripcion: node.description,
+    descripcionHtml: node.descriptionHtml || '',
     precio:      `$${Number(node.priceRange.minVariantPrice.amount).toLocaleString('es-CO')}`,
     precioNumerico: Number(node.priceRange.minVariantPrice.amount),
     imagen1:     imgs[0] || '',
@@ -360,7 +361,7 @@ const mapProducto = (node) => {
 
 // ── Fragmento completo (detalle de producto) ──────────
 const PRODUCT_FIELDS = `
-  id handle title description productType tags
+  id handle title description descriptionHtml productType tags
   priceRange { minVariantPrice { amount } }
   images(first: 10) { edges { node { url } } }
   detallesField: metafield(namespace: "pavoa", key: "detalles") { value }
@@ -378,7 +379,7 @@ const PRODUCT_FIELDS = `
 
 // ── Fragmento ligero (listados/grids, sin detalles ni cuidados) ──
 const PRODUCT_FIELDS_LIGHT = `
-  id handle title description productType tags
+  id handle title description descriptionHtml productType tags
   priceRange { minVariantPrice { amount } }
   images(first: 2) { edges { node { url } } }
   variants(first: 20) {

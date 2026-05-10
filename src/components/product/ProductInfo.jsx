@@ -7,10 +7,33 @@ const normalizeDescription = (value) =>
     .replace(/\\n/g, '\n')
     .trim();
 
+const parseDescriptionHtmlParagraphs = (html) => {
+  const normalizedHtml = String(html || '').trim();
+  if (!normalizedHtml || typeof window === 'undefined' || typeof window.DOMParser !== 'function') {
+    return [];
+  }
+
+  try {
+    const doc = new window.DOMParser().parseFromString(normalizedHtml, 'text/html');
+    const paragraphs = Array.from(doc.querySelectorAll('p'))
+      .map((paragraph) => paragraph.textContent?.replace(/\u00A0/g, ' ').replace(/\s+/g, ' ').trim() || '')
+      .filter(Boolean);
+
+    if (paragraphs.length > 0) return paragraphs;
+
+    const fallbackText = doc.body.textContent?.replace(/\u00A0/g, ' ').trim() || '';
+    return fallbackText ? [fallbackText.replace(/\s+/g, ' ')] : [];
+  } catch {
+    return [];
+  }
+};
+
 export default function ProductInfo({ producto }) {
   const { isWished, toggle } = useWishlist();
+  const descripcionHtmlParrafos = parseDescriptionHtmlParagraphs(producto.descripcionHtml);
   const descripcionRaw = normalizeDescription(producto.descripcion);
   const descripcionParrafos = (() => {
+    if (descripcionHtmlParrafos.length > 0) return descripcionHtmlParrafos;
     if (!descripcionRaw) return [];
 
     const bloquesOriginales = descripcionRaw
