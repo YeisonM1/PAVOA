@@ -101,6 +101,169 @@ export const FOOTER_CONTENT_DEFAULTS = {
 };
 
 // ── Caché en memoria con TTL ──────────────────────────
+export const HELP_PAGES_DEFAULTS = {
+  envios: {
+    pageKey: 'envios',
+    internalName: 'Envios y entregas',
+    eyebrow: 'Ayuda',
+    title: 'Envios y entregas',
+    seoTitle: 'Envios y entregas',
+    seoDescription: 'Informacion sobre tiempos, cobertura y condiciones de envio en PAVOA.',
+    ctaLabel: '',
+    ctaUrl: '',
+    blocks: [
+      {
+        id: 'envios-cobertura',
+        internalName: 'Cobertura',
+        order: 1,
+        blockType: 'text',
+        title: 'Cobertura',
+        body: 'Realizamos envios a las principales ciudades y municipios de Colombia.',
+      },
+      {
+        id: 'envios-tiempos-estimados',
+        internalName: 'Tiempos estimados',
+        order: 2,
+        blockType: 'text',
+        title: 'Tiempos estimados',
+        body: 'Ciudades principales: 2 a 5 dias habiles. Otras zonas: 3 a 8 dias habiles.',
+      },
+      {
+        id: 'envios-seguimiento-y-soporte',
+        internalName: 'Seguimiento y soporte',
+        order: 3,
+        blockType: 'text',
+        title: 'Seguimiento y soporte',
+        body: 'Cuando tu pedido sea despachado, te compartimos la guia de seguimiento. Para apoyo, visita Contacto.',
+      },
+    ],
+  },
+  cambios: {
+    pageKey: 'cambios',
+    internalName: 'Cambios y devoluciones',
+    eyebrow: 'Ayuda',
+    title: 'Cambios y devoluciones',
+    seoTitle: 'Cambios y devoluciones',
+    seoDescription: 'Politica de cambios y devoluciones de PAVOA.',
+    ctaLabel: '',
+    ctaUrl: '',
+    blocks: [
+      {
+        id: 'cambios-plazo-para-solicitar',
+        internalName: 'Plazo para solicitar',
+        order: 1,
+        blockType: 'text',
+        title: 'Plazo para solicitar',
+        body: 'Puedes solicitar cambio o devolucion dentro de los primeros 5 dias habiles despues de recibir tu pedido.',
+      },
+      {
+        id: 'cambios-condiciones',
+        internalName: 'Condiciones',
+        order: 2,
+        blockType: 'text',
+        title: 'Condiciones',
+        body: 'La prenda debe estar sin uso, limpia, con etiquetas y en su empaque original.',
+      },
+      {
+        id: 'cambios-inicia-tu-solicitud',
+        internalName: 'Inicia tu solicitud',
+        order: 3,
+        blockType: 'text',
+        title: 'Inicia tu solicitud',
+        body: 'Ten listo: numero de pedido, motivo y fotos del producto.',
+      },
+    ],
+  },
+  faq: {
+    pageKey: 'faq',
+    internalName: 'Preguntas frecuentes',
+    eyebrow: 'Ayuda',
+    title: 'Preguntas frecuentes',
+    seoTitle: 'Preguntas frecuentes',
+    seoDescription: 'Resuelve dudas comunes sobre compras, envios, tallas y cambios en PAVOA.',
+    ctaLabel: '',
+    ctaUrl: '',
+    blocks: [
+      {
+        id: 'faq-como-se-cuanto-tarda-mi-pedido',
+        internalName: 'Como se cuanto tarda mi pedido?',
+        order: 1,
+        blockType: 'faq',
+        title: 'Como se cuanto tarda mi pedido?',
+        body: 'Al despachar tu compra te enviamos la guia para rastreo. El tiempo depende de la ciudad destino.',
+      },
+      {
+        id: 'faq-puedo-cambiar-la-talla',
+        internalName: 'Puedo cambiar la talla?',
+        order: 2,
+        blockType: 'faq',
+        title: 'Puedo cambiar la talla?',
+        body: 'Si, siempre que la prenda cumpla condiciones de cambio y lo solicites dentro del plazo.',
+      },
+      {
+        id: 'faq-que-pasa-si-mi-producto-llega-con-novedad',
+        internalName: 'Que pasa si mi producto llega con novedad?',
+        order: 3,
+        blockType: 'faq',
+        title: 'Que pasa si mi producto llega con novedad?',
+        body: 'Te ayudamos a gestionarlo de inmediato. Escribenos con fotos y numero de pedido.',
+      },
+      {
+        id: 'faq-tienen-atencion-personalizada',
+        internalName: 'Tienen atencion personalizada?',
+        order: 4,
+        blockType: 'faq',
+        title: 'Tienen atencion personalizada?',
+        body: 'Si. Te orientamos por contacto para talla, uso y disponibilidad.',
+      },
+      {
+        id: 'faq-no-encuentras-tu-respuesta',
+        internalName: 'No encuentras tu respuesta?',
+        order: 5,
+        blockType: 'text',
+        title: 'No encuentras tu respuesta?',
+        body: 'Escribenos desde Contacto y te respondemos en menos de 24 horas habiles.',
+      },
+    ],
+  },
+  guia_tallas: {
+    pageKey: 'guia_tallas',
+    internalName: 'Guia de tallas',
+    eyebrow: 'Ayuda',
+    title: 'Guia de tallas',
+    seoTitle: 'Guia de tallas',
+    seoDescription: 'Encuentra tu talla ideal en PAVOA.',
+    ctaLabel: '',
+    ctaUrl: '',
+    blocks: [
+      {
+        id: 'guia-tallas-como-medirte',
+        internalName: 'Como medirte',
+        order: 1,
+        blockType: 'text',
+        title: 'Como medirte',
+        body: 'Mide alrededor de la parte mas llena del busto.\n\nMide la parte mas estrecha del torso.\n\nMide alrededor de la parte mas ancha de la cadera.',
+      },
+      {
+        id: 'guia-tallas-recomendacion',
+        internalName: 'Recomendacion',
+        order: 2,
+        blockType: 'text',
+        title: 'Recomendacion',
+        body: 'Si estas entre dos tallas, elige segun tu ajuste preferido: mas firme para entrenamiento o mas relajado para uso diario.',
+      },
+      {
+        id: 'guia-tallas-te-asesoramos',
+        internalName: 'Te asesoramos',
+        order: 3,
+        blockType: 'text',
+        title: 'Te asesoramos',
+        body: 'Si tienes duda con una referencia puntual, escribenos por Contacto.',
+      },
+    ],
+  },
+};
+
 const _cache = new Map();
 const CACHE_TTL = 60 * 1000; // 60 segundos
 
@@ -847,6 +1010,96 @@ export const getFooterContent = () => {
   })();
 
   setCache('footer-content', promise);
+  return promise;
+};
+
+export const getHelpPage = (pageKey) => {
+  const normalizedPageKey = String(pageKey || '').trim();
+  const fallback = HELP_PAGES_DEFAULTS[normalizedPageKey] || null;
+  const cacheKey = `help-page-${normalizedPageKey}`;
+  const cached = getCached(cacheKey);
+  if (cached) return cached;
+
+  const mapHelpPageBlock = (node, index = 0) => {
+    const fields = node?.fields || [];
+    const order = Number(getMetaobjectFieldValue(fields, 'order'));
+
+    return {
+      id: node?.id || getMetaobjectFieldValue(fields, 'internal_name') || `help-block-${index + 1}`,
+      internalName: getMetaobjectFieldValue(fields, 'internal_name'),
+      order: Number.isFinite(order) && order > 0 ? order : index + 1,
+      blockType: getMetaobjectFieldValue(fields, 'block_type') || 'text',
+      title: getMetaobjectFieldValue(fields, 'title'),
+      body: getMetaobjectFieldValue(fields, 'body'),
+      label: getMetaobjectFieldValue(fields, 'label'),
+    };
+  };
+
+  const promise = (async () => {
+    if (!normalizedPageKey) return fallback;
+
+    try {
+      const data = await shopifyFetch(`
+        query {
+          metaobjects(type: "help_page", first: 20) {
+            edges {
+              node {
+                id
+                fields {
+                  key
+                  value
+                  references(first: 50) {
+                    nodes {
+                      ... on Metaobject {
+                        id
+                        fields {
+                          key
+                          value
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      `);
+
+      const pageNode = data.metaobjects.edges
+        .map(({ node }) => node)
+        .find((node) => {
+          const fields = node?.fields || [];
+          return getMetaobjectFieldValue(fields, 'page_key') === normalizedPageKey;
+        });
+
+      if (!pageNode) return fallback;
+
+      const fields = pageNode.fields || [];
+      const referencedBlocks = getMetaobjectFieldReferences(fields, 'blocks_1', 'blocks');
+      const blocks = referencedBlocks
+        .map((node, index) => mapHelpPageBlock(node, index))
+        .filter((block) => block.title || block.body)
+        .sort((a, b) => a.order - b.order);
+
+      return {
+        pageKey: getMetaobjectFieldValue(fields, 'page_key') || fallback?.pageKey || normalizedPageKey,
+        internalName: getMetaobjectFieldValue(fields, 'internal_name') || fallback?.internalName || '',
+        eyebrow: getMetaobjectFieldValue(fields, 'eyebrow') || fallback?.eyebrow || '',
+        title: getMetaobjectFieldValue(fields, 'title') || fallback?.title || '',
+        seoTitle: getMetaobjectFieldValue(fields, 'seo_title') || fallback?.seoTitle || '',
+        seoDescription: getMetaobjectFieldValue(fields, 'seo_description') || fallback?.seoDescription || '',
+        ctaLabel: getMetaobjectFieldValue(fields, 'cta_label') || fallback?.ctaLabel || '',
+        ctaUrl: getMetaobjectFieldValue(fields, 'cta_url') || fallback?.ctaUrl || '',
+        blocks: blocks.length > 0 ? blocks : (fallback?.blocks || []),
+      };
+    } catch (err) {
+      console.error(`Error getHelpPage ${normalizedPageKey}:`, err);
+      return fallback;
+    }
+  })();
+
+  setCache(cacheKey, promise);
   return promise;
 };
 

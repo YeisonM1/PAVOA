@@ -1,5 +1,8 @@
+import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
+import HelpBlockBody from '../components/HelpBlockBody';
 import SEO from '../components/SEO';
+import { getHelpPage, HELP_PAGES_DEFAULTS } from '../services/productService';
 
 const MOTIVOS = [
   {
@@ -29,14 +32,31 @@ const buildContactoUrl = ({ pedido, motivo, mensaje }) => {
 };
 
 export default function CambiosDevolucionesPage() {
+  const [content, setContent] = useState(HELP_PAGES_DEFAULTS.cambios);
   const [searchParams] = useSearchParams();
   const pedido = (searchParams.get('pedido') || '').trim();
+  const requestBlock = content.blocks[2] || null;
+
+  useEffect(() => {
+    let active = true;
+
+    getHelpPage('cambios')
+      .then((data) => {
+        if (!active || !data) return;
+        setContent(data);
+      })
+      .catch(() => {});
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   return (
     <div className="min-h-screen bg-white">
       <SEO
-        title="Cambios y devoluciones"
-        description="Politica de cambios y devoluciones de PAVOA."
+        title={content.seoTitle}
+        description={content.seoDescription}
         url="/cambios-y-devoluciones"
       />
 
@@ -46,32 +66,35 @@ export default function CambiosDevolucionesPage() {
             <span className="text-[10px] tracking-[0.2em] text-stone-500 uppercase flex items-center gap-2">
               <Link to="/" className="hover:text-stone-900 transition-colors">Inicio</Link>
               <span>/</span>
-              <span className="text-stone-900 font-bold">Cambios y devoluciones</span>
+              <span className="text-stone-900 font-bold">{content.title}</span>
             </span>
           </nav>
-          <span className="text-[9px] font-medium tracking-[0.3em] uppercase text-stone-400 block mb-3">Ayuda</span>
-          <h1 className="text-3xl md:text-5xl font-light text-stone-900 tracking-[0.15em] uppercase">Cambios y devoluciones</h1>
+          <span className="text-[9px] font-medium tracking-[0.3em] uppercase text-stone-400 block mb-3">{content.eyebrow}</span>
+          <h1 className="text-3xl md:text-5xl font-light text-stone-900 tracking-[0.15em] uppercase">{content.title}</h1>
           <div className="w-12 h-[1px] mt-6" style={{ background: 'var(--color-gold)' }} />
         </div>
       </section>
 
       <section className="w-full py-10 md:py-16 px-6 md:px-12 lg:px-16">
         <div className="max-w-[1000px] mx-auto grid gap-8">
-          <article className="border border-stone-100 p-7 md:p-9">
-            <h2 className="text-[12px] font-bold tracking-[0.2em] uppercase text-stone-900 mb-4">Plazo para solicitar</h2>
-            <p className="text-[12px] text-stone-500 leading-relaxed tracking-[0.08em]">
-              Puedes solicitar cambio o devolucion dentro de los primeros 5 dias habiles despues de recibir tu pedido.
-            </p>
-          </article>
-          <article className="border border-stone-100 p-7 md:p-9">
-            <h2 className="text-[12px] font-bold tracking-[0.2em] uppercase text-stone-900 mb-4">Condiciones</h2>
-            <p className="text-[12px] text-stone-500 leading-relaxed tracking-[0.08em]">
-              La prenda debe estar sin uso, limpia, con etiquetas y en su empaque original.
-            </p>
-          </article>
+          {content.blocks.slice(0, 2).map((block) => (
+            <article key={block.id} className="border border-stone-100 p-7 md:p-9">
+              <h2 className="text-[12px] font-bold tracking-[0.2em] uppercase text-stone-900 mb-4">{block.title}</h2>
+              <HelpBlockBody
+                body={block.body}
+                className="text-[12px] text-stone-500 leading-relaxed tracking-[0.08em]"
+              />
+            </article>
+          ))}
 
           <article className="border border-stone-100 p-7 md:p-9">
-            <h2 className="text-[12px] font-bold tracking-[0.2em] uppercase text-stone-900 mb-4">Inicia tu solicitud</h2>
+            <h2 className="text-[12px] font-bold tracking-[0.2em] uppercase text-stone-900 mb-4">{requestBlock?.title || 'Inicia tu solicitud'}</h2>
+            {requestBlock?.body && (
+              <HelpBlockBody
+                body={requestBlock.body}
+                className="text-[12px] text-stone-500 leading-relaxed tracking-[0.08em] mb-6"
+              />
+            )}
             {pedido && (
               <p className="text-[10px] text-stone-600 tracking-[0.12em] uppercase mb-4">
                 Pedido detectado: <span className="font-bold text-stone-900">{pedido}</span>
@@ -90,11 +113,7 @@ export default function CambiosDevolucionesPage() {
                 </Link>
               ))}
             </div>
-
             <div className="mt-6 pt-6 border-t border-stone-100">
-              <p className="text-[10px] text-stone-400 tracking-[0.12em] uppercase">
-                Ten listo: numero de pedido, motivo y fotos del producto.
-              </p>
               <Link
                 to={buildContactoUrl({ pedido, motivo: 'Cambios y devoluciones' })}
                 className="inline-block mt-3 text-[10px] font-bold text-stone-900 uppercase border-b border-stone-900 pb-0.5 tracking-[0.12em] hover:text-stone-500 transition-colors"
