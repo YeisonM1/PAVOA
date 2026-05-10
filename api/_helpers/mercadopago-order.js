@@ -181,7 +181,15 @@ const processMercadoPagoPaymentInternal = async (paymentId) => {
 
     let insertedOrder = false;
     let itemsFinales = order?.line_items
-      ? order.line_items.map((i) => ({ nombre: i.title, cantidad: i.quantity, precio: i.price }))
+      ? order.line_items.map((i) => ({
+          nombre: i.title,
+          cantidad: i.quantity,
+          precio: i.price,
+          product_id: i.product_id || null,
+          variant_id: i.variant_id || null,
+          variant_title: i.variant_title || null,
+          sku: i.sku || null,
+        }))
       : itemsMP;
     if (emailCliente) {
       const addr = order?.shipping_address;

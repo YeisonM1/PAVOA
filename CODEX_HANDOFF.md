@@ -44,6 +44,7 @@ Estado de cierre al 2026-05-09.
   - helper cliente: `src/lib/funnel.js`
   - helper servidor: `api/_helpers/funnel.js`
 - Se agrego script SQL manual: `SUPABASE_FUNNEL_EVENTS.sql`
+- `Compra confirmada` del embudo ya preserva `variant_id` y `variant_title` al salir de Shopify, para que `PAVOA Control` pueda mostrar color/talla en eventos nuevos
 - Correos transaccionales redisenados
 - Flujo Mailtrap integrado
 - Wishlist corregido para consolidar guest -> cuenta al iniciar sesion
