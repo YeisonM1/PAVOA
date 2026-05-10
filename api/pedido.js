@@ -1,6 +1,7 @@
 import { getShopifyToken } from './_helpers/shopify-token.js';
 import { validateCartWithShopify } from './_helpers/cart-validation.js';
 import { verifyToken } from './_helpers/auth.js';
+import { trackFunnelEvent } from './_helpers/funnel.js';
 
 const SHOPIFY_DOMAIN = process.env.VITE_SHOPIFY_DOMAIN;
 
@@ -129,7 +130,7 @@ export default async function handler(req, res) {
   }
 
   const tokenPayload = verifyToken(req);
-  const { form, cartItems, idempotencyKey } = req.body;
+  const { form, cartItems, cartTotal, idempotencyKey } = req.body;
   const orderOwnerEmail = normalizeEmail(tokenPayload?.email || form?.email);
 
   if (!form?.nombre?.trim() || !form?.telefono?.trim()) {
@@ -178,9 +179,33 @@ export default async function handler(req, res) {
       _pedidoCache.set(idempotencyKey, { draftOrderId: draftOrder.id, name: draftOrder.name, ts: Date.now() });
     }
 
+    await trackFunnelEvent({
+      eventKey: `draft_order_created:${draftOrder.id}`,
+      eventType: 'draft_order_created',
+      source: 'backend',
+      userEmail: orderOwnerEmail,
+      orderId: String(draftOrder.id),
+      amount: cartTotal || null,
+      meta: {
+        shopify_order_name: draftOrder.name || null,
+        line_count: trustedItems.length,
+        item_count: trustedItems.reduce((total, item) => total + Number(item.quantity || 0), 0),
+      },
+    });
+
     console.log(`Draft Order creado: ${draftOrder.name} - ${draftOrder.id}`);
     return res.status(200).json({ ok: true, draftOrderId: draftOrder.id, name: draftOrder.name });
   } catch (err) {
+    await trackFunnelEvent({
+      eventType: 'draft_order_failed',
+      source: 'backend',
+      userEmail: orderOwnerEmail,
+      amount: cartTotal || null,
+      meta: {
+        detail: parseShopifyError(err.message),
+        line_count: Array.isArray(cartItems) ? cartItems.length : 0,
+      },
+    });
     console.error('Error creando draft order:', err.message);
     return res.status(500).json({
       error: 'Error al crear el pedido en Shopify',

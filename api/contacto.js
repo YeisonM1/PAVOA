@@ -32,6 +32,63 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Metodo no permitido' });
   }
 
+  if (req.body?.type === 'funnel-event') {
+    const {
+      eventKey,
+      eventType,
+      source = 'frontend',
+      sessionId,
+      userId,
+      userEmail,
+      productId,
+      productName,
+      variantId,
+      color,
+      size,
+      orderId,
+      paymentId,
+      amount,
+      meta,
+    } = req.body;
+
+    if (!eventType) {
+      return res.status(400).json({ error: 'eventType es requerido.' });
+    }
+
+    try {
+      const payload = {
+        event_key: normalizeOptional(eventKey),
+        event_type: String(eventType).trim(),
+        source: normalizeOptional(source) || 'frontend',
+        session_id: normalizeOptional(sessionId),
+        user_id: normalizeOptional(userId),
+        user_email: normalizeOptional(userEmail)?.toLowerCase() || null,
+        product_id: normalizeOptional(productId),
+        product_name: normalizeOptional(productName),
+        variant_id: normalizeOptional(variantId),
+        color: normalizeOptional(color),
+        size: normalizeOptional(size),
+        order_id: normalizeOptional(orderId),
+        payment_id: normalizeOptional(paymentId),
+        amount: amount === null || amount === undefined || amount === '' ? null : Number(amount),
+        meta: meta && typeof meta === 'object' ? meta : {},
+        created_at: new Date().toISOString(),
+      };
+
+      const query = payload.event_key
+        ? supabase.from('funnel_events').upsert(payload, { onConflict: 'event_key' })
+        : supabase.from('funnel_events').insert(payload);
+
+      const { error } = await query;
+      if (error) throw error;
+
+      return res.status(200).json({ ok: true });
+    } catch (err) {
+      console.error('Error funnel event:', err.message);
+      return res.status(500).json({ error: 'No se pudo registrar el evento.' });
+    }
+  }
+
   // Stock alert branch
   if (req.body?.type === 'stock-alert') {
     const { email, productId, productNombre, talla, color, variantId } = req.body;

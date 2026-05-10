@@ -4,6 +4,7 @@ import { getShopifyToken, eliminarDraftOrder } from './_helpers/shopify-token.js
 import { processMercadoPagoPayment } from './_helpers/mercadopago-order.js';
 import { validateCartWithShopify } from './_helpers/cart-validation.js';
 import { verifyToken } from './_helpers/auth.js';
+import { trackFunnelEvent } from './_helpers/funnel.js';
 
 const client = new mercadopago.MercadoPagoConfig({
   accessToken: process.env.MP_ACCESS_TOKEN,
@@ -289,6 +290,17 @@ export default async function handler(req, res) {
   try {
     const sellerCheck = await validateExpectedSeller();
     if (!sellerCheck.ok) {
+      await trackFunnelEvent({
+        eventType: 'payment_preference_failed',
+        source: 'backend',
+        userEmail: orderOwnerEmail,
+        orderId: draftOrderId,
+        amount: cartTotal || null,
+        meta: {
+          stage: 'seller_validation',
+          detail: sellerCheck.detail || sellerCheck.error,
+        },
+      });
       return res.status(sellerCheck.status || 409).json({
         error: sellerCheck.error,
         detail: sellerCheck.detail || null,
@@ -300,6 +312,18 @@ export default async function handler(req, res) {
     const { trustedItems, total } = await validateCartWithShopify(cartItems);
     if (Math.abs(Number(cartTotal) - total) > 1) {
       await eliminarDraftOrder(draftOrderId);
+      await trackFunnelEvent({
+        eventType: 'payment_preference_failed',
+        source: 'backend',
+        userEmail: orderOwnerEmail,
+        orderId: draftOrderId,
+        amount: cartTotal || null,
+        meta: {
+          stage: 'cart_validation',
+          expected_total: total,
+          received_total: Number(cartTotal),
+        },
+      });
       return res.status(409).json({ error: 'El precio del carrito cambio. Actualiza la bolsa e intenta de nuevo.' });
     }
 
@@ -378,6 +402,23 @@ export default async function handler(req, res) {
       `Preferencia MP creada: ${preference.id} | collector: ${preference.collector_id} | live_mode: ${preference.live_mode} | checkout_mode: ${checkoutMode} | draft: ${draftOrderId} | descuento: ${descuentoAplicado}`
     );
 
+    await trackFunnelEvent({
+      eventKey: `payment_preference_created:${preference.id}`,
+      eventType: 'payment_preference_created',
+      source: 'backend',
+      userEmail: orderOwnerEmail,
+      orderId: draftOrderId,
+      amount: total,
+      meta: {
+        preference_id: preference.id,
+        collector_id: preference.collector_id || null,
+        checkout_mode: checkoutMode,
+        descuento_aplicado: descuentoAplicado,
+        line_count: trustedItems.length,
+        item_count: trustedItems.reduce((sum, item) => sum + Number(item.quantity || 0), 0),
+      },
+    });
+
     return res.status(200).json({
       ok: true,
       init_point: checkoutUrl,
@@ -398,6 +439,17 @@ export default async function handler(req, res) {
   } catch (error) {
     console.error('Error creando preferencia MP:', error?.message);
     await eliminarDraftOrder(draftOrderId);
+    await trackFunnelEvent({
+      eventType: 'payment_preference_failed',
+      source: 'backend',
+      userEmail: orderOwnerEmail,
+      orderId: draftOrderId,
+      amount: cartTotal || null,
+      meta: {
+        stage: 'unexpected',
+        detail: error?.message || 'Error al crear la preferencia de pago',
+      },
+    });
     return res.status(500).json({ error: error?.message || 'Error al crear la preferencia de pago' });
   }
 }

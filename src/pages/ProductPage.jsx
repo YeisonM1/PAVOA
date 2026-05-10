@@ -6,6 +6,7 @@ import { getProductoById } from '../services/productService';
 import SEO from '../components/SEO';
 import { heroImage } from '../utils/imageUrl';
 import { trackViewItem } from '../lib/analytics';
+import { trackFunnelEvent } from '../lib/funnel';
 import GuiaTallasModal from '../components/GuiaTallasModal';
 import { saveRecentlyViewed } from '../hooks/useRecentlyViewed';
 import { estaAutenticado, getCliente } from '../services/authService';
@@ -48,7 +49,18 @@ export default function ProductPage() {
         if (!cancelled) {
           setProducto(data);
           setLoading(false);
-          if (data) { trackViewItem(data); saveRecentlyViewed(data); }
+          if (data) {
+            trackViewItem(data);
+            trackFunnelEvent('view_product', {
+              productId: data.id,
+              productName: data.nombre,
+              amount: data.precioNumerico || 0,
+              meta: {
+                category: data.categoria || '',
+              },
+            });
+            saveRecentlyViewed(data);
+          }
         }
       } catch {
         if (!cancelled) setLoading(false);
@@ -144,7 +156,21 @@ export default function ProductPage() {
 
   // ── Handlers ──
   const handleCantidadBloqueada = () => { setShowCantidadHint(true); setTimeout(() => setShowCantidadHint(false), 2500); };
-  const handleColorSelect = (color) => { setColorSeleccionado(colorSeleccionado === color ? null : color); setTallaSeleccionada(null); setCantidad(1); setAlertSent(false); };
+  const handleColorSelect = (color) => {
+    const nextColor = colorSeleccionado === color ? null : color;
+    if (nextColor && producto) {
+      trackFunnelEvent('select_color', {
+        productId: producto.id,
+        productName: producto.nombre,
+        color: nextColor,
+        amount: producto.precioNumerico || 0,
+      });
+    }
+    setColorSeleccionado(nextColor);
+    setTallaSeleccionada(null);
+    setCantidad(1);
+    setAlertSent(false);
+  };
   const incrementar = () => { if (!puedeSeleccionarCantidad) { handleCantidadBloqueada(); return; } setCantidad(c => stockActual !== null ? Math.min(c + 1, stockActual) : c + 1); };
   const decrementar = () => { if (!puedeSeleccionarCantidad) return; setCantidad(c => Math.max(1, c - 1)); };
   const toggleAccordion = (s) => setOpenAccordion(openAccordion === s ? null : s);
@@ -191,6 +217,14 @@ export default function ProductPage() {
         }),
       });
       setAlertSent(true);
+      trackFunnelEvent('stock_alert_submit', {
+        productId: producto.id,
+        productName: producto.nombre,
+        variantId: varianteSeleccionada?.variantId || null,
+        color: colorSeleccionado,
+        size: tallaSeleccionada,
+        amount: producto.precioNumerico || 0,
+      });
     } catch {} finally { setAlertLoading(false); }
   };
 
@@ -257,9 +291,32 @@ export default function ProductPage() {
               colorSeleccionado={colorSeleccionado} tallaSeleccionada={tallaSeleccionada}
               cantidad={cantidad} stockActual={stockActual}
               puedeSeleccionarCantidad={puedeSeleccionarCantidad} showCantidadHint={showCantidadHint} adding={adding}
-              onColorSelect={handleColorSelect} onTallaSelect={(t) => { setTallaSeleccionada(t); setAlertSent(false); }}
+              onColorSelect={handleColorSelect}
+              onTallaSelect={(t) => {
+                trackFunnelEvent('select_size', {
+                  productId: producto.id,
+                  productName: producto.nombre,
+                  color: colorSeleccionado,
+                  size: t,
+                  variantId: variantes.find((v) => v.color === colorSeleccionado && v.talla === t)?.variantId || null,
+                  amount: producto.precioNumerico || 0,
+                });
+                setTallaSeleccionada(t);
+                setAlertSent(false);
+              }}
               onIncrementar={incrementar} onDecrementar={decrementar} onCantidadBloqueada={handleCantidadBloqueada}
-              onAddToCart={handleAddToCart} onShowGuiaTallas={() => setShowGuiaTallas(true)} addBtnRef={addBtnRef}
+              onAddToCart={handleAddToCart}
+              onShowGuiaTallas={() => {
+                trackFunnelEvent('open_size_guide', {
+                  productId: producto.id,
+                  productName: producto.nombre,
+                  color: colorSeleccionado,
+                  size: tallaSeleccionada,
+                  amount: producto.precioNumerico || 0,
+                });
+                setShowGuiaTallas(true);
+              }}
+              addBtnRef={addBtnRef}
               alertEmail={alertEmail} alertSent={alertSent} alertLoading={alertLoading}
               onAlertEmailChange={setAlertEmail} onStockAlert={handleStockAlert}
             />

@@ -2,6 +2,7 @@ import React, { useState, useContext, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { CartContext } from '../App';
 import { trackBeginCheckout } from '../lib/analytics';
+import { trackFunnelEvent } from '../lib/funnel';
 import SEO from '../components/SEO';
 import { thumbImage } from '../utils/imageUrl';
 import { verificarStock } from '../services/productService';
@@ -87,7 +88,16 @@ export default function CheckoutPage() {
   const [searchParams] = useSearchParams();
 
   useEffect(() => {
-    if (cartItems.length > 0) trackBeginCheckout(cartItems, cartTotal);
+    if (cartItems.length > 0) {
+      trackBeginCheckout(cartItems, cartTotal);
+      trackFunnelEvent('begin_checkout', {
+        amount: cartTotal,
+        meta: {
+          line_count: cartItems.length,
+          item_count: cartItems.reduce((total, item) => total + item.cantidad, 0),
+        },
+      });
+    }
   }, []);
 
   const [form, setForm] = useState({
@@ -171,6 +181,15 @@ export default function CheckoutPage() {
   useEffect(() => {
     const isRejected = statusFromMP === 'failure' || statusFromMP === 'rejected';
     if (!isRejected) return;
+
+    trackFunnelEvent('checkout_error', {
+      amount: cartTotal,
+      meta: {
+        stage: 'mercadopago_return',
+        status: statusFromMP,
+        status_detail: statusDetailFromMP || null,
+      },
+    });
 
     try {
       const checkoutSession = JSON.parse(sessionStorage.getItem('pavoa-checkout-session') || 'null');
@@ -293,6 +312,13 @@ export default function CheckoutPage() {
     let draftOrderIdCreado = '';
     const nuevosErrores = validar();
     if (Object.keys(nuevosErrores).length > 0) {
+      trackFunnelEvent('checkout_error', {
+        amount: cartTotal,
+        meta: {
+          stage: 'validation',
+          fields: Object.keys(nuevosErrores),
+        },
+      });
       setTouched((prev) => ({
         ...prev,
         nombre: true,
@@ -324,10 +350,25 @@ export default function CheckoutPage() {
       // Paso 1 — Verificar stock
       const erroresStock = await verificarStock(cartItems);
       if (erroresStock.length > 0) {
+        trackFunnelEvent('checkout_error', {
+          amount: cartTotal,
+          meta: {
+            stage: 'stock_validation',
+            messages: erroresStock,
+          },
+        });
         setErrors({ general: erroresStock.join(' ') });
         setCargandoPago(false);
         return;
       }
+
+      trackFunnelEvent('payment_click', {
+        amount: cartTotal,
+        meta: {
+          line_count: cartItems.length,
+          item_count: cartItems.reduce((total, item) => total + item.cantidad, 0),
+        },
+      });
 
       // Paso 2 — Crear draft order en Shopify
       const resPedido = await fetch('/api/pedido', {
@@ -337,6 +378,13 @@ export default function CheckoutPage() {
       });
       const dataPedido = await resPedido.json();
       if (!resPedido.ok || !dataPedido.ok || !dataPedido.draftOrderId) {
+        trackFunnelEvent('checkout_error', {
+          amount: cartTotal,
+          meta: {
+            stage: 'draft_order',
+            message: dataPedido?.error || 'No se pudo registrar el pedido.',
+          },
+        });
         setErrors({ general: formatBackendError(dataPedido?.error || 'No se pudo registrar el pedido.', dataPedido?.detail) });
         setCargandoPago(false);
         return;
@@ -352,6 +400,14 @@ export default function CheckoutPage() {
       const dataPref = await resPref.json();
       if (!resPref.ok || !dataPref.init_point) {
         await limpiarDraftPendiente(draftOrderIdCreado);
+        trackFunnelEvent('checkout_error', {
+          amount: cartTotal,
+          orderId: draftOrderIdCreado,
+          meta: {
+            stage: 'payment_preference',
+            message: dataPref?.error || 'No se pudo iniciar el pago.',
+          },
+        });
         setErrors({ general: dataPref?.error || 'No se pudo iniciar el pago.' });
         setCargandoPago(false);
         return;
@@ -391,6 +447,14 @@ export default function CheckoutPage() {
         await limpiarDraftPendiente(draftOrderIdCreado);
       }
       console.error('[PAVOA] Error al iniciar pago:', err);
+      trackFunnelEvent('checkout_error', {
+        amount: cartTotal,
+        orderId: draftOrderIdCreado || null,
+        meta: {
+          stage: 'unexpected',
+          message: err?.message || 'Error inesperado.',
+        },
+      });
       setErrors({ general: 'Error inesperado. Intenta de nuevo.' });
       setCargandoPago(false);
     }

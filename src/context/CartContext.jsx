@@ -2,6 +2,7 @@ import { useState, createContext, useMemo, useCallback } from 'react';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { parsePrice } from '../utils/price';
 import { trackAddToCart } from '../lib/analytics';
+import { trackFunnelEvent } from '../lib/funnel';
 
 export const CartContext = createContext();
 
@@ -32,6 +33,17 @@ export function CartProvider({ children }) {
     });
 
     trackAddToCart(producto, talla, cantidad);
+    trackFunnelEvent('add_to_cart', {
+      productId: producto.id,
+      productName: producto.nombre,
+      variantId: producto.selectedVariantId || null,
+      color: producto.colorSeleccionado || null,
+      size: talla,
+      amount: (producto.precioNumerico || parsePrice(producto?.precio) || 0) * cantidad,
+      meta: {
+        quantity: cantidad,
+      },
+    });
     setIsCartAnimating(true);
     setToastKey(k => k + 1);
     setShowToast(`${producto.nombre} añadido`);

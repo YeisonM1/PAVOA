@@ -38,6 +38,12 @@ Estado de cierre al 2026-05-09.
   - `Envios a todo Colombia`
   - `Cambios dentro de los primeros 5 dias habiles`
   - `Pago seguro`
+- Se implemento embudo propio para PAVOA:
+  - eventos frontend via `/api/contacto` con `type: funnel-event`
+  - eventos backend desde checkout y Mercado Pago
+  - helper cliente: `src/lib/funnel.js`
+  - helper servidor: `api/_helpers/funnel.js`
+- Se agrego script SQL manual: `SUPABASE_FUNNEL_EVENTS.sql`
 - Correos transaccionales redisenados
 - Flujo Mailtrap integrado
 - Wishlist corregido para consolidar guest -> cuenta al iniciar sesion
@@ -74,8 +80,16 @@ Commit de revert:
   - `alter table public.wishlist_events add constraint wishlist_events_action_type_check check (action_type in ('add', 'remove', 'guest_merge'));`
 - Si se clona este entorno en otra base, este ajuste debe repetirse o el KPI `Interes anonimo convertido en cuenta` no va a subir aunque el merge visual funcione
 
+### Nota manual pendiente en Supabase para embudo
+- Hay que ejecutar `SUPABASE_FUNNEL_EVENTS.sql`
+- Crea la tabla `funnel_events`
+- Desactiva RLS para permitir insercion desde el endpoint reutilizado `/api/contacto`
+- Sin esa tabla:
+  - no persistiran eventos del embudo
+  - el modulo `Embudo` de `PAVOA Control` no mostrara datos reales
+
 ### Siguiente trabajo recomendado en storefront
-1. Extender medicion del embudo en `src/lib/analytics.js`
+1. Ejecutar `SUPABASE_FUNNEL_EVENTS.sql` en la base real y validar datos en `PAVOA Control`
 2. Mover newsletter del footer a endpoint backend conservando UI
 3. Corregir escalabilidad de `getProductos()` para no depender de `products(first: 100)`
 4. Si se quiere volver editable el bloque de confianza del PDP, llevarlo a Shopify en lugar de hardcodearlo
@@ -132,6 +146,25 @@ Commit de revert:
 - Se agrego conteo de `guest_merge` en insights y exportacion
 - Se agrego caja guia para explicar como leer la metrica
 - Se redeployo manualmente Vercel porque produccion seguia sirviendo una build vieja del 2026-05-03
+
+### Embudo
+- Nuevo modulo `Embudo` agregado en `PAVOA Control`
+- Muestra:
+  - visitas a producto
+  - selecciones de talla
+  - agregados al carrito
+  - inicio de compra
+  - intentos de pago
+  - compras confirmadas
+  - pagos rechazados
+  - errores en checkout
+- Tambien muestra:
+  - conversion a carrito
+  - conversion a checkout
+  - conversion a compra
+  - productos con mas interes
+  - actividad reciente
+- El resumen principal tambien puede mostrar compras confirmadas del embudo si la tabla existe
 
 ### Pedidos espejo
 - Modulo montado

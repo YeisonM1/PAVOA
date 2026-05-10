@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 import { getShopifyToken, eliminarDraftOrder } from './shopify-token.js';
 import { emailConfirmacion } from './email-templates.js';
 import { sendTransactionalEmail } from './mail.js';
+import { trackFunnelEvent } from './funnel.js';
 
 const client = new mercadopago.MercadoPagoConfig({ accessToken: process.env.MP_ACCESS_TOKEN });
 const SHOPIFY_DOMAIN = process.env.VITE_SHOPIFY_DOMAIN;
@@ -218,6 +219,19 @@ const processMercadoPagoPaymentInternal = async (paymentId) => {
     }
 
     const latestOrder = await getExistingOrderByPaymentId(pagoInfo.id);
+    await trackFunnelEvent({
+      eventKey: `payment_approved:${pagoInfo.id}`,
+      eventType: 'payment_approved',
+      source: 'backend',
+      userEmail: emailCliente || emailRef || pagoInfo.payer?.email || null,
+      orderId: draftOrderId,
+      paymentId: String(pagoInfo.id),
+      amount: totalPagado,
+      meta: {
+        shopify_order_name: order?.name || latestOrder?.shopify_order_name || null,
+        already_processed: !insertedOrder,
+      },
+    });
     return {
       ok: true,
       status: 'approved',
@@ -231,6 +245,19 @@ const processMercadoPagoPaymentInternal = async (paymentId) => {
 
   if (pagoInfo.status === 'rejected' || pagoInfo.status === 'cancelled') {
     await eliminarDraftOrder(draftOrderId);
+    await trackFunnelEvent({
+      eventKey: `payment_rejected:${pagoInfo.id}`,
+      eventType: 'payment_rejected',
+      source: 'backend',
+      userEmail: emailRef || pagoInfo.payer?.email || null,
+      orderId: draftOrderId,
+      paymentId: String(pagoInfo.id),
+      amount: pagoInfo.transaction_amount || null,
+      meta: {
+        status: pagoInfo.status,
+        status_detail: pagoInfo.status_detail || null,
+      },
+    });
     return {
       ok: true,
       status: pagoInfo.status,
@@ -238,6 +265,20 @@ const processMercadoPagoPaymentInternal = async (paymentId) => {
       draftOrderId,
     };
   }
+
+  await trackFunnelEvent({
+    eventKey: `payment_pending:${pagoInfo.id}`,
+    eventType: 'payment_pending',
+    source: 'backend',
+    userEmail: emailRef || pagoInfo.payer?.email || null,
+    orderId: draftOrderId,
+    paymentId: String(pagoInfo.id),
+    amount: pagoInfo.transaction_amount || null,
+    meta: {
+      status: pagoInfo.status || 'unknown',
+      status_detail: pagoInfo.status_detail || null,
+    },
+  });
 
   return {
     ok: true,
