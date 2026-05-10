@@ -36,7 +36,7 @@ function ProductCard({ producto }) {
 
   // Colores únicos por hex (solo si hay 2+)
   const coloresUnicos = [...new Map(variantes.map(v => [v.hex, v.hex])).values()];
-  const mostrarColores = coloresUnicos.length >= 2;
+  const mostrarColores = coloresUnicos.length >= 1;
   const addVariantToCart = (talla) => {
     const varianteElegida = variantes.find(v => v.talla === talla && (v.stock ?? 0) > 0)
       || variantes.find(v => v.talla === talla);
@@ -169,14 +169,14 @@ function ProductCard({ producto }) {
           <HeartIcon filled={isWished(producto.id)} />
         </button>
 
-        <div className={`mx-auto flex w-full max-w-[260px] flex-col items-center text-center ${mostrarColores ? 'min-h-[98px] justify-between' : 'min-h-[78px] justify-start gap-3'}`}>
+        <div className="mx-auto flex min-h-[98px] w-full max-w-[260px] flex-col items-center justify-between text-center">
           <div className="flex min-h-[38px] w-full items-start justify-center">
             <h3 className="w-full max-w-[220px] text-[11px] font-bold uppercase tracking-[0.15em] text-stone-900 leading-[1.55]">
               {producto.nombre}
             </h3>
           </div>
 
-          <div className={`flex items-center justify-center ${mostrarColores ? 'min-h-[18px]' : 'hidden'}`}>
+          <div className="flex min-h-[18px] items-center justify-center">
             {mostrarColores && (
               <div className="flex items-center justify-center gap-1.5">
                 {coloresUnicos.slice(0, 7).map((hex) => (
@@ -191,8 +191,8 @@ function ProductCard({ producto }) {
             )}
           </div>
 
-          <div className="flex min-h-[24px] items-center justify-center">
-            <p className="text-[14px] md:text-[15px] font-semibold tracking-[0.06em] text-stone-700 transition-colors duration-300 md:group-hover:text-stone-900">
+          <div className="h-[24px] overflow-hidden">
+            <p className="text-[14px] md:text-[15px] font-semibold tracking-[0.06em] text-stone-700 transform translate-y-0 opacity-100 md:translate-y-full md:opacity-0 md:group-hover:translate-y-0 md:group-hover:opacity-100 md:group-hover:text-stone-900 transition-all duration-500 ease-out">
               {producto.precio}
             </p>
           </div>
