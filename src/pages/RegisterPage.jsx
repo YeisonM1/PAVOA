@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { register } from '../services/authService';
 import logo from '../assets/LOGO-PAVOA.svg';
+import logoPavo from '../assets/Pavoa Logo Negro Sin Fondo.svg';
 import SEO from '../components/SEO';
 
 export default function RegisterPage() {
@@ -83,9 +84,12 @@ export default function RegisterPage() {
             <p style={{ letterSpacing: '0.35em' }} className="text-[9px] text-stone-400 uppercase font-medium mb-3">
               Únete a PAVOA
             </p>
-            <h1 className="text-2xl font-light text-stone-900 tracking-[0.15em] uppercase">
-              Crear <strong className="font-bold">cuenta</strong>
-            </h1>
+            <div className="flex items-center justify-between">
+              <h1 className="text-2xl font-light text-stone-900 tracking-[0.15em] uppercase">
+                Crear <strong className="font-bold">cuenta</strong>
+              </h1>
+              <img src={logoPavo} alt="PAVOA" className="h-10 w-auto object-contain opacity-90" />
+            </div>
             <div className="w-8 h-[1px] mt-4" style={{ backgroundColor: '#DFCDB4' }} />
           </div>
 

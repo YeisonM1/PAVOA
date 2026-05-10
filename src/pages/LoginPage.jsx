@@ -82,7 +82,7 @@ export default function LoginPage() {
               <h1 className="text-2xl font-light text-stone-900 tracking-[0.15em] uppercase">
                 Iniciar <strong className="font-bold">sesión</strong>
               </h1>
-              <img src={logoPavo} alt="PAVOA" className="h-8 w-auto object-contain opacity-80" />
+              <img src={logoPavo} alt="PAVOA" className="h-10 w-auto object-contain opacity-90" />
             </div>
             <div className="w-8 h-[1px] mt-4" style={{ backgroundColor: '#DFCDB4' }} />
           </div>
