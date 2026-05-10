@@ -1,9 +1,15 @@
 import { Link } from 'react-router-dom';
 import { useWishlist } from '../../context/WishlistContext';
 
+const normalizeDescription = (value) =>
+  String(value || '')
+    .replace(/\\n\\n/g, '\n\n')
+    .replace(/\\n/g, '\n')
+    .trim();
+
 export default function ProductInfo({ producto }) {
   const { isWished, toggle } = useWishlist();
-  const descripcionRaw = String(producto.descripcion || '').trim();
+  const descripcionRaw = normalizeDescription(producto.descripcion);
   const descripcionParrafos = (() => {
     if (!descripcionRaw) return [];
 
