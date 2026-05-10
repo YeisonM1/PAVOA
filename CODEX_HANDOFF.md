@@ -34,6 +34,10 @@ Estado de cierre al 2026-05-09.
   - `help_page_block`
   - Nota: en esta tienda el campo de referencias quedo con key `blocks_1`, no `blocks`
 - La descripcion principal de PDP ahora prioriza `descriptionHtml` de Shopify para respetar parrafos reales
+- Se agrego bloque corto de confianza en PDP debajo de la imagen principal:
+  - `Envios a todo Colombia`
+  - `Cambios dentro de los primeros 5 dias habiles`
+  - `Pago seguro`
 - Correos transaccionales redisenados
 - Flujo Mailtrap integrado
 - Wishlist corregido para consolidar guest -> cuenta al iniciar sesion
@@ -71,10 +75,10 @@ Commit de revert:
 - Si se clona este entorno en otra base, este ajuste debe repetirse o el KPI `Interes anonimo convertido en cuenta` no va a subir aunque el merge visual funcione
 
 ### Siguiente trabajo recomendado en storefront
-1. Reescribir bloque de confianza en `src/components/product/ProductVariantSelector.jsx`
-2. Extender medicion del embudo en `src/lib/analytics.js`
-3. Mover newsletter del footer a endpoint backend conservando UI
-4. Corregir escalabilidad de `getProductos()` para no depender de `products(first: 100)`
+1. Extender medicion del embudo en `src/lib/analytics.js`
+2. Mover newsletter del footer a endpoint backend conservando UI
+3. Corregir escalabilidad de `getProductos()` para no depender de `products(first: 100)`
+4. Si se quiere volver editable el bloque de confianza del PDP, llevarlo a Shopify en lugar de hardcodearlo
 
 ### Auditoria resumida
 - PDP necesita mas confianza, no mas texto

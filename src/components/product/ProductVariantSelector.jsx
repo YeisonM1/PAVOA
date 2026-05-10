@@ -1,5 +1,4 @@
 import { Plus, Minus } from 'lucide-react';
-import { Link } from 'react-router-dom';
 
 export default function ProductVariantSelector({
   coloresUnicos, tallasDisponibles, esTallaUnica, tieneVariantes,
@@ -173,38 +172,6 @@ export default function ProductVariantSelector({
       >
         {stockActual === 0 ? 'Agotado' : stockActual === null ? 'Selecciona color y talla' : adding ? 'Agregado' : 'Añadir a la bolsa'}
       </button>
-
-      <div className="mt-4 border border-stone-100 bg-stone-50 px-4 py-3">
-        <ul className="flex flex-col gap-2">
-          <li className="text-[9px] tracking-[0.14em] text-stone-500 uppercase flex items-start gap-2">
-            <span className="mt-[5px] w-1 h-1 bg-stone-400 rounded-full flex-shrink-0" />
-            Envío estimado: ciudades principales 2 a 5 días hábiles
-          </li>
-          <li className="text-[9px] tracking-[0.14em] text-stone-500 uppercase flex items-start gap-2">
-            <span className="mt-[5px] w-1 h-1 bg-stone-400 rounded-full flex-shrink-0" />
-            Cambios y devoluciones dentro de 5 días hábiles
-          </li>
-          <li className="text-[9px] tracking-[0.14em] text-stone-500 uppercase flex items-start gap-2">
-            <span className="mt-[5px] w-1 h-1 bg-stone-400 rounded-full flex-shrink-0" />
-            <span>
-              ¿Duda de talla?{' '}
-              <button
-                onClick={onShowGuiaTallas}
-                className="text-stone-900 border-b border-stone-900 hover:text-stone-600 transition-colors"
-              >
-                Ver guía
-              </button>
-              {' '}o{' '}
-              <Link
-                to="/guia-de-tallas"
-                className="text-stone-900 border-b border-stone-900 hover:text-stone-600 transition-colors"
-              >
-                abrir página
-              </Link>
-            </span>
-          </li>
-        </ul>
-      </div>
 
       {stockActual === 0 && tallaSeleccionada && (
         alertSent ? (
