@@ -139,6 +139,12 @@ Commit de revert:
   - marca `notified_at`
 - Se limpio el debug temporal
 - Correo de stock alerts alineado con el nuevo sistema visual transaccional
+- `PAVOA Control` ahora define y re-registra explicitamente los webhooks de Shopify desde la app autenticada:
+  - `app/uninstalled`
+  - `app/scopes_update`
+  - `inventory_levels/update`
+- Esto evita que stock alerts dependa de una suscripcion vieja o perdida en Shopify
+- Despues de deploy, conviene abrir `PAVOA Control` al menos una vez para que se vuelva a registrar `inventory_levels/update` con la tienda
 
 ### Newsletter
 - Vista lista
