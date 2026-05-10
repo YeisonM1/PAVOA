@@ -22,10 +22,10 @@ function ProductTrustBlock() {
       <ul className="grid grid-cols-3 gap-3">
         {TRUST_ITEMS.map(({ icon: Icon, text }) => (
           <li key={text} className="flex flex-col items-center text-center gap-2">
-            <span className="flex h-9 w-9 items-center justify-center rounded-full border border-stone-200 bg-white text-stone-700">
-              <Icon size={15} strokeWidth={1.6} />
+            <span className="flex items-center justify-center text-[#C9A96E]">
+              <Icon size={18} strokeWidth={1.75} />
             </span>
-            <span className="text-[8px] leading-[1.55] tracking-[0.14em] text-stone-500 uppercase">
+            <span className="text-[8.5px] leading-[1.6] tracking-[0.14em] text-stone-600 uppercase">
               {text}
             </span>
           </li>
