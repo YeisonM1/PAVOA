@@ -1,6 +1,12 @@
 import { createContext, useState, useCallback, useMemo, useContext, useEffect } from 'react';
-import { estaAutenticado } from '../services/authService';
-import { fetchWishlist, addToWishlistAPI, removeFromWishlistAPI, trackWishlistEvent } from '../services/wishlistService';
+import { AUTH_STORAGE_CHANGED_EVENT, estaAutenticado } from '../services/authService';
+import {
+  fetchWishlist,
+  addToWishlistAPI,
+  removeFromWishlistAPI,
+  mergeGuestWishlistAPI,
+  trackWishlistEvent,
+} from '../services/wishlistService';
 
 export const WishlistContext = createContext();
 
@@ -14,16 +20,62 @@ function loadWishlist() {
 export function WishlistProvider({ children }) {
   const [ids, setIds] = useState(loadWishlist);
 
-  // Si está autenticado, sincronizar con Supabase al montar
-  useEffect(() => {
-    if (!estaAutenticado()) return;
-    fetchWishlist()
-      .then(remoteIds => {
-        setIds(remoteIds);
-        try { localStorage.setItem(KEY, JSON.stringify(remoteIds)); } catch {}
-      })
-      .catch(() => {});
+  const persistWishlist = useCallback((nextIds) => {
+    try { localStorage.setItem(KEY, JSON.stringify(nextIds)); } catch {}
   }, []);
+
+  const clearStoredWishlist = useCallback(() => {
+    try { localStorage.removeItem(KEY); } catch {}
+  }, []);
+
+  const syncAuthenticatedWishlist = useCallback(async () => {
+    const guestIds = loadWishlist();
+
+    if (guestIds.length > 0) {
+      try {
+        const mergedIds = await mergeGuestWishlistAPI(guestIds);
+        persistWishlist(mergedIds);
+        return mergedIds;
+      } catch {}
+    }
+
+    const remoteIds = await fetchWishlist();
+    persistWishlist(remoteIds);
+    return remoteIds;
+  }, [persistWishlist]);
+
+  useEffect(() => {
+    let active = true;
+
+    const syncFromAuthState = async () => {
+      if (!estaAutenticado()) return;
+
+      try {
+        const nextIds = await syncAuthenticatedWishlist();
+        if (!active) return;
+        setIds(nextIds);
+      } catch {}
+    };
+
+    const handleAuthChanged = () => {
+      if (!estaAutenticado()) {
+        if (!active) return;
+        setIds([]);
+        clearStoredWishlist();
+        return;
+      }
+
+      syncFromAuthState();
+    };
+
+    syncFromAuthState();
+    window.addEventListener(AUTH_STORAGE_CHANGED_EVENT, handleAuthChanged);
+
+    return () => {
+      active = false;
+      window.removeEventListener(AUTH_STORAGE_CHANGED_EVENT, handleAuthChanged);
+    };
+  }, [clearStoredWishlist, syncAuthenticatedWishlist]);
 
   const toggle = useCallback((productoId) => {
     setIds(prev => {
@@ -32,7 +84,7 @@ export function WishlistProvider({ children }) {
         ? prev.filter(id => id !== productoId)
         : [...prev, productoId];
 
-      try { localStorage.setItem(KEY, JSON.stringify(next)); } catch {}
+      persistWishlist(next);
 
       if (estaAutenticado()) {
         if (wished) removeFromWishlistAPI(productoId).catch(() => {});
@@ -46,7 +98,7 @@ export function WishlistProvider({ children }) {
 
       return next;
     });
-  }, []);
+  }, [persistWishlist]);
 
   const isWished = useCallback((id) => ids.includes(id), [ids]);
 

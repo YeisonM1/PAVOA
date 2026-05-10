@@ -42,6 +42,30 @@ const getAnonId = () => {
   }
 };
 
+export const getWishlistAnonId = () => getAnonId();
+
+export const mergeGuestWishlistAPI = async (productIds = []) => {
+  const normalizedIds = Array.from(
+    new Set(
+      (Array.isArray(productIds) ? productIds : [])
+        .map((id) => String(id || '').trim())
+        .filter(Boolean)
+    )
+  );
+
+  const res = await post('wishlist-merge', {
+    productIds: normalizedIds,
+    anonId: getAnonId(),
+  });
+
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok || data?.ok === false) {
+    throw new Error(data?.error || 'No se pudo consolidar el wishlist.');
+  }
+
+  return data.ids || [];
+};
+
 export const trackWishlistEvent = ({ productId, actionType }) =>
   post('wishlist-track', {
     productId,

@@ -151,14 +151,106 @@ export default async function handler(req, res) {
   // From here, auth is required
   if (!tokenPayload) return res.status(401).json({ error: 'No autorizado. Inicia sesion de nuevo.' });
 
-  // Wishlist: get
-  if (action === 'wishlist-get') {
+  const getCurrentWishlistIds = async () => {
     const { data, error } = await supabase
       .from('wishlists')
       .select('product_id')
       .eq('user_id', tokenPayload.userId);
-    if (error) return res.status(500).json({ error: error.message });
-    return res.status(200).json({ ids: (data || []).map(r => r.product_id) });
+
+    if (error) throw error;
+    return (data || []).map((row) => row.product_id);
+  };
+
+  if (action === 'wishlist-merge') {
+    const rawProductIds = Array.isArray(req.body?.productIds) ? req.body.productIds : [];
+    const productIds = Array.from(
+      new Set(
+        rawProductIds
+          .map((productId) => String(productId || '').trim())
+          .filter(Boolean)
+      )
+    );
+    const anonId = String(req.body?.anonId || '').trim() || null;
+    const nowIso = new Date().toISOString();
+
+    try {
+      const currentIds = await getCurrentWishlistIds();
+      const currentSet = new Set(currentIds);
+      const idsToInsert = productIds.filter((productId) => !currentSet.has(productId));
+
+      if (idsToInsert.length > 0) {
+        const { error: wishlistsError } = await supabase
+          .from('wishlists')
+          .upsert(
+            idsToInsert.map((productId) => ({
+              user_id: tokenPayload.userId,
+              product_id: productId,
+            })),
+            { onConflict: 'user_id,product_id' }
+          );
+        if (wishlistsError) throw wishlistsError;
+
+        const { error: actorStateError } = await supabase
+          .from('wishlist_actor_state')
+          .upsert(
+            idsToInsert.map((productId) => ({
+              actor_type: 'auth',
+              actor_id: tokenPayload.userId,
+              product_id: productId,
+              user_id: tokenPayload.userId,
+              user_email: tokenPayload.email || null,
+              last_action_at: nowIso,
+            })),
+            { onConflict: 'actor_type,actor_id,product_id' }
+          );
+        if (actorStateError) throw actorStateError;
+
+        const { error: mergeEventsError } = await supabase
+          .from('wishlist_events')
+          .insert(
+            idsToInsert.map((productId) => ({
+              product_id: productId,
+              action_type: 'guest_merge',
+              actor_type: 'auth',
+              actor_id: tokenPayload.userId,
+              user_id: tokenPayload.userId,
+              user_email: tokenPayload.email || null,
+            }))
+          );
+        if (mergeEventsError) throw mergeEventsError;
+      }
+
+      if (anonId && productIds.length > 0) {
+        const { error: guestStateDeleteError } = await supabase
+          .from('wishlist_actor_state')
+          .delete()
+          .eq('actor_type', 'guest')
+          .eq('actor_id', anonId)
+          .in('product_id', productIds);
+        if (guestStateDeleteError) {
+          console.error('Error limpiando wishlist guest al consolidar:', guestStateDeleteError.message);
+        }
+      }
+
+      return res.status(200).json({
+        ok: true,
+        ids: Array.from(new Set([...currentIds, ...productIds])),
+        mergedCount: idsToInsert.length,
+      });
+    } catch (error) {
+      console.error('Error wishlist-merge:', error.message);
+      return res.status(500).json({ error: error.message });
+    }
+  }
+
+  // Wishlist: get
+  if (action === 'wishlist-get') {
+    try {
+      const ids = await getCurrentWishlistIds();
+      return res.status(200).json({ ids });
+    } catch (error) {
+      return res.status(500).json({ error: error.message });
+    }
   }
 
   // Wishlist: add

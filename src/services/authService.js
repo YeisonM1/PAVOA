@@ -1,4 +1,11 @@
 // ── Login — llama a nuestra API serverless ────────────
+const AUTH_CHANGED_EVENT = 'pavoa:auth-changed';
+
+const emitAuthChanged = () => {
+  if (typeof window === 'undefined') return;
+  window.dispatchEvent(new CustomEvent(AUTH_CHANGED_EVENT));
+};
+
 export const login = async (email, password) => {
   const res = await fetch('/api/login', {
     method: 'POST',
@@ -12,6 +19,7 @@ export const login = async (email, password) => {
   localStorage.setItem('pavoa_token', data.token);
   localStorage.setItem('pavoa_token_expires', data.expiresAt);
   localStorage.setItem('pavoa_usuario', JSON.stringify(data.usuario));
+  emitAuthChanged();
 
   return data;
 };
@@ -35,6 +43,7 @@ export const cerrarSesion = () => {
   localStorage.removeItem('pavoa_token');
   localStorage.removeItem('pavoa_token_expires');
   localStorage.removeItem('pavoa_usuario');
+  emitAuthChanged();
 };
 
 // ── Obtener token activo ──────────────────────────────
@@ -55,6 +64,7 @@ const authHeaders = () => {
 
 // ── Verificar si está autenticado ─────────────────────
 export const estaAutenticado = () => !!getToken();
+export const AUTH_STORAGE_CHANGED_EVENT = AUTH_CHANGED_EVENT;
 
 // ── Obtener perfil del cliente (desde localStorage) ───
 export const getCliente = () => {
