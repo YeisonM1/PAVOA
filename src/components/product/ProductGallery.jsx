@@ -1,20 +1,33 @@
 import { heroImage, productImage, thumbImage } from '../../utils/imageUrl';
-import { Maximize2 } from 'lucide-react';
+import { Maximize2, ShieldCheck, Truck, Undo2 } from 'lucide-react';
 
 const TRUST_ITEMS = [
-  'Envios a todo Colombia',
-  'Cambios dentro de los primeros 5 dias habiles',
-  'Pago seguro',
+  {
+    icon: Truck,
+    text: 'Envios a todo Colombia',
+  },
+  {
+    icon: Undo2,
+    text: 'Cambios dentro de los primeros 5 dias habiles',
+  },
+  {
+    icon: ShieldCheck,
+    text: 'Pago seguro',
+  },
 ];
 
 function ProductTrustBlock() {
   return (
-    <div className="mt-6 border border-stone-100 bg-stone-50 px-4 py-4">
-      <ul className="flex flex-col gap-2.5">
-        {TRUST_ITEMS.map((item) => (
-          <li key={item} className="text-[9px] tracking-[0.14em] text-stone-500 uppercase flex items-start gap-2">
-            <span className="mt-[5px] w-1 h-1 bg-stone-400 rounded-full flex-shrink-0" />
-            {item}
+    <div className="mt-6 border border-stone-100 bg-stone-50 px-4 py-5">
+      <ul className="grid grid-cols-3 gap-3">
+        {TRUST_ITEMS.map(({ icon: Icon, text }) => (
+          <li key={text} className="flex flex-col items-center text-center gap-2">
+            <span className="flex h-9 w-9 items-center justify-center rounded-full border border-stone-200 bg-white text-stone-700">
+              <Icon size={15} strokeWidth={1.6} />
+            </span>
+            <span className="text-[8px] leading-[1.55] tracking-[0.14em] text-stone-500 uppercase">
+              {text}
+            </span>
           </li>
         ))}
       </ul>
