@@ -1,4 +1,4 @@
-import { useEffect, useContext } from 'react';
+import { useEffect, useContext, useState } from 'react';
 import { useLocation, useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { CartContext } from '../App';
 import SEO from '../components/SEO';
@@ -29,8 +29,9 @@ export default function OrdenConfirmadaPage() {
   })();
 
   const paymentId = paymentIdParam || state?.paymentId;
-  const orderData = savedOrder || state;
-  const { items = [], total, email, nombre } = orderData || {};
+  const [resolvedOrderData, setResolvedOrderData] = useState(savedOrder || state || null);
+  const orderData = resolvedOrderData || savedOrder || state;
+  const { items = [], total, email, nombre, firstName: explicitFirstName } = orderData || {};
 
   // Limpiar carrito al confirmar pago
   useEffect(() => {
@@ -64,12 +65,34 @@ export default function OrdenConfirmadaPage() {
     return () => window.clearTimeout(timer);
   }, [paymentIdParam, statusParam]);
 
+  useEffect(() => {
+    const hasUsefulOrderData =
+      Boolean(orderData?.nombre) ||
+      Boolean(orderData?.firstName) ||
+      Boolean(orderData?.email) ||
+      (Array.isArray(orderData?.items) && orderData.items.length > 0);
+
+    if (!paymentIdParam || hasUsefulOrderData) return;
+
+    fetch('/api/procesar-pago', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'mp-summary', paymentId: paymentIdParam }),
+    })
+      .then((res) => res.json().catch(() => null))
+      .then((data) => {
+        if (!data?.ok || !data?.summary) return;
+        setResolvedOrderData((prev) => ({ ...(prev || {}), ...data.summary }));
+      })
+      .catch(() => {});
+  }, [paymentIdParam, orderData]);
+
   // Analytics
   useEffect(() => {
     if (paymentId && items.length > 0) {
       trackPurchase({ paymentId, items, total });
     }
-  }, []);
+  }, [paymentId, items, total]);
 
   // Redirigir al checkout si el pago falló
   useEffect(() => {
@@ -91,7 +114,7 @@ export default function OrdenConfirmadaPage() {
 
   const isPending  = statusParam === 'pending';
   const cliente    = getCliente();
-  const firstName  = nombre?.split(' ')[0] || cliente?.firstName || 'Cliente';
+  const firstName  = explicitFirstName || nombre?.split(' ')[0] || cliente?.firstName || 'Cliente';
 
   return (
     <div className="min-h-screen bg-white pt-[88px] md:pt-[104px]">

@@ -58,6 +58,14 @@ const getTokenUserIdHint = () => {
   return /^\d+$/.test(tail) ? tail : null;
 };
 
+const splitCustomerName = (fullName = '') => {
+  const [firstName, ...rest] = String(fullName || '').trim().split(/\s+/).filter(Boolean);
+  return {
+    firstName: firstName || null,
+    lastName: rest.join(' ') || null,
+  };
+};
+
 const validateExpectedSeller = async () => {
   if (!MP_EXPECTED_USER_ID) return { ok: true, skipped: true };
 
@@ -295,6 +303,60 @@ export default async function handler(req, res) {
     return res.status(result.ok ? 200 : 409).json(result);
   }
 
+  if (req.body?.type === 'mp-summary') {
+    const paymentId = String(req.body?.paymentId || '').trim();
+    if (!paymentId) {
+      return res.status(400).json({ error: 'Falta paymentId' });
+    }
+
+    try {
+      const { data: pedido } = await supabase
+        .from('pedidos')
+        .select('nombre,email,total,items')
+        .eq('payment_id', paymentId)
+        .maybeSingle();
+
+      if (pedido) {
+        const firstName = String(pedido.nombre || '').trim().split(/\s+/).filter(Boolean)[0] || null;
+        return res.status(200).json({
+          ok: true,
+          summary: {
+            firstName,
+            nombre: pedido.nombre || null,
+            email: pedido.email || null,
+            total: pedido.total || null,
+            items: Array.isArray(pedido.items) ? pedido.items : [],
+          },
+        });
+      }
+
+      const paymentClient = new mercadopago.Payment(client);
+      const payment = await paymentClient.get({ id: paymentId });
+
+      return res.status(200).json({
+        ok: true,
+        summary: {
+          firstName: payment?.payer?.first_name || null,
+          nombre: payment?.payer?.first_name || null,
+          email: payment?.payer?.email || null,
+          total: payment?.transaction_amount || null,
+          items: (payment?.additional_info?.items || []).map((item) => ({
+            nombre: item.title,
+            cantidad: Number(item.quantity || 0),
+            precio: item.unit_price
+              ? `$${Number(item.unit_price).toLocaleString('es-CO')}`
+              : '',
+            color: null,
+            talla: null,
+            imagen: item.picture_url || null,
+          })),
+        },
+      });
+    } catch (error) {
+      return res.status(500).json({ error: error?.message || 'No se pudo resumir el pago.' });
+    }
+  }
+
   const tokenPayload = verifyToken(req);
   const { form, cartItems, cartTotal, draftOrderId } = req.body;
   const orderOwnerEmail = normalizeEmail(tokenPayload?.email || form?.email);
@@ -415,10 +477,15 @@ export default async function handler(req, res) {
 
     const externalRef = `${draftOrderId}|${orderOwnerEmail}|${descuentoAplicado ? '1' : '0'}`;
 
+    const customerName = splitCustomerName(form?.nombre);
     const preference = await preferenceClient.create({
       body: {
         items: itemsMapped,
-        payer: { email: payerEmail },
+        payer: {
+          email: payerEmail,
+          first_name: customerName.firstName || undefined,
+          last_name: customerName.lastName || undefined,
+        },
         back_urls: {
           success: `${APP_URL}/orden-confirmada`,
           failure: `${APP_URL}/checkout`,

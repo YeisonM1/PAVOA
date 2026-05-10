@@ -90,6 +90,35 @@ const enviarEmailConfirmacion = async (order, paymentId, totalReal, descuentoApl
   });
 };
 
+const toMoneyLabel = (value) =>
+  value === null || value === undefined || value === ''
+    ? ''
+    : `$${Number(value).toLocaleString('es-CO')}`;
+
+const toLineItemSummary = (items = []) =>
+  (Array.isArray(items) ? items : []).map((item) => ({
+    product_id: item?.product_id || item?.sku || item?.variant_id || item?.id || null,
+    product_name: item?.nombre || item?.title || item?.name || null,
+    variant_id: item?.variant_id || null,
+    color: item?.color || null,
+    size: item?.talla || item?.variant_title || null,
+    quantity: Number(item?.cantidad || item?.quantity || 0),
+    amount: Number(item?.precio || item?.price || item?.unit_price || 0),
+  }));
+
+const getSingleLineItem = (items = []) => {
+  const lineItems = toLineItemSummary(items);
+  if (lineItems.length !== 1) return null;
+  const [item] = lineItems;
+  return {
+    productId: item.product_id || null,
+    productName: item.product_name || null,
+    variantId: item.variant_id || null,
+    color: item.color || null,
+    size: item.size || null,
+  };
+};
+
 const processMercadoPagoPaymentInternal = async (paymentId) => {
   const paymentClient = new mercadopago.Payment(client);
   const pagoInfo = await paymentClient.get({ id: paymentId });
@@ -124,6 +153,7 @@ const processMercadoPagoPaymentInternal = async (paymentId) => {
       nombre: i.title,
       cantidad: Number(i.quantity),
       precio: i.unit_price,
+      imagen: i.picture_url || null,
     }));
     const totalMP = pagoInfo.transaction_amount || 0;
 
@@ -150,10 +180,10 @@ const processMercadoPagoPaymentInternal = async (paymentId) => {
     }
 
     let insertedOrder = false;
+    let itemsFinales = order?.line_items
+      ? order.line_items.map((i) => ({ nombre: i.title, cantidad: i.quantity, precio: i.price }))
+      : itemsMP;
     if (emailCliente) {
-      const itemsFinales = order?.line_items
-        ? order.line_items.map((i) => ({ nombre: i.title, cantidad: i.quantity, precio: i.price }))
-        : itemsMP;
       const addr = order?.shipping_address;
       if (shouldPersistOrder) {
         const { error: sbError } = await supabase.from('pedidos').insert({
@@ -219,17 +249,25 @@ const processMercadoPagoPaymentInternal = async (paymentId) => {
     }
 
     const latestOrder = await getExistingOrderByPaymentId(pagoInfo.id);
+    const singleItem = getSingleLineItem(itemsFinales);
     await trackFunnelEvent({
       eventKey: `payment_approved:${pagoInfo.id}`,
       eventType: 'payment_approved',
       source: 'backend',
       userEmail: emailCliente || emailRef || pagoInfo.payer?.email || null,
+      productId: singleItem?.productId || null,
+      productName: singleItem?.productName || null,
+      variantId: singleItem?.variantId || null,
+      color: singleItem?.color || null,
+      size: singleItem?.size || null,
       orderId: draftOrderId,
       paymentId: String(pagoInfo.id),
       amount: totalPagado,
       meta: {
         shopify_order_name: order?.name || latestOrder?.shopify_order_name || null,
         already_processed: !insertedOrder,
+        first_name: pagoInfo.payer?.first_name || null,
+        line_items: toLineItemSummary(itemsFinales),
       },
     });
     return {
