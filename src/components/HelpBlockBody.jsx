@@ -1,6 +1,11 @@
 import { Fragment } from 'react';
 import { Link } from 'react-router-dom';
 
+const normalizeBody = (value) =>
+  String(value || '')
+    .replace(/\\n\\n/g, '\n\n')
+    .replace(/\\n/g, '\n');
+
 const renderInlineContactLink = (text) => {
   const parts = String(text || '').split('Contacto');
   if (parts.length === 1) return text;
@@ -18,7 +23,7 @@ const renderInlineContactLink = (text) => {
 };
 
 export default function HelpBlockBody({ body, className = '' }) {
-  const paragraphs = String(body || '').split(/\n{2,}/).filter(Boolean);
+  const paragraphs = normalizeBody(body).split(/\n{2,}/).filter(Boolean);
 
   return (
     <div className={className}>
