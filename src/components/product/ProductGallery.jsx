@@ -18,14 +18,14 @@ const TRUST_ITEMS = [
 
 function ProductTrustBlock() {
   return (
-    <div className="mt-6 border border-stone-100 bg-stone-50 px-4 py-5">
-      <ul className="grid grid-cols-3 gap-3">
+    <div className="mt-10 px-2">
+      <ul className="grid grid-cols-3 gap-4">
         {TRUST_ITEMS.map(({ icon: Icon, text }) => (
-          <li key={text} className="flex flex-col items-center text-center gap-2">
-            <span className="flex items-center justify-center text-[#C9A96E]">
-              <Icon size={18} strokeWidth={1.75} />
+          <li key={text} className="flex flex-col items-center text-center gap-2.5">
+            <span className="flex items-center justify-center text-[#1C1410]">
+              <Icon size={24} strokeWidth={1.85} />
             </span>
-            <span className="text-[8.5px] leading-[1.6] tracking-[0.14em] text-stone-600 uppercase">
+            <span className="text-[9.5px] leading-[1.65] tracking-[0.14em] text-[#1C1410] uppercase">
               {text}
             </span>
           </li>
