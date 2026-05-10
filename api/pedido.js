@@ -153,8 +153,9 @@ export default async function handler(req, res) {
   }
 
   const tokenPayload = verifyToken(req);
-  const { form, cartItems, cartTotal, idempotencyKey } = req.body;
+  const { form, cartItems, cartTotal, idempotencyKey, funnelSessionId } = req.body;
   const orderOwnerEmail = normalizeEmail(tokenPayload?.email || form?.email);
+  const authUserId = String(tokenPayload?.userId || tokenPayload?.id || '').trim() || null;
 
   if (!form?.nombre?.trim() || !form?.telefono?.trim()) {
     return res.status(400).json({ error: 'Nombre y telefono son requeridos' });
@@ -207,6 +208,8 @@ export default async function handler(req, res) {
       eventKey: `draft_order_created:${draftOrder.id}`,
       eventType: 'draft_order_created',
       source: 'backend',
+      sessionId: String(funnelSessionId || '').trim() || null,
+      userId: authUserId,
       userEmail: orderOwnerEmail,
       productId: singleItem?.productId || null,
       productName: singleItem?.productName || null,
@@ -229,6 +232,8 @@ export default async function handler(req, res) {
     await trackFunnelEvent({
       eventType: 'draft_order_failed',
       source: 'backend',
+      sessionId: String(funnelSessionId || '').trim() || null,
+      userId: authUserId,
       userEmail: orderOwnerEmail,
       productId: getSingleCartItem(cartItems)?.productId || null,
       productName: getSingleCartItem(cartItems)?.productName || null,

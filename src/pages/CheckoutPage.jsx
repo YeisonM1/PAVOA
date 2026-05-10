@@ -2,7 +2,7 @@ import React, { useState, useContext, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { CartContext } from '../App';
 import { trackBeginCheckout } from '../lib/analytics';
-import { trackFunnelEvent } from '../lib/funnel';
+import { getFunnelSessionId, trackFunnelEvent } from '../lib/funnel';
 import SEO from '../components/SEO';
 import { thumbImage } from '../utils/imageUrl';
 import { verificarStock } from '../services/productService';
@@ -169,6 +169,7 @@ export default function CheckoutPage() {
   const [tieneDescuento, setTieneDescuento] = useState(false);
   const [diagnosticLoading, setDiagnosticLoading] = useState(false);
   const [diagnosticResult, setDiagnosticResult] = useState(null);
+  const funnelSessionId = getFunnelSessionId();
   const checkoutStep = cargandoPago ? 2 : 1;
   const statusFromMP = (searchParams.get('status') || '').toLowerCase();
   const statusDetailFromMP = (searchParams.get('status_detail') || '').toLowerCase();
@@ -410,7 +411,7 @@ export default function CheckoutPage() {
       const resPedido = await fetch('/api/pedido', {
         method: 'POST',
         headers: getJsonHeaders(),
-        body: JSON.stringify({ form, cartItems, cartTotal, idempotencyKey }),
+        body: JSON.stringify({ form, cartItems, cartTotal, idempotencyKey, funnelSessionId }),
       });
       const dataPedido = await resPedido.json();
       if (!resPedido.ok || !dataPedido.ok || !dataPedido.draftOrderId) {
@@ -431,7 +432,7 @@ export default function CheckoutPage() {
       const resPref = await fetch('/api/procesar-pago', {
         method: 'POST',
         headers: getJsonHeaders(),
-        body: JSON.stringify({ form, cartItems, cartTotal, draftOrderId: draftOrderIdCreado }),
+        body: JSON.stringify({ form, cartItems, cartTotal, draftOrderId: draftOrderIdCreado, funnelSessionId }),
       });
       const dataPref = await resPref.json();
       if (!resPref.ok || !dataPref.init_point) {

@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { sendTransactionalEmail } from './_helpers/mail.js';
+import { trackFunnelEvent } from './_helpers/funnel.js';
 
 const supabase = createClient(
   process.env.VITE_SUPABASE_URL,
@@ -56,32 +57,26 @@ export default async function handler(req, res) {
     }
 
     try {
-      const payload = {
-        event_key: normalizeOptional(eventKey),
-        event_type: String(eventType).trim(),
+      const ok = await trackFunnelEvent({
+        eventKey: normalizeOptional(eventKey),
+        eventType: String(eventType).trim(),
         source: normalizeOptional(source) || 'frontend',
-        session_id: normalizeOptional(sessionId),
-        user_id: normalizeOptional(userId),
-        user_email: normalizeOptional(userEmail)?.toLowerCase() || null,
-        product_id: normalizeOptional(productId),
-        product_name: normalizeOptional(productName),
-        variant_id: normalizeOptional(variantId),
+        sessionId: normalizeOptional(sessionId),
+        userId: normalizeOptional(userId),
+        userEmail: normalizeOptional(userEmail)?.toLowerCase() || null,
+        productId: normalizeOptional(productId),
+        productName: normalizeOptional(productName),
+        variantId: normalizeOptional(variantId),
         color: normalizeOptional(color),
         size: normalizeOptional(size),
-        order_id: normalizeOptional(orderId),
-        payment_id: normalizeOptional(paymentId),
+        orderId: normalizeOptional(orderId),
+        paymentId: normalizeOptional(paymentId),
         amount: amount === null || amount === undefined || amount === '' ? null : Number(amount),
         meta: meta && typeof meta === 'object' ? meta : {},
-        created_at: new Date().toISOString(),
-      };
+        createdAt: new Date().toISOString(),
+      });
 
-      const query = payload.event_key
-        ? supabase.from('funnel_events').upsert(payload, { onConflict: 'event_key' })
-        : supabase.from('funnel_events').insert(payload);
-
-      const { error } = await query;
-      if (error) throw error;
-
+      if (!ok) throw new Error('No se pudo registrar el evento.');
       return res.status(200).json({ ok: true });
     } catch (err) {
       console.error('Error funnel event:', err.message);

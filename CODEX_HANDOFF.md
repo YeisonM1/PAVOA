@@ -44,6 +44,10 @@ Estado de cierre al 2026-05-09.
   - helper cliente: `src/lib/funnel.js`
   - helper servidor: `api/_helpers/funnel.js`
 - Se agrego script SQL manual: `SUPABASE_FUNNEL_EVENTS.sql`
+- Se agrego capa derivada `funnel_journeys` para resumir recorridos completos:
+  - script SQL manual: `SUPABASE_FUNNEL_JOURNEYS.sql`
+  - `api/_helpers/funnel.js` ahora actualiza `funnel_events` y `funnel_journeys`
+  - checkout manda `session_id` al backend para unir PDP, carrito, checkout y pago en un solo recorrido
 - `Compra confirmada` del embudo ya preserva `variant_id` y `variant_title` al salir de Shopify, para que `PAVOA Control` pueda mostrar color/talla en eventos nuevos
 - Correos transaccionales redisenados
 - Flujo Mailtrap integrado
@@ -85,6 +89,11 @@ Commit de revert:
 - Hay que ejecutar `SUPABASE_FUNNEL_EVENTS.sql`
 - Crea la tabla `funnel_events`
 - Desactiva RLS para permitir insercion desde el endpoint reutilizado `/api/contacto`
+- Hay que ejecutar tambien `SUPABASE_FUNNEL_JOURNEYS.sql`
+- Crea la tabla derivada `funnel_journeys`
+- Sin esa tabla:
+  - los eventos crudos seguiran llegando
+  - pero `Recorridos` del modulo `Embudo` no mostrara resumenes reales
 - Sin esa tabla:
   - no persistiran eventos del embudo
   - el modulo `Embudo` de `PAVOA Control` no mostrara datos reales
@@ -150,21 +159,16 @@ Commit de revert:
 
 ### Embudo
 - Nuevo modulo `Embudo` agregado en `PAVOA Control`
-- Muestra:
-  - visitas a producto
-  - selecciones de talla
-  - agregados al carrito
-  - inicio de compra
-  - intentos de pago
-  - compras confirmadas
-  - pagos rechazados
-  - errores en checkout
-- Tambien muestra:
-  - conversion a carrito
-  - conversion a checkout
-  - conversion a compra
-  - productos con mas interes
-  - actividad reciente
+- Ahora se separa en vistas:
+  - `Resumen`
+  - `Recorridos`
+  - `Productos`
+  - `Actividad`
+- `Recorridos` usa `funnel_journeys`:
+  - una fila por proceso
+  - tiempos por etapa
+  - linea de tiempo expandible
+- `Actividad` deja los eventos crudos como vista tecnica secundaria
 - El resumen principal tambien puede mostrar compras confirmadas del embudo si la tabla existe
 
 ### Pedidos espejo

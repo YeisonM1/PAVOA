@@ -22,6 +22,8 @@ const getSessionId = () => {
   return generated;
 };
 
+export const getFunnelSessionId = () => getSessionId();
+
 export const trackFunnelEvent = (eventType, payload = {}) => {
   if (typeof window === 'undefined' || !eventType) return;
 

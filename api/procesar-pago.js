@@ -358,9 +358,10 @@ export default async function handler(req, res) {
   }
 
   const tokenPayload = verifyToken(req);
-  const { form, cartItems, cartTotal, draftOrderId } = req.body;
+  const { form, cartItems, cartTotal, draftOrderId, funnelSessionId } = req.body;
   const orderOwnerEmail = normalizeEmail(tokenPayload?.email || form?.email);
   const payerEmail = normalizeEmail(form?.email);
+  const authUserId = String(tokenPayload?.userId || tokenPayload?.id || '').trim() || null;
 
   if (!form || !cartItems?.length || !draftOrderId || !cartTotal) {
     return res.status(400).json({ error: 'Datos incompletos' });
@@ -379,6 +380,8 @@ export default async function handler(req, res) {
       await trackFunnelEvent({
         eventType: 'payment_preference_failed',
         source: 'backend',
+        sessionId: String(funnelSessionId || '').trim() || null,
+        userId: authUserId,
         userEmail: orderOwnerEmail,
         productId: singleItem?.productId || null,
         productName: singleItem?.productName || null,
@@ -407,6 +410,8 @@ export default async function handler(req, res) {
       await trackFunnelEvent({
         eventType: 'payment_preference_failed',
         source: 'backend',
+        sessionId: String(funnelSessionId || '').trim() || null,
+        userId: authUserId,
         userEmail: orderOwnerEmail,
         productId: singleItem?.productId || null,
         productName: singleItem?.productName || null,
@@ -509,6 +514,8 @@ export default async function handler(req, res) {
       eventKey: `payment_preference_created:${preference.id}`,
       eventType: 'payment_preference_created',
       source: 'backend',
+      sessionId: String(funnelSessionId || '').trim() || null,
+      userId: authUserId,
       userEmail: orderOwnerEmail,
       productId: singleItem?.productId || null,
       productName: singleItem?.productName || null,
@@ -551,6 +558,8 @@ export default async function handler(req, res) {
     await trackFunnelEvent({
       eventType: 'payment_preference_failed',
       source: 'backend',
+      sessionId: String(funnelSessionId || '').trim() || null,
+      userId: authUserId,
       userEmail: orderOwnerEmail,
       productId: getSingleCartItem(cartItems)?.productId || null,
       productName: getSingleCartItem(cartItems)?.productName || null,
