@@ -1,6 +1,6 @@
 # CODEX_HANDOFF.md
 
-Estado de cierre al 2026-05-03.
+Estado de cierre al 2026-05-09.
 
 ## Storefront principal `PAVOA`
 
@@ -29,8 +29,15 @@ Estado de cierre al 2026-05-03.
   - `nosotros_page` + `nosotros_block`
   - `contact_page`
   - `footer_content`
+- Paginas de ayuda conectadas a Shopify via:
+  - `help_page`
+  - `help_page_block`
+  - Nota: en esta tienda el campo de referencias quedo con key `blocks_1`, no `blocks`
+- La descripcion principal de PDP ahora prioriza `descriptionHtml` de Shopify para respetar parrafos reales
 - Correos transaccionales redisenados
 - Flujo Mailtrap integrado
+- Wishlist corregido para consolidar guest -> cuenta al iniciar sesion
+- Login y logout emiten cambio de auth para resincronizar wishlist real
 
 ### Punto descartado hoy
 - Se probo agregar un bloque de decision arriba del selector en PDP
@@ -41,9 +48,27 @@ Commit de revert:
 - `8933e12` `Revert PDP decision block`
 
 ### Ultimos cambios importantes en main
+- `2095921` `Merge guest wishlist into account`
+- `91bb4c4` `Align product card colors and hover price`
+- `5c44309` `Use Shopify product HTML for PDP paragraphs`
+- `76672e7` `Normalize escaped help page line breaks`
+- `680459e` `Load help pages from Shopify metaobjects`
 - `34d0d1d` `Refresh transactional email system`
 - `3a1f6cd` `Add Mailtrap sandbox email provider`
 - `8933e12` `Revert PDP decision block`
+
+### Nota importante sobre wishlist en storefront
+- `producto.id` en `PAVOA` sigue siendo `node.handle`
+- Si en Shopify cambia el titulo pero no el handle, en wishlist y analytics seguira apareciendo el handle viejo
+- Si hace falta corregir lectura visual para cliente, mostrar `title` real desde Shopify en `PAVOA Control`, no solo el handle formateado
+
+### Nota manual aplicada en Supabase
+- La tabla `wishlist_events` tenia un check constraint que solo permitia `add` y `remove`
+- Se actualizo manualmente en Supabase para permitir tambien `guest_merge`
+- SQL aplicado:
+  - `alter table public.wishlist_events drop constraint if exists wishlist_events_action_type_check;`
+  - `alter table public.wishlist_events add constraint wishlist_events_action_type_check check (action_type in ('add', 'remove', 'guest_merge'));`
+- Si se clona este entorno en otra base, este ajuste debe repetirse o el KPI `Interes anonimo convertido en cuenta` no va a subir aunque el merge visual funcione
 
 ### Siguiente trabajo recomendado en storefront
 1. Reescribir bloque de confianza en `src/components/product/ProductVariantSelector.jsx`
@@ -94,6 +119,15 @@ Commit de revert:
 
 ### Wishlist
 - Vista y exportacion montadas
+- El resumen ya no lee la tabla vieja `wishlists` para KPI principal; ahora usa `wishlist_actor_state`
+- La UI se tradujo a lenguaje de negocio:
+  - `Interes en productos`
+  - `Favoritos activos hoy`
+  - `Interes anonimo convertido en cuenta`
+  - `Productos retirados de favoritos`
+- Se agrego conteo de `guest_merge` en insights y exportacion
+- Se agrego caja guia para explicar como leer la metrica
+- Se redeployo manualmente Vercel porque produccion seguia sirviendo una build vieja del 2026-05-03
 
 ### Pedidos espejo
 - Modulo montado
@@ -103,6 +137,8 @@ Commit de revert:
 - `PAVOA Control` tambien ya soporta `mailtrap_sandbox`
 
 ### Commits importantes en app repo
+- `36ea18e` `Clarify wishlist conversion metrics`
+- `0f6337a` `Fix wishlist summary source`
 - `965179e` `Align stock alert email with transactional design`
 - `89d83f5` `Add Mailtrap sandbox support to stock alerts`
 - `1656bec` `Download newsletter export inside Shopify session`
@@ -122,5 +158,8 @@ Si se abre otro chat, decir:
 - lee `CLAUDE.md`
 - lee `AGENTS.md`
 - lee `CODEX_HANDOFF.md`
-- luego sigue con el bloque de confianza de compra o con analytics del embudo
-
+- luego sigue con uno de estos frentes:
+  - bloque de confianza de compra en PDP
+  - analytics del embudo
+  - newsletter del footer por backend
+  - escalabilidad del catalogo
