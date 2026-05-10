@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { login } from '../services/authService';
 import logo from '../assets/LOGO-PAVOA.svg';
+import logoPavo from '../assets/Pavoa Logo Negro Sin Fondo.svg';
 import SEO from '../components/SEO';
 
 export default function LoginPage() {
@@ -81,7 +82,7 @@ export default function LoginPage() {
               <h1 className="text-2xl font-light text-stone-900 tracking-[0.15em] uppercase">
                 Iniciar <strong className="font-bold">sesión</strong>
               </h1>
-              <img src={logo} alt="PAVOA" className="h-8 w-auto object-contain opacity-80" />
+              <img src={logoPavo} alt="PAVOA" className="h-8 w-auto object-contain opacity-80" />
             </div>
             <div className="w-8 h-[1px] mt-4" style={{ backgroundColor: '#DFCDB4' }} />
           </div>
