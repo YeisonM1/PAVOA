@@ -48,6 +48,29 @@ const parseShopifyError = (message = '') => {
   }
 };
 
+const buildCartSummary = (cartItems = []) =>
+  (Array.isArray(cartItems) ? cartItems : []).map((item) => ({
+    product_id: item?.producto?.id || null,
+    product_name: item?.producto?.nombre || null,
+    variant_id: item?.producto?.selectedVariantId || null,
+    color: item?.producto?.colorSeleccionado || null,
+    size: item?.talla || null,
+    quantity: Number(item?.cantidad || 0),
+    amount: Number(item?.producto?.precioNumerico || 0),
+  }));
+
+const getSingleCartItem = (cartItems = []) => {
+  if (!Array.isArray(cartItems) || cartItems.length !== 1) return null;
+  const [item] = cartItems;
+  return {
+    productId: item?.producto?.id || null,
+    productName: item?.producto?.nombre || null,
+    variantId: item?.producto?.selectedVariantId || null,
+    color: item?.producto?.colorSeleccionado || null,
+    size: item?.talla || null,
+  };
+};
+
 const crearDraftOrder = async (token, { form, trustedItems, orderOwnerEmail }) => {
   const lineItems = trustedItems.map((item) => ({
     variant_id: item.variantId,
@@ -179,17 +202,24 @@ export default async function handler(req, res) {
       _pedidoCache.set(idempotencyKey, { draftOrderId: draftOrder.id, name: draftOrder.name, ts: Date.now() });
     }
 
+    const singleItem = getSingleCartItem(cartItems);
     await trackFunnelEvent({
       eventKey: `draft_order_created:${draftOrder.id}`,
       eventType: 'draft_order_created',
       source: 'backend',
       userEmail: orderOwnerEmail,
+      productId: singleItem?.productId || null,
+      productName: singleItem?.productName || null,
+      variantId: singleItem?.variantId || null,
+      color: singleItem?.color || null,
+      size: singleItem?.size || null,
       orderId: String(draftOrder.id),
       amount: cartTotal || null,
       meta: {
         shopify_order_name: draftOrder.name || null,
         line_count: trustedItems.length,
         item_count: trustedItems.reduce((total, item) => total + Number(item.quantity || 0), 0),
+        line_items: buildCartSummary(cartItems),
       },
     });
 
@@ -200,10 +230,16 @@ export default async function handler(req, res) {
       eventType: 'draft_order_failed',
       source: 'backend',
       userEmail: orderOwnerEmail,
+      productId: getSingleCartItem(cartItems)?.productId || null,
+      productName: getSingleCartItem(cartItems)?.productName || null,
+      variantId: getSingleCartItem(cartItems)?.variantId || null,
+      color: getSingleCartItem(cartItems)?.color || null,
+      size: getSingleCartItem(cartItems)?.size || null,
       amount: cartTotal || null,
       meta: {
         detail: parseShopifyError(err.message),
         line_count: Array.isArray(cartItems) ? cartItems.length : 0,
+        line_items: buildCartSummary(cartItems),
       },
     });
     console.error('Error creando draft order:', err.message);

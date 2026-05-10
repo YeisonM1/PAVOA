@@ -21,6 +21,29 @@ const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const SOLO_DIGITOS = /\D/g;
 const CHECKOUT_FORM_KEY = 'pavoa-checkout-form-v1';
 
+const buildCheckoutLineItems = (cartItems = []) =>
+  cartItems.map((item) => ({
+    product_id: item?.producto?.id || null,
+    product_name: item?.producto?.nombre || null,
+    variant_id: item?.producto?.selectedVariantId || null,
+    color: item?.producto?.colorSeleccionado || null,
+    size: item?.talla || null,
+    quantity: Number(item?.cantidad || 0),
+    amount: Number(item?.producto?.precioNumerico || 0),
+  }));
+
+const getSingleCheckoutItem = (cartItems = []) => {
+  if (cartItems.length !== 1) return null;
+  const [item] = cartItems;
+  return {
+    productId: item?.producto?.id || null,
+    productName: item?.producto?.nombre || null,
+    variantId: item?.producto?.selectedVariantId || null,
+    color: item?.producto?.colorSeleccionado || null,
+    size: item?.talla || null,
+  };
+};
+
 const formatBackendError = (error, detail) => {
   const base = String(error || '').trim();
   if (!detail) return base || 'Ocurrio un error.';
@@ -89,12 +112,19 @@ export default function CheckoutPage() {
 
   useEffect(() => {
     if (cartItems.length > 0) {
+      const singleItem = getSingleCheckoutItem(cartItems);
       trackBeginCheckout(cartItems, cartTotal);
       trackFunnelEvent('begin_checkout', {
+        productId: singleItem?.productId || null,
+        productName: singleItem?.productName || null,
+        variantId: singleItem?.variantId || null,
+        color: singleItem?.color || null,
+        size: singleItem?.size || null,
         amount: cartTotal,
         meta: {
           line_count: cartItems.length,
           item_count: cartItems.reduce((total, item) => total + item.cantidad, 0),
+          line_items: buildCheckoutLineItems(cartItems),
         },
       });
     }
@@ -363,10 +393,16 @@ export default function CheckoutPage() {
       }
 
       trackFunnelEvent('payment_click', {
+        productId: getSingleCheckoutItem(cartItems)?.productId || null,
+        productName: getSingleCheckoutItem(cartItems)?.productName || null,
+        variantId: getSingleCheckoutItem(cartItems)?.variantId || null,
+        color: getSingleCheckoutItem(cartItems)?.color || null,
+        size: getSingleCheckoutItem(cartItems)?.size || null,
         amount: cartTotal,
         meta: {
           line_count: cartItems.length,
           item_count: cartItems.reduce((total, item) => total + item.cantidad, 0),
+          line_items: buildCheckoutLineItems(cartItems),
         },
       });
 

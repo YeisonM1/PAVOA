@@ -91,6 +91,29 @@ const validateExpectedSeller = async () => {
   return { ok: true, active_user_id: activeUserId };
 };
 
+const buildCartSummary = (cartItems = []) =>
+  (Array.isArray(cartItems) ? cartItems : []).map((item) => ({
+    product_id: item?.producto?.id || null,
+    product_name: item?.producto?.nombre || null,
+    variant_id: item?.producto?.selectedVariantId || null,
+    color: item?.producto?.colorSeleccionado || null,
+    size: item?.talla || null,
+    quantity: Number(item?.cantidad || 0),
+    amount: Number(item?.producto?.precioNumerico || 0),
+  }));
+
+const getSingleCartItem = (cartItems = []) => {
+  if (!Array.isArray(cartItems) || cartItems.length !== 1) return null;
+  const [item] = cartItems;
+  return {
+    productId: item?.producto?.id || null,
+    productName: item?.producto?.nombre || null,
+    variantId: item?.producto?.selectedVariantId || null,
+    color: item?.producto?.colorSeleccionado || null,
+    size: item?.talla || null,
+  };
+};
+
 const buildMpDiagnosticSummary = ({ userInfo, preferenceInfo }) => {
   const summary = [];
 
@@ -288,17 +311,24 @@ export default async function handler(req, res) {
   }
 
   try {
+    const singleItem = getSingleCartItem(cartItems);
     const sellerCheck = await validateExpectedSeller();
     if (!sellerCheck.ok) {
       await trackFunnelEvent({
         eventType: 'payment_preference_failed',
         source: 'backend',
         userEmail: orderOwnerEmail,
+        productId: singleItem?.productId || null,
+        productName: singleItem?.productName || null,
+        variantId: singleItem?.variantId || null,
+        color: singleItem?.color || null,
+        size: singleItem?.size || null,
         orderId: draftOrderId,
         amount: cartTotal || null,
         meta: {
           stage: 'seller_validation',
           detail: sellerCheck.detail || sellerCheck.error,
+          line_items: buildCartSummary(cartItems),
         },
       });
       return res.status(sellerCheck.status || 409).json({
@@ -316,12 +346,18 @@ export default async function handler(req, res) {
         eventType: 'payment_preference_failed',
         source: 'backend',
         userEmail: orderOwnerEmail,
+        productId: singleItem?.productId || null,
+        productName: singleItem?.productName || null,
+        variantId: singleItem?.variantId || null,
+        color: singleItem?.color || null,
+        size: singleItem?.size || null,
         orderId: draftOrderId,
         amount: cartTotal || null,
         meta: {
           stage: 'cart_validation',
           expected_total: total,
           received_total: Number(cartTotal),
+          line_items: buildCartSummary(cartItems),
         },
       });
       return res.status(409).json({ error: 'El precio del carrito cambio. Actualiza la bolsa e intenta de nuevo.' });
@@ -407,6 +443,11 @@ export default async function handler(req, res) {
       eventType: 'payment_preference_created',
       source: 'backend',
       userEmail: orderOwnerEmail,
+      productId: singleItem?.productId || null,
+      productName: singleItem?.productName || null,
+      variantId: singleItem?.variantId || null,
+      color: singleItem?.color || null,
+      size: singleItem?.size || null,
       orderId: draftOrderId,
       amount: total,
       meta: {
@@ -416,6 +457,7 @@ export default async function handler(req, res) {
         descuento_aplicado: descuentoAplicado,
         line_count: trustedItems.length,
         item_count: trustedItems.reduce((sum, item) => sum + Number(item.quantity || 0), 0),
+        line_items: buildCartSummary(cartItems),
       },
     });
 
@@ -443,11 +485,17 @@ export default async function handler(req, res) {
       eventType: 'payment_preference_failed',
       source: 'backend',
       userEmail: orderOwnerEmail,
+      productId: getSingleCartItem(cartItems)?.productId || null,
+      productName: getSingleCartItem(cartItems)?.productName || null,
+      variantId: getSingleCartItem(cartItems)?.variantId || null,
+      color: getSingleCartItem(cartItems)?.color || null,
+      size: getSingleCartItem(cartItems)?.size || null,
       orderId: draftOrderId,
       amount: cartTotal || null,
       meta: {
         stage: 'unexpected',
         detail: error?.message || 'Error al crear la preferencia de pago',
+        line_items: buildCartSummary(cartItems),
       },
     });
     return res.status(500).json({ error: error?.message || 'Error al crear la preferencia de pago' });
