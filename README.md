@@ -1,77 +1,51 @@
-# PAVOA — Moda Deportiva Premium
+# PAVOA
 
-E-commerce headless de moda deportiva femenina de diseño, construido con React 19 + Vite 8 + Tailwind CSS v4.
+Storefront headless de PAVOA.
 
 ## Stack
+- React 19
+- Vite 8
+- Tailwind CSS v4
+- Shopify Storefront API
+- Supabase
+- Mercado Pago
+- Vercel Serverless Functions
 
-| Capa | Tecnología |
-|------|-----------|
-| Frontend | React 19, Vite 8, Tailwind CSS v4 |
-| Backend | Vercel Serverless Functions (Node.js) |
-| Productos | Shopify Storefront API (GraphQL) |
-| Pagos | MercadoPago |
-| Auth & DB | Supabase (usuarios, pedidos) |
-| Email | Resend |
+## Estructura
+- `src/`: storefront
+- `api/`: funciones serverless
+- `public/`: assets públicos
+- `SUPABASE_FUNNEL_EVENTS.sql`: tabla de eventos del embudo
+- `SUPABASE_FUNNEL_JOURNEYS.sql`: tabla derivada de recorridos
 
-## Estructura del Proyecto
-
-```
-├── api/                    # Vercel Serverless Functions
-│   ├── _helpers/           # Helpers compartidos (auth, shopify, email templates)
-│   ├── login.js            # Auth con JWT
-│   ├── register.js         # Registro + email verificación
-│   ├── pedido.js           # Crear draft order en Shopify
-│   ├── procesar-pago.js    # Crear preferencia MercadoPago
-│   ├── webhook-mercadopago.js  # Webhook MP → completar orden + email
-│   ├── webhook-shopify.js      # Webhook Shopify → tracking + emails
-│   └── ...
-├── src/
-│   ├── components/         # Componentes reutilizables
-│   │   ├── product/        # Sub-componentes de ProductPage
-│   │   └── ...
-│   ├── pages/              # Páginas (lazy loaded)
-│   ├── sections/           # Secciones de layout (Header, Footer, etc.)
-│   │   └── header/         # Sub-componentes del Header
-│   ├── services/           # Servicios (Shopify API, auth)
-│   ├── hooks/              # Custom hooks
-│   ├── context/            # React Context providers
-│   ├── lib/                # Utilidades (analytics, etc.)
-│   └── utils/              # Helpers puros
-└── public/                 # Assets estáticos
-```
-
-## Desarrollo Local
-
+## Comandos
 ```bash
 npm install
-npm run dev      # → http://localhost:5173
+npm run dev
+npm run build
+npm run lint
 ```
 
-## Variables de Entorno
+## Entorno
+Ver `.env.example`.
 
-### Cliente (prefijo `VITE_`)
-- `VITE_SHOPIFY_DOMAIN` — Dominio de la tienda Shopify
-- `VITE_SHOPIFY_TOKEN` — Token Storefront API
-- `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY`
-- `VITE_APP_URL` — URL base de la app
-- `VITE_WHATSAPP_NUMBER` — Número de WhatsApp para checkout
+Variables relevantes:
+- `VITE_SHOPIFY_DOMAIN`
+- `VITE_SHOPIFY_TOKEN`
+- `VITE_SUPABASE_URL`
+- `VITE_SUPABASE_ANON_KEY`
+- `SUPABASE_SERVICE_ROLE_KEY`
+- `MP_ACCESS_TOKEN`
+- `RESEND_API_KEY`
 
-### Servidor (Vercel)
-- `SHOPIFY_CLIENT_ID` / `SHOPIFY_CLIENT_SECRET` — OAuth de Shopify
-- `SHOPIFY_ADMIN_TOKEN` — Token admin para webhooks
-- `SHOPIFY_WEBHOOK_SECRET` — Secret del webhook de Shopify
-- `MP_ACCESS_TOKEN` / `MP_WEBHOOK_SECRET` — MercadoPago
-- `RESEND_API_KEY` — API key de Resend
-- `JWT_SECRET` — Secret para tokens JWT de sesión
+## Producción
+- Storefront: `https://pavoa.vercel.app`
+- Shopify visible: `pavoa-4502.myshopify.com`
 
-## Deploy
+## Documentación operativa
+- `CLAUDE.md`: reglas base de trabajo
+- `AGENTS.md`: guía activa de continuidad
+- `CODEX_HANDOFF.md`: estado actual del proyecto y pendientes reales
 
-Push a `main` → Vercel despliega automáticamente.
-
-```bash
-git add -A && git commit -m "feat: descripción" && git push
-```
-
-## Licencia
-
-Privado — © 2026 PAVOA. Todos los derechos reservados.
+## Nota
+`PAVOA Control` vive como repo/app separado dentro de `pavoa-control/`, pero no es la prioridad principal de este repo.

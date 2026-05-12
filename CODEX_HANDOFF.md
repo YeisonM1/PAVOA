@@ -1,213 +1,113 @@
 # CODEX_HANDOFF.md
 
-Estado de cierre al 2026-05-09.
+Estado de continuidad al 2026-05-11.
 
-## Storefront principal `PAVOA`
+## Leer junto con
+- `CLAUDE.md`
+- `AGENTS.md`
 
-### Estado general
-- La pagina quedo mas solida
-- Mailtrap Sandbox ya funciona para pruebas de correo
-- Se mantuvo el diseño general
-- El cambio de bloque nuevo en PDP fue revertido porque no gusto
+## Prioridad real
+- La prioridad sigue siendo el storefront `PAVOA`.
+- `PAVOA Control` sigue activo, pero no es el frente principal salvo que haya una falla operativa concreta.
+- Evitar cambios visuales grandes sin validación.
+- Favorecer estabilidad, medición, conversión y lógica antes que rediseños.
 
-### Produccion
-- URL: `https://pavoa.vercel.app`
-- Shopify store visible: `pavoa-4502`
-- Dominio permanente/API que puede aparecer en webhooks: `pnxbbs-hd.myshopify.com`
+## Estado actual del storefront
+- Home, categorías, PDP, checkout y cuenta están estables.
+- La home con tabs `Nuevo`, `Mas vendido`, `Tendencia` se mantiene con 2 productos por decisión de la dueña.
+- El intento de agregar un bloque nuevo de decisión en PDP fue descartado. La mejora segura sigue siendo confianza debajo del CTA, no más texto arriba.
+- La página `Nosotros` ya fue reorientada a filosofía de marca y el copy visible del storefront fue normalizado en español.
 
-### Correo
-- Se agrego proveedor por entorno con switch:
-  - `resend`
-  - `mailtrap_sandbox`
-- Mailtrap ya fue probado con otros correos y funciona
-- Correos transaccionales del repo principal fueron pulidos visualmente
+## Integraciones y arquitectura
+- Frontend: React 19 + Vite 8 + Tailwind v4.
+- Backend: funciones serverless en `api/`.
+- Catálogo y contenido editorial: Shopify Storefront API + metaobjects.
+- Pagos: Mercado Pago.
+- Datos internos: Supabase.
+- Correo transaccional: Resend con soporte de `mailtrap_sandbox` para pruebas.
 
-### Cambios relevantes ya hechos
-- Shopify content conectado:
-  - `site_settings`
-  - `filosofia_section`
-  - `nosotros_page` + `nosotros_block`
-  - `contact_page`
-  - `footer_content`
-- Paginas de ayuda conectadas a Shopify via:
-  - `help_page`
-  - `help_page_block`
-  - Nota: en esta tienda el campo de referencias quedo con key `blocks_1`, no `blocks`
-- La descripcion principal de PDP ahora prioriza `descriptionHtml` de Shopify para respetar parrafos reales
-- Se agrego bloque corto de confianza en PDP debajo de la imagen principal:
-  - `Envios a todo Colombia`
-  - `Cambios dentro de los primeros 5 dias habiles`
-  - `Pago seguro`
-- Se implemento embudo propio para PAVOA:
-  - eventos frontend via `/api/contacto` con `type: funnel-event`
-  - eventos backend desde checkout y Mercado Pago
-  - helper cliente: `src/lib/funnel.js`
-  - helper servidor: `api/_helpers/funnel.js`
-- Se agrego script SQL manual: `SUPABASE_FUNNEL_EVENTS.sql`
-- Se agrego capa derivada `funnel_journeys` para resumir recorridos completos:
-  - script SQL manual: `SUPABASE_FUNNEL_JOURNEYS.sql`
-  - `api/_helpers/funnel.js` ahora actualiza `funnel_events` y `funnel_journeys`
-  - checkout manda `session_id` al backend para unir PDP, carrito, checkout y pago en un solo recorrido
-- `Compra confirmada` del embudo ya preserva `variant_id` y `variant_title` al salir de Shopify, para que `PAVOA Control` pueda mostrar color/talla en eventos nuevos
-- Correos transaccionales redisenados
-- Flujo Mailtrap integrado
-- Wishlist corregido para consolidar guest -> cuenta al iniciar sesion
-- Login y logout emiten cambio de auth para resincronizar wishlist real
+## Lo que ya quedó resuelto
+- Newsletter del footer ya no inserta directo a Supabase desde frontend.
+  - Ahora entra por `/api/contacto` con `type: newsletter-subscribe`.
+- El catálogo ya no depende de `products(first: 100)`.
+  - `getProductos()` ya pagina Shopify.
+- Checkout/pago quedó más sólido.
+  - mejor idempotencia para creación de preferencia de pago
+  - mejor validación de drafts cacheados
+- El embudo propio ya existe y registra eventos frontend/backend.
+  - `src/lib/funnel.js`
+  - `api/_helpers/funnel.js`
+- `Nosotros` ya soporta una estructura más editorial orientada a filosofía.
 
-### Punto descartado hoy
-- Se probo agregar un bloque de decision arriba del selector en PDP
-- No gusto
-- Ya fue revertido y empujado
+## Stock alerts
+- El problema reciente no era visual ni del panel.
+- La causa real estaba en Supabase: el índice viejo impedía repetir alertas históricas para la misma combinación de `email + producto + variante`.
+- La solución correcta fue en base de datos:
+  - dejar unicidad solo para alertas pendientes
+  - permitir nuevas alertas cuando la anterior ya fue notificada
+- El backend quedó simplificado después de eso.
+- Si este entorno se replica en otra base, hay que repetir esa regla.
 
-Commit de revert:
-- `8933e12` `Revert PDP decision block`
+## Ajustes manuales importantes en Supabase
 
-### Ultimos cambios importantes en main
-- `2095921` `Merge guest wishlist into account`
-- `91bb4c4` `Align product card colors and hover price`
-- `5c44309` `Use Shopify product HTML for PDP paragraphs`
-- `76672e7` `Normalize escaped help page line breaks`
-- `680459e` `Load help pages from Shopify metaobjects`
-- `34d0d1d` `Refresh transactional email system`
-- `3a1f6cd` `Add Mailtrap sandbox email provider`
-- `8933e12` `Revert PDP decision block`
+### 1. `wishlist_events`
+Si se clona otra base, repetir:
 
-### Nota importante sobre wishlist en storefront
-- `producto.id` en `PAVOA` sigue siendo `node.handle`
-- Si en Shopify cambia el titulo pero no el handle, en wishlist y analytics seguira apareciendo el handle viejo
-- Si hace falta corregir lectura visual para cliente, mostrar `title` real desde Shopify en `PAVOA Control`, no solo el handle formateado
+```sql
+alter table public.wishlist_events drop constraint if exists wishlist_events_action_type_check;
+alter table public.wishlist_events add constraint wishlist_events_action_type_check check (action_type in ('add', 'remove', 'guest_merge'));
+```
 
-### Nota manual aplicada en Supabase
-- La tabla `wishlist_events` tenia un check constraint que solo permitia `add` y `remove`
-- Se actualizo manualmente en Supabase para permitir tambien `guest_merge`
-- SQL aplicado:
-  - `alter table public.wishlist_events drop constraint if exists wishlist_events_action_type_check;`
-  - `alter table public.wishlist_events add constraint wishlist_events_action_type_check check (action_type in ('add', 'remove', 'guest_merge'));`
-- Si se clona este entorno en otra base, este ajuste debe repetirse o el KPI `Interes anonimo convertido en cuenta` no va a subir aunque el merge visual funcione
+### 2. Embudo
+Ejecutar:
+- `SUPABASE_FUNNEL_EVENTS.sql`
+- `SUPABASE_FUNNEL_JOURNEYS.sql`
 
-### Nota manual pendiente en Supabase para embudo
-- Hay que ejecutar `SUPABASE_FUNNEL_EVENTS.sql`
-- Crea la tabla `funnel_events`
-- Desactiva RLS para permitir insercion desde el endpoint reutilizado `/api/contacto`
-- Hay que ejecutar tambien `SUPABASE_FUNNEL_JOURNEYS.sql`
-- Crea la tabla derivada `funnel_journeys`
-- Sin esa tabla:
-  - los eventos crudos seguiran llegando
-  - pero `Recorridos` del modulo `Embudo` no mostrara resumenes reales
-- Sin esa tabla:
-  - no persistiran eventos del embudo
-  - el modulo `Embudo` de `PAVOA Control` no mostrara datos reales
+Sin eso:
+- no persisten eventos del embudo
+- `PAVOA Control` no puede mostrar recorridos reales
 
-### Siguiente trabajo recomendado en storefront
-1. Ejecutar `SUPABASE_FUNNEL_EVENTS.sql` en la base real y validar datos en `PAVOA Control`
-2. Mover newsletter del footer a endpoint backend conservando UI
-3. Corregir escalabilidad de `getProductos()` para no depender de `products(first: 100)`
-4. Si se quiere volver editable el bloque de confianza del PDP, llevarlo a Shopify en lugar de hardcodearlo
+### 3. Stock alerts
+La base debe mantener la lógica de unicidad para solo una alerta pendiente por variante.
+Si se reconstruye la tabla, verificar que el índice no vuelva a bloquear historial completo.
 
-### Auditoria resumida
-- PDP necesita mas confianza, no mas texto
-- Analytics aun es demasiado corto para optimizar conversion
-- Newsletter actual inserta directo desde frontend
-- Catalogo depende de maximo 100 productos
-- Home tabs con 2 productos se dejan asi por decision de la dueña
+## Shopify / contenido editable ya activo
+- `site_settings`
+- `filosofia_section`
+- `nosotros_page`
+- `nosotros_block`
+- `contact_page`
+- `footer_content`
+- `help_page`
+- `help_page_block`
 
-## App embebida `PAVOA Control`
+Nota:
+- en esta tienda, el campo de referencias de ayuda quedó con key `blocks_1`, no `blocks`
 
-### Estado general
-- App desplegada y estable en Vercel
-- Ya no depende de terminal ni tunnel
-- Repo remoto configurado y sincronizado
+## PAVOA Control
+Estado general:
+- desplegado y estable en Vercel
+- repo separado
+- módulos ya montados: resumen, stock alerts, newsletter, pedidos espejo, wishlist insights, embudo
 
-### Produccion
-- URL: `https://pavoa-control.vercel.app`
-- Repo: `https://github.com/YeisonM1/pavoa-control.git`
+Notas útiles:
+- conviene abrir `PAVOA Control` después de deploys relevantes para que la app vuelva a registrar `inventory_levels/update`
+- el módulo de stock alerts depende de que Shopify y Supabase sigan alineados en `variant_id`, `notified` y `notified_at`
 
-### Modulos ya montados
-- Dashboard resumen
-- Stock alerts
-- Newsletter
-- Pedidos espejo
-- Wishlist insights
-
-### Stock alerts
-- Flujo real validado
-- Guarda `variant_id`
-- Cuando sube stock:
-  - webhook entra
-  - envia correo
-  - marca `notified = true`
-  - marca `notified_at`
-- Se limpio el debug temporal
-- Correo de stock alerts alineado con el nuevo sistema visual transaccional
-- `PAVOA Control` ahora define y re-registra explicitamente los webhooks de Shopify desde la app autenticada:
-  - `app/uninstalled`
-  - `app/scopes_update`
-  - `inventory_levels/update`
-- Esto evita que stock alerts dependa de una suscripcion vieja o perdida en Shopify
-- Despues de deploy, conviene abrir `PAVOA Control` al menos una vez para que se vuelva a registrar `inventory_levels/update` con la tienda
-
-### Newsletter
-- Vista lista
-- Exportacion a Excel funcionando
-- Se corrigio para que descargue dentro de la sesion embebida sin mandar a login
-
-### Wishlist
-- Vista y exportacion montadas
-- El resumen ya no lee la tabla vieja `wishlists` para KPI principal; ahora usa `wishlist_actor_state`
-- La UI se tradujo a lenguaje de negocio:
-  - `Interes en productos`
-  - `Favoritos activos hoy`
-  - `Interes anonimo convertido en cuenta`
-  - `Productos retirados de favoritos`
-- Se agrego conteo de `guest_merge` en insights y exportacion
-- Se agrego caja guia para explicar como leer la metrica
-- Se redeployo manualmente Vercel porque produccion seguia sirviendo una build vieja del 2026-05-03
-
-### Embudo
-- Nuevo modulo `Embudo` agregado en `PAVOA Control`
-- Ahora se separa en vistas:
-  - `Resumen`
-  - `Recorridos`
-  - `Productos`
-  - `Actividad`
-- `Recorridos` usa `funnel_journeys`:
-  - una fila por proceso
-  - tiempos por etapa
-  - linea de tiempo expandible
-- `Actividad` deja los eventos crudos como vista tecnica secundaria
-- El resumen principal tambien puede mostrar compras confirmadas del embudo si la tabla existe
-
-### Pedidos espejo
-- Modulo montado
-- Tabla puede estar vacia segun datos actuales
-
-### Mailtrap en app
-- `PAVOA Control` tambien ya soporta `mailtrap_sandbox`
-
-### Commits importantes en app repo
-- `36ea18e` `Clarify wishlist conversion metrics`
-- `0f6337a` `Fix wishlist summary source`
-- `965179e` `Align stock alert email with transactional design`
-- `89d83f5` `Add Mailtrap sandbox support to stock alerts`
-- `1656bec` `Download newsletter export inside Shopify session`
-- `13dfc41` `Add mirror orders module`
-- `8ad8a01` `Add wishlist insights module`
-
-## Archivos que no deben tocarse por ruido local
+## Archivos locales que no deben tocarse por ruido
 - `.claude/settings.local.json`
 - `.cursor/`
 - `.gemini/`
-- `REF 1.jpeg`
-- `Skills de Claude Construyendo IA.pdf`
-- `TEXTO`
+- archivos de apoyo temporales que no estén versionados
 
-## Recordatorio para retomar
-Si se abre otro chat, decir:
-- lee `CLAUDE.md`
-- lee `AGENTS.md`
-- lee `CODEX_HANDOFF.md`
-- luego sigue con uno de estos frentes:
-  - bloque de confianza de compra en PDP
-  - analytics del embudo
-  - newsletter del footer por backend
-  - escalabilidad del catalogo
+## Siguientes frentes recomendados
+1. Validar que el embudo esté completamente operativo en la base real.
+2. Mejorar confianza de compra en PDP con cambios pequeños y medibles.
+3. Añadir visibilidad operativa simple en `PAVOA Control` para pagos/pedidos cuando se retome ese frente.
+4. Mantener limpio el contenido editable en Shopify para reducir hardcode.
+
+## Regla para retomar en otro chat
+Pedir explícitamente:
+- leer `CLAUDE.md`
+- leer `AGENTS.md`
+- leer `CODEX_HANDOFF.md`
