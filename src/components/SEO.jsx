@@ -1,7 +1,7 @@
-import { Helmet } from 'react-helmet-async'
+﻿import { Helmet } from 'react-helmet-async'
 
 const SITE_URL = (import.meta.env.VITE_APP_URL || 'https://pavoa.vercel.app').replace(/\/$/, '')
-const DEFAULT_DESCRIPTION = 'Ropa deportiva femenina premium de diseno. Piezas de edicion limitada para moverte con elegancia, rendimiento y presencia.'
+const DEFAULT_DESCRIPTION = 'Ropa deportiva femenina premium de diseño. Piezas de edición limitada para moverte con elegancia, rendimiento y presencia.'
 const DEFAULT_OG_IMAGE = `${SITE_URL}/og-image.jpg`
 
 export default function SEO({ title, description, url, image, type = 'website', jsonLd, noIndex = false }) {
@@ -40,3 +40,4 @@ export default function SEO({ title, description, url, image, type = 'website', 
     </Helmet>
   )
 }
+

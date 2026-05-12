@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import HelpBlockBody from '../components/HelpBlockBody';
 import SEO from '../components/SEO';
@@ -16,22 +16,22 @@ const MOTIVOS = [
     mensaje: 'Quiero cambiar una prenda por otra referencia de la tienda.',
   },
   {
-    titulo: 'Devolucion por inconformidad',
-    motivo: 'Devolucion por inconformidad',
-    mensaje: 'Quiero solicitar devolucion del dinero de esta compra.',
+    titulo: 'Devolución por inconformidad',
+    motivo: 'Devolución por inconformidad',
+    mensaje: 'Quiero solicitar devolución del dinero de esta compra.',
   },
 ];
 
 const buildContactoUrl = ({ pedido, motivo, mensaje }) => {
   const query = new URLSearchParams();
-  query.set('asunto', 'Cambios y devoluciones');
+  query.set('asunto', 'Cambios y devoluciónes');
   if (pedido) query.set('pedido', pedido);
   if (motivo) query.set('motivo', motivo);
   if (mensaje) query.set('mensaje', mensaje);
   return `/contacto?${query.toString()}`;
 };
 
-export default function CambiosDevolucionesPage() {
+export default function CambiosDevoluciónesPage() {
   const [content, setContent] = useState(HELP_PAGES_DEFAULTS.cambios);
   const [searchParams] = useSearchParams();
   const pedido = (searchParams.get('pedido') || '').trim();
@@ -57,7 +57,7 @@ export default function CambiosDevolucionesPage() {
       <SEO
         title={content.seoTitle}
         description={content.seoDescription}
-        url="/cambios-y-devoluciones"
+        url="/cambios-y-devoluciónes"
       />
 
       <section className="w-full pt-[140px] md:pt-[160px] pb-8 md:pb-12 px-6 border-b border-stone-100" style={{ background: 'var(--color-ivory)' }}>
@@ -115,7 +115,7 @@ export default function CambiosDevolucionesPage() {
             </div>
             <div className="mt-6 pt-6 border-t border-stone-100">
               <Link
-                to={buildContactoUrl({ pedido, motivo: 'Cambios y devoluciones' })}
+                to={buildContactoUrl({ pedido, motivo: 'Cambios y devoluciónes' })}
                 className="inline-block mt-3 text-[10px] font-bold text-stone-900 uppercase border-b border-stone-900 pb-0.5 tracking-[0.12em] hover:text-stone-500 transition-colors"
               >
                 Ir al formulario general
@@ -127,3 +127,4 @@ export default function CambiosDevolucionesPage() {
     </div>
   );
 }
+

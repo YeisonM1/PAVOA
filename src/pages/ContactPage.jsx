@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import SEO from '../components/SEO';
 import { CONTACT_PAGE_DEFAULTS, enviarContacto, getContactPage } from '../services/productService';
@@ -7,8 +7,8 @@ import useSiteSettings from '../hooks/useSiteSettings';
 
 const ASUNTOS = [
   'Selecciona un asunto',
-  'Informacion de pedido',
-  'Guia de tallas',
+  'Información de pedido',
+  'Guía de tallas',
   'Cambios y devoluciones',
   'Disponibilidad de producto',
   'Otro',
@@ -125,7 +125,7 @@ export default function ContactPage() {
     <div className="min-h-screen bg-white">
       <SEO
         title="Contacto"
-        description="Tienes preguntas sobre tallas, pedidos o colecciones? Escribenos y te respondemos pronto."
+        description="¿Tienes preguntas sobre tallas, pedidos o colecciones? Escríbenos y te respondemos pronto."
         url="/contacto"
       />
 
@@ -336,7 +336,7 @@ export default function ContactPage() {
                     rows={5}
                     value={form.mensaje}
                     onChange={handleChange}
-                    placeholder="Cuentanos en que podemos ayudarte..."
+                    placeholder="Cuéntanos en qué podemos ayudarte..."
                     className={`${inputBase} ${errores.mensaje ? inputError : inputNormal} resize-none`}
                   />
                   {errores.mensaje && <p className="text-[10px] text-red-400 mt-1 tracking-[0.05em]">{errores.mensaje}</p>}
@@ -344,7 +344,7 @@ export default function ContactPage() {
 
                 {estado === 'error' && (
                   <p className="text-[11px] text-red-400 tracking-[0.08em]">
-                    Hubo un error al enviar. Intenta de nuevo o escribenos por correo.
+                    Hubo un error al enviar. Intenta de nuevo o escríbenos por correo.
                   </p>
                 )}
 
@@ -367,3 +367,5 @@ export default function ContactPage() {
     </div>
   );
 }
+
+

@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
+﻿import { createClient } from '@supabase/supabase-js';
 import { sendTransactionalEmail } from './_helpers/mail.js';
 import { trackFunnelEvent } from './_helpers/funnel.js';
 
@@ -227,15 +227,15 @@ export default async function handler(req, res) {
                   Mensaje recibido
                 </h2>
                 <p style="font-size: 13px; color: #888; line-height: 1.8; max-width: 360px; margin: 0 auto 32px;">
-                  Hola <strong style="color: #0e0e0e;">${safeNombre}</strong>, recibimos tu mensaje sobre <em>${safeAsunto}</em>. Te respondemos en un maximo de 24 horas habiles.
+                  Hola <strong style="color: #0e0e0e;">${safeNombre}</strong>, recibimos tu mensaje sobre <em>${safeAsunto}</em>. Te respondemos en un máximo de 24 horas hábiles.
                 </p>
                 <div style="height: 1px; background: #f0f0f0; margin-bottom: 32px;"></div>
                 <p style="font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: #888;">
-                  Mientras tanto, explora nuestra coleccion
+                  Mientras tanto, explora nuestra colección
                 </p>
                 <a href="https://pavoa.vercel.app/categoria"
                   style="display: inline-block; margin-top: 16px; padding: 14px 32px; background: #0e0e0e; color: #ffffff; font-size: 10px; font-weight: 600; letter-spacing: 0.2em; text-transform: uppercase; text-decoration: none;">
-                  Ver coleccion
+                  Ver colección
                 </a>
               </div>
 
@@ -255,3 +255,4 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: 'Error al enviar el email' });
   }
 }
+

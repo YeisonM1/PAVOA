@@ -1,8 +1,8 @@
-import React, { Suspense, lazy } from 'react';
+﻿import React, { Suspense, lazy } from 'react';
 import HeroFullscreen from '../sections/HeroFullscreen';
 import SEO from '../components/SEO';
 
-// ── Carga diferida — no bloquean el Hero ──────────────
+// â”€â”€ Carga diferida â€” no bloquean el Hero â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const Categorias = lazy(() => import('../sections/Categorias'));
 const Productos  = lazy(() => import('../sections/Productos'));
 const Filosofia  = lazy(() => import('../sections/Filosofia'));
@@ -13,7 +13,7 @@ export default function HomePage() {
     <>
       <SEO
         title="Ropa Deportiva Femenina Premium"
-        description="PAVOA crea ropa deportiva femenina premium para entrenamiento, movimiento diario y estilo. Piezas de edicion limitada con envios a toda Colombia."
+        description="PAVOA crea ropa deportiva femenina premium para entrenamiento, movimiento diario y estilo. Piezas de edición limitada con envíos a toda Colombia."
         url="/"
       />
       <main>
@@ -28,3 +28,4 @@ export default function HomePage() {
     </>
   );
 }
+

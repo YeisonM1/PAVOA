@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 import logoChampan from '../assets/Pavoa Logo Hueso Sin Fondo.svg';
 import { FILOSOFIA_SECTION_DEFAULTS, getFilosofiaSection } from '../services/productService';
 
@@ -26,7 +26,7 @@ export default function Filosofia() {
       {/* IZQUIERDA — Texto */}
       <div className="w-full md:w-1/2 bg-stone-900 flex flex-col justify-center px-10 md:px-16 lg:px-24 py-20 relative">
 
-        {/* Logo Champan — arriba derecha del panel */}
+        {/* Logo Champán — arriba derecha del panel */}
         <div className="absolute top-6 right-5 md:top-8 md:right-7 pointer-events-none">
           <img src={logoChampan} alt="PAVOA" width={120} height={194} className="h-24 md:h-36 w-auto object-contain" />
         </div>
@@ -72,7 +72,7 @@ export default function Filosofia() {
       <div className="w-full md:w-1/2 relative overflow-hidden min-h-[50vh] md:min-h-full">
         <img
           src={content.image}
-          alt="PAVOA Filosofia"
+          alt="PAVOA Filosofía"
           width={600}
           height={900}
           loading="lazy"
@@ -86,3 +86,4 @@ export default function Filosofia() {
     </section>
   );
 }
+

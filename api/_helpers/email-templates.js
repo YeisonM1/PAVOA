@@ -1,4 +1,4 @@
-const APP_URL = process.env.VITE_APP_URL || "https://pavoa.vercel.app";
+﻿const APP_URL = process.env.VITE_APP_URL || "https://pavoa.vercel.app";
 const LOGO_URL = `${APP_URL}/logo-pavoa.png`;
 
 const escapeHtml = (value) =>
@@ -139,7 +139,7 @@ export const emailConfirmacion = ({
   total,
   totalOriginal,
   descuentoAplicado,
-  direccion,
+  dirección,
 }) => {
   const itemsHtml = (lineItems || [])
     .map((item) => {
@@ -192,10 +192,10 @@ export const emailConfirmacion = ({
     </table>
   `;
 
-  const shippingSection = direccion
+  const shippingSection = dirección
     ? renderSection(
         "Direccion de entrega",
-        `<p style="margin:0;font-size:14px;line-height:1.7;color:#4f4a44;">${escapeHtml(direccion)}</p>`,
+        `<p style="margin:0;font-size:14px;line-height:1.7;color:#4f4a44;">${escapeHtml(dirección)}</p>`,
       )
     : "";
 
@@ -214,7 +214,7 @@ export const emailConfirmacion = ({
         `
           <div style="display:grid;gap:10px;">
             <p style="margin:0;font-size:14px;line-height:1.7;color:#4f4a44;">1. Validamos tu pedido y alistamos la entrega.</p>
-            <p style="margin:0;font-size:14px;line-height:1.7;color:#4f4a44;">2. Cuando se despache, te compartiremos la guia.</p>
+            <p style="margin:0;font-size:14px;line-height:1.7;color:#4f4a44;">2. Cuando se despache, te compartiremos la guía.</p>
             <p style="margin:0;font-size:14px;line-height:1.7;color:#4f4a44;">3. Si necesitas ayuda antes de eso, estamos disponibles.</p>
           </div>
         `,
@@ -235,7 +235,7 @@ export const emailDespacho = ({
 }) =>
   renderLayout({
     preheader: `Tu pedido ${orderName} ya va en camino`,
-    eyebrow: subtitulo || "Actualizacion de envio",
+    eyebrow: subtitulo || "Actualización de envío",
     title: `Hola, ${nombreCliente}`,
     body: cuerpo,
     primaryCta: trackingUrl
@@ -246,7 +246,7 @@ export const emailDespacho = ({
       : null,
     afterHero:
       renderSection(
-        "Datos de envio",
+        "Datos de envío",
         renderInfoCard(`
           <table width="100%" cellpadding="0" cellspacing="0">
             ${renderRow("Pedido", `<strong style="font-size:16px;color:#161616;">${escapeHtml(orderName)}</strong>`)}
@@ -257,7 +257,7 @@ export const emailDespacho = ({
       ) +
       renderSection(
         "Recordatorio",
-        `<p style="margin:0;font-size:14px;line-height:1.7;color:#4f4a44;">Tambien puedes consultar el estado del pedido desde tu cuenta en PAVOA cuando quieras.</p>`,
+        `<p style="margin:0;font-size:14px;line-height:1.7;color:#4f4a44;">También puedes consultar el estado del pedido desde tu cuenta en PAVOA cuando quieras.</p>`,
       ),
     footerNote:
       "Te recomendamos guardar este correo hasta que recibas tu pedido.",
@@ -274,7 +274,7 @@ export const emailEntregado = ({ nombreCliente, orderName }) =>
         "Pedido",
         renderInfoCard(`
           <table width="100%" cellpadding="0" cellspacing="0">
-            ${renderRow("Numero", `<strong style="font-size:16px;color:#161616;">${escapeHtml(orderName)}</strong>`, { border: false })}
+            ${renderRow("Número", `<strong style="font-size:16px;color:#161616;">${escapeHtml(orderName)}</strong>`, { border: false })}
           </table>
         `),
       ) +
@@ -317,3 +317,4 @@ export const emailResetPassword = ({ firstName, resetLink }) =>
       `<p style="margin:0;font-size:14px;line-height:1.7;color:#4f4a44;">Este enlace expira en 1 hora. Si no solicitaste este cambio, puedes ignorar este correo sin problema.</p>`,
     ),
   });
+

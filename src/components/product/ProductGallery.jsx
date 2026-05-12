@@ -1,14 +1,14 @@
-import { heroImage, productImage, thumbImage } from '../../utils/imageUrl';
+﻿import { heroImage, productImage, thumbImage } from '../../utils/imageUrl';
 import { Maximize2, ShieldCheck, Truck, Undo2 } from 'lucide-react';
 
 const TRUST_ITEMS = [
   {
     icon: Truck,
-    text: 'Envios a todo Colombia',
+    text: 'Envíos a todo Colombia',
   },
   {
     icon: Undo2,
-    text: 'Cambios dentro de los primeros 5 dias habiles',
+    text: 'Cambios dentro de los primeros 5 días hábiles',
   },
   {
     icon: ShieldCheck,
@@ -146,3 +146,4 @@ export default function ProductGallery({ imagenes, selectedImage, onSelectImage,
     </>
   );
 }
+

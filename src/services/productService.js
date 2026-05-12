@@ -1,4 +1,4 @@
-const SHOPIFY_DOMAIN   = import.meta.env.VITE_SHOPIFY_DOMAIN;
+﻿const SHOPIFY_DOMAIN   = import.meta.env.VITE_SHOPIFY_DOMAIN;
 const SHOPIFY_TOKEN    = import.meta.env.VITE_SHOPIFY_TOKEN;
 const SHOPIFY_ENDPOINT = `https://${SHOPIFY_DOMAIN}/api/2026-04/graphql.json`;
 
@@ -12,10 +12,10 @@ export const SITE_SETTINGS_DEFAULTS = {
 };
 
 export const FILOSOFIA_SECTION_DEFAULTS = {
-  tag: 'NUESTRA FILOSOFIA',
+  tag: 'NUESTRA FILOSOFÍA',
   headlineLine1: 'No es ropa.',
   headlineLine2: 'Es armadura.',
-  body: 'Cada pieza de PAVOA nace de la conviccion de que la mujer que se mueve con intencion merece ropa que este a su altura. Elegancia natural. Presencia silenciosa.',
+  body: 'Cada pieza de PAVOA nace de la convicción de que la mujer que se mueve con intención merece ropa que esté a su altura. Elegancia natural. Presencia silenciosa.',
   ctaText: 'SOBRE NOSOTROS',
   ctaLink: '/nosotros',
   image: 'https://cdn.shopify.com/s/files/1/0752/0436/2380/files/Filosofia.jpg?width=600&format=webp',
@@ -76,14 +76,14 @@ export const NOSOTROS_PAGE_DEFAULTS = {
 
 export const CONTACT_PAGE_DEFAULTS = {
   internalName: 'Principal',
-  eyebrow: 'Estamos aqui',
+  eyebrow: 'Estamos aquí',
   title: 'Hablemos',
-  informationHeading: 'Informacion',
+  informationHeading: 'Información',
   emailLabel: 'Email',
   scheduleLabel: 'Horario',
-  observationLabel: 'Observacion',
+  observationLabel: 'Observación',
   responseTimeHeading: 'Tiempo de respuesta',
-  formHeading: 'Envianos un mensaje',
+  formHeading: 'Envíanos un mensaje',
   guidedRequestEyebrow: 'Solicitud guiada',
   successTitle: 'Mensaje enviado',
   successBody: 'Te respondemos en menos de 24 horas.',
@@ -95,10 +95,10 @@ export const CONTACT_PAGE_DEFAULTS = {
 export const FOOTER_CONTENT_DEFAULTS = {
   internalName: 'Principal',
   newsletterEyebrow: 'NEWSLETTER',
-  newsletterTitle: 'Se la primera en enterarte.',
-  newsletterBody: 'Nuevas colecciones, descuentos exclusivos y mas.',
+  newsletterTitle: 'Sé la primera en enterarte.',
+  newsletterBody: 'Nuevas colecciónes, descuentos exclusivos y más.',
   newsletterSuccessText: 'GRACIAS POR SUSCRIBIRTE',
-  newsletterInputPlaceholder: 'Tu correo electronico',
+  newsletterInputPlaceholder: 'Tu correo electrónico',
   newsletterButtonText: 'SUSCRIBIRSE',
   brandBody: 'Ropa deportiva femenina premium. Elegancia natural. Presencia silenciosa.',
   storeHeading: 'TIENDA',
@@ -107,15 +107,15 @@ export const FOOTER_CONTENT_DEFAULTS = {
   copyrightText: '© 2026 PAVOA. TODOS LOS DERECHOS RESERVADOS.',
 };
 
-// ── Caché en memoria con TTL ──────────────────────────
+// â”€â”€ CachÃ© en memoria con TTL â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export const HELP_PAGES_DEFAULTS = {
   envios: {
     pageKey: 'envios',
-    internalName: 'Envios y entregas',
+    internalName: 'Envíos y entregas',
     eyebrow: 'Ayuda',
-    title: 'Envios y entregas',
-    seoTitle: 'Envios y entregas',
-    seoDescription: 'Informacion sobre tiempos, cobertura y condiciones de envio en PAVOA.',
+    title: 'Envíos y entregas',
+    seoTitle: 'Envíos y entregas',
+    seoDescription: 'Información sobre tiempos, cobertura y condiciones de envío en PAVOA.',
     ctaLabel: '',
     ctaUrl: '',
     blocks: [
@@ -125,7 +125,7 @@ export const HELP_PAGES_DEFAULTS = {
         order: 1,
         blockType: 'text',
         title: 'Cobertura',
-        body: 'Realizamos envios a las principales ciudades y municipios de Colombia.',
+        body: 'Realizamos envíos a las principales ciudades y municipios de Colombia.',
       },
       {
         id: 'envios-tiempos-estimados',
@@ -133,7 +133,7 @@ export const HELP_PAGES_DEFAULTS = {
         order: 2,
         blockType: 'text',
         title: 'Tiempos estimados',
-        body: 'Ciudades principales: 2 a 5 dias habiles. Otras zonas: 3 a 8 dias habiles.',
+        body: 'Ciudades principales: 2 a 5 días hábiles. Otras zonas: 3 a 8 días hábiles.',
       },
       {
         id: 'envios-seguimiento-y-soporte',
@@ -141,17 +141,17 @@ export const HELP_PAGES_DEFAULTS = {
         order: 3,
         blockType: 'text',
         title: 'Seguimiento y soporte',
-        body: 'Cuando tu pedido sea despachado, te compartimos la guia de seguimiento. Para apoyo, visita Contacto.',
+        body: 'Cuando tu pedido sea despachado, te compartimos la guía de seguimiento. Para apoyo, visita Contacto.',
       },
     ],
   },
   cambios: {
     pageKey: 'cambios',
-    internalName: 'Cambios y devoluciones',
+    internalName: 'Cambios y devoluciónes',
     eyebrow: 'Ayuda',
-    title: 'Cambios y devoluciones',
-    seoTitle: 'Cambios y devoluciones',
-    seoDescription: 'Politica de cambios y devoluciones de PAVOA.',
+    title: 'Cambios y devoluciónes',
+    seoTitle: 'Cambios y devoluciónes',
+    seoDescription: 'Política de cambios y devoluciónes de PAVOA.',
     ctaLabel: '',
     ctaUrl: '',
     blocks: [
@@ -161,7 +161,7 @@ export const HELP_PAGES_DEFAULTS = {
         order: 1,
         blockType: 'text',
         title: 'Plazo para solicitar',
-        body: 'Puedes solicitar cambio o devolucion dentro de los primeros 5 dias habiles despues de recibir tu pedido.',
+        body: 'Puedes solicitar cambio o devolución dentro de los primeros 5 días hábiles después de recibir tu pedido.',
       },
       {
         id: 'cambios-condiciones',
@@ -177,7 +177,7 @@ export const HELP_PAGES_DEFAULTS = {
         order: 3,
         blockType: 'text',
         title: 'Inicia tu solicitud',
-        body: 'Ten listo: numero de pedido, motivo y fotos del producto.',
+        body: 'Ten listo: número de pedido, motivo y fotos del producto.',
       },
     ],
   },
@@ -187,77 +187,77 @@ export const HELP_PAGES_DEFAULTS = {
     eyebrow: 'Ayuda',
     title: 'Preguntas frecuentes',
     seoTitle: 'Preguntas frecuentes',
-    seoDescription: 'Resuelve dudas comunes sobre compras, envios, tallas y cambios en PAVOA.',
+    seoDescription: 'Resuelve dudas comunes sobre compras, envíos, tallas y cambios en PAVOA.',
     ctaLabel: '',
     ctaUrl: '',
     blocks: [
       {
         id: 'faq-como-se-cuanto-tarda-mi-pedido',
-        internalName: 'Como se cuanto tarda mi pedido?',
+        internalName: '¿Cómo sé cuánto tarda mi pedido?',
         order: 1,
         blockType: 'faq',
-        title: 'Como se cuanto tarda mi pedido?',
-        body: 'Al despachar tu compra te enviamos la guia para rastreo. El tiempo depende de la ciudad destino.',
+        title: '¿Cómo sé cuánto tarda mi pedido?',
+        body: 'Al despachar tu compra te enviamos la guía para rastreo. El tiempo depende de la ciudad destino.',
       },
       {
         id: 'faq-puedo-cambiar-la-talla',
-        internalName: 'Puedo cambiar la talla?',
+        internalName: '¿Puedo cambiar la talla?',
         order: 2,
         blockType: 'faq',
-        title: 'Puedo cambiar la talla?',
-        body: 'Si, siempre que la prenda cumpla condiciones de cambio y lo solicites dentro del plazo.',
+        title: '¿Puedo cambiar la talla?',
+        body: 'Sí, siempre que la prenda cumpla condiciones de cambio y lo solicites dentro del plazo.',
       },
       {
         id: 'faq-que-pasa-si-mi-producto-llega-con-novedad',
-        internalName: 'Que pasa si mi producto llega con novedad?',
+        internalName: '¿Qué pasa si mi producto llega con novedad?',
         order: 3,
         blockType: 'faq',
-        title: 'Que pasa si mi producto llega con novedad?',
-        body: 'Te ayudamos a gestionarlo de inmediato. Escribenos con fotos y numero de pedido.',
+        title: '¿Qué pasa si mi producto llega con novedad?',
+        body: 'Te ayudamos a gestionarlo de inmediato. Escríbenos con fotos y número de pedido.',
       },
       {
         id: 'faq-tienen-atencion-personalizada',
-        internalName: 'Tienen atencion personalizada?',
+        internalName: '¿Tienen atención personalizada?',
         order: 4,
         blockType: 'faq',
-        title: 'Tienen atencion personalizada?',
-        body: 'Si. Te orientamos por contacto para talla, uso y disponibilidad.',
+        title: '¿Tienen atención personalizada?',
+        body: 'Sí. Te orientamos por contacto para talla, uso y disponibilidad.',
       },
       {
         id: 'faq-no-encuentras-tu-respuesta',
-        internalName: 'No encuentras tu respuesta?',
+        internalName: '¿No encuentras tu respuesta?',
         order: 5,
         blockType: 'text',
-        title: 'No encuentras tu respuesta?',
-        body: 'Escribenos desde Contacto y te respondemos en menos de 24 horas habiles.',
+        title: '¿No encuentras tu respuesta?',
+        body: 'Escríbenos desde Contacto y te respondemos en menos de 24 horas hábiles.',
       },
     ],
   },
   guia_tallas: {
     pageKey: 'guia_tallas',
-    internalName: 'Guia de tallas',
+    internalName: 'Guía de tallas',
     eyebrow: 'Ayuda',
-    title: 'Guia de tallas',
-    seoTitle: 'Guia de tallas',
+    title: 'Guía de tallas',
+    seoTitle: 'Guía de tallas',
     seoDescription: 'Encuentra tu talla ideal en PAVOA.',
     ctaLabel: '',
     ctaUrl: '',
     blocks: [
       {
         id: 'guia-tallas-como-medirte',
-        internalName: 'Como medirte',
+        internalName: 'Cómo medirte',
         order: 1,
         blockType: 'text',
-        title: 'Como medirte',
-        body: 'Mide alrededor de la parte mas llena del busto.\n\nMide la parte mas estrecha del torso.\n\nMide alrededor de la parte mas ancha de la cadera.',
+        title: 'Cómo medirte',
+        body: 'Mide alrededor de la parte más llena del busto.\n\nMide la parte más estrecha del torso.\n\nMide alrededor de la parte más ancha de la cadera.',
       },
       {
         id: 'guia-tallas-recomendacion',
-        internalName: 'Recomendacion',
+        internalName: 'Recomendación',
         order: 2,
         blockType: 'text',
-        title: 'Recomendacion',
-        body: 'Si estas entre dos tallas, elige segun tu ajuste preferido: mas firme para entrenamiento o mas relajado para uso diario.',
+        title: 'Recomendación',
+        body: 'Si estás entre dos tallas, elige según tu ajuste preferido: más firme para entrenamiento o más relajado para uso diario.',
       },
       {
         id: 'guia-tallas-te-asesoramos',
@@ -265,7 +265,7 @@ export const HELP_PAGES_DEFAULTS = {
         order: 3,
         blockType: 'text',
         title: 'Te asesoramos',
-        body: 'Si tienes duda con una referencia puntual, escribenos por Contacto.',
+        body: 'Si tienes duda con una referencia puntual, escríbenos por Contacto.',
       },
     ],
   },
@@ -305,14 +305,14 @@ const setCache = (key, promise) => {
   promise.catch(() => _cache.delete(key));
 };
 
-// Limpiar caché cuando el usuario vuelve a la pestaña
+// Limpiar cachÃ© cuando el usuario vuelve a la pestaÃ±a
 // para que el stock se actualice al regresar
 if (typeof document !== 'undefined') {
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible') _cache.clear();
   });
 }
-// ──────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export const shopifyFetch = async (query, variables = {}) => {
   const res = await fetch(SHOPIFY_ENDPOINT, {
@@ -329,7 +329,7 @@ export const shopifyFetch = async (query, variables = {}) => {
   return data;
 };
 
-// ── Convierte producto Shopify → estructura PAVOA ──────
+// â”€â”€ Convierte producto Shopify â†’ estructura PAVOA â”€â”€â”€â”€â”€â”€
 const mapProducto = (node) => {
   const variantes = node.variants.edges.map(({ node: v }) => {
     const hexRaw = v.metafield?.value || '#888888';
@@ -366,7 +366,7 @@ const mapProducto = (node) => {
   };
 };
 
-// ── Fragmento completo (detalle de producto) ──────────
+// â”€â”€ Fragmento completo (detalle de producto) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const PRODUCT_FIELDS = `
   id handle title description descriptionHtml productType tags
   priceRange { minVariantPrice { amount } }
@@ -384,7 +384,7 @@ const PRODUCT_FIELDS = `
   }
 `;
 
-// ── Fragmento ligero (listados/grids, sin detalles ni cuidados) ──
+// â”€â”€ Fragmento ligero (listados/grids, sin detalles ni cuidados) â”€â”€
 const PRODUCT_FIELDS_LIGHT = `
   id handle title description descriptionHtml productType tags
   priceRange { minVariantPrice { amount } }
@@ -400,7 +400,7 @@ const PRODUCT_FIELDS_LIGHT = `
   }
 `;
 
-// ── Trae TODOS los productos ───────────────────────────
+// â”€â”€ Trae TODOS los productos â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export const getProductos = () => {
   const cached = getCached('all-products');
   if (cached) return cached;
@@ -427,7 +427,7 @@ export const getProductos = () => {
   return promise;
 };
 
-// ── Trae UN producto por handle (slug) ─────────────────
+// â”€â”€ Trae UN producto por handle (slug) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export const getProductoById = (handle) => {
   const key = `product-${handle}`;
   const cached = getCached(key);
@@ -452,7 +452,7 @@ export const getProductoById = (handle) => {
   return promise;
 };
 
-// ── Trae info del banner de categoría desde Shopify ───
+// â”€â”€ Trae info del banner de categorÃ­a desde Shopify â”€â”€â”€
 export const getCategoriaById = (id) => {
   const cacheKey = `categoria-${id}`;
   const cached = getCached(cacheKey);
@@ -490,7 +490,7 @@ export const getCategoriaById = (id) => {
   return promise;
 };
 
-// ── Enviar formulario de contacto ──────────────────────
+// â”€â”€ Enviar formulario de contacto â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export const enviarContacto = async ({ nombre, contacto, asunto, mensaje }) => {
   try {
     const res = await fetch('/api/contacto', {
@@ -507,7 +507,7 @@ export const enviarContacto = async ({ nombre, contacto, asunto, mensaje }) => {
 };
 
 
-// ── Trae los slides del Hero desde Shopify Metaobjects ─
+// â”€â”€ Trae los slides del Hero desde Shopify Metaobjects â”€
 export const getHeroSlides = () => {
   const cached = getCached('hero-slides');
   if (cached) return cached;
@@ -563,7 +563,7 @@ export const getHeroSlides = () => {
   setCache('hero-slides', promise);
   return promise;
 };
-// ── Trae las categorías destacadas desde Shopify Metaobjects ─
+// â”€â”€ Trae las categorÃ­as destacadas desde Shopify Metaobjects â”€
 export const getCategoriasDestacadas = () => {
   const cached = getCached('categorias-destacadas');
   if (cached) return cached;
@@ -607,7 +607,7 @@ export const getCategoriasDestacadas = () => {
             nombre: get('nombre'),
             desc:   get('descripcion'),
             href:   get('href'),
-            image:  getImage('imagen'),   // ← ahora lee desde reference
+            image:  getImage('imagen'),   // â† ahora lee desde reference
           };
         }
       });
@@ -623,7 +623,7 @@ export const getCategoriasDestacadas = () => {
   return promise;
 };
 
-// ── Trae el announcement bar desde Shopify Metaobjects ─
+// â”€â”€ Trae el announcement bar desde Shopify Metaobjects â”€
 export const getAnnouncementBar = () => {
   const cached = getCached('announcement-bar');
   if (cached) return cached;
@@ -670,7 +670,7 @@ export const getAnnouncementBar = () => {
 };
 
 
-// ── Trae los posts de Instagram desde Shopify Metaobjects ─
+// â”€â”€ Trae los posts de Instagram desde Shopify Metaobjects â”€
 export const getInstagramPosts = () => {
   const cached = getCached('instagram-posts');
   if (cached) return cached;
@@ -823,9 +823,9 @@ export const getFilosofiaSection = () => {
   return promise;
 };
 
-// ── Verifica stock de los items del carrito antes del pago ─
+// â”€â”€ Verifica stock de los items del carrito antes del pago â”€
 // Recibe array de { selectedVariantId, cantidad, nombre }
-// Devuelve array de errores (vacío = todo OK)
+// Devuelve array de errores (vacÃ­o = todo OK)
 export const getNosotrosPage = () => {
   const cached = getCached('nosotros-page');
   if (cached) return cached;
@@ -1171,3 +1171,5 @@ export const verificarStock = async (cartItems) => {
     return []; // Si falla la consulta, dejamos pasar (no bloqueamos el pago)
   }
 };
+
+

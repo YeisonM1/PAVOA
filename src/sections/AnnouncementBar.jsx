@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+﻿import { useState, useEffect, useRef } from 'react';
 import { getAnnouncementBar } from '../services/productService';
 
 const normalizeAnnouncementCopy = (message) =>
@@ -31,9 +31,9 @@ const renderAnnouncementMessage = (message) =>
     });
 
 const FALLBACK = [
-  'Descubre tu mejor version · PAVOA',
-  'Nueva coleccion disponible · Ediciones limitadas',
-  'Sientete segura · Envios a todo el pais',
+  'Descubre tu mejor versión · PAVOA',
+  'Nueva colección disponible · Ediciones limitadas',
+  'Siéntete segura · Envíos a todo el país',
 ].map(normalizeAnnouncementCopy);
 
 export default function AnnouncementBar() {
@@ -134,3 +134,4 @@ export default function AnnouncementBar() {
     </div>
   );
 }
+

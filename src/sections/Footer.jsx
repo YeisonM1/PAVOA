@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { createClient } from '@supabase/supabase-js';
 import logo from '../assets/LOGO-PAVOA.svg';
@@ -78,7 +78,7 @@ export default function Footer() {
           ) : (
             <div className="flex flex-col gap-2 w-full md:w-auto">
               <form onSubmit={handleSubscribe} className="flex w-full md:w-auto">
-                <label htmlFor="newsletter-email" className="sr-only">Tu correo electronico</label>
+                <label htmlFor="newsletter-email" className="sr-only">Tu correo electrónico</label>
                 <input
                   id="newsletter-email"
                   type="email"
@@ -116,27 +116,27 @@ export default function Footer() {
             {content.brandBody}
           </p>
           <div className="flex items-center gap-4">
-            <a href={settings.instagramUrl} target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors" aria-label="Siguenos en Instagram"><InstagramIcon /></a>
-            <a href={settings.facebookUrl} target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors" aria-label="Siguenos en Facebook"><FacebookIcon /></a>
+            <a href={settings.instagramUrl} target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors" aria-label="Síguenos en Instagram"><InstagramIcon /></a>
+            <a href={settings.facebookUrl} target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors" aria-label="Síguenos en Facebook"><FacebookIcon /></a>
           </div>
         </div>
 
         <nav aria-label="Tienda">
           <p style={{ letterSpacing: '0.2em' }} className="text-[10px] font-semibold text-white mb-6">{content.storeHeading}</p>
           <ul className="space-y-3 text-[11px] font-light">
-            <li><Link to="/categoria" className="text-stone-400 hover:text-white transition-colors">Nueva Coleccion</Link></li>
+            <li><Link to="/categoria" className="text-stone-400 hover:text-white transition-colors">Nueva Colección</Link></li>
             <li><Link to="/categoria/superior" className="text-stone-400 hover:text-white transition-colors">Tops y Camisetas</Link></li>
             <li><Link to="/categoria/accesorios" className="text-stone-400 hover:text-white transition-colors">Accesorios</Link></li>
-            <li><Link to="/categoria" className="text-stone-400 hover:text-white transition-colors">Mas Vendidos</Link></li>
+            <li><Link to="/categoria" className="text-stone-400 hover:text-white transition-colors">Más Vendidos</Link></li>
           </ul>
         </nav>
 
         <nav aria-label="Ayuda">
           <p style={{ letterSpacing: '0.2em' }} className="text-[10px] font-semibold text-white mb-6">{content.helpHeading}</p>
           <ul className="space-y-3 text-[11px] font-light">
-            <li><Link to="/envios-y-entregas" className="text-stone-400 hover:text-white transition-colors">Envios y entregas</Link></li>
+            <li><Link to="/envios-y-entregas" className="text-stone-400 hover:text-white transition-colors">Envíos y entregas</Link></li>
             <li><Link to="/cambios-y-devoluciones" className="text-stone-400 hover:text-white transition-colors">Cambios y devoluciones</Link></li>
-            <li><Link to="/guia-de-tallas" className="text-stone-400 hover:text-white transition-colors">Guia de tallas</Link></li>
+            <li><Link to="/guia-de-tallas" className="text-stone-400 hover:text-white transition-colors">Guía de tallas</Link></li>
             <li><Link to="/preguntas-frecuentes" className="text-stone-400 hover:text-white transition-colors">Preguntas frecuentes</Link></li>
           </ul>
         </nav>
@@ -176,3 +176,4 @@ export default function Footer() {
     </footer>
   );
 }
+

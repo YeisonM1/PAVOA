@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useContext } from 'react';
+﻿import { useState, useEffect, useRef, useContext } from 'react';
 import {
   Menu,
   User,
@@ -254,7 +254,7 @@ const Header = () => {
                   setAccountOpen(v => !v);
                 }}
                 className="hover:text-stone-900 transition-colors relative"
-                aria-label={autenticado ? 'Abrir menu de cuenta' : 'Iniciar sesion'}
+                aria-label={autenticado ? 'Abrir menú de cuenta' : 'Iniciar sesión'}
                 aria-haspopup={autenticado ? 'menu' : undefined}
                 aria-expanded={autenticado ? accountOpen : undefined}
               >
@@ -324,7 +324,7 @@ const Header = () => {
                     className="w-full px-4 py-3 text-left text-[10px] font-bold tracking-[0.18em] uppercase text-stone-500 hover:bg-white/60 hover:text-stone-900 transition-colors flex items-center gap-3"
                   >
                     <LogOut size={15} strokeWidth={1.7} aria-hidden="true" />
-                    Cerrar sesion
+                    Cerrar sesión
                   </button>
                 </div>
               )}
@@ -368,3 +368,4 @@ const Header = () => {
 };
 
 export default Header;
+
