@@ -67,6 +67,14 @@ const buildStockAlertErrorDetail = (error) => {
   return text || 'Error desconocido en stock alerts.';
 };
 
+const isUniqueVariantAlertError = (error) => {
+  const text = getErrorText(error).toLowerCase();
+  return (
+    error?.code === '23505' &&
+    text.includes('stock_alerts_unique_variant_alert')
+  );
+};
+
 const findPendingStockAlerts = async ({
   email,
   productId,
@@ -123,6 +131,48 @@ const insertStockAlert = async ({
   }
 
   return supabase.from('stock_alerts').insert(payload);
+};
+
+const reactivateStockAlert = async ({
+  email,
+  productId,
+  productNombre,
+  talla,
+  color,
+  variantId,
+  useVariantColumn = true,
+  useNotifiedAtColumn = true,
+}) => {
+  const payload = {
+    product_nombre: productNombre || '',
+    talla,
+    color,
+    notified: false,
+    created_at: new Date().toISOString(),
+  };
+
+  if (useVariantColumn) {
+    payload.variant_id = variantId;
+  }
+
+  if (useNotifiedAtColumn) {
+    payload.notified_at = null;
+  }
+
+  let query = supabase
+    .from('stock_alerts')
+    .update(payload)
+    .eq('email', email)
+    .eq('product_id', productId);
+
+  query = applyOptionalFilter(query, 'talla', talla);
+  query = applyOptionalFilter(query, 'color', color);
+
+  if (useVariantColumn) {
+    query = applyOptionalFilter(query, 'variant_id', variantId);
+  }
+
+  return query.select('id').limit(1);
 };
 
 export default async function handler(req, res) {
@@ -298,6 +348,41 @@ export default async function handler(req, res) {
           useVariantColumn: supportsVariantColumn,
           useNotifiedAtColumn: false,
         }));
+      }
+
+      if (error && isUniqueVariantAlertError(error)) {
+        console.info('Stock alerts: se reactiva alerta historica para la misma variante.');
+        let reactivated = await reactivateStockAlert({
+          email: normalizedEmail,
+          productId,
+          productNombre,
+          talla: normalizedTalla,
+          color: normalizedColor,
+          variantId: normalizedVariantId,
+          useVariantColumn: supportsVariantColumn,
+          useNotifiedAtColumn: true,
+        });
+        let reactivateError = reactivated.error;
+
+        if (reactivateError && isMissingColumnError(reactivateError, ['notified_at'])) {
+          reactivated = await reactivateStockAlert({
+            email: normalizedEmail,
+            productId,
+            productNombre,
+            talla: normalizedTalla,
+            color: normalizedColor,
+            variantId: normalizedVariantId,
+            useVariantColumn: supportsVariantColumn,
+            useNotifiedAtColumn: false,
+          });
+          reactivateError = reactivated.error;
+        }
+
+        if (!reactivateError && (reactivated.data || []).length > 0) {
+          return res.status(200).json({ ok: true, reactivated: true });
+        }
+
+        if (reactivateError) throw reactivateError;
       }
 
       if (error) throw error;
