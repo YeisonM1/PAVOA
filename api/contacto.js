@@ -396,9 +396,23 @@ export default async function handler(req, res) {
           });
         }
 
+        if (!historicalAlert?.id && supportsVariantColumn) {
+          historicalAlert = await findHistoricalStockAlert({
+            email: normalizedEmail,
+            productId,
+            talla: normalizedTalla,
+            color: normalizedColor,
+            variantId: null,
+            useVariantColumn: false,
+          });
+        }
+
         if (!historicalAlert?.id) {
           throw error;
         }
+
+        const shouldUpdateVariantColumn =
+          supportsVariantColumn && normalizeOptional(historicalAlert.variant_id) !== null;
 
         let reactivated = await reactivateStockAlert({
           alertId: historicalAlert.id,
@@ -406,7 +420,7 @@ export default async function handler(req, res) {
           talla: normalizedTalla,
           color: normalizedColor,
           variantId: normalizedVariantId,
-          useVariantColumn: supportsVariantColumn,
+          useVariantColumn: shouldUpdateVariantColumn,
           useNotifiedAtColumn: true,
         });
         let reactivateError = reactivated.error;
@@ -418,7 +432,7 @@ export default async function handler(req, res) {
             talla: normalizedTalla,
             color: normalizedColor,
             variantId: normalizedVariantId,
-            useVariantColumn: supportsVariantColumn,
+            useVariantColumn: shouldUpdateVariantColumn,
             useNotifiedAtColumn: false,
           });
           reactivateError = reactivated.error;
