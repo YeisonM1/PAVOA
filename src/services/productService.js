@@ -400,6 +400,52 @@ const PRODUCT_FIELDS_LIGHT = `
   }
 `;
 
+const PRODUCTS_PAGE_SIZE = 100;
+const PRODUCTS_MAX_PAGES = 20;
+
+const fetchAllProducts = async () => {
+  const products = [];
+  let cursor = null;
+  let page = 0;
+  let hasNextPage = true;
+
+  while (hasNextPage && page < PRODUCTS_MAX_PAGES) {
+    const data = await shopifyFetch(`
+      query($first: Int!, $after: String) {
+        products(first: $first, after: $after) {
+          edges {
+            cursor
+            node { ${PRODUCT_FIELDS_LIGHT} }
+          }
+          pageInfo {
+            hasNextPage
+          }
+        }
+      }
+    `, {
+      first: PRODUCTS_PAGE_SIZE,
+      after: cursor,
+    });
+
+    const edges = data.products?.edges || [];
+    products.push(...edges.map(({ node }) => mapProducto(node)));
+    hasNextPage = data.products?.pageInfo?.hasNextPage === true;
+    cursor = edges.length > 0 ? edges[edges.length - 1].cursor : null;
+    page += 1;
+
+    if (hasNextPage && !cursor) {
+      console.warn('getProductos: Shopify indicó más páginas pero no devolvió cursor. Se corta la paginación.');
+      break;
+    }
+  }
+
+  if (hasNextPage) {
+    console.warn(`getProductos: se alcanzó el límite de ${PRODUCTS_MAX_PAGES} páginas. Revisa el tamaño del catálogo.`);
+  }
+
+  return products;
+};
+
 // â”€â”€ Trae TODOS los productos â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export const getProductos = () => {
   const cached = getCached('all-products');
@@ -407,16 +453,7 @@ export const getProductos = () => {
 
   const promise = (async () => {
     try {
-      const data = await shopifyFetch(`
-        query {
-          products(first: 100) {
-            edges {
-              node { ${PRODUCT_FIELDS_LIGHT} }
-            }
-          }
-        }
-      `);
-      return data.products.edges.map(({ node }) => mapProducto(node));
+      return await fetchAllProducts();
     } catch (err) {
       console.error('Error getProductos:', err);
       return [];
