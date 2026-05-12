@@ -53,8 +53,8 @@ export default function NosotrosPage() {
   return (
     <div className="min-h-screen bg-white">
       <SEO
-        title="Nuestra Filosofia"
-        description={content.manifestoSupportingText || content.blocks[0]?.body || 'Conoce la filosofia de PAVOA, su manifiesto y sus pilares.'}
+        title="Nuestra Filosofía"
+        description={content.manifestoSupportingText || content.blocks[0]?.body || 'Conoce la filosofía de PAVOA, su manifiesto y sus pilares.'}
         url="/nosotros"
       />
 
@@ -93,7 +93,7 @@ export default function NosotrosPage() {
             <div className="lg:pb-3">
               <div className="border border-stone-200 bg-white/70 backdrop-blur-sm px-6 py-7 md:px-8 md:py-9">
                 <p className="text-[9px] font-bold tracking-[0.28em] uppercase text-stone-400 mb-4">
-                  Seguridad en movimiento
+                  Seguridad en Movimiento
                 </p>
                 <p className="text-[12px] md:text-[13px] text-stone-600 leading-relaxed tracking-[0.08em]">
                   {content.manifestoSupportingText}
@@ -128,7 +128,7 @@ export default function NosotrosPage() {
         <div className="max-w-[1400px] mx-auto">
           <div className="flex flex-col gap-3 mb-10 md:mb-12">
             <p className="text-[9px] font-bold tracking-[0.28em] uppercase text-stone-400">
-              La filosofia PAVOA
+              La Filosofía PAVOA
             </p>
             <h2 className="text-2xl md:text-4xl font-light text-stone-900 tracking-[0.08em] uppercase">
               Principios que sostienen la marca
