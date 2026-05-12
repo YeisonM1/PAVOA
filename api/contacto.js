@@ -62,6 +62,11 @@ const buildStockAlertErrorMessage = (error) => {
   return 'No se pudo registrar. Intenta de nuevo.';
 };
 
+const buildStockAlertErrorDetail = (error) => {
+  const text = getErrorText(error);
+  return text || 'Error desconocido en stock alerts.';
+};
+
 const findPendingStockAlerts = async ({
   email,
   productId,
@@ -304,7 +309,10 @@ export default async function handler(req, res) {
         details: err?.details,
         hint: err?.hint,
       });
-      return res.status(500).json({ error: buildStockAlertErrorMessage(err) });
+      return res.status(500).json({
+        error: buildStockAlertErrorMessage(err),
+        detail: buildStockAlertErrorDetail(err),
+      });
     }
   }
 

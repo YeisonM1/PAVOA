@@ -111,7 +111,8 @@ export default function QuickViewModal({ productoId, onClose }) {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data?.ok) {
-        throw new Error(data?.error || 'No se pudo registrar la alerta. Intenta de nuevo.');
+        const message = [data?.error, data?.detail].filter(Boolean).join(' ');
+        throw new Error(message || 'No se pudo registrar la alerta. Intenta de nuevo.');
       }
       setAlertSent(true);
     } catch (err) {
