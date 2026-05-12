@@ -23,8 +23,15 @@ export const FILOSOFIA_SECTION_DEFAULTS = {
 
 export const NOSOTROS_PAGE_DEFAULTS = {
   internalName: 'Nosotros',
-  eyebrow: 'Filosofia PAVOA',
-  title: 'Una marca con intencion, diseno y vision',
+  eyebrow: 'Sobre nosotros',
+  title: 'Filosofia de PAVOA',
+  manifesto: 'PAVOA no te da la seguridad, PAVOA la celebra porque ya esta en ti.',
+  manifestoSupportingText: 'No es un disfraz, es un espejo de quien es la mujer que la usa.',
+  introEyebrow: 'Nuestra esencia',
+  introTitle: 'Mas que una marca, una identidad.',
+  introBody: 'PAVOA no nacio para seguir tendencias, nacio de una necesidad real: encontrar ese punto de equilibrio donde el movimiento y el estilo se encuentran sin sacrificios. Creemos que la ropa deportiva no deberia ser un impedimento para verte impecable; al contrario, debe ser la extension natural de tu estilo de vida.\n\nNo disenamos para darte seguridad, disenamos porque sabemos que esa seguridad ya vive en ti. Nuestra mision es representarte: desde la mujer que hoy decide dar su primer paso en el deporte, hasta la atleta de alto rendimiento que domina su disciplina.\n\nEn PAVOA, alguien penso en ti. Pensamos en la comodidad de cada talla, en la suavidad de cada fibra y en la elegancia de cada corte. No vendemos por vender; solo creamos aquello que nos inspira confianza, glamour y que consideramos una verdadera expresion de arte. Porque si no lo usariamos nosotros, no es para ti.',
+  quote: 'Diseno con alma, pensado por y para la mujer que se mueve con seguridad por el mundo.',
+  signature: 'By Daianna P.',
   ctaEyebrow: 'Siguiente paso',
   ctaTitle: 'Explorar coleccion o hablar con nosotros',
   ctaLink1Text: 'Explorar coleccion',
@@ -33,36 +40,36 @@ export const NOSOTROS_PAGE_DEFAULTS = {
   ctaLink2Url: '/contacto',
   blocks: [
     {
-      id: 'creemos',
-      internalName: 'Creemos',
+      id: 'seguridad-movimiento',
+      internalName: 'Seguridad en Movimiento',
       order: 1,
       label: '01',
-      title: 'Que creemos',
-      body: 'Creemos en vestirnos como vivimos: con intencion. PAVOA nace para mujeres que sostienen muchas cosas al mismo tiempo y no necesitan elegir entre verse bien y sentirse capaces. No hacemos ropa para verse deportiva; hacemos piezas para habitar el dia con presencia, desde un entrenamiento temprano hasta una reunion tarde.',
+      title: 'Seguridad en Movimiento',
+      body: 'Creamos piezas con las que te sientes alineada. No te vistes para entrenar, te vistes para ser tu misma en cada paso.',
     },
     {
-      id: 'materializamos',
-      internalName: 'Materializamos',
+      id: 'elegancia-sin-esfuerzo',
+      internalName: 'Elegancia sin Esfuerzo',
       order: 2,
       label: '02',
-      title: 'Como lo materializamos',
-      body: 'Disenamos menos, pero mejor. Cada prenda tiene que pasar una prueba simple: acompanar cuando te mueves de verdad. Trabajamos con siluetas limpias, telas comodas y decisiones que no gritan, pero se notan. Lo funcional no esta peleado con lo elegante; para nosotros, van juntos.',
+      title: 'Elegancia sin Esfuerzo',
+      body: 'Vemos la moda deportiva como una expresion de arte. Queremos que te sientas linda y arreglada, manteniendo la comodidad absoluta como nuestra prioridad no negociable.',
     },
     {
-      id: 'vestimos',
-      internalName: 'Vestimos',
+      id: 'compromiso-verdad',
+      internalName: 'Compromiso con la Verdad',
       order: 3,
       label: '03',
-      title: 'A quien vestimos',
-      body: 'Vestimos a la mujer que se cumple a si misma. La que entrena aunque este cansada. La que trabaja con foco. La que no necesita llamar la atencion para tener presencia. PAVOA es para ella: una mujer disciplinada, sensible al detalle y clara con lo que quiere proyectar.',
+      title: 'Compromiso con la Verdad',
+      body: 'No seguimos modas pasajeras. Solo lanzamos prendas que resaltan tu confianza y que nosotros mismos amamos usar. Si no proyecta seguridad, no lleva nuestro nombre.',
     },
     {
-      id: 'vision',
-      internalName: 'Vision',
+      id: 'todas-versiones',
+      internalName: 'Para Todas las Versiones de Ti',
       order: 4,
       label: '04',
-      title: 'Hacia donde vamos',
-      body: 'Queremos construir una marca latinoamericana con identidad propia. No perseguimos volumen por volumen. Queremos crecer cuidando el criterio, la calidad y la coherencia de cada coleccion. Nuestra vision es simple: que cuando una mujer piense en activewear premium con caracter, piense en PAVOA.',
+      title: 'Para Todas las Versiones de Ti',
+      body: 'Desde tu primera carrera de 5 km hasta tu victoria profesional, PAVOA esta aqui para simbolizar tu fuerza y tu estilo en cada talla y cada meta.',
     },
   ],
 };
@@ -878,7 +885,14 @@ export const getNosotrosPage = () => {
 
       const pageNode = data.nosotrosPage.edges[0]?.node;
       const pageFields = pageNode?.fields || [];
-      const referencedBlocks = getMetaobjectFieldReferences(pageFields, 'blocks', 'nosotros_blocks');
+      const hasModernNosotrosFields = [
+        'manifesto',
+        'manifesto_supporting_text',
+        'intro_body',
+        'quote',
+        'signature',
+      ].some((key) => getMetaobjectFieldValue(pageFields, key));
+      const referencedBlocks = getMetaobjectFieldReferences(pageFields, 'philosophy_blocks', 'pillars', 'blocks', 'nosotros_blocks');
       const fallbackBlocks = data.nosotrosBlocks.edges.map(({ node }, index) => mapNosotrosBlock(node, index));
       const blocksSource = referencedBlocks.length > 0
         ? referencedBlocks.map((node, index) => mapNosotrosBlock(node, index))
@@ -888,11 +902,27 @@ export const getNosotrosPage = () => {
         .sort((a, b) => a.order - b.order);
 
       if (!pageNode && blocks.length === 0) return NOSOTROS_PAGE_DEFAULTS;
+      if (!hasModernNosotrosFields) {
+        return {
+          ...NOSOTROS_PAGE_DEFAULTS,
+          ctaLink1Text: getMetaobjectFieldValue(pageFields, 'cta_link_1_text') || NOSOTROS_PAGE_DEFAULTS.ctaLink1Text,
+          ctaLink1Url: getMetaobjectFieldValue(pageFields, 'cta_link_1_url') || NOSOTROS_PAGE_DEFAULTS.ctaLink1Url,
+          ctaLink2Text: getMetaobjectFieldValue(pageFields, 'cta_link_2_text') || NOSOTROS_PAGE_DEFAULTS.ctaLink2Text,
+          ctaLink2Url: getMetaobjectFieldValue(pageFields, 'cta_link_2_url') || NOSOTROS_PAGE_DEFAULTS.ctaLink2Url,
+        };
+      }
 
       return {
         internalName: getMetaobjectFieldValue(pageFields, 'internal_name') || NOSOTROS_PAGE_DEFAULTS.internalName,
         eyebrow: getMetaobjectFieldValue(pageFields, 'eyebrow') || NOSOTROS_PAGE_DEFAULTS.eyebrow,
         title: getMetaobjectFieldValue(pageFields, 'title') || NOSOTROS_PAGE_DEFAULTS.title,
+        manifesto: getMetaobjectFieldValue(pageFields, 'manifesto') || NOSOTROS_PAGE_DEFAULTS.manifesto,
+        manifestoSupportingText: getMetaobjectFieldValue(pageFields, 'manifesto_supporting_text') || NOSOTROS_PAGE_DEFAULTS.manifestoSupportingText,
+        introEyebrow: getMetaobjectFieldValue(pageFields, 'intro_eyebrow') || NOSOTROS_PAGE_DEFAULTS.introEyebrow,
+        introTitle: getMetaobjectFieldValue(pageFields, 'intro_title') || NOSOTROS_PAGE_DEFAULTS.introTitle,
+        introBody: getMetaobjectFieldValue(pageFields, 'intro_body') || NOSOTROS_PAGE_DEFAULTS.introBody,
+        quote: getMetaobjectFieldValue(pageFields, 'quote') || NOSOTROS_PAGE_DEFAULTS.quote,
+        signature: getMetaobjectFieldValue(pageFields, 'signature') || NOSOTROS_PAGE_DEFAULTS.signature,
         ctaEyebrow: getMetaobjectFieldValue(pageFields, 'cta_eyebrow') || NOSOTROS_PAGE_DEFAULTS.ctaEyebrow,
         ctaTitle: getMetaobjectFieldValue(pageFields, 'cta_title') || NOSOTROS_PAGE_DEFAULTS.ctaTitle,
         ctaLink1Text: getMetaobjectFieldValue(pageFields, 'cta_link_1_text') || NOSOTROS_PAGE_DEFAULTS.ctaLink1Text,
