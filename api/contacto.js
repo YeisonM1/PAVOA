@@ -84,6 +84,38 @@ export default async function handler(req, res) {
     }
   }
 
+  if (req.body?.type === 'newsletter-subscribe') {
+    const normalizedEmail = String(req.body?.email || '').trim().toLowerCase();
+    const normalizedSource = normalizeOptional(req.body?.source) || 'storefront_footer';
+
+    if (!normalizedEmail) {
+      return res.status(400).json({ error: 'Email requerido.' });
+    }
+
+    if (!isValidEmail(normalizedEmail)) {
+      return res.status(400).json({ error: 'Email invalido.' });
+    }
+
+    try {
+      const { error } = await supabase.from('newsletter_subscribers').insert({
+        email: normalizedEmail,
+        source: normalizedSource,
+        subscribed_at: new Date().toISOString(),
+      });
+
+      if (error?.code === '23505') {
+        return res.status(200).json({ ok: true, duplicate: true });
+      }
+
+      if (error) throw error;
+
+      return res.status(200).json({ ok: true });
+    } catch (err) {
+      console.error('Error newsletter subscribe:', err.message);
+      return res.status(500).json({ error: 'No se pudo registrar. Intenta de nuevo.' });
+    }
+  }
+
   // Stock alert branch
   if (req.body?.type === 'stock-alert') {
     const { email, productId, productNombre, talla, color, variantId } = req.body;

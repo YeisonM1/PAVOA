@@ -96,7 +96,7 @@ export const FOOTER_CONTENT_DEFAULTS = {
   internalName: 'Principal',
   newsletterEyebrow: 'NEWSLETTER',
   newsletterTitle: 'Sé la primera en enterarte.',
-  newsletterBody: 'Nuevas colecciónes, descuentos exclusivos y más.',
+  newsletterBody: 'Nuevas colecciones, descuentos exclusivos y más.',
   newsletterSuccessText: 'GRACIAS POR SUSCRIBIRTE',
   newsletterInputPlaceholder: 'Tu correo electrónico',
   newsletterButtonText: 'SUSCRIBIRSE',
@@ -503,6 +503,40 @@ export const enviarContacto = async ({ nombre, contacto, asunto, mensaje }) => {
   } catch (err) {
     console.error('Error enviarContacto:', err);
     return false;
+  }
+};
+
+export const suscribirNewsletter = async ({ email, source = 'storefront_footer' }) => {
+  try {
+    const res = await fetch('/api/contacto', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        type: 'newsletter-subscribe',
+        email,
+        source,
+      }),
+    });
+
+    const data = await res.json().catch(() => ({}));
+
+    if (!res.ok) {
+      return {
+        ok: false,
+        error: data?.error || 'Error al suscribirse. Intenta de nuevo.',
+      };
+    }
+
+    return {
+      ok: true,
+      duplicate: data?.duplicate === true,
+    };
+  } catch (err) {
+    console.error('Error suscribirNewsletter:', err);
+    return {
+      ok: false,
+      error: 'Error al suscribirse. Intenta de nuevo.',
+    };
   }
 };
 

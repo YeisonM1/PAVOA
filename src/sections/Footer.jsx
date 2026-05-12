@@ -1,15 +1,9 @@
 ﻿import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { createClient } from '@supabase/supabase-js';
 import logo from '../assets/LOGO-PAVOA.svg';
 import { InstagramIcon, FacebookIcon } from '../components/Icons';
-import { FOOTER_CONTENT_DEFAULTS, getFooterContent } from '../services/productService';
+import { FOOTER_CONTENT_DEFAULTS, getFooterContent, suscribirNewsletter } from '../services/productService';
 import useSiteSettings from '../hooks/useSiteSettings';
-
-const supabase = createClient(
-  import.meta.env.VITE_SUPABASE_URL,
-  import.meta.env.VITE_SUPABASE_ANON_KEY
-);
 
 export default function Footer() {
   const settings = useSiteSettings();
@@ -40,12 +34,15 @@ export default function Footer() {
     setLoading(true);
     setError('');
     try {
-      const { error: subscribeError } = await supabase
-        .from('newsletter_subscribers')
-        .insert({ email: email.toLowerCase() });
-      if (subscribeError && subscribeError.code !== '23505') {
-        throw new Error('Error al suscribirse. Intenta de nuevo.');
+      const result = await suscribirNewsletter({
+        email: email.toLowerCase(),
+        source: 'storefront_footer',
+      });
+
+      if (!result.ok) {
+        throw new Error(result.error || 'Error al suscribirse. Intenta de nuevo.');
       }
+
       setSubscribed(true);
       setEmail('');
     } catch (err) {
