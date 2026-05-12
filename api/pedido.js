@@ -71,6 +71,44 @@ const getSingleCartItem = (cartItems = []) => {
   };
 };
 
+const obtenerDraftOrder = async (token, draftOrderId) => {
+  const res = await fetch(
+    `https://${SHOPIFY_DOMAIN}/admin/api/2026-04/draft_orders/${draftOrderId}.json`,
+    {
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Shopify-Access-Token': token,
+      },
+    }
+  );
+
+  if (res.status === 404) return null;
+
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(JSON.stringify(data));
+  }
+
+  return data.draft_order || null;
+};
+
+const cachedDraftOrderStillExists = async (draftOrderId) => {
+  for (const preferredToken of ['app', 'admin']) {
+    try {
+      const token = await getShopifyToken(preferredToken);
+      const draftOrder = await obtenerDraftOrder(token, draftOrderId);
+      if (preferredToken === 'admin') {
+        console.warn('[PAVOA] Draft Order validado usando fallback con SHOPIFY_ADMIN_TOKEN.');
+      }
+      return Boolean(draftOrder);
+    } catch (tokenErr) {
+      console.warn(`[PAVOA] Fallo validando draft cacheado con token ${preferredToken}:`, tokenErr.message);
+    }
+  }
+
+  return false;
+};
+
 const crearDraftOrder = async (token, { form, trustedItems, orderOwnerEmail }) => {
   const lineItems = trustedItems.map((item) => ({
     variant_id: item.variantId,
@@ -171,8 +209,14 @@ export default async function handler(req, res) {
   if (idempotencyKey) {
     const cached = _pedidoCache.get(idempotencyKey);
     if (cached && Date.now() - cached.ts < IDEM_TTL) {
+      const draftStillExists = await cachedDraftOrderStillExists(cached.draftOrderId);
+      if (!draftStillExists) {
+        console.warn(`Draft Order cacheado ya no existe. Se invalida cache para ${idempotencyKey}.`);
+        _pedidoCache.delete(idempotencyKey);
+      } else {
       console.log(`Draft Order reutilizado (idempotency): ${cached.name}`);
       return res.status(200).json({ ok: true, draftOrderId: cached.draftOrderId, name: cached.name });
+      }
     }
   }
 

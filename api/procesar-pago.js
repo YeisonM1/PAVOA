@@ -21,6 +21,9 @@ const MP_EXPECTED_USER_ID = String(
   process.env.MP_EXPECTED_USER_ID || process.env.MP_SELLER_USER_ID || ''
 ).trim();
 const normalizeEmail = (value) => String(value || '').trim().toLowerCase();
+const PAYMENT_PREFERENCE_TTL = 15 * 60 * 1000;
+const _paymentPreferenceCache = new Map();
+const _paymentPreferenceInflight = new Map();
 
 const requiredEnvError = () => {
   if (!process.env.MP_ACCESS_TOKEN) return 'Falta MP_ACCESS_TOKEN en variables de entorno de Vercel.';
@@ -121,6 +124,69 @@ const getSingleCartItem = (cartItems = []) => {
     size: item?.talla || null,
   };
 };
+
+const buildPaymentPreferenceKey = ({ idempotencyKey, draftOrderId, orderOwnerEmail }) => {
+  const explicitKey = String(idempotencyKey || '').trim();
+  if (explicitKey) return `key:${explicitKey}`;
+
+  const normalizedDraftOrderId = String(draftOrderId || '').trim();
+  if (!normalizedDraftOrderId) return '';
+
+  return `draft:${normalizedDraftOrderId}|${normalizeEmail(orderOwnerEmail) || 'unknown'}`;
+};
+
+const getCachedPaymentPreference = (key) => {
+  if (!key) return null;
+
+  const entry = _paymentPreferenceCache.get(key);
+  if (!entry) return null;
+  if (Date.now() - entry.ts > PAYMENT_PREFERENCE_TTL) {
+    _paymentPreferenceCache.delete(key);
+    return null;
+  }
+
+  return entry.payload;
+};
+
+const setCachedPaymentPreference = (key, payload) => {
+  if (!key || !payload?.ok) return;
+  _paymentPreferenceCache.set(key, { payload, ts: Date.now() });
+};
+
+const markPreferenceAsReused = (payload) => ({
+  ...payload,
+  debug: {
+    ...(payload?.debug || {}),
+    reused_preference: true,
+  },
+});
+
+const buildPreferenceResponsePayload = ({
+  preference,
+  checkoutUrl,
+  checkoutMode,
+  descuentoAplicado,
+  sellerCheck,
+  paymentPreferenceKey,
+}) => ({
+  ok: true,
+  init_point: checkoutUrl,
+  descuento_aplicado: descuentoAplicado,
+  debug: {
+    preference_id: preference.id,
+    collector_id: preference.collector_id,
+    live_mode: preference.live_mode,
+    checkout_mode: checkoutMode,
+    checkout_url: checkoutUrl,
+    sandbox_init_point: preference.sandbox_init_point || null,
+    init_point: preference.init_point,
+    expected_user_id: MP_EXPECTED_USER_ID || null,
+    active_user_id: sellerCheck.active_user_id || null,
+    token_user_id_hint: getTokenUserIdHint(),
+    payment_preference_key: paymentPreferenceKey || null,
+    reused_preference: false,
+  },
+});
 
 const buildMpDiagnosticSummary = ({ userInfo, preferenceInfo }) => {
   const summary = [];
@@ -225,6 +291,237 @@ const buildMpDiagnosticSummary = ({ userInfo, preferenceInfo }) => {
   }
 
   return summary;
+};
+
+const createPaymentPreference = async ({
+  form,
+  cartItems,
+  cartTotal,
+  draftOrderId,
+  funnelSessionId,
+  orderOwnerEmail,
+  payerEmail,
+  authUserId,
+  paymentPreferenceKey,
+}) => {
+  const singleItem = getSingleCartItem(cartItems);
+
+  try {
+    const sellerCheck = await validateExpectedSeller();
+    if (!sellerCheck.ok) {
+      await trackFunnelEvent({
+        eventType: 'payment_preference_failed',
+        source: 'backend',
+        sessionId: String(funnelSessionId || '').trim() || null,
+        userId: authUserId,
+        userEmail: orderOwnerEmail,
+        productId: singleItem?.productId || null,
+        productName: singleItem?.productName || null,
+        variantId: singleItem?.variantId || null,
+        color: singleItem?.color || null,
+        size: singleItem?.size || null,
+        orderId: draftOrderId,
+        amount: cartTotal || null,
+        meta: {
+          stage: 'seller_validation',
+          detail: sellerCheck.detail || sellerCheck.error,
+          payment_preference_key: paymentPreferenceKey || null,
+          line_items: buildCartSummary(cartItems),
+        },
+      });
+      return {
+        statusCode: sellerCheck.status || 409,
+        payload: {
+          error: sellerCheck.error,
+          detail: sellerCheck.detail || null,
+        },
+      };
+    }
+
+    const preferenceClient = new mercadopago.Preference(client);
+
+    const { trustedItems, total } = await validateCartWithShopify(cartItems);
+    if (Math.abs(Number(cartTotal) - total) > 1) {
+      await eliminarDraftOrder(draftOrderId);
+      await trackFunnelEvent({
+        eventType: 'payment_preference_failed',
+        source: 'backend',
+        sessionId: String(funnelSessionId || '').trim() || null,
+        userId: authUserId,
+        userEmail: orderOwnerEmail,
+        productId: singleItem?.productId || null,
+        productName: singleItem?.productName || null,
+        variantId: singleItem?.variantId || null,
+        color: singleItem?.color || null,
+        size: singleItem?.size || null,
+        orderId: draftOrderId,
+        amount: cartTotal || null,
+        meta: {
+          stage: 'cart_validation',
+          expected_total: total,
+          received_total: Number(cartTotal),
+          payment_preference_key: paymentPreferenceKey || null,
+          line_items: buildCartSummary(cartItems),
+        },
+      });
+      return {
+        statusCode: 409,
+        payload: {
+          error: 'El precio del carrito cambio. Actualiza la bolsa e intenta de nuevo.',
+        },
+      };
+    }
+
+    let itemsMapped = trustedItems.map((item) => ({
+      id: String(item.variantId),
+      title: item.title,
+      quantity: item.quantity,
+      unit_price: item.unitPrice,
+      currency_id: 'COP',
+    }));
+
+    let descuentoAplicado = false;
+    try {
+      const { data: usuario } = await supabase
+        .from('usuarios')
+        .select('descuento_bienvenida_usado')
+        .eq('email', orderOwnerEmail)
+        .eq('email_verified', true)
+        .single();
+
+      if (usuario && !usuario.descuento_bienvenida_usado) {
+        itemsMapped = itemsMapped.map((item) => ({
+          ...item,
+          unit_price: Math.round(item.unit_price * 0.9),
+        }));
+        descuentoAplicado = true;
+        console.log(`Descuento bienvenida 10% aplicado a: ${orderOwnerEmail}`);
+      }
+    } catch (descErr) {
+      console.warn('No se pudo verificar descuento:', descErr.message);
+    }
+
+    if (descuentoAplicado) {
+      try {
+        const shopifyToken = await getShopifyToken();
+        await fetch(
+          `https://${SHOPIFY_DOMAIN}/admin/api/2026-04/draft_orders/${draftOrderId}.json`,
+          {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', 'X-Shopify-Access-Token': shopifyToken },
+            body: JSON.stringify({
+              draft_order: {
+                applied_discount: { title: 'Descuento Bienvenida 10%', value: '10.0', value_type: 'percentage' },
+              },
+            }),
+          }
+        );
+        console.log(`Descuento aplicado en Shopify draft order: ${draftOrderId}`);
+      } catch (shopifyErr) {
+        console.warn('No se pudo aplicar descuento en Shopify:', shopifyErr.message);
+      }
+    }
+
+    const externalRef = `${draftOrderId}|${orderOwnerEmail}|${descuentoAplicado ? '1' : '0'}`;
+    const customerName = splitCustomerName(form?.nombre);
+    const preference = await preferenceClient.create({
+      body: {
+        items: itemsMapped,
+        payer: {
+          email: payerEmail,
+          first_name: customerName.firstName || undefined,
+          last_name: customerName.lastName || undefined,
+        },
+        back_urls: {
+          success: `${APP_URL}/orden-confirmada`,
+          failure: `${APP_URL}/checkout`,
+          pending: `${APP_URL}/orden-confirmada`,
+        },
+        auto_return: 'approved',
+        external_reference: externalRef,
+        notification_url: `${APP_URL}/api/webhook-mercadopago`,
+        statement_descriptor: 'PAVOA',
+      },
+    });
+
+    const checkoutUrl = preference.sandbox_init_point || preference.init_point;
+    const checkoutMode = preference.sandbox_init_point ? 'sandbox' : 'live';
+
+    console.log(
+      `Preferencia MP creada: ${preference.id} | collector: ${preference.collector_id} | live_mode: ${preference.live_mode} | checkout_mode: ${checkoutMode} | draft: ${draftOrderId} | descuento: ${descuentoAplicado}`
+    );
+
+    await trackFunnelEvent({
+      eventKey: `payment_preference_created:${preference.id}`,
+      eventType: 'payment_preference_created',
+      source: 'backend',
+      sessionId: String(funnelSessionId || '').trim() || null,
+      userId: authUserId,
+      userEmail: orderOwnerEmail,
+      productId: singleItem?.productId || null,
+      productName: singleItem?.productName || null,
+      variantId: singleItem?.variantId || null,
+      color: singleItem?.color || null,
+      size: singleItem?.size || null,
+      orderId: draftOrderId,
+      amount: total,
+      meta: {
+        preference_id: preference.id,
+        collector_id: preference.collector_id || null,
+        checkout_mode: checkoutMode,
+        descuento_aplicado: descuentoAplicado,
+        payment_preference_key: paymentPreferenceKey || null,
+        line_count: trustedItems.length,
+        item_count: trustedItems.reduce((sum, item) => sum + Number(item.quantity || 0), 0),
+        line_items: buildCartSummary(cartItems),
+      },
+    });
+
+    const payload = buildPreferenceResponsePayload({
+      preference,
+      checkoutUrl,
+      checkoutMode,
+      descuentoAplicado,
+      sellerCheck,
+      paymentPreferenceKey,
+    });
+
+    setCachedPaymentPreference(paymentPreferenceKey, payload);
+
+    return {
+      statusCode: 200,
+      payload,
+    };
+  } catch (error) {
+    console.error('Error creando preferencia MP:', error?.message);
+    await eliminarDraftOrder(draftOrderId);
+    await trackFunnelEvent({
+      eventType: 'payment_preference_failed',
+      source: 'backend',
+      sessionId: String(funnelSessionId || '').trim() || null,
+      userId: authUserId,
+      userEmail: orderOwnerEmail,
+      productId: singleItem?.productId || null,
+      productName: singleItem?.productName || null,
+      variantId: singleItem?.variantId || null,
+      color: singleItem?.color || null,
+      size: singleItem?.size || null,
+      orderId: draftOrderId,
+      amount: cartTotal || null,
+      meta: {
+        stage: 'unexpected',
+        detail: error?.message || 'Error al crear la preferencia de pago',
+        payment_preference_key: paymentPreferenceKey || null,
+        line_items: buildCartSummary(cartItems),
+      },
+    });
+    return {
+      statusCode: 500,
+      payload: {
+        error: error?.message || 'Error al crear la preferencia de pago',
+      },
+    };
+  }
 };
 
 export default async function handler(req, res) {
@@ -358,7 +655,7 @@ export default async function handler(req, res) {
   }
 
   const tokenPayload = verifyToken(req);
-  const { form, cartItems, cartTotal, draftOrderId, funnelSessionId } = req.body;
+  const { form, cartItems, cartTotal, draftOrderId, funnelSessionId, idempotencyKey } = req.body;
   const orderOwnerEmail = normalizeEmail(tokenPayload?.email || form?.email);
   const payerEmail = normalizeEmail(form?.email);
   const authUserId = String(tokenPayload?.userId || tokenPayload?.id || '').trim() || null;
@@ -373,207 +670,51 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Correo de pago invalido.' });
   }
 
-  try {
-    const singleItem = getSingleCartItem(cartItems);
-    const sellerCheck = await validateExpectedSeller();
-    if (!sellerCheck.ok) {
-      await trackFunnelEvent({
-        eventType: 'payment_preference_failed',
-        source: 'backend',
-        sessionId: String(funnelSessionId || '').trim() || null,
-        userId: authUserId,
-        userEmail: orderOwnerEmail,
-        productId: singleItem?.productId || null,
-        productName: singleItem?.productName || null,
-        variantId: singleItem?.variantId || null,
-        color: singleItem?.color || null,
-        size: singleItem?.size || null,
-        orderId: draftOrderId,
-        amount: cartTotal || null,
-        meta: {
-          stage: 'seller_validation',
-          detail: sellerCheck.detail || sellerCheck.error,
-          line_items: buildCartSummary(cartItems),
-        },
-      });
-      return res.status(sellerCheck.status || 409).json({
-        error: sellerCheck.error,
-        detail: sellerCheck.detail || null,
-      });
-    }
+  const paymentPreferenceKey = buildPaymentPreferenceKey({
+    idempotencyKey,
+    draftOrderId,
+    orderOwnerEmail,
+  });
 
-    const preferenceClient = new mercadopago.Preference(client);
+  const cachedPreference = getCachedPaymentPreference(paymentPreferenceKey);
+  if (cachedPreference) {
+    console.info(`[PAVOA] Preferencia MP reutilizada desde cache: ${paymentPreferenceKey}`);
+    return res.status(200).json(markPreferenceAsReused(cachedPreference));
+  }
 
-    const { trustedItems, total } = await validateCartWithShopify(cartItems);
-    if (Math.abs(Number(cartTotal) - total) > 1) {
-      await eliminarDraftOrder(draftOrderId);
-      await trackFunnelEvent({
-        eventType: 'payment_preference_failed',
-        source: 'backend',
-        sessionId: String(funnelSessionId || '').trim() || null,
-        userId: authUserId,
-        userEmail: orderOwnerEmail,
-        productId: singleItem?.productId || null,
-        productName: singleItem?.productName || null,
-        variantId: singleItem?.variantId || null,
-        color: singleItem?.color || null,
-        size: singleItem?.size || null,
-        orderId: draftOrderId,
-        amount: cartTotal || null,
-        meta: {
-          stage: 'cart_validation',
-          expected_total: total,
-          received_total: Number(cartTotal),
-          line_items: buildCartSummary(cartItems),
-        },
-      });
-      return res.status(409).json({ error: 'El precio del carrito cambio. Actualiza la bolsa e intenta de nuevo.' });
-    }
-
-    let itemsMapped = trustedItems.map((item) => ({
-      id: String(item.variantId),
-      title: item.title,
-      quantity: item.quantity,
-      unit_price: item.unitPrice,
-      currency_id: 'COP',
-    }));
-
-    let descuentoAplicado = false;
-    try {
-      const { data: usuario } = await supabase
-        .from('usuarios')
-        .select('descuento_bienvenida_usado')
-        .eq('email', orderOwnerEmail)
-        .eq('email_verified', true)
-        .single();
-
-      if (usuario && !usuario.descuento_bienvenida_usado) {
-        itemsMapped = itemsMapped.map((item) => ({
-          ...item,
-          unit_price: Math.round(item.unit_price * 0.9),
-        }));
-        descuentoAplicado = true;
-        console.log(`Descuento bienvenida 10% aplicado a: ${orderOwnerEmail}`);
-      }
-    } catch (descErr) {
-      console.warn('No se pudo verificar descuento:', descErr.message);
-    }
-
-    if (descuentoAplicado) {
-      try {
-        const shopifyToken = await getShopifyToken();
-        await fetch(
-          `https://${SHOPIFY_DOMAIN}/admin/api/2026-04/draft_orders/${draftOrderId}.json`,
-          {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json', 'X-Shopify-Access-Token': shopifyToken },
-            body: JSON.stringify({
-              draft_order: {
-                applied_discount: { title: 'Descuento Bienvenida 10%', value: '10.0', value_type: 'percentage' },
-              },
-            }),
-          }
-        );
-        console.log(`Descuento aplicado en Shopify draft order: ${draftOrderId}`);
-      } catch (shopifyErr) {
-        console.warn('No se pudo aplicar descuento en Shopify:', shopifyErr.message);
-      }
-    }
-
-    const externalRef = `${draftOrderId}|${orderOwnerEmail}|${descuentoAplicado ? '1' : '0'}`;
-
-    const customerName = splitCustomerName(form?.nombre);
-    const preference = await preferenceClient.create({
-      body: {
-        items: itemsMapped,
-        payer: {
-          email: payerEmail,
-          first_name: customerName.firstName || undefined,
-          last_name: customerName.lastName || undefined,
-        },
-        back_urls: {
-          success: `${APP_URL}/orden-confirmada`,
-          failure: `${APP_URL}/checkout`,
-          pending: `${APP_URL}/orden-confirmada`,
-        },
-        auto_return: 'approved',
-        external_reference: externalRef,
-        notification_url: `${APP_URL}/api/webhook-mercadopago`,
-        statement_descriptor: 'PAVOA',
-      },
-    });
-
-    const checkoutUrl = preference.sandbox_init_point || preference.init_point;
-    const checkoutMode = preference.sandbox_init_point ? 'sandbox' : 'live';
-
-    console.log(
-      `Preferencia MP creada: ${preference.id} | collector: ${preference.collector_id} | live_mode: ${preference.live_mode} | checkout_mode: ${checkoutMode} | draft: ${draftOrderId} | descuento: ${descuentoAplicado}`
+  const inflightPreference = paymentPreferenceKey
+    ? _paymentPreferenceInflight.get(paymentPreferenceKey)
+    : null;
+  if (inflightPreference) {
+    console.info(`[PAVOA] Esperando preferencia MP en progreso: ${paymentPreferenceKey}`);
+    const result = await inflightPreference;
+    return res.status(result.statusCode).json(
+      result.statusCode === 200 ? markPreferenceAsReused(result.payload) : result.payload
     );
+  }
 
-    await trackFunnelEvent({
-      eventKey: `payment_preference_created:${preference.id}`,
-      eventType: 'payment_preference_created',
-      source: 'backend',
-      sessionId: String(funnelSessionId || '').trim() || null,
-      userId: authUserId,
-      userEmail: orderOwnerEmail,
-      productId: singleItem?.productId || null,
-      productName: singleItem?.productName || null,
-      variantId: singleItem?.variantId || null,
-      color: singleItem?.color || null,
-      size: singleItem?.size || null,
-      orderId: draftOrderId,
-      amount: total,
-      meta: {
-        preference_id: preference.id,
-        collector_id: preference.collector_id || null,
-        checkout_mode: checkoutMode,
-        descuento_aplicado: descuentoAplicado,
-        line_count: trustedItems.length,
-        item_count: trustedItems.reduce((sum, item) => sum + Number(item.quantity || 0), 0),
-        line_items: buildCartSummary(cartItems),
-      },
-    });
+  const preferencePromise = createPaymentPreference({
+    form,
+    cartItems,
+    cartTotal,
+    draftOrderId,
+    funnelSessionId,
+    orderOwnerEmail,
+    payerEmail,
+    authUserId,
+    paymentPreferenceKey,
+  });
 
-    return res.status(200).json({
-      ok: true,
-      init_point: checkoutUrl,
-      descuento_aplicado: descuentoAplicado,
-      debug: {
-        preference_id: preference.id,
-        collector_id: preference.collector_id,
-        live_mode: preference.live_mode,
-        checkout_mode: checkoutMode,
-        checkout_url: checkoutUrl,
-        sandbox_init_point: preference.sandbox_init_point || null,
-        init_point: preference.init_point,
-        expected_user_id: MP_EXPECTED_USER_ID || null,
-        active_user_id: sellerCheck.active_user_id || null,
-        token_user_id_hint: getTokenUserIdHint(),
-      },
-    });
-  } catch (error) {
-    console.error('Error creando preferencia MP:', error?.message);
-    await eliminarDraftOrder(draftOrderId);
-    await trackFunnelEvent({
-      eventType: 'payment_preference_failed',
-      source: 'backend',
-      sessionId: String(funnelSessionId || '').trim() || null,
-      userId: authUserId,
-      userEmail: orderOwnerEmail,
-      productId: getSingleCartItem(cartItems)?.productId || null,
-      productName: getSingleCartItem(cartItems)?.productName || null,
-      variantId: getSingleCartItem(cartItems)?.variantId || null,
-      color: getSingleCartItem(cartItems)?.color || null,
-      size: getSingleCartItem(cartItems)?.size || null,
-      orderId: draftOrderId,
-      amount: cartTotal || null,
-      meta: {
-        stage: 'unexpected',
-        detail: error?.message || 'Error al crear la preferencia de pago',
-        line_items: buildCartSummary(cartItems),
-      },
-    });
-    return res.status(500).json({ error: error?.message || 'Error al crear la preferencia de pago' });
+  if (paymentPreferenceKey) {
+    _paymentPreferenceInflight.set(paymentPreferenceKey, preferencePromise);
+  }
+
+  try {
+    const result = await preferencePromise;
+    return res.status(result.statusCode).json(result.payload);
+  } finally {
+    if (paymentPreferenceKey) {
+      _paymentPreferenceInflight.delete(paymentPreferenceKey);
+    }
   }
 }

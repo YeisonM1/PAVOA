@@ -366,10 +366,9 @@ export default function CheckoutPage() {
       return;
     }
 
-    // Proteccion doble pago: siempre crear una preferencia nueva.
-    // Reutilizar init_point estaba generando redirecciónes a sesiónes viejas de MP.
     const cartHash = cartItems.map(i => `${i.producto.id}|${i.talla}|${i.cantidad}`).join(',');
-    // Clave de idempotencia por minuto: evita crear dos Draft Orders por doble-click o retry rÃ¡pido
+    // Clave de idempotencia corta: absorbe doble-clicks y retries inmediatos
+    // en pedido y preferencia de pago, pero cada intento nuevo sigue creando su propia sesion.
     const minuteBucket    = Math.floor(Date.now() / 60000);
     const idempotencyKey  = `${form.email || 'anon'}-${cartHash}-${minuteBucket}`;
 
@@ -432,7 +431,14 @@ export default function CheckoutPage() {
       const resPref = await fetch('/api/procesar-pago', {
         method: 'POST',
         headers: getJsonHeaders(),
-        body: JSON.stringify({ form, cartItems, cartTotal, draftOrderId: draftOrderIdCreado, funnelSessionId }),
+        body: JSON.stringify({
+          form,
+          cartItems,
+          cartTotal,
+          draftOrderId: draftOrderIdCreado,
+          funnelSessionId,
+          idempotencyKey: `${idempotencyKey}-payment`,
+        }),
       });
       const dataPref = await resPref.json();
       if (!resPref.ok || !dataPref.init_point) {
