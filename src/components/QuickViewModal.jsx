@@ -24,6 +24,7 @@ export default function QuickViewModal({ productoId, onClose }) {
   const [alertEmail, setAlertEmail]         = useState('');
   const [alertSent, setAlertSent]           = useState(false);
   const [alertLoading, setAlertLoading]     = useState(false);
+  const [alertError, setAlertError]         = useState('');
 
   useEffect(() => {
     if (!productoId) return;
@@ -32,6 +33,7 @@ export default function QuickViewModal({ productoId, onClose }) {
     setColor(null);
     setTalla(null);
     setAlertSent(false);
+    setAlertError('');
     getProductoById(productoId)
       .then(data => { if (!cancelled) { setProducto(data); setLoading(false); } })
       .catch(() => { if (!cancelled) setLoading(false); });
@@ -92,8 +94,9 @@ export default function QuickViewModal({ productoId, onClose }) {
   const handleStockAlert = async () => {
     if (!alertEmail) return;
     setAlertLoading(true);
+    setAlertError('');
     try {
-      await fetch('/api/contacto', {
+      const res = await fetch('/api/contacto', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -106,8 +109,15 @@ export default function QuickViewModal({ productoId, onClose }) {
           variantId: varianteSeleccionada?.variantId || null,
         }),
       });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data?.ok) {
+        throw new Error(data?.error || 'No se pudo registrar la alerta. Intenta de nuevo.');
+      }
       setAlertSent(true);
-    } catch {} finally { setAlertLoading(false); }
+    } catch (err) {
+      setAlertSent(false);
+      setAlertError(err.message || 'No se pudo registrar la alerta. Intenta de nuevo.');
+    } finally { setAlertLoading(false); }
   };
 
   const canAdd = colorSeleccionado && (esTallaUnica || tallaSeleccionada) && stockActual !== 0 && stockActual !== null;
@@ -159,7 +169,7 @@ export default function QuickViewModal({ productoId, onClose }) {
                   </span>
                   <div className="flex gap-3 flex-wrap">
                     {coloresUnicos.map(v => (
-                      <button key={v.color} onClick={() => { setColor(v.color); setTalla(null); setAlertSent(false); }}
+                      <button key={v.color} onClick={() => { setColor(v.color); setTalla(null); setAlertSent(false); setAlertError(''); }}
                         className="flex flex-col items-center gap-1" aria-label={v.color}>
                         <div className={`w-7 h-7 rounded-full border transition-all ${colorSeleccionado === v.color ? 'ring-2 ring-offset-2 ring-stone-900 border-stone-300 scale-110' : 'border-stone-200 shadow-sm hover:scale-105'}`}
                           style={{ backgroundColor: v.hex }} />
@@ -184,7 +194,7 @@ export default function QuickViewModal({ productoId, onClose }) {
                         const activo = tallaSeleccionada === talla;
                         return (
                           <button key={talla}
-                            onClick={() => { setTalla(talla); setAlertSent(false); }}
+                            onClick={() => { setTalla(talla); setAlertSent(false); setAlertError(''); }}
                             className={`h-11 px-4 border text-[11px] font-medium tracking-[0.05em] uppercase transition-colors relative
                               ${agotado && activo ? 'border-stone-900 bg-stone-900 text-white' :
                                 agotado ? 'border-stone-100 text-stone-300' :
@@ -213,13 +223,16 @@ export default function QuickViewModal({ productoId, onClose }) {
                   <div className="flex flex-col gap-3">
                     <p className="text-[9px] tracking-[0.15em] text-stone-400 uppercase">Esta talla está agotada. Avísame cuando vuelva:</p>
                     <div className="flex gap-2">
-                      <input type="email" value={alertEmail} onChange={e => setAlertEmail(e.target.value)} placeholder="tu@correo.com"
+                      <input type="email" value={alertEmail} onChange={e => { setAlertEmail(e.target.value); if (alertError) setAlertError(''); }} placeholder="tu@correo.com"
                         className="flex-1 border-b border-stone-200 focus:border-stone-900 outline-none py-2 text-[12px] text-stone-900 placeholder-stone-300 bg-transparent transition-colors" />
                       <button onClick={handleStockAlert} disabled={alertLoading || !alertEmail}
                         className="text-[9px] font-bold tracking-[0.15em] uppercase text-white bg-stone-900 px-4 py-2 hover:bg-stone-700 transition-colors disabled:opacity-40">
                         {alertLoading ? '...' : 'Avísame'}
                       </button>
                     </div>
+                    {alertError && (
+                      <p className="text-[10px] text-red-500 tracking-[0.08em]">{alertError}</p>
+                    )}
                   </div>
                 )
               )}

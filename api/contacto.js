@@ -28,6 +28,74 @@ const applyOptionalFilter = (query, column, value) => (
     : query.eq(column, value)
 );
 
+const getErrorText = (error) =>
+  String(error?.message || error?.details || error?.hint || error || '').trim();
+
+const isMissingColumnError = (error, columns = []) => {
+  const text = getErrorText(error).toLowerCase();
+  if (!text || !text.includes('column')) return false;
+
+  return columns.some((column) => text.includes(String(column).toLowerCase()));
+};
+
+const findPendingStockAlerts = async ({
+  email,
+  productId,
+  talla,
+  color,
+  variantId,
+  useVariantColumn = true,
+}) => {
+  let query = supabase
+    .from('stock_alerts')
+    .select('id')
+    .eq('email', email)
+    .eq('product_id', productId)
+    .eq('notified', false);
+
+  query = applyOptionalFilter(query, 'talla', talla);
+  query = applyOptionalFilter(query, 'color', color);
+
+  if (useVariantColumn) {
+    query = applyOptionalFilter(query, 'variant_id', variantId);
+  }
+
+  const { data, error } = await query.limit(2);
+  if (error) throw error;
+  return data || [];
+};
+
+const insertStockAlert = async ({
+  email,
+  productId,
+  productNombre,
+  talla,
+  color,
+  variantId,
+  useVariantColumn = true,
+  useNotifiedAtColumn = true,
+}) => {
+  const payload = {
+    email,
+    product_id: productId,
+    product_nombre: productNombre || '',
+    talla,
+    color,
+    notified: false,
+    created_at: new Date().toISOString(),
+  };
+
+  if (useVariantColumn) {
+    payload.variant_id = variantId;
+  }
+
+  if (useNotifiedAtColumn) {
+    payload.notified_at = null;
+  }
+
+  return supabase.from('stock_alerts').insert(payload);
+};
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Metodo no permitido' });
@@ -128,50 +196,80 @@ export default async function handler(req, res) {
     const normalizedVariantId = normalizeOptional(variantId);
 
     try {
-      let existingQuery = supabase
-        .from('stock_alerts')
-        .select('id')
-        .eq('email', normalizedEmail)
-        .eq('product_id', productId)
-        .eq('notified', false);
+      let supportsVariantColumn = true;
 
-      existingQuery = applyOptionalFilter(existingQuery, 'talla', normalizedTalla);
-      existingQuery = applyOptionalFilter(existingQuery, 'color', normalizedColor);
-      existingQuery = applyOptionalFilter(existingQuery, 'variant_id', normalizedVariantId);
+      try {
+        const existingAlerts = await findPendingStockAlerts({
+          email: normalizedEmail,
+          productId,
+          talla: normalizedTalla,
+          color: normalizedColor,
+          variantId: normalizedVariantId,
+          useVariantColumn: true,
+        });
 
-      const { data: existingAlerts, error: existingError } = await existingQuery.limit(2);
-      if (existingError) throw existingError;
-      if ((existingAlerts || []).length > 0) return res.status(200).json({ ok: true, duplicate: true });
+        if (existingAlerts.length > 0) {
+          return res.status(200).json({ ok: true, duplicate: true });
+        }
 
-      // Compatibilidad con alertas viejas creadas antes de guardar variant_id.
-      if (normalizedVariantId !== null) {
-        let legacyQuery = supabase
-          .from('stock_alerts')
-          .select('id')
-          .eq('email', normalizedEmail)
-          .eq('product_id', productId)
-          .eq('notified', false)
-          .is('variant_id', null);
+        // Compatibilidad con alertas viejas creadas antes de guardar variant_id.
+        if (normalizedVariantId !== null) {
+          const legacyAlerts = await findPendingStockAlerts({
+            email: normalizedEmail,
+            productId,
+            talla: normalizedTalla,
+            color: normalizedColor,
+            variantId: null,
+            useVariantColumn: false,
+          });
 
-        legacyQuery = applyOptionalFilter(legacyQuery, 'talla', normalizedTalla);
-        legacyQuery = applyOptionalFilter(legacyQuery, 'color', normalizedColor);
+          if (legacyAlerts.length > 0) {
+            return res.status(200).json({ ok: true, duplicate: true });
+          }
+        }
+      } catch (queryError) {
+        if (!isMissingColumnError(queryError, ['variant_id'])) throw queryError;
+        supportsVariantColumn = false;
+        console.warn('Stock alerts: tabla legacy sin variant_id. Se usa compatibilidad.');
 
-        const { data: legacyAlerts, error: legacyError } = await legacyQuery.limit(2);
-        if (legacyError) throw legacyError;
-        if ((legacyAlerts || []).length > 0) return res.status(200).json({ ok: true, duplicate: true });
+        const legacyAlerts = await findPendingStockAlerts({
+          email: normalizedEmail,
+          productId,
+          talla: normalizedTalla,
+          color: normalizedColor,
+          variantId: null,
+          useVariantColumn: false,
+        });
+
+        if (legacyAlerts.length > 0) {
+          return res.status(200).json({ ok: true, duplicate: true });
+        }
       }
 
-      const { error } = await supabase.from('stock_alerts').insert({
+      let { error } = await insertStockAlert({
         email: normalizedEmail,
-        product_id: productId,
-        product_nombre: productNombre || '',
+        productId,
+        productNombre,
         talla: normalizedTalla,
         color: normalizedColor,
-        variant_id: normalizedVariantId,
-        notified: false,
-        notified_at: null,
-        created_at: new Date().toISOString(),
+        variantId: normalizedVariantId,
+        useVariantColumn: supportsVariantColumn,
+        useNotifiedAtColumn: true,
       });
+
+      if (error && isMissingColumnError(error, ['notified_at'])) {
+        console.warn('Stock alerts: tabla legacy sin notified_at. Se reintenta sin esa columna.');
+        ({ error } = await insertStockAlert({
+          email: normalizedEmail,
+          productId,
+          productNombre,
+          talla: normalizedTalla,
+          color: normalizedColor,
+          variantId: normalizedVariantId,
+          useVariantColumn: supportsVariantColumn,
+          useNotifiedAtColumn: false,
+        }));
+      }
 
       if (error) throw error;
       return res.status(200).json({ ok: true });

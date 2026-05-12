@@ -38,6 +38,7 @@ export default function ProductPage() {
   const [alertEmail, setAlertEmail]           = useState('');
   const [alertSent, setAlertSent]             = useState(false);
   const [alertLoading, setAlertLoading]       = useState(false);
+  const [alertError, setAlertError]           = useState('');
 
   // ── Data loading ──
   useEffect(() => {
@@ -170,6 +171,7 @@ export default function ProductPage() {
     setTallaSeleccionada(null);
     setCantidad(1);
     setAlertSent(false);
+    setAlertError('');
   };
   const incrementar = () => { if (!puedeSeleccionarCantidad) { handleCantidadBloqueada(); return; } setCantidad(c => stockActual !== null ? Math.min(c + 1, stockActual) : c + 1); };
   const decrementar = () => { if (!puedeSeleccionarCantidad) return; setCantidad(c => Math.max(1, c - 1)); };
@@ -202,8 +204,9 @@ export default function ProductPage() {
   const handleStockAlert = async () => {
     if (!alertEmail) return;
     setAlertLoading(true);
+    setAlertError('');
     try {
-      await fetch('/api/contacto', {
+      const res = await fetch('/api/contacto', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -216,6 +219,10 @@ export default function ProductPage() {
           variantId: varianteSeleccionada?.variantId || null,
         }),
       });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data?.ok) {
+        throw new Error(data?.error || 'No se pudo registrar la alerta. Intenta de nuevo.');
+      }
       setAlertSent(true);
       trackFunnelEvent('stock_alert_submit', {
         productId: producto.id,
@@ -225,7 +232,10 @@ export default function ProductPage() {
         size: tallaSeleccionada,
         amount: producto.precioNumerico || 0,
       });
-    } catch {} finally { setAlertLoading(false); }
+    } catch (err) {
+      setAlertSent(false);
+      setAlertError(err.message || 'No se pudo registrar la alerta. Intenta de nuevo.');
+    } finally { setAlertLoading(false); }
   };
 
   // ── Loading / Not found ──
@@ -303,6 +313,7 @@ export default function ProductPage() {
                 });
                 setTallaSeleccionada(t);
                 setAlertSent(false);
+                setAlertError('');
               }}
               onIncrementar={incrementar} onDecrementar={decrementar} onCantidadBloqueada={handleCantidadBloqueada}
               onAddToCart={handleAddToCart}
@@ -318,7 +329,11 @@ export default function ProductPage() {
               }}
               addBtnRef={addBtnRef}
               alertEmail={alertEmail} alertSent={alertSent} alertLoading={alertLoading}
-              onAlertEmailChange={setAlertEmail} onStockAlert={handleStockAlert}
+              alertError={alertError}
+              onAlertEmailChange={(value) => {
+                setAlertEmail(value);
+                if (alertError) setAlertError('');
+              }} onStockAlert={handleStockAlert}
             />
 
             <div className="w-full h-[1px] bg-stone-200 my-12" />

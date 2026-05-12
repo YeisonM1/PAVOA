@@ -6,7 +6,7 @@ export default function ProductVariantSelector({
   puedeSeleccionarCantidad, showCantidadHint, adding,
   onColorSelect, onTallaSelect, onIncrementar, onDecrementar, onCantidadBloqueada,
   onAddToCart, onShowGuiaTallas, addBtnRef,
-  alertEmail, alertSent, alertLoading, onAlertEmailChange, onStockAlert,
+  alertEmail, alertSent, alertLoading, alertError, onAlertEmailChange, onStockAlert,
 }) {
   return (
     <>
@@ -195,6 +195,9 @@ export default function ProductVariantSelector({
                 {alertLoading ? '...' : 'Avísame'}
               </button>
             </div>
+            {alertError && (
+              <p className="text-[10px] text-red-500 tracking-[0.08em]">{alertError}</p>
+            )}
           </div>
         )
       )}
