@@ -2,10 +2,12 @@
 import { sendTransactionalEmail } from './_helpers/mail.js';
 import { trackFunnelEvent } from './_helpers/funnel.js';
 
-const supabase = createClient(
-  process.env.VITE_SUPABASE_URL,
-  process.env.VITE_SUPABASE_ANON_KEY
-);
+const supabaseUrl = process.env.VITE_SUPABASE_URL;
+const supabaseKey =
+  process.env.SUPABASE_SERVICE_ROLE_KEY ||
+  process.env.VITE_SUPABASE_ANON_KEY;
+
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 const escapeHtml = (str) =>
   String(str || '')
@@ -36,6 +38,28 @@ const isMissingColumnError = (error, columns = []) => {
   if (!text || !text.includes('column')) return false;
 
   return columns.some((column) => text.includes(String(column).toLowerCase()));
+};
+
+const isPermissionError = (error) => {
+  const text = getErrorText(error).toLowerCase();
+  return (
+    error?.code === '42501' ||
+    text.includes('row-level security') ||
+    text.includes('permission denied') ||
+    text.includes('insufficient_privilege')
+  );
+};
+
+const buildStockAlertErrorMessage = (error) => {
+  if (isPermissionError(error)) {
+    return 'Permiso denegado en stock alerts. Revisa la policy de Supabase o configura SUPABASE_SERVICE_ROLE_KEY en Vercel.';
+  }
+
+  if (isMissingColumnError(error, ['variant_id', 'notified_at', 'notified', 'product_nombre', 'created_at'])) {
+    return 'La tabla stock_alerts en Supabase no coincide con la estructura esperada del backend.';
+  }
+
+  return 'No se pudo registrar. Intenta de nuevo.';
 };
 
 const findPendingStockAlerts = async ({
@@ -274,8 +298,13 @@ export default async function handler(req, res) {
       if (error) throw error;
       return res.status(200).json({ ok: true });
     } catch (err) {
-      console.error('Error stock alert:', err.message);
-      return res.status(500).json({ error: 'No se pudo registrar. Intenta de nuevo.' });
+      console.error('Error stock alert:', {
+        message: err?.message,
+        code: err?.code,
+        details: err?.details,
+        hint: err?.hint,
+      });
+      return res.status(500).json({ error: buildStockAlertErrorMessage(err) });
     }
   }
 
