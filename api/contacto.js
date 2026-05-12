@@ -67,11 +67,14 @@ const buildStockAlertErrorDetail = (error) => {
   return text || 'Error desconocido en stock alerts.';
 };
 
-const isUniqueVariantAlertError = (error) => {
+const isStockAlertUniqueConflict = (error) => {
   const text = getErrorText(error).toLowerCase();
   return (
     error?.code === '23505' &&
-    text.includes('stock_alerts_unique_variant_alert')
+    (
+      text.includes('stock_alerts_unique_variant_alert') ||
+      text.includes('stock_alerts_unique_pending_variant_alert')
+    )
   );
 };
 
@@ -131,69 +134,6 @@ const insertStockAlert = async ({
   }
 
   return supabase.from('stock_alerts').insert(payload);
-};
-
-const reactivateStockAlert = async ({
-  alertId,
-  productNombre,
-  talla,
-  color,
-  variantId,
-  useVariantColumn = true,
-  useNotifiedAtColumn = true,
-}) => {
-  const payload = {
-    product_nombre: productNombre || '',
-    talla,
-    color,
-    notified: false,
-    created_at: new Date().toISOString(),
-  };
-
-  if (useVariantColumn) {
-    payload.variant_id = variantId;
-  }
-
-  if (useNotifiedAtColumn) {
-    payload.notified_at = null;
-  }
-
-  return supabase
-    .from('stock_alerts')
-    .update(payload)
-    .eq('id', alertId)
-    .select('id')
-    .limit(1);
-};
-
-const findHistoricalStockAlert = async ({
-  email,
-  productId,
-  talla,
-  color,
-  variantId,
-  useVariantColumn = true,
-}) => {
-  let query = supabase
-    .from('stock_alerts')
-    .select('id, variant_id, notified, created_at')
-    .eq('email', email)
-    .eq('product_id', productId);
-
-  query = applyOptionalFilter(query, 'talla', talla);
-  query = applyOptionalFilter(query, 'color', color);
-
-  if (useVariantColumn) {
-    query = applyOptionalFilter(query, 'variant_id', variantId);
-  }
-
-  const { data, error } = await query
-    .order('created_at', { ascending: false })
-    .limit(5);
-
-  if (error) throw error;
-
-  return (data || [])[0] || null;
 };
 
 export default async function handler(req, res) {
@@ -371,78 +311,8 @@ export default async function handler(req, res) {
         }));
       }
 
-      if (error && isUniqueVariantAlertError(error)) {
-        console.info('Stock alerts: se reactiva alerta historica para la misma variante.');
-        let historicalAlert = null;
-
-        try {
-          historicalAlert = await findHistoricalStockAlert({
-            email: normalizedEmail,
-            productId,
-            talla: normalizedTalla,
-            color: normalizedColor,
-            variantId: normalizedVariantId,
-            useVariantColumn: supportsVariantColumn,
-          });
-        } catch (historyError) {
-          if (!isMissingColumnError(historyError, ['variant_id'])) throw historyError;
-          historicalAlert = await findHistoricalStockAlert({
-            email: normalizedEmail,
-            productId,
-            talla: normalizedTalla,
-            color: normalizedColor,
-            variantId: null,
-            useVariantColumn: false,
-          });
-        }
-
-        if (!historicalAlert?.id && supportsVariantColumn) {
-          historicalAlert = await findHistoricalStockAlert({
-            email: normalizedEmail,
-            productId,
-            talla: normalizedTalla,
-            color: normalizedColor,
-            variantId: null,
-            useVariantColumn: false,
-          });
-        }
-
-        if (!historicalAlert?.id) {
-          throw error;
-        }
-
-        const shouldUpdateVariantColumn =
-          supportsVariantColumn && normalizeOptional(historicalAlert.variant_id) !== null;
-
-        let reactivated = await reactivateStockAlert({
-          alertId: historicalAlert.id,
-          productNombre,
-          talla: normalizedTalla,
-          color: normalizedColor,
-          variantId: normalizedVariantId,
-          useVariantColumn: shouldUpdateVariantColumn,
-          useNotifiedAtColumn: true,
-        });
-        let reactivateError = reactivated.error;
-
-        if (reactivateError && isMissingColumnError(reactivateError, ['notified_at'])) {
-          reactivated = await reactivateStockAlert({
-            alertId: historicalAlert.id,
-            productNombre,
-            talla: normalizedTalla,
-            color: normalizedColor,
-            variantId: normalizedVariantId,
-            useVariantColumn: shouldUpdateVariantColumn,
-            useNotifiedAtColumn: false,
-          });
-          reactivateError = reactivated.error;
-        }
-
-        if (!reactivateError && (reactivated.data || []).length > 0) {
-          return res.status(200).json({ ok: true, reactivated: true });
-        }
-
-        if (reactivateError) throw reactivateError;
+      if (error && isStockAlertUniqueConflict(error)) {
+        return res.status(200).json({ ok: true, duplicate: true });
       }
 
       if (error) throw error;
