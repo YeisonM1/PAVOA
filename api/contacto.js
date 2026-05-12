@@ -134,8 +134,7 @@ const insertStockAlert = async ({
 };
 
 const reactivateStockAlert = async ({
-  email,
-  productId,
+  alertId,
   productNombre,
   talla,
   color,
@@ -159,9 +158,25 @@ const reactivateStockAlert = async ({
     payload.notified_at = null;
   }
 
-  let query = supabase
+  return supabase
     .from('stock_alerts')
     .update(payload)
+    .eq('id', alertId)
+    .select('id')
+    .limit(1);
+};
+
+const findHistoricalStockAlert = async ({
+  email,
+  productId,
+  talla,
+  color,
+  variantId,
+  useVariantColumn = true,
+}) => {
+  let query = supabase
+    .from('stock_alerts')
+    .select('id, variant_id, notified, created_at')
     .eq('email', email)
     .eq('product_id', productId);
 
@@ -172,7 +187,13 @@ const reactivateStockAlert = async ({
     query = applyOptionalFilter(query, 'variant_id', variantId);
   }
 
-  return query.select('id').limit(1);
+  const { data, error } = await query
+    .order('created_at', { ascending: false })
+    .limit(5);
+
+  if (error) throw error;
+
+  return (data || [])[0] || null;
 };
 
 export default async function handler(req, res) {
@@ -352,9 +373,35 @@ export default async function handler(req, res) {
 
       if (error && isUniqueVariantAlertError(error)) {
         console.info('Stock alerts: se reactiva alerta historica para la misma variante.');
+        let historicalAlert = null;
+
+        try {
+          historicalAlert = await findHistoricalStockAlert({
+            email: normalizedEmail,
+            productId,
+            talla: normalizedTalla,
+            color: normalizedColor,
+            variantId: normalizedVariantId,
+            useVariantColumn: supportsVariantColumn,
+          });
+        } catch (historyError) {
+          if (!isMissingColumnError(historyError, ['variant_id'])) throw historyError;
+          historicalAlert = await findHistoricalStockAlert({
+            email: normalizedEmail,
+            productId,
+            talla: normalizedTalla,
+            color: normalizedColor,
+            variantId: null,
+            useVariantColumn: false,
+          });
+        }
+
+        if (!historicalAlert?.id) {
+          throw error;
+        }
+
         let reactivated = await reactivateStockAlert({
-          email: normalizedEmail,
-          productId,
+          alertId: historicalAlert.id,
           productNombre,
           talla: normalizedTalla,
           color: normalizedColor,
@@ -366,8 +413,7 @@ export default async function handler(req, res) {
 
         if (reactivateError && isMissingColumnError(reactivateError, ['notified_at'])) {
           reactivated = await reactivateStockAlert({
-            email: normalizedEmail,
-            productId,
+            alertId: historicalAlert.id,
             productNombre,
             talla: normalizedTalla,
             color: normalizedColor,
