@@ -24,14 +24,14 @@ const MOTIVOS = [
 
 const buildContactoUrl = ({ pedido, motivo, mensaje }) => {
   const query = new URLSearchParams();
-  query.set('asunto', 'Cambios y devoluciónes');
+  query.set('asunto', 'Cambios y devoluciones');
   if (pedido) query.set('pedido', pedido);
   if (motivo) query.set('motivo', motivo);
   if (mensaje) query.set('mensaje', mensaje);
   return `/contacto?${query.toString()}`;
 };
 
-export default function CambiosDevoluciónesPage() {
+export default function CambiosDevolucionesPage() {
   const [content, setContent] = useState(HELP_PAGES_DEFAULTS.cambios);
   const [searchParams] = useSearchParams();
   const pedido = (searchParams.get('pedido') || '').trim();
@@ -57,7 +57,7 @@ export default function CambiosDevoluciónesPage() {
       <SEO
         title={content.seoTitle}
         description={content.seoDescription}
-        url="/cambios-y-devoluciónes"
+        url="/cambios-y-devoluciones"
       />
 
       <section className="w-full pt-[140px] md:pt-[160px] pb-8 md:pb-12 px-6 border-b border-stone-100" style={{ background: 'var(--color-ivory)' }}>
@@ -115,7 +115,7 @@ export default function CambiosDevoluciónesPage() {
             </div>
             <div className="mt-6 pt-6 border-t border-stone-100">
               <Link
-                to={buildContactoUrl({ pedido, motivo: 'Cambios y devoluciónes' })}
+                to={buildContactoUrl({ pedido, motivo: 'Cambios y devoluciones' })}
                 className="inline-block mt-3 text-[10px] font-bold text-stone-900 uppercase border-b border-stone-900 pb-0.5 tracking-[0.12em] hover:text-stone-500 transition-colors"
               >
                 Ir al formulario general

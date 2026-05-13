@@ -214,7 +214,7 @@ function OrdenDetalle({ pedido, imagenMap }) {
                 </a>
               )}
               <Link
-                to={`/cambios-y-devoluciónes?pedido=${encodeURIComponent(pedido.name)}`}
+                to={`/cambios-y-devoluciones?pedido=${encodeURIComponent(pedido.name)}`}
                 style={{ letterSpacing: '0.12em' }}
                 className="text-[9px] font-bold text-stone-900 uppercase border-b border-stone-900 pb-0.5 hover:text-stone-500 transition-colors"
               >

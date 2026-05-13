@@ -147,11 +147,11 @@ export const HELP_PAGES_DEFAULTS = {
   },
   cambios: {
     pageKey: 'cambios',
-    internalName: 'Cambios y devoluciónes',
+    internalName: 'Cambios y devoluciones',
     eyebrow: 'Ayuda',
-    title: 'Cambios y devoluciónes',
-    seoTitle: 'Cambios y devoluciónes',
-    seoDescription: 'Política de cambios y devoluciónes de PAVOA.',
+    title: 'Cambios y devoluciones',
+    seoTitle: 'Cambios y devoluciones',
+    seoDescription: 'Política de cambios y devoluciones de PAVOA.',
     ctaLabel: '',
     ctaUrl: '',
     blocks: [

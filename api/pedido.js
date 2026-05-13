@@ -114,6 +114,7 @@ const crearDraftOrder = async (token, { form, trustedItems, orderOwnerEmail }) =
     variant_id: item.variantId,
     quantity: item.quantity,
   }));
+  const direccionEntrega = String(form?.direccion || form?.['dirección'] || '').trim();
 
   const nota = [
     `Horario de entrega: ${form.horario}`,
@@ -133,7 +134,7 @@ const crearDraftOrder = async (token, { form, trustedItems, orderOwnerEmail }) =
         first_name: firstName,
         last_name: lastName,
         phone: telFormateado,
-        address1: form.direccion,
+        address1: direccionEntrega,
         address2: form.barrio,
         city: form.ciudad,
         country: 'CO',
@@ -142,7 +143,7 @@ const crearDraftOrder = async (token, { form, trustedItems, orderOwnerEmail }) =
         first_name: firstName,
         last_name: lastName,
         phone: telFormateado,
-        address1: form.direccion,
+        address1: direccionEntrega,
         address2: form.barrio,
         city: form.ciudad,
         country: 'CO',
