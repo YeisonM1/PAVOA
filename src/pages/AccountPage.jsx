@@ -73,7 +73,7 @@ function OrdenDetalle({ pedido, imagenMap }) {
     <div className="border-t border-stone-100 bg-[#FAFAF9]">
       <div className="grid md:grid-cols-2 gap-0 divide-y md:divide-y-0 md:divide-x divide-stone-100">
 
-        {/* â”€â”€ Columna izquierda: productos â”€â”€ */}
+        {/* Columna izquierda: productos */}
         <div className="p-6">
           <p style={{ letterSpacing: '0.25em' }} className="text-[9px] font-bold text-stone-400 uppercase mb-4">
             Productos
@@ -113,7 +113,7 @@ function OrdenDetalle({ pedido, imagenMap }) {
           </div>
         </div>
 
-        {/* â”€â”€ Columna derecha: detalles â”€â”€ */}
+        {/* Columna derecha: detalles */}
         <div className="p-6 flex flex-col gap-5">
 
           {/* Estado */}
@@ -127,11 +127,11 @@ function OrdenDetalle({ pedido, imagenMap }) {
             </div>
           </div>
 
-          {/* DirecciÃ³n */}
+          {/* Dirección */}
           {(pedido.dirección || pedido.ciudad) && (
             <div>
               <p style={{ letterSpacing: '0.25em' }} className="text-[9px] font-bold text-stone-400 uppercase mb-2">
-                DirecciÃ³n de entrega
+                Dirección de entrega
               </p>
               <div className="flex flex-col gap-0.5">
                 {pedido.nombreCliente && (
@@ -162,11 +162,11 @@ function OrdenDetalle({ pedido, imagenMap }) {
             </div>
           )}
 
-          {/* GuÃ­a de envÃ­o */}
+          {/* Guía de envío */}
           {pedido.trackingNumber && (
             <div className="border border-stone-100 p-4 bg-stone-50">
               <p style={{ letterSpacing: '0.25em' }} className="text-[9px] font-bold text-stone-400 uppercase mb-3">
-                InformaciÃ³n de envÃ­o
+                Información de envío
               </p>
               {pedido.trackingCompany && (
                 <p className="text-[10px] text-stone-400 tracking-[0.08em] uppercase mb-1">
@@ -184,7 +184,7 @@ function OrdenDetalle({ pedido, imagenMap }) {
                   style={{ letterSpacing: '0.15em' }}
                   className="inline-block text-[9px] font-bold text-stone-900 uppercase border-b border-stone-900 pb-0.5 hover:text-stone-500 transition-colors"
                 >
-                  Rastrear pedido â†’
+                  Rastrear pedido →
                 </a>
               )}
             </div>
@@ -244,10 +244,10 @@ function OrdenDetalle({ pedido, imagenMap }) {
                 </div>
                 <div className="flex justify-between items-center mb-2">
                   <span style={{ letterSpacing: '0.1em', color: '#DFCDB4' }} className="text-[9px] uppercase flex items-center gap-1">
-                    <span>âœ¦</span> Descuento bienvenida âˆ’10%
+                    <span>✦</span> Descuento bienvenida −10%
                   </span>
                   <span style={{ color: '#DFCDB4' }} className="text-[11px]">
-                    âˆ’{formatPrecio(pedido.totalOriginal - pedido.totalPrice.amount)}
+                    −{formatPrecio(pedido.totalOriginal - pedido.totalPrice.amount)}
                   </span>
                 </div>
               </>
@@ -292,7 +292,7 @@ function OrdenCard({ pedido, imagenMap }) {
             <EstadoBadge status={pedido.fulfillmentStatus} />
             {pedido.descuentoAplicado && (
               <span style={{ color: '#DFCDB4', letterSpacing: '0.12em' }} className="text-[8px] font-bold uppercase flex items-center gap-1">
-                âœ¦ âˆ’10%
+                ✦ −10%
               </span>
             )}
           </div>
@@ -313,7 +313,7 @@ function OrdenCard({ pedido, imagenMap }) {
         </div>
       </button>
 
-      {/* Precio visible en mÃ³vil */}
+      {/* Precio visible en móvil */}
       <div className="sm:hidden px-6 pb-4 -mt-2 flex justify-between items-center">
         <p style={{ letterSpacing: '0.08em' }} className="text-[9px] text-stone-400 uppercase">
           {pedido.items.length} {pedido.items.length === 1 ? 'producto' : 'productos'}
@@ -412,7 +412,7 @@ export default function AccountPage() {
             style={{ letterSpacing: '0.15em' }}
             className="text-[10px] font-bold text-stone-400 hover:text-stone-900 uppercase transition-colors border-b border-stone-200 pb-0.5"
           >
-            Cerrar sesiÃ³n
+            Cerrar sesión
           </button>
         </div>
 
@@ -442,7 +442,7 @@ export default function AccountPage() {
           ))}
         </div>
 
-        {/* â”€â”€ PEDIDOS â”€â”€ */}
+        {/* PEDIDOS */}
         {activeTab === 'pedidos' && (
           <div className="flex flex-col gap-3">
             {pedidos.length === 0 ? (
@@ -451,14 +451,14 @@ export default function AccountPage() {
                   Sin pedidos
                 </p>
                 <p className="text-[11px] tracking-[0.15em] text-stone-400 uppercase">
-                  AÃºn no has realizado ninguna compra
+                  Aún no has realizado ninguna compra
                 </p>
                 <button
                   onClick={() => navigate('/categoria')}
                   style={{ letterSpacing: '0.2em' }}
                   className="mt-4 text-[10px] font-bold text-stone-900 uppercase border-b border-stone-900 pb-0.5 hover:text-stone-500 transition-colors"
                 >
-                  Explorar colecciÃ³n â†’
+                  Explorar colección →
                 </button>
               </div>
             ) : (
@@ -485,7 +485,7 @@ export default function AccountPage() {
           </div>
         )}
 
-        {/* â”€â”€ DESEOS â”€â”€ */}
+        {/* DESEOS */}
         {activeTab === 'deseos' && (() => {
           const wishlistProductos = allProductos.filter(p => wishlist.includes(p.id));
           return wishlistProductos.length === 0 ? (
@@ -501,7 +501,7 @@ export default function AccountPage() {
                 style={{ letterSpacing: '0.2em' }}
                 className="mt-2 text-[10px] font-bold text-stone-900 uppercase border-b border-stone-900 pb-0.5 hover:text-stone-500 transition-colors"
               >
-                Explorar colecciÃ³n â†’
+                Explorar colección →
               </button>
             </div>
           ) : (
@@ -511,13 +511,13 @@ export default function AccountPage() {
           );
         })()}
 
-        {/* â”€â”€ PERFIL â”€â”€ */}
+        {/* PERFIL */}
         {activeTab === 'perfil' && (
           <div className="max-w-md flex flex-col gap-6">
             {[
               { label: 'Nombre',   value: `${cliente?.firstName} ${cliente?.lastName}` },
               { label: 'Correo',   value: cliente?.email },
-              { label: 'TelÃ©fono', value: cliente?.phone || 'â€”' },
+              { label: 'Teléfono', value: cliente?.phone || '—' },
             ].map(({ label, value }) => (
               <div key={label} className="border-b border-stone-100 pb-4">
                 <p style={{ letterSpacing: '0.25em' }} className="text-[9px] font-bold text-stone-400 uppercase mb-1">

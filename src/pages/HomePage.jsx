@@ -2,7 +2,7 @@
 import HeroFullscreen from '../sections/HeroFullscreen';
 import SEO from '../components/SEO';
 
-// â”€â”€ Carga diferida â€” no bloquean el Hero â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Carga diferida: no bloquea el Hero
 const Categorias = lazy(() => import('../sections/Categorias'));
 const Productos  = lazy(() => import('../sections/Productos'));
 const Filosofia  = lazy(() => import('../sections/Filosofia'));

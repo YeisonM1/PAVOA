@@ -107,7 +107,7 @@ export const FOOTER_CONTENT_DEFAULTS = {
   copyrightText: '© 2026 PAVOA. TODOS LOS DERECHOS RESERVADOS.',
 };
 
-// â”€â”€ CachÃ© en memoria con TTL â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Caché en memoria con TTL
 export const HELP_PAGES_DEFAULTS = {
   envios: {
     pageKey: 'envios',
@@ -305,14 +305,14 @@ const setCache = (key, promise) => {
   promise.catch(() => _cache.delete(key));
 };
 
-// Limpiar cachÃ© cuando el usuario vuelve a la pestaÃ±a
+// Limpiar caché cuando el usuario vuelve a la pestaña
 // para que el stock se actualice al regresar
 if (typeof document !== 'undefined') {
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible') _cache.clear();
   });
 }
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ----------------------------------------------------------------
 
 export const shopifyFetch = async (query, variables = {}) => {
   const res = await fetch(SHOPIFY_ENDPOINT, {
@@ -329,7 +329,7 @@ export const shopifyFetch = async (query, variables = {}) => {
   return data;
 };
 
-// â”€â”€ Convierte producto Shopify â†’ estructura PAVOA â”€â”€â”€â”€â”€â”€
+// Convierte producto Shopify -> estructura PAVOA
 const mapProducto = (node) => {
   const variantes = node.variants.edges.map(({ node: v }) => {
     const hexRaw = v.metafield?.value || '#888888';
@@ -366,7 +366,7 @@ const mapProducto = (node) => {
   };
 };
 
-// â”€â”€ Fragmento completo (detalle de producto) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Fragmento completo (detalle de producto)
 const PRODUCT_FIELDS = `
   id handle title description descriptionHtml productType tags
   priceRange { minVariantPrice { amount } }
@@ -384,7 +384,7 @@ const PRODUCT_FIELDS = `
   }
 `;
 
-// â”€â”€ Fragmento ligero (listados/grids, sin detalles ni cuidados) â”€â”€
+// Fragmento ligero (listados/grids, sin detalles ni cuidados)
 const PRODUCT_FIELDS_LIGHT = `
   id handle title description descriptionHtml productType tags
   priceRange { minVariantPrice { amount } }
@@ -446,7 +446,7 @@ const fetchAllProducts = async () => {
   return products;
 };
 
-// â”€â”€ Trae TODOS los productos â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Trae TODOS los productos
 export const getProductos = () => {
   const cached = getCached('all-products');
   if (cached) return cached;
@@ -464,7 +464,7 @@ export const getProductos = () => {
   return promise;
 };
 
-// â”€â”€ Trae UN producto por handle (slug) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Trae UN producto por handle (slug)
 export const getProductoById = (handle) => {
   const key = `product-${handle}`;
   const cached = getCached(key);
@@ -489,7 +489,7 @@ export const getProductoById = (handle) => {
   return promise;
 };
 
-// â”€â”€ Trae info del banner de categorÃ­a desde Shopify â”€â”€â”€
+// Trae info del banner de categoría desde Shopify
 export const getCategoriaById = (id) => {
   const cacheKey = `categoria-${id}`;
   const cached = getCached(cacheKey);
@@ -527,7 +527,7 @@ export const getCategoriaById = (id) => {
   return promise;
 };
 
-// â”€â”€ Enviar formulario de contacto â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Enviar formulario de contacto
 export const enviarContacto = async ({ nombre, contacto, asunto, mensaje }) => {
   try {
     const res = await fetch('/api/contacto', {
@@ -578,7 +578,7 @@ export const suscribirNewsletter = async ({ email, source = 'storefront_footer' 
 };
 
 
-// â”€â”€ Trae los slides del Hero desde Shopify Metaobjects â”€
+// Trae los slides del Hero desde Shopify Metaobjects
 export const getHeroSlides = () => {
   const cached = getCached('hero-slides');
   if (cached) return cached;
@@ -634,7 +634,7 @@ export const getHeroSlides = () => {
   setCache('hero-slides', promise);
   return promise;
 };
-// â”€â”€ Trae las categorÃ­as destacadas desde Shopify Metaobjects â”€
+// Trae las categorías destacadas desde Shopify Metaobjects
 export const getCategoriasDestacadas = () => {
   const cached = getCached('categorias-destacadas');
   if (cached) return cached;
@@ -678,7 +678,7 @@ export const getCategoriasDestacadas = () => {
             nombre: get('nombre'),
             desc:   get('descripcion'),
             href:   get('href'),
-            image:  getImage('imagen'),   // â† ahora lee desde reference
+            image:  getImage('imagen'),   // <- ahora lee desde reference
           };
         }
       });
@@ -694,7 +694,7 @@ export const getCategoriasDestacadas = () => {
   return promise;
 };
 
-// â”€â”€ Trae el announcement bar desde Shopify Metaobjects â”€
+// Trae el announcement bar desde Shopify Metaobjects
 export const getAnnouncementBar = () => {
   const cached = getCached('announcement-bar');
   if (cached) return cached;
@@ -741,7 +741,7 @@ export const getAnnouncementBar = () => {
 };
 
 
-// â”€â”€ Trae los posts de Instagram desde Shopify Metaobjects â”€
+// Trae los posts de Instagram desde Shopify Metaobjects
 export const getInstagramPosts = () => {
   const cached = getCached('instagram-posts');
   if (cached) return cached;
@@ -894,9 +894,9 @@ export const getFilosofiaSection = () => {
   return promise;
 };
 
-// â”€â”€ Verifica stock de los items del carrito antes del pago â”€
+// Verifica stock de los items del carrito antes del pago
 // Recibe array de { selectedVariantId, cantidad, nombre }
-// Devuelve array de errores (vacÃ­o = todo OK)
+// Devuelve array de errores (vacío = todo OK)
 export const getNosotrosPage = () => {
   const cached = getCached('nosotros-page');
   if (cached) return cached;

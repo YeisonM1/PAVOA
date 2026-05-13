@@ -9,10 +9,10 @@ const SLIDES_FALLBACK = [
   {
     id: 1,
     image: null,
-    tag: 'Nueva ColecciÃ³n',
-    headline: ['El lujo de', 'sentirte', 'tÃº.'],
-    sub: 'Descubre nuestra nueva colecciÃ³n diseÃ±ada para mujeres que buscan estilo, rendimiento y exclusividad.',
-    cta: 'Explorar colecciÃ³n',
+    tag: 'Nueva Colección',
+    headline: ['El lujo de', 'sentirte', 'tú.'],
+    sub: 'Descubre nuestra nueva colección diseñada para mujeres que buscan estilo, rendimiento y exclusividad.',
+    cta: 'Explorar colección',
     href: '/categoria',
   },
   {
@@ -20,7 +20,7 @@ const SLIDES_FALLBACK = [
     image: null,
     tag: 'Temporada 2026',
     headline: ['Fuerza &', 'Elegancia', 'pura.'],
-    sub: 'Cada prenda diseÃ±ada para mujeres que no se detienen en su dÃ­a a dÃ­a.',
+    sub: 'Cada prenda diseñada para mujeres que no se detienen en su día a día.',
     cta: 'Explorar',
     href: '/categoria',
   },
@@ -28,15 +28,15 @@ const SLIDES_FALLBACK = [
     id: 3,
     image: null,
     tag: 'Best Sellers',
-    headline: ['Descubre', 'tu mejor', 'versiÃ³n.'],
+    headline: ['Descubre', 'tu mejor', 'versión.'],
     sub: 'Las piezas favoritas de nuestra comunidad de mujeres empoderadas y seguras de sí mismas.',
-    cta: 'Descubrir colecciÃ³n',
+    cta: 'Descubrir colección',
     href: '/categoria',
   },
 ];
 
 export default function HeroFullscreen() {
-  // â”€â”€ Intentar cargar desde localStorage primero â”€â”€â”€â”€â”€â”€â”€â”€
+  // Intentar cargar desde localStorage primero
   const cached = (() => {
     try {
       const raw = localStorage.getItem(CACHE_KEY);
@@ -50,7 +50,7 @@ export default function HeroFullscreen() {
     getHeroSlides().then(data => {
       if (data.length > 0) {
         setSlides(data);
-        // Guardar en localStorage para la prÃ³xima visita
+        // Guardar en localStorage para la próxima visita
         try { localStorage.setItem(CACHE_KEY, JSON.stringify(data)); } catch {}
       }
     });
@@ -75,7 +75,7 @@ export default function HeroFullscreen() {
   return (
     <section className="relative w-full h-[100dvh] overflow-hidden bg-black" role="region" aria-roledescription="carrusel" aria-label="Banner principal">
 
-      {/* Hero â€” ancho completo */}
+      {/* Hero - ancho completo */}
       <div className="w-full h-full relative overflow-hidden">
 
       {slides.map((slide, index) => {
@@ -153,18 +153,18 @@ export default function HeroFullscreen() {
             className="inline-flex items-center text-[11px] font-bold text-white uppercase border-b border-white pb-2 hover:text-stone-300 hover:border-stone-300 transition-all duration-300 group"
           >
             {s.cta}
-            <span className="ml-4 transform transition-transform duration-300 group-hover:translate-x-3">â†’</span>
+            <span className="ml-4 transform transition-transform duration-300 group-hover:translate-x-3">→</span>
           </a>
 
           <p style={{ letterSpacing: '0.2em' }} className="text-white/40 text-[8px] sm:text-[9px] mt-5 tracking-[0.25em]">
-            EnvÃ­os a todo el paÃ­s  -  Ediciones limitadas
+            Envíos a todo el país  -  Ediciones limitadas
           </p>
         </div>
       </div>
 
       <div className="absolute bottom-10 right-8 md:right-16 z-20 flex items-center gap-8">
         <div className="text-white/90 text-[11px] tracking-[0.3em] font-medium hidden sm:block">
-          {String(current + 1).padStart(2, '0')} â€” {String(slides.length).padStart(2, '0')}
+          {String(current + 1).padStart(2, '0')} — {String(slides.length).padStart(2, '0')}
         </div>
         <div className="flex gap-3">
           <button onClick={prev} className="w-12 h-12 flex items-center justify-center border border-white/20 rounded-full text-white/70 hover:bg-white hover:text-black hover:border-white transition-all duration-500 backdrop-blur-sm group" aria-label="Anterior">

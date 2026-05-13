@@ -57,9 +57,9 @@ export default function CategoriaPage() {
   const [loading, setLoading]         = useState(true);
 
   const [isSortOpen, setIsSortOpen]     = useState(false);
-  const [sortOption, setSortOption]     = useState('Lo mÃ¡s nuevo');
+  const [sortOption, setSortOption]     = useState('Lo más nuevo');
   const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const sortOptions = ['Lo mÃ¡s nuevo', 'Precio: Menor a Mayor', 'Precio: Mayor a Menor'];
+  const sortOptions = ['Lo más nuevo', 'Precio: Menor a Mayor', 'Precio: Mayor a Menor'];
 
   const [tallasFiltro, setTallasFiltro]   = useState([]);
   const [coloresFiltro, setColoresFiltro] = useState([]);
@@ -93,7 +93,7 @@ export default function CategoriaPage() {
         if (!infoCategoria) infoCategoria = await getCategoriaById('default');
         setDataHeader(infoCategoria || {
           titulo1: 'Cole', titulo2: 'cciones',
-          desc: 'Descubre nuestra lÃ­nea completa.',
+          desc: 'Descubre nuestra línea completa.',
           heroImage: 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=1600&q=80'
         });
       } catch {
@@ -236,7 +236,7 @@ export default function CategoriaPage() {
                 <path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6" />
               </svg>
             </button>
-            <span className="hidden lg:block text-[11px] font-bold text-stone-900 tracking-[0.2em] uppercase">CatÃ¡logo</span>
+            <span className="hidden lg:block text-[11px] font-bold text-stone-900 tracking-[0.2em] uppercase">Catálogo</span>
           </div>
 
           <div className="hidden md:flex items-center gap-4 relative">
@@ -299,7 +299,7 @@ export default function CategoriaPage() {
                       onClick={() => setVisibles(v => v + 12)}
                       className="text-[11px] font-bold text-stone-900 tracking-[0.2em] uppercase border-b border-stone-900 pb-1 hover:text-stone-500 hover:border-stone-500 transition-colors"
                     >
-                      Cargar mÃ¡s piezas
+                      Cargar más piezas
                     </button>
                   </div>
                 )}

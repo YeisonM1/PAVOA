@@ -8,7 +8,7 @@ import { thumbImage } from '../utils/imageUrl';
 import { verificarStock } from '../services/productService';
 import { estaAutenticado, getCliente, getToken } from '../services/authService';
 
-const HORARIOS = ['MaÃ±ana (8am - 12pm)', 'Tarde (12pm - 6pm)', 'Noche (6pm - 9pm)'];
+const HORARIOS = ['Mañana (8am - 12pm)', 'Tarde (12pm - 6pm)', 'Noche (6pm - 9pm)'];
 
 const CHECKOUT_STEPS = [
   { key: 'bag', label: 'Bolsa' },
@@ -258,7 +258,7 @@ export default function CheckoutPage() {
   if (cartCount === 0) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-6 bg-white">
-        <p className="text-[11px] tracking-[0.2em] uppercase text-stone-500">Tu bolsa estÃ¡ vacÃ­a</p>
+        <p className="text-[11px] tracking-[0.2em] uppercase text-stone-500">Tu bolsa está vacía</p>
         <Link to="/" className="text-[10px] font-bold tracking-[0.2em] uppercase border-b border-stone-900 pb-1">
           Volver al inicio
         </Link>
@@ -338,7 +338,7 @@ export default function CheckoutPage() {
     return nuevosErrores;
   };
 
-  // â”€â”€ PAGO EN LÃNEA (Checkout Pro) â”€â”€
+  // Pago en línea (Checkout Pro)
   const handlePagarOnline = async () => {
     let draftOrderIdCreado = '';
     const nuevosErrores = validar();
@@ -377,7 +377,7 @@ export default function CheckoutPage() {
     setCargandoPago(true);
 
     try {
-      // Paso 1 â€” Verificar stock
+      // Paso 1 - Verificar stock
       const erroresStock = await verificarStock(cartItems);
       if (erroresStock.length > 0) {
         trackFunnelEvent('checkout_error', {
@@ -406,7 +406,7 @@ export default function CheckoutPage() {
         },
       });
 
-      // Paso 2 â€” Crear draft order en Shopify
+      // Paso 2 - Crear draft order en Shopify
       const resPedido = await fetch('/api/pedido', {
         method: 'POST',
         headers: getJsonHeaders(),
@@ -427,7 +427,7 @@ export default function CheckoutPage() {
       }
       draftOrderIdCreado = dataPedido.draftOrderId;
 
-      // Paso 3 â€” Crear preferencia en MercadoPago
+      // Paso 3 - Crear preferencia en MercadoPago
       const resPref = await fetch('/api/procesar-pago', {
         method: 'POST',
         headers: getJsonHeaders(),
@@ -461,7 +461,7 @@ export default function CheckoutPage() {
         console.info('[PAVOA][MP DEBUG]', dataPref.debug);
       }
 
-      // Paso 4 â€” Guardar datos del pedido y sesiÃ³n de checkout en sessionStorage
+      // Paso 4 - Guardar datos del pedido y sesión de checkout en sessionStorage
       sessionStorage.setItem('pavoa-pending-order', JSON.stringify({
         items: cartItems.map(item => ({
           nombre:   item.producto.nombre,
@@ -482,7 +482,7 @@ export default function CheckoutPage() {
         ts:           Date.now(),
       }));
 
-      // Paso 5 â€” Redirigir a MercadoPago
+      // Paso 5 - Redirigir a MercadoPago
       window.location.href = dataPref.init_point;
 
     } catch (err) {
@@ -539,7 +539,7 @@ export default function CheckoutPage() {
           <span className="text-[10px] tracking-[0.2em] text-stone-400 uppercase flex items-center gap-2">
             <Link to="/" className="hover:text-stone-900 transition-colors">Inicio</Link>
             <span>/</span>
-            <Link to="/categoria" className="hover:text-stone-900 transition-colors">CatÃ¡logo</Link>
+            <Link to="/categoria" className="hover:text-stone-900 transition-colors">Catálogo</Link>
             <span>/</span>
             <span className="text-stone-900 font-bold">Checkout</span>
           </span>
@@ -572,10 +572,10 @@ export default function CheckoutPage() {
 
           <div className="flex-1">
             <h1 className="text-2xl md:text-3xl font-light text-stone-900 tracking-[0.15em] uppercase mb-2">
-              Datos de <strong className="font-bold">EnvÃ­o</strong>
+              Datos de <strong className="font-bold">Envío</strong>
             </h1>
             <p className="text-[11px] text-stone-400 tracking-[0.1em] uppercase mb-10">
-              Completa la informaciÃ³n para coordinar tu pedido
+              Completa la información para coordinar tu pedido
             </p>
 
             <div className="flex flex-col gap-8">
@@ -584,20 +584,20 @@ export default function CheckoutPage() {
               </div>
 
               <div className={errors.email ? 'error-field' : ''}>
-                <CAMPO label="Correo electrÃ³nico" name="email" value={form.email} onChange={handleChange} onBlur={handleBlur} placeholder="tu@correo.com" type="email" required={true} error={errors.email} />
+                <CAMPO label="Correo electrónico" name="email" value={form.email} onChange={handleChange} onBlur={handleBlur} placeholder="tu@correo.com" type="email" required={true} error={errors.email} />
               </div>
 
               <div className={errors.telefono ? 'error-field' : ''}>
-                <CAMPO label="TelÃ©fono" name="telefono" value={form.telefono} onChange={handleChange} onBlur={handleBlur} placeholder="3XX XXX XXXX" type="tel" error={errors.telefono} />
+                <CAMPO label="Teléfono" name="telefono" value={form.telefono} onChange={handleChange} onBlur={handleBlur} placeholder="3XX XXX XXXX" type="tel" error={errors.telefono} />
               </div>
 
               <div className={errors.ciudad ? 'error-field' : ''}>
-                <CAMPO label="Ciudad" name="ciudad" value={form.ciudad} onChange={handleChange} onBlur={handleBlur} placeholder="Ej: MedellÃ­n" error={errors.ciudad} />
+                <CAMPO label="Ciudad" name="ciudad" value={form.ciudad} onChange={handleChange} onBlur={handleBlur} placeholder="Ej: Medellín" error={errors.ciudad} />
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div className={errors.dirección ? 'error-field' : ''}>
-                  <CAMPO label="DirecciÃ³n" name="dirección" value={form.dirección} onChange={handleChange} onBlur={handleBlur} placeholder="Calle, Carrera, Av..." error={errors.dirección} />
+                  <CAMPO label="Dirección" name="dirección" value={form.dirección} onChange={handleChange} onBlur={handleBlur} placeholder="Calle, Carrera, Av..." error={errors.dirección} />
                 </div>
                 <div className={errors.barrio ? 'error-field' : ''}>
                   <CAMPO label="Barrio" name="barrio" value={form.barrio} onChange={handleChange} onBlur={handleBlur} placeholder="Nombre del barrio" error={errors.barrio} />
@@ -622,11 +622,11 @@ export default function CheckoutPage() {
               </div>
             </div>
 
-            {/* â”€â”€ BOTÃ“N DE PAGO â”€â”€ */}
+            {/* BOTÓN DE PAGO */}
             <button onClick={handlePagarOnline} disabled={cargandoPago} className={`mt-12 w-full h-14 text-[10px] font-bold tracking-[0.25em] uppercase transition-all duration-300 flex items-center justify-center gap-3 border border-stone-900 ${cargandoPago ? 'bg-stone-100 text-stone-400 border-stone-200 cursor-not-allowed' : 'bg-stone-900 text-white hover:bg-stone-800'}`}>
               {cargandoPago
                 ? <><span className="w-3.5 h-3.5 border-2 border-stone-300 border-t-stone-500 rounded-full animate-spin" />Redirigiendo a MercadoPago...</>
-                : 'Pagar en lÃ­nea ahora'}
+                : 'Pagar en línea ahora'}
             </button>
 
             {errors.general && (
@@ -670,7 +670,7 @@ export default function CheckoutPage() {
             )}
           </div>
 
-          {/* â”€â”€ RESUMEN DEL PEDIDO â”€â”€ */}
+          {/* RESUMEN DEL PEDIDO */}
           <div className="w-full lg:w-[360px] flex-shrink-0">
             <div className="lg:sticky lg:top-[120px]">
               <h2 className="text-[10px] font-bold tracking-[0.2em] text-stone-900 uppercase mb-6">Resumen del pedido</h2>
@@ -683,7 +683,7 @@ export default function CheckoutPage() {
                     </div>
                     <div className="flex flex-col justify-center gap-1 flex-grow">
                       <p className="text-[11px] font-bold tracking-[0.12em] text-stone-900 uppercase">{item.producto.nombre}</p>
-                      <p className="text-[10px] text-stone-400 tracking-[0.08em] uppercase">Talla: {item.talla} {item.producto.colorSeleccionado && ` Â· ${item.producto.colorSeleccionado}`}</p>
+                      <p className="text-[10px] text-stone-400 tracking-[0.08em] uppercase">Talla: {item.talla} {item.producto.colorSeleccionado && ` · ${item.producto.colorSeleccionado}`}</p>
                       <p className="text-[12px] font-semibold text-stone-900 mt-1">{item.producto.precio}</p>
                     </div>
                   </div>
@@ -699,15 +699,15 @@ export default function CheckoutPage() {
                 {tieneDescuento && (
                   <div className="flex justify-between items-center">
                     <span className="text-[10px] tracking-[0.15em] uppercase flex items-center gap-1.5" style={{ color: '#DFCDB4' }}>
-                      <span>âœ¦</span> Descuento bienvenida âˆ’10%
+                      <span>✦</span> Descuento bienvenida −10%
                     </span>
                     <span className="text-[13px]" style={{ color: '#DFCDB4' }}>
-                      âˆ’${Math.round(cartTotal * 0.1).toLocaleString('es-CO')}
+                      −${Math.round(cartTotal * 0.1).toLocaleString('es-CO')}
                     </span>
                   </div>
                 )}
                 <div className="flex justify-between items-center">
-                  <span className="text-[10px] tracking-[0.15em] text-stone-500 uppercase">EnvÃ­o</span>
+                  <span className="text-[10px] tracking-[0.15em] text-stone-500 uppercase">Envío</span>
                   <span className="text-[11px] text-stone-500 uppercase tracking-[0.1em]">A coordinar</span>
                 </div>
                 <div className="flex justify-between items-center border-t border-stone-100 pt-4 mt-1">
