@@ -3,36 +3,12 @@ import { Link } from 'react-router-dom';
 import { categoryImage } from '../utils/imageUrl';
 import { getCategoriasDestacadas, getHomeProductosSection, HOME_PRODUCTOS_DEFAULTS } from '../services/productService';
 
-// ── Fallback hardcodeado por si Shopify falla ──────────
+// Fallback sin imágenes — todas las categorías tienen imagen en Shopify
 const CATEGORIAS_FALLBACK = {
-  protagonista: {
-    id: 1,
-    nombre: 'Sets Completos',
-    desc: 'La colección definitiva',
-    href: '/categoria/sets-completos',
-    image: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=500&q=70&fm=webp&auto=format',
-  },
-  superior: {
-    id: 2,
-    nombre: 'Tops y Camisetas',
-    desc: 'Soporte y diseño',
-    href: '/categoria/superior',
-    image: 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=500&q=70&fm=webp&auto=format',
-  },
-  nicho1: {
-    id: 3,
-    nombre: 'Movimiento',
-    desc: 'Libertad sin límites',
-    href: '/categoria/movimiento',
-    image: 'https://images.unsplash.com/photo-1538805060514-97d9cc17730c?w=400&q=70&fm=webp&auto=format',
-  },
-  nicho2: {
-    id: 4,
-    nombre: 'Accesorios',
-    desc: 'El toque final',
-    href: '/categoria/accesorios',
-    image: 'https://images.unsplash.com/photo-1611085583191-a3b181a88401?w=400&q=70&fm=webp&auto=format',
-  },
+  protagonista: { id: 1, nombre: 'Sets Completos',   desc: 'La colección definitiva', href: '/categoria/sets-completos', image: null },
+  superior:     { id: 2, nombre: 'Tops y Camisetas', desc: 'Soporte y diseño',        href: '/categoria/superior',       image: null },
+  nicho1:       { id: 3, nombre: 'Movimiento',       desc: 'Libertad sin límites',    href: '/categoria/movimiento',     image: null },
+  nicho2:       { id: 4, nombre: 'Accesorios',       desc: 'El toque final',          href: '/categoria/accesorios',     image: null },
 };
 
 const CategoriaCard = ({ cat, className, delay = 0, size = 'large' }) => {
