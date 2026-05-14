@@ -1,12 +1,11 @@
 import React, { Suspense, lazy } from 'react';
 import HeroFullscreen from '../sections/HeroFullscreen';
-import Categorias from '../sections/Categorias';
 import SEO from '../components/SEO';
 
-// Solo lazy las secciones pesadas o below-the-fold profundo
-const Productos = lazy(() => import('../sections/Productos'));
-const Filosofia = lazy(() => import('../sections/Filosofia'));
-const Instagram = lazy(() => import('../sections/Instagram'));
+const Categorias = lazy(() => import('../sections/Categorias'));
+const Productos  = lazy(() => import('../sections/Productos'));
+const Filosofia  = lazy(() => import('../sections/Filosofia'));
+const Instagram  = lazy(() => import('../sections/Instagram'));
 
 export default function HomePage() {
   return (
@@ -18,14 +17,10 @@ export default function HomePage() {
       />
       <main>
         <HeroFullscreen />
-        <Categorias />
-        <Suspense fallback={<div className="min-h-[60vh]" />}>
+        <Suspense fallback={null}>
+          <Categorias />
           <Productos />
-        </Suspense>
-        <Suspense fallback={<div className="min-h-[80vh]" />}>
           <Filosofia />
-        </Suspense>
-        <Suspense fallback={<div className="min-h-[40vh]" />}>
           <Instagram />
         </Suspense>
       </main>
