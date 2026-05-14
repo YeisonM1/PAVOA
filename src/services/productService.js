@@ -841,6 +841,56 @@ export const getSiteSettings = () => {
   return promise;
 };
 
+export const HOME_PRODUCTOS_DEFAULTS = {
+  eyebrow: 'Nueva Temporada',
+  tituloLinea1: 'TU SEGUNDA',
+  tituloLinea2: 'PIEL',
+  tabNuevo: 'NUEVO',
+  tabBestseller: 'MÁS VENDIDO',
+  tabTendencia: 'TENDENCIA',
+  emptyEyebrow: 'Próximamente',
+  emptyBody: 'Nuevas piezas en camino',
+};
+
+export const getHomeProductosSection = () => {
+  const cached = getCached('home-productos-section');
+  if (cached) return cached;
+
+  const promise = (async () => {
+    try {
+      const data = await shopifyFetch(`
+        query {
+          metaobjects(type: "home_productos_section", first: 1) {
+            edges {
+              node {
+                fields { key value }
+              }
+            }
+          }
+        }
+      `);
+      const node = data.metaobjects.edges[0]?.node;
+      if (!node) return HOME_PRODUCTOS_DEFAULTS;
+      const get = (key) => node.fields.find(f => f.key === key)?.value?.trim() || '';
+      return {
+        eyebrow:      get('eyebrow')        || HOME_PRODUCTOS_DEFAULTS.eyebrow,
+        tituloLinea1: get('titulo_linea_1') || HOME_PRODUCTOS_DEFAULTS.tituloLinea1,
+        tituloLinea2: get('titulo_linea_2') || HOME_PRODUCTOS_DEFAULTS.tituloLinea2,
+        tabNuevo:     get('tab_nuevo')      || HOME_PRODUCTOS_DEFAULTS.tabNuevo,
+        tabBestseller:get('tab_bestseller') || HOME_PRODUCTOS_DEFAULTS.tabBestseller,
+        tabTendencia: get('tab_tendencia')  || HOME_PRODUCTOS_DEFAULTS.tabTendencia,
+        emptyEyebrow: get('empty_eyebrow')  || HOME_PRODUCTOS_DEFAULTS.emptyEyebrow,
+        emptyBody:    get('empty_body')     || HOME_PRODUCTOS_DEFAULTS.emptyBody,
+      };
+    } catch {
+      return HOME_PRODUCTOS_DEFAULTS;
+    }
+  })();
+
+  setCache('home-productos-section', promise);
+  return promise;
+};
+
 export const getFilosofiaSection = () => {
   const cached = getCached('filosofia-section');
   if (cached) return cached;

@@ -1,24 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { getProductos } from '../services/productService';
+import { getProductos, getHomeProductosSection, HOME_PRODUCTOS_DEFAULTS } from '../services/productService';
 import ProductCard from '../components/ProductCard';
 import SkeletonCard from '../components/SkeletonCard';
 
-const TABS = [
-  { label: 'NUEVO',       value: 'nuevo'      },
-  { label: 'MÁS VENDIDO', value: 'bestseller' },
-  { label: 'TENDENCIA',   value: 'tendencia'  },
-];
-
-// ─────────────────────────────────────────
-// SECCIÓN PRINCIPAL — Tu Segunda Piel
-// ─────────────────────────────────────────
 export default function Productos() {
   const [productos, setProductos]   = useState([]);
   const [loading, setLoading]       = useState(true);
   const [activeTab, setActiveTab]   = useState('nuevo');
+  const [content, setContent]       = useState(HOME_PRODUCTOS_DEFAULTS);
 
   useEffect(() => {
+    getHomeProductosSection().then(data => setContent(data)).catch(() => {});
     const cargarProductos = async () => {
       const datos = await getProductos();
       setProductos(datos);
@@ -26,6 +19,12 @@ export default function Productos() {
     };
     cargarProductos();
   }, []);
+
+  const TABS = [
+    { label: content.tabNuevo,      value: 'nuevo'      },
+    { label: content.tabBestseller, value: 'bestseller' },
+    { label: content.tabTendencia,  value: 'tendencia'  },
+  ];
 
   // Filtrar por tab activo — máximo 2 productos
   const productosFiltrados = productos
@@ -59,10 +58,10 @@ export default function Productos() {
         <div className="flex items-end justify-between mb-8 border-b border-stone-200 pb-6">
           <div className="flex flex-col gap-1">
             <span  className="text-[9px] text-stone-500 tracking-[0.3em] uppercase font-medium">
-              Nueva Temporada
+              {content.eyebrow}
             </span>
             <h2  className="text-lg md:text-xl font-light text-stone-900 tracking-[0.2em] uppercase">
-              TU SEGUNDA <strong className="font-bold">PIEL</strong>
+              {content.tituloLinea1} <strong className="font-bold">{content.tituloLinea2}</strong>
             </h2>
           </div>
           <Link
@@ -114,10 +113,10 @@ export default function Productos() {
           // Estado vacío — cuando no hay productos con ese tag
           <div className="flex flex-col items-center justify-center py-20 gap-3">
             <span  className="text-[9px] font-bold tracking-[0.3em] uppercase text-stone-300">
-              Próximamente
+              {content.emptyEyebrow}
             </span>
             <p  className="text-[11px] tracking-[0.15em] text-stone-400 uppercase">
-              Nuevas piezas en camino
+              {content.emptyBody}
             </p>
           </div>
         )}
