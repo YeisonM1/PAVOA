@@ -1,7 +1,7 @@
 ﻿import { useState, useEffect, useRef } from 'react';
 import { heroImage } from '../utils/imageUrl';
 import { useCarousel } from '../hooks/useCarousel';
-import { getHeroSlides } from '../services/productService';
+import { getHeroSlides, getHeroSection, HERO_SECTION_DEFAULTS } from '../services/productService';
 
 const CACHE_KEY = 'pavoa_hero_slides';
 
@@ -45,8 +45,10 @@ export default function HeroFullscreen() {
   })();
 
   const [slides, setSlides] = useState(cached || SLIDES_FALLBACK);
+  const [heroContent, setHeroContent] = useState(HERO_SECTION_DEFAULTS);
 
   useEffect(() => {
+    getHeroSection().then(data => setHeroContent(data)).catch(() => {});
     getHeroSlides().then(data => {
       if (data.length > 0) {
         setSlides(data);
@@ -157,7 +159,7 @@ export default function HeroFullscreen() {
           </a>
 
           <p style={{ letterSpacing: '0.2em' }} className="text-white/40 text-[8px] sm:text-[9px] mt-5 tracking-[0.25em]">
-            Envíos a todo el país  -  Ediciones limitadas
+            {heroContent.badgeText}
           </p>
         </div>
       </div>

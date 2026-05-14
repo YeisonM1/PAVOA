@@ -864,6 +864,38 @@ export const TICKER_DEFAULTS = [
   'Colección limitada disponible',
 ];
 
+export const HERO_SECTION_DEFAULTS = {
+  badgeText: 'Envíos a todo el país  -  Ediciones limitadas',
+};
+
+export const getHeroSection = () => {
+  const cached = getCached('hero-section');
+  if (cached) return cached;
+
+  const promise = (async () => {
+    try {
+      const data = await shopifyFetch(`
+        query {
+          metaobjects(type: "hero_section", first: 1) {
+            edges { node { fields { key value } } }
+          }
+        }
+      `);
+      const node = data.metaobjects.edges[0]?.node;
+      if (!node) return HERO_SECTION_DEFAULTS;
+      const get = (key) => node.fields.find(f => f.key === key)?.value?.trim() || '';
+      return {
+        badgeText: get('badge_text') || HERO_SECTION_DEFAULTS.badgeText,
+      };
+    } catch {
+      return HERO_SECTION_DEFAULTS;
+    }
+  })();
+
+  setCache('hero-section', promise);
+  return promise;
+};
+
 export const getTickerItems = () => {
   const cached = getCached('ticker-bar');
   if (cached) return cached;
