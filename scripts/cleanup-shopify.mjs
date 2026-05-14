@@ -42,13 +42,15 @@ const loadEnvFile = (filePath, { override = false } = {}) => {
 
 const requestedEnvFileArg = process.argv
   .slice(2)
-  .find((arg) => arg.startsWith('--env-file='));
+  .find((arg) => arg.startsWith('--vars-file=') || arg.startsWith('--env-file='));
 
 loadEnvFile(path.join(REPO_ROOT, '.env'));
 loadEnvFile(path.join(REPO_ROOT, '.env.local'));
 
 if (requestedEnvFileArg) {
-  const requestedPath = requestedEnvFileArg.slice('--env-file='.length).trim();
+  const requestedPath = requestedEnvFileArg.includes('--vars-file=')
+    ? requestedEnvFileArg.slice('--vars-file='.length).trim()
+    : requestedEnvFileArg.slice('--env-file='.length).trim();
   const resolvedPath = path.isAbsolute(requestedPath)
     ? requestedPath
     : path.resolve(REPO_ROOT, requestedPath);
@@ -70,7 +72,7 @@ Opciones:
   --status=VALUE             Drafts: open | invoice_sent | completed | any. Orders: open | closed | cancelled | any
   --max-pages=NUM            Maximo de paginas a leer. Default: 10
   --page-size=NUM            Registros por pagina. Default: 100, max: 250
-  --env-file=PATH            Carga variables desde un archivo .env adicional.
+  --vars-file=PATH           Carga variables desde un archivo .env adicional.
   --tag=VALUE                Tag requerido. Repite la bandera para varios tags.
   --no-default-tags          No exigir pavoa-web y mercadopago.
   --id=VALUE                 Limita a un id especifico. Repite la bandera para varios ids.
@@ -79,7 +81,7 @@ Opciones:
 Ejemplos:
   node scripts/cleanup-shopify.mjs --resource=drafts
   node scripts/cleanup-shopify.mjs --resource=drafts --action=delete --older-than-minutes=180 --apply
-  node scripts/cleanup-shopify.mjs --resource=drafts --env-file=.env.vercel
+  node scripts/cleanup-shopify.mjs --resource=drafts --vars-file=.env.vercel
   node scripts/cleanup-shopify.mjs --resource=orders --status=any --tag=pavoa-web --tag=mercadopago
   node scripts/cleanup-shopify.mjs --resource=orders --action=delete --id=123456789 --apply
 
@@ -130,7 +132,7 @@ const parseArgs = (argv) => {
       config.tags = [];
       continue;
     }
-    if (arg.startsWith('--env-file=')) {
+    if (arg.startsWith('--vars-file=') || arg.startsWith('--env-file=')) {
       continue;
     }
     if (arg.startsWith('--resource=')) {
