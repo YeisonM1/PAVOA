@@ -1,56 +1,68 @@
 # CODEX_HANDOFF.md
 
-Estado de continuidad al 2026-05-11.
+Estado de continuidad al 2026-05-13.
 
 ## Leer junto con
+
 - `CLAUDE.md`
 - `AGENTS.md`
 
 ## Prioridad real
+
 - La prioridad sigue siendo el storefront `PAVOA`.
-- `PAVOA Control` sigue activo, pero no es el frente principal salvo que haya una falla operativa concreta.
-- Evitar cambios visuales grandes sin validación.
-- Favorecer estabilidad, medición, conversión y lógica antes que rediseños.
+- `PAVOA Control` sigue activo, pero no es el frente principal salvo falla operativa puntual.
+- Evitar cambios visuales grandes sin validacion.
+- Favorecer estabilidad, medicion, conversion y logica antes que redisenos.
 
 ## Estado actual del storefront
-- Home, categorías, PDP, checkout y cuenta están estables.
-- La home con tabs `Nuevo`, `Mas vendido`, `Tendencia` se mantiene con 2 productos por decisión de la dueña.
-- El intento de agregar un bloque nuevo de decisión en PDP fue descartado. La mejora segura sigue siendo confianza debajo del CTA, no más texto arriba.
-- La página `Nosotros` ya fue reorientada a filosofía de marca y el copy visible del storefront fue normalizado en español.
 
-## Integraciones y arquitectura
+- Home, categorias, PDP, checkout, cuenta y contacto estan estables.
+- La home con tabs `Nuevo`, `Mas vendido`, `Tendencia` sigue con 2 productos por decision de la duena.
+- El intento de agregar un bloque nuevo de decision en PDP fue descartado.
+- La mejora segura para PDP sigue siendo confianza debajo del CTA, no mas texto arriba.
+- `Nosotros` ya fue reorientada a filosofia de marca.
+- El contenido editorial principal ya depende de Shopify metaobjects.
+
+## Integraciones y arquitectura reales
+
 - Frontend: React 19 + Vite 8 + Tailwind v4.
-- Backend: funciones serverless en `api/`.
-- Catálogo y contenido editorial: Shopify Storefront API + metaobjects.
+- Backend: 12 funciones serverless activas en `api/`.
+- Catalogo y contenido editorial: Shopify Storefront API + metaobjects.
+- Shopify Storefront version usada en frontend: `2026-04`.
 - Pagos: Mercado Pago.
-- Datos internos: Supabase.
-- Correo transaccional: Resend con soporte de `mailtrap_sandbox` para pruebas.
+- Datos operativos: Supabase.
+- Correo transaccional: Resend con soporte opcional de `mailtrap_sandbox`.
 
-## Lo que ya quedó resuelto
+## Lo que ya quedo resuelto
+
 - Newsletter del footer ya no inserta directo a Supabase desde frontend.
-  - Ahora entra por `/api/contacto` con `type: newsletter-subscribe`.
-- El catálogo ya no depende de `products(first: 100)`.
-  - `getProductos()` ya pagina Shopify.
-- Checkout/pago quedó más sólido.
-  - mejor idempotencia para creación de preferencia de pago
-  - mejor validación de drafts cacheados
-- El embudo propio ya existe y registra eventos frontend/backend.
+  - ahora entra por `/api/contacto` con `type: newsletter-subscribe`
+- El embudo propio ya existe y registra eventos frontend y backend.
   - `src/lib/funnel.js`
   - `api/_helpers/funnel.js`
-- `Nosotros` ya soporta una estructura más editorial orientada a filosofía.
+- El catalogo ya no depende de `products(first: 100)`.
+  - `getProductos()` pagina Shopify
+- Checkout y pago quedaron mas solidos.
+  - mejor idempotencia
+  - mejor validacion de drafts cacheados
+  - diagnostico de Mercado Pago en `procesar-pago.js`
+- `Nosotros` soporta estructura editorial via `nosotros_page` y `nosotros_block`.
+- `Help pages` soportan referencias con `blocks_1` y `blocks`.
 
 ## Stock alerts
+
 - El problema reciente no era visual ni del panel.
-- La causa real estaba en Supabase: el índice viejo impedía repetir alertas históricas para la misma combinación de `email + producto + variante`.
-- La solución correcta fue en base de datos:
+- La causa real estaba en Supabase: el indice viejo impedia repetir alertas historicas para la misma combinacion de `email + producto + variante`.
+- La solucion correcta fue en base de datos:
   - dejar unicidad solo para alertas pendientes
   - permitir nuevas alertas cuando la anterior ya fue notificada
-- El backend quedó simplificado después de eso.
-- Si este entorno se replica en otra base, hay que repetir esa regla.
+- El backend actual ademas mantiene compatibilidad con tablas legacy sin `variant_id` o sin `notified_at`.
+- Si se replica este entorno en otra base, hay que repetir esa logica.
 
 ## Ajustes manuales importantes en Supabase
 
 ### 1. `wishlist_events`
+
 Si se clona otra base, repetir:
 
 ```sql
@@ -59,19 +71,30 @@ alter table public.wishlist_events add constraint wishlist_events_action_type_ch
 ```
 
 ### 2. Embudo
+
 Ejecutar:
+
 - `SUPABASE_FUNNEL_EVENTS.sql`
 - `SUPABASE_FUNNEL_JOURNEYS.sql`
 
 Sin eso:
+
 - no persisten eventos del embudo
 - `PAVOA Control` no puede mostrar recorridos reales
 
 ### 3. Stock alerts
-La base debe mantener la lógica de unicidad para solo una alerta pendiente por variante.
-Si se reconstruye la tabla, verificar que el índice no vuelva a bloquear historial completo.
 
-## Shopify / contenido editable ya activo
+La base debe mantener unicidad solo para una alerta pendiente por variante.
+
+Si se reconstruye la tabla:
+
+- verificar que no vuelva un indice que bloquee historial completo
+- verificar columnas `variant_id`, `notified` y `notified_at`
+
+## Shopify / contenido editable activo
+
+Metaobjects confirmados en codigo:
+
 - `site_settings`
 - `filosofia_section`
 - `nosotros_page`
@@ -79,35 +102,66 @@ Si se reconstruye la tabla, verificar que el índice no vuelva a bloquear histor
 - `contact_page`
 - `footer_content`
 - `help_page`
-- `help_page_block`
 
-Nota:
-- en esta tienda, el campo de referencias de ayuda quedó con key `blocks_1`, no `blocks`
+Nota util:
+
+- en esta tienda el campo de referencias de ayuda puede venir como `blocks_1` o `blocks`
+
+## Endpoints activos en `api/`
+
+- `check-descuento.js`
+- `contacto.js`
+- `forgot-password.js`
+- `login.js`
+- `mis-pedidos.js`
+- `pedido.js`
+- `procesar-pago.js`
+- `register.js`
+- `reset-password.js`
+- `verify.js`
+- `webhook-mercadopago.js`
+- `webhook-shopify.js`
 
 ## PAVOA Control
+
 Estado general:
+
 - desplegado y estable en Vercel
 - repo separado
-- módulos ya montados: resumen, stock alerts, newsletter, pedidos espejo, wishlist insights, embudo
+- no es el frente principal de este repo
 
-Notas útiles:
-- conviene abrir `PAVOA Control` después de deploys relevantes para que la app vuelva a registrar `inventory_levels/update`
-- el módulo de stock alerts depende de que Shopify y Supabase sigan alineados en `variant_id`, `notified` y `notified_at`
+Modulos mencionados en continuidad:
+
+- resumen
+- stock alerts
+- newsletter
+- pedidos espejo
+- wishlist insights
+- embudo
+
+Notas utiles:
+
+- conviene abrir `PAVOA Control` despues de deploys relevantes para que la app vuelva a registrar `inventory_levels/update`
+- stock alerts dependen de que Shopify y Supabase sigan alineados en `variant_id`, `notified` y `notified_at`
 
 ## Archivos locales que no deben tocarse por ruido
+
 - `.claude/settings.local.json`
 - `.cursor/`
 - `.gemini/`
-- archivos de apoyo temporales que no estén versionados
+- archivos temporales no versionados
 
 ## Siguientes frentes recomendados
-1. Validar que el embudo esté completamente operativo en la base real.
-2. Mejorar confianza de compra en PDP con cambios pequeños y medibles.
-3. Añadir visibilidad operativa simple en `PAVOA Control` para pagos/pedidos cuando se retome ese frente.
+
+1. Validar que el embudo este completamente operativo en la base real.
+2. Mejorar confianza de compra en PDP con cambios pequenos y medibles.
+3. Dar visibilidad operativa simple a pagos y pedidos cuando se retome `PAVOA Control`.
 4. Mantener limpio el contenido editable en Shopify para reducir hardcode.
 
 ## Regla para retomar en otro chat
-Pedir explícitamente:
+
+Pedir explicitamente:
+
 - leer `CLAUDE.md`
 - leer `AGENTS.md`
 - leer `CODEX_HANDOFF.md`

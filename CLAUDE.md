@@ -1,84 +1,135 @@
-# CLAUDE.md — PAVOA
+# CLAUDE.md - PAVOA
 
-PAVOA is a headless e-commerce platform for Colombian fashion/sports apparel.
-- **URL:** https://pavoa.vercel.app — **Shopify:** pavoa-4502.myshopify.com
-- **Stack:** React + Vite + Tailwind CSS v4 + Vercel serverless (`/api/`)
+PAVOA es el storefront headless principal de la marca.
 
----
+- URL: `https://pavoa.vercel.app`
+- Shopify: `pavoa-4502.myshopify.com`
+- Stack: React 19 + Vite 8 + Tailwind CSS v4 + Vercel serverless en `api/`
 
-## ⚠️ Reglas críticas
+## Reglas criticas
 
-1. **NO tocar el diseño** — no cambiar clases Tailwind, estructura visual ni estilos
-2. **NO asumir** — pedir el archivo antes de modificarlo
-3. **NO refactorizar** sin permiso explícito
-4. **NO agregar dependencias** sin justificarlo primero
-5. **Explicar QUÉ y CÓMO** antes de mostrar código
-6. Si hay duda → **preguntar antes de actuar**
+1. No tocar el diseno sin validacion clara.
+2. No asumir: leer el archivo real antes de modificarlo.
+3. No refactorizar sin permiso explicito.
+4. No agregar dependencias sin justificarlo primero.
+5. Explicar que se va a cambiar antes de editar.
+6. Si hay duda operativa o comercial, preguntar antes de actuar.
 
----
-
-## Commands
+## Comandos
 
 ```bash
-npm run dev      # Vite dev server
-npm run build    # Production build → dist/
-npm run lint     # ESLint
+npm run dev
+npm run build
+npm run lint
+npm run preview
 ```
 
----
-
-## Architecture
+## Arquitectura
 
 ### Frontend (`src/`)
-- **Routing:** React Router DOM v7, lazy-loaded. Auth pages sin Header/Footer, resto usa AppShell
-- **Styling:** Tailwind v4. Colores brand en `src/index.css` — negro `#0B0B0B`, beige `#F6F1EA`, gold `#DFCDB4`, fuente Raleway
-- **Path aliases:** `@/` → `src/`
 
-```
+- Routing: React Router DOM v7 con lazy loading.
+- Estilos: Tailwind v4.
+- Fuente principal: Raleway.
+- Alias: `@/` -> `src/`
+
+Estructura activa:
+
+```text
 src/
-  pages/       # Una por ruta
-  sections/    # Header, Footer, CartDrawer
-  components/  # ProductCard, SEO, SkeletonCard
-  hooks/       # useLocalStorage, useCarousel
-  services/    # productService.js, authService.js
-  context/     # CartContext (persiste en localStorage)
+  assets/
+  components/
+  context/
+  hooks/
+  lib/
+  pages/
+  sections/
+  services/
+  utils/
 ```
+
+Puntos reales del storefront:
+
+- `src/services/productService.js`
+  - Shopify Storefront API version `2026-04`
+  - paginacion real del catalogo
+  - metaobjects para home, filosofia, nosotros, contacto, footer y help pages
+- `src/lib/funnel.js`
+  - sesion local del embudo
+  - eventos enviados a `/api/contacto`
+- `src/lib/analytics.js`
+  - eventos de analytics y `begin_checkout`
 
 ### Backend (`api/`)
-| Archivo | Función |
-|---|---|
-| `pedido.js` | Draft Order en Shopify — token via Client Credentials Grant, cacheado |
-| `procesar-pago.js` | Crea preferencia MercadoPago |
-| `webhook-mercadopago.js` | Actualiza orden en Supabase al pagar |
-| `register.js` / `login.js` | Auth con bcrypt + Supabase + Resend |
 
-### Flujo de checkout
-1. `POST /api/pedido` → Draft Order en Shopify
-2. `POST /api/procesar-pago` → preferencia MP, devuelve `init_point`
-3. MP redirige a `OrdenConfirmadaPage`
-4. `POST /api/webhook-mercadopago` → orden completa en Supabase
+Funciones activas hoy:
 
----
+| Archivo | Funcion |
+| --- | --- |
+| `check-descuento.js` | valida descuento de bienvenida |
+| `contacto.js` | contacto, newsletter, funnel y stock alerts |
+| `forgot-password.js` | inicio de recuperacion |
+| `login.js` | login cliente |
+| `mis-pedidos.js` | pedidos, wishlist y merge guest/user |
+| `pedido.js` | draft order Shopify + validaciones + funnel |
+| `procesar-pago.js` | preferencia Mercado Pago + diagnostico |
+| `register.js` | registro cliente |
+| `reset-password.js` | cambio de password |
+| `verify.js` | verificacion de cuenta |
+| `webhook-mercadopago.js` | confirmacion de pago |
+| `webhook-shopify.js` | sincronizacion operativa desde Shopify |
+
+Helpers relevantes:
+
+- `api/_helpers/funnel.js`
+- `api/_helpers/mail.js`
+- `api/_helpers/mercadopago-order.js`
+- `api/_helpers/shopify-token.js`
+- `api/_helpers/cart-validation.js`
+
+## Flujo comercial principal
+
+1. `POST /api/pedido` crea draft order en Shopify.
+2. `POST /api/procesar-pago` crea preferencia Mercado Pago.
+3. Mercado Pago redirige a `orden-confirmada`.
+4. `POST /api/webhook-mercadopago` confirma el pago y actualiza persistencia.
+5. `POST /api/contacto` cubre contacto, newsletter, funnel y stock alerts.
 
 ## Variables de entorno
-Ver `.env.example`. Las `VITE_*` son públicas (build time). Las secretas solo en `/api/`.
 
----
-## 🦴 Caveman Mode (Efficiency Layer)
-- **No filler:** No "Happy to help", no "Based on your request".
-- **Direct execution:** If a tool is needed, call it immediately.
-- **Concise output:** Use minimalist linguistics. Result > Explanation.
-- **Token priority:** Maximize context utility by pruning unnecessary particles.
+Ver `.env.example`.
 
----
+Notas:
+
+- Las `VITE_*` son publicas y viven en build time.
+- Las secretas solo deben usarse en backend.
+- Variables server-only relevantes:
+  - `SHOPIFY_CLIENT_SECRET`
+  - `SHOPIFY_WEBHOOK_SECRET`
+  - `MP_ACCESS_TOKEN`
+  - `MP_WEBHOOK_SECRET`
+  - `RESEND_API_KEY`
+  - `MAILTRAP_SANDBOX_API_TOKEN`
+  - `MAILTRAP_SANDBOX_INBOX_ID`
+  - `SUPABASE_SERVICE_ROLE_KEY`
+  - `JWT_SECRET`
 
 ## Git workflow
-Commit + push a `main` después de cada cambio. Vercel auto-deploys. **Nunca dejar commits sin sincronizar.**
 
----
+Cada cambio cerrado debe terminar con:
 
-## ⚠️ Límite Vercel Hobby — 12 funciones serverless
-El plan Hobby de Vercel permite **máximo 12 archivos** en `/api/` (excluye `_helpers/`).
-Actualmente se usan los 12. Antes de agregar una nueva función:
-1. Verificar si se puede llamar al servicio directamente desde el frontend (ej. Supabase con anon key + RLS)
-2. Si no, consolidar dos funciones existentes en una antes de crear la nueva
+1. `npm run build`
+2. commit a `main`
+3. push a `main`
+
+No dejar cambios funcionales sin sincronizar.
+
+## Limite de Vercel Hobby
+
+El plan Hobby permite maximo 12 archivos en `api/` y hoy ya estan ocupados.
+
+Antes de crear una funcion nueva:
+
+1. Verificar si la necesidad cabe en una funcion existente.
+2. Preferir ampliar `contacto.js` o consolidar funciones antes de abrir otra.
+3. Evitar crecer `api/` por conveniencia si el frontend o Shopify ya resuelven el caso.

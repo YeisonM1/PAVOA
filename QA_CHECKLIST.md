@@ -1,23 +1,23 @@
 # QA Checklist - PAVOA
 
-Checklist operativa para validar el storefront principal, Shopify, Mercado Pago, Supabase y `PAVOA Control`.
+Checklist operativa para validar storefront, Shopify, Mercado Pago, Supabase y `PAVOA Control`.
 
 ## Objetivo
 
 Confirmar que el flujo comercial real funciona de punta a punta:
 
-- navegación y UI del storefront
-- creación de draft orders en Shopify
-- redirección y pago con Mercado Pago
+- navegacion y UI del storefront
+- creacion de draft orders en Shopify
+- redireccion y pago con Mercado Pago
 - persistencia de datos en Supabase
 - visibilidad operativa en `PAVOA Control`
 
-## Preparación mínima
+## Preparacion minima
 
 Antes de probar:
 
 - usar `main` desplegado en `https://pavoa.vercel.app`
-- confirmar que el deploy más reciente no falló en Vercel
+- confirmar que el deploy mas reciente no fallo en Vercel
 - tener acceso a:
   - Shopify Admin
   - Mercado Pago cuenta receptora
@@ -29,9 +29,7 @@ Antes de probar:
 - definir un email de prueba para usuario registrado
 - si se va a probar descuento de bienvenida, usar un usuario verificado que no lo haya consumido
 
-## Datos que conviene registrar en cada prueba
-
-Guardar estos identificadores en una nota simple:
+## Datos que conviene guardar en cada prueba
 
 - fecha y hora
 - ambiente probado
@@ -43,41 +41,41 @@ Guardar estos identificadores en una nota simple:
 - `payment_id`
 - estado final del pago
 
-## Orden recomendado de ejecución
+## Orden recomendado
 
-1. Smoke test de navegación
+1. Smoke test de navegacion
 2. Checkout sin pagar
 3. Draft order en Shopify
 4. Redirect a Mercado Pago
 5. Pago aprobado
 6. Pago rechazado o fallido
-7. Verificación en Supabase
-8. Verificación en `PAVOA Control`
+7. Verificacion en Supabase
+8. Verificacion en `PAVOA Control`
 9. Regresiones auxiliares
 
-## 1. Smoke Test Storefront
+## 1. Smoke test storefront
 
 Validar manualmente:
 
-- home carga sin textos rotos ni bloques vacíos
-- hero, categorías, productos, filosofía, footer y enlaces visibles funcionan
+- home carga sin textos rotos ni bloques vacios
+- hero, categorias, productos, filosofia, footer y enlaces visibles funcionan
 - `/categoria` carga productos y filtros
-- PDP carga imágenes, tallas, colores y CTA
+- PDP carga imagenes, tallas, colores y CTA
 - carrito abre, suma cantidades y totaliza correctamente
 - checkout carga y deja completar todos los campos
 - cuenta carga pedidos, deseos y perfil
 - contacto carga correctamente
 - cambios y devoluciones abre desde footer y desde cuenta
 
-## 2. Checkout Sin Pagar
+## 2. Checkout sin pagar
 
 Objetivo: validar frontend y payload antes de cobrar.
 
 Casos:
 
-- dejar campos vacíos y confirmar errores visibles
-- probar nombre, email, teléfono, ciudad, dirección, barrio y horario
-- confirmar que el botón no permite doble click útil
+- dejar campos vacios y confirmar errores visibles
+- probar nombre, email, telefono, ciudad, direccion, barrio y horario
+- confirmar que el boton no permite doble click util
 - confirmar que al volver a checkout el formulario persiste en `sessionStorage`
 - confirmar que el resumen muestra producto, talla, color y total correctos
 
@@ -87,7 +85,7 @@ Resultado esperado:
 - sin rutas rotas
 - sin errores visibles en consola del navegador
 
-## 3. Draft Order En Shopify
+## 3. Draft order en Shopify
 
 Objetivo: validar que el backend cree correctamente el pedido base.
 
@@ -102,10 +100,10 @@ Validar en el draft:
 - producto correcto
 - variante correcta
 - cantidad correcta
-- teléfono correcto
+- telefono correcto
 - ciudad correcta
 - barrio en `address2`
-- dirección en `address1`
+- direccion en `address1`
 - nota con horario y punto de referencia
 - tags esperados: `pavoa-web,mercadopago`
 
@@ -113,36 +111,36 @@ Si aplica descuento de bienvenida:
 
 - validar que el draft tenga descuento aplicado
 
-## 4. Redirect A Mercado Pago
+## 4. Redirect a Mercado Pago
 
 Objetivo: validar que la preferencia se genere bien.
 
 Validar:
 
-- redirección exitosa al checkout de Mercado Pago
+- redireccion exitosa al checkout de Mercado Pago
 - total correcto
-- ítems correctos
+- items correctos
 - cuenta receptora correcta
 - no aparece error de seller/account mismatch
 
 Si falla:
 
-- usar el botón de diagnóstico en checkout
-- revisar el resultado del endpoint `mp-diagnostico`
+- usar el boton de diagnostico en checkout
+- revisar la respuesta del flujo `mp-diagnostico`
 
-## 5. Pago Aprobado
+## 5. Pago aprobado
 
 Objetivo: validar el flujo completo positivo.
 
 Pasos:
 
 - completar un pago aprobado
-- esperar redirección de vuelta
+- esperar redireccion de vuelta
 - abrir `orden-confirmada`
 
 Validar en storefront:
 
-- llega a la página correcta
+- llega a la pagina correcta
 - se muestra el resumen esperado
 - el carrito se limpia
 
@@ -153,29 +151,30 @@ Validar en Mercado Pago:
 
 Validar en Shopify:
 
-- el draft order asociado existe o ya fue transformado según la lógica actual
-- no queda un draft huérfano si el flujo lo cerró correctamente
+- el draft order asociado existe o ya fue transformado segun la logica actual
+- no queda un draft huerfano si el flujo lo cerro correctamente
 
 Validar en Supabase:
 
-- existe fila de pedido si la integración lo persiste para ese caso
+- existe fila de pedido si la integracion lo persiste para ese caso
 - email, total e items son coherentes
+- se registran eventos de embudo ligados al checkout
 
-## 6. Pago Fallido O Rechazado
+## 6. Pago fallido o rechazado
 
 Objetivo: validar el flujo negativo.
 
 Probar uno de estos escenarios:
 
-- rechazo explícito
+- rechazo explicito
 - abandono en Mercado Pago
-- error técnico al volver
+- error tecnico al volver
 
 Validar:
 
-- el usuario vuelve a checkout sin romper la sesión
+- el usuario vuelve a checkout sin romper la sesion
 - aparece mensaje razonable
-- el botón de diagnóstico funciona
+- el boton de diagnostico funciona
 - el draft order fallido se limpia si corresponde
 
 ## 7. Supabase
@@ -188,40 +187,45 @@ Validar:
 - newsletter entra por backend
 - eventos de embudo se registran
 - stock alerts no quedan en estado incoherente
+- wishlist merge no rompe `wishlist_events`
 
 Chequeos concretos:
 
 - `pedidos`
 - `usuarios`
+- `newsletter_subscribers`
+- `wishlist_events`
 - tablas del embudo cargadas por `SUPABASE_FUNNEL_EVENTS.sql` y `SUPABASE_FUNNEL_JOURNEYS.sql`
-- stock alerts si el caso de prueba las toca
+- `stock_alerts` si el caso de prueba las toca
 
 ## 8. PAVOA Control
 
-Abrir `https://pavoa-control.vercel.app` después de la ronda de pruebas.
+Abrir `https://pavoa-control.vercel.app` despues de la ronda de pruebas.
 
-Validar por módulo:
+Validar por modulo:
 
 - resumen: refleja actividad reciente
-- pedidos espejo: muestra pedido nuevo si ese módulo depende del flujo probado
-- newsletter: muestra nuevos registros si se probó suscripción
-- wishlist insights: sin errores si se probó wishlist
+- pedidos espejo: muestra pedido nuevo si ese modulo depende del flujo probado
+- newsletter: muestra nuevos registros si se probo suscripcion
+- wishlist insights: sin errores si se probo wishlist
 - embudo: registra `begin_checkout`, errores y eventos de pago
-- stock alerts: no requiere esta prueba salvo que se fuerce un caso de reposición
+- stock alerts: no requiere esta prueba salvo que se fuerce un caso de reposicion
 
-## 9. Regresiones Auxiliares
+## 9. Regresiones auxiliares
 
-Después del flujo principal, probar rápido:
+Despues del flujo principal, probar rapido:
 
 - login
 - registro
+- verificacion de cuenta
+- recuperar contrasena
 - wishlist
 - contacto
 - newsletter footer
 - orden confirmada con recarga
-- navegación desde cuenta a cambios/devoluciones
+- navegacion desde cuenta a cambios/devoluciones
 
-## Escenarios Recomendados
+## Escenarios recomendados
 
 Hacer al menos estas 6 pruebas:
 
@@ -230,34 +234,34 @@ Hacer al menos estas 6 pruebas:
 3. Usuario con descuento de bienvenida + pago aprobado
 4. Pago rechazado
 5. Variante sin stock
-6. Navegación a cambios y devoluciones desde cuenta
+6. Navegacion a cambios y devoluciones desde cuenta
 
-## Criterio De Aprobación
+## Criterio de aprobacion
 
 La ronda se puede considerar sana si:
 
 - no hay rutas rotas
 - no hay textos corruptos
-- Shopify recibe bien dirección, ciudad, barrio y teléfono
+- Shopify recibe bien direccion, ciudad, barrio y telefono
 - Mercado Pago redirige y cobra sobre la cuenta correcta
 - el flujo aprobado vuelve sin errores
 - Supabase persiste lo esperado
 - `PAVOA Control` refleja actividad real
 
-## Criterio De Bloqueo
+## Criterio de bloqueo
 
-Detener deploys o campañas si pasa cualquiera de estos:
+Detener deploys o campanas si pasa cualquiera de estos:
 
-- draft orders sin dirección
+- draft orders sin direccion
 - total distinto entre storefront y Mercado Pago
 - seller incorrecto en Mercado Pago
 - pago aprobado sin reflejo esperado en Shopify o Supabase
 - ruta rota en checkout, cuenta o cambios/devoluciones
-- eventos críticos del embudo no persisten
+- eventos criticos del embudo no persisten
 
-## Siguiente Nivel
+## Siguiente nivel
 
-Cuando esta checklist manual ya esté estable, conviene formalizar:
+Cuando esta checklist manual ya este estable, conviene formalizar:
 
 - una plantilla de evidencia por prueba
 - una hoja simple de resultados por fecha
