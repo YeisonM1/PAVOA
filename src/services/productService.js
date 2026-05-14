@@ -850,6 +850,9 @@ export const HOME_PRODUCTOS_DEFAULTS = {
   tabTendencia: 'TENDENCIA',
   emptyEyebrow: 'Próximamente',
   emptyBody: 'Nuevas piezas en camino',
+  categoriasEyebrow: 'Descubre la prenda a tu estilo',
+  categoriasTitulo: 'DISEÑADO PARA TI',
+  categoriasLink: 'Explorar',
 };
 
 export const getHomeProductosSection = () => {
@@ -881,6 +884,9 @@ export const getHomeProductosSection = () => {
         tabTendencia: get('tab_tendencia')  || HOME_PRODUCTOS_DEFAULTS.tabTendencia,
         emptyEyebrow: get('empty_eyebrow')  || HOME_PRODUCTOS_DEFAULTS.emptyEyebrow,
         emptyBody:    get('empty_body')     || HOME_PRODUCTOS_DEFAULTS.emptyBody,
+        categoriasEyebrow: get('categorias_eyebrow') || HOME_PRODUCTOS_DEFAULTS.categoriasEyebrow,
+        categoriasTitulo:  get('categorias_titulo')  || HOME_PRODUCTOS_DEFAULTS.categoriasTitulo,
+        categoriasLink:    get('categorias_link')    || HOME_PRODUCTOS_DEFAULTS.categoriasLink,
       };
     } catch {
       return HOME_PRODUCTOS_DEFAULTS;

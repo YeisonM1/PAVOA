@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { categoryImage } from '../utils/imageUrl';
-import { getCategoriasDestacadas } from '../services/productService';
+import { getCategoriasDestacadas, getHomeProductosSection, HOME_PRODUCTOS_DEFAULTS } from '../services/productService';
 
 // ── Fallback hardcodeado por si Shopify falla ──────────
 const CATEGORIAS_FALLBACK = {
@@ -107,20 +107,14 @@ const CategoriaCard = ({ cat, className, delay = 0 }) => {
 };
 
 export default function Categorias() {
-  const [categorias, setCategorias] = useState(null); // ← null en lugar de FALLBACK
+  const [categorias, setCategorias] = useState(null);
+  const [content, setContent] = useState(HOME_PRODUCTOS_DEFAULTS);
 
   useEffect(() => {
+    getHomeProductosSection().then(data => setContent(data)).catch(() => {});
     getCategoriasDestacadas().then(data => {
       if (Object.keys(data).length > 0) {
-        const next = { ...data };
-        if (next.superior) {
-          next.superior = {
-            ...next.superior,
-            nombre: 'Tops y Camisetas',
-            href: '/categoria/superior',
-          };
-        }
-        setCategorias(next);
+        setCategorias(data);
       }
     });
   }, []);
@@ -154,10 +148,10 @@ export default function Categorias() {
       <div className="max-w-[1400px] mx-auto mb-10 md:mb-12 flex items-end justify-between border-b border-stone-200 pb-6">
         <div className="flex flex-col gap-1">
           <span className="text-[9px] text-stone-500 tracking-[0.3em] uppercase font-medium">
-            Descubre la prenda a tu estilo
+            {content.categoriasEyebrow}
           </span>
           <h2 className="text-lg md:text-xl font-light text-stone-900 tracking-[0.2em] uppercase">
-            DISEÑADO <strong className="font-bold">PARA TI</strong>
+            {content.categoriasTitulo}
           </h2>
         </div>
         <Link
@@ -166,7 +160,7 @@ export default function Categorias() {
           style={{ letterSpacing: '0.15em' }}
           className="text-[10px] font-bold text-stone-500 hover:text-stone-900 transition-colors uppercase flex items-center gap-2 group"
         >
-          Explorar
+          {content.categoriasLink}
           <span className="transform transition-transform duration-300 group-hover:translate-x-1">→</span>
         </Link>
       </div>
