@@ -18,7 +18,7 @@ export const FILOSOFIA_SECTION_DEFAULTS = {
   body: 'Cada pieza de PAVOA nace de la convicción de que la mujer que se mueve con intención merece ropa que esté a su altura. Elegancia natural. Presencia silenciosa.',
   ctaText: 'SOBRE NOSOTROS',
   ctaLink: '/nosotros',
-  image: 'https://cdn.shopify.com/s/files/1/0752/0436/2380/files/Filosofia.jpg?width=600&format=webp',
+  image: 'https://cdn.shopify.com/s/files/1/0752/0436/2380/files/Filosofia.jpg?v=1775927011&width=800&format=webp',
 };
 
 export const NOSOTROS_PAGE_DEFAULTS = {

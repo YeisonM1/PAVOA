@@ -1,6 +1,7 @@
 ﻿import { useEffect, useState } from 'react';
 import logoChampan from '../assets/Pavoa Logo Hueso Sin Fondo.svg';
 import { FILOSOFIA_SECTION_DEFAULTS, getFilosofiaSection } from '../services/productService';
+import { categoryImage } from '../utils/imageUrl';
 
 export default function Filosofia() {
   const [content, setContent] = useState(FILOSOFIA_SECTION_DEFAULTS);
@@ -71,7 +72,7 @@ export default function Filosofia() {
       {/* DERECHA — Imagen */}
       <div className="w-full md:w-1/2 relative overflow-hidden min-h-[50vh] md:min-h-full">
         <img
-          src={content.image}
+          src={categoryImage(content.image)}
           alt="PAVOA Filosofía"
           width={600}
           height={900}
