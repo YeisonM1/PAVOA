@@ -137,6 +137,7 @@ const processMercadoPagoPaymentInternal = async (paymentId) => {
     const existingOrder = await getExistingOrderByPaymentId(pagoInfo.id);
 
     if (existingOrder) {
+      await eliminarDraftOrder(draftOrderId);
       return {
         ok: true,
         status: 'approved',
@@ -174,6 +175,7 @@ const processMercadoPagoPaymentInternal = async (paymentId) => {
         console.info(`Shopify ya esta completando el draft ${draftOrderId} desde otro request.`);
         shouldPersistOrder = false;
         await wait(1200);
+        await eliminarDraftOrder(draftOrderId);
       } else {
         console.error(`Shopify fallo al completar draft ${draftOrderId}: ${shopifyErr.message}`);
       }

@@ -20,6 +20,8 @@ const CHECKOUT_STEPS = [
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const SOLO_DIGITOS = /\D/g;
 const CHECKOUT_FORM_KEY = 'pavoa-checkout-form-v1';
+const CHECKOUT_SESSION_KEY = 'pavoa-checkout-session';
+const CHECKOUT_SESSION_MAX_AGE_MS = 30 * 60 * 1000;
 
 const buildCheckoutLineItems = (cartItems = []) =>
   cartItems.map((item) => ({
@@ -43,6 +45,9 @@ const getSingleCheckoutItem = (cartItems = []) => {
     size: item?.talla || null,
   };
 };
+
+const buildCheckoutCartHash = (cartItems = []) =>
+  cartItems.map((item) => `${item?.producto?.id || ''}|${item?.talla || ''}|${item?.cantidad || 0}`).join(',');
 
 const formatBackendError = (error, detail) => {
   const base = String(error || '').trim();
@@ -173,6 +178,8 @@ export default function CheckoutPage() {
   const checkoutStep = cargandoPago ? 2 : 1;
   const statusFromMP = (searchParams.get('status') || '').toLowerCase();
   const statusDetailFromMP = (searchParams.get('status_detail') || '').toLowerCase();
+  const paymentIdFromMP = (searchParams.get('payment_id') || '').trim();
+  const currentCartHash = buildCheckoutCartHash(cartItems);
 
   useEffect(() => {
     try {
@@ -197,10 +204,30 @@ export default function CheckoutPage() {
       .catch(() => {});
   }, []);
 
-  // Limpiar sesión de checkout si el carrito cambia
   useEffect(() => {
-    sessionStorage.removeItem('pavoa-checkout-session');
-  }, [cartItems.length]);
+    const isReturningFromMercadoPago = Boolean(statusFromMP || paymentIdFromMP);
+    if (isReturningFromMercadoPago) return;
+
+    try {
+      const raw = sessionStorage.getItem(CHECKOUT_SESSION_KEY);
+      if (!raw) return;
+
+      const checkoutSession = JSON.parse(raw);
+      const storedDraftOrderId = String(checkoutSession?.draftOrderId || '').trim();
+      const storedCartHash = String(checkoutSession?.cartHash || '').trim();
+      const storedTs = Number(checkoutSession?.ts || 0);
+      const isExpired = !storedTs || (Date.now() - storedTs > CHECKOUT_SESSION_MAX_AGE_MS);
+      const cartChanged = storedCartHash && storedCartHash !== currentCartHash;
+
+      if (!isExpired && !cartChanged) return;
+
+      if (storedDraftOrderId) {
+        limpiarDraftPendiente(storedDraftOrderId);
+      }
+
+      sessionStorage.removeItem(CHECKOUT_SESSION_KEY);
+    } catch {}
+  }, [currentCartHash, paymentIdFromMP, statusFromMP]);
 
   useEffect(() => {
     if (cartCount !== 0) return;
@@ -223,14 +250,14 @@ export default function CheckoutPage() {
     });
 
     try {
-      const checkoutSession = JSON.parse(sessionStorage.getItem('pavoa-checkout-session') || 'null');
+      const checkoutSession = JSON.parse(sessionStorage.getItem(CHECKOUT_SESSION_KEY) || 'null');
       const draftOrderId = checkoutSession?.draftOrderId || '';
       if (draftOrderId) {
         limpiarDraftPendiente(draftOrderId);
       }
     } catch {}
 
-    sessionStorage.removeItem('pavoa-checkout-session');
+    sessionStorage.removeItem(CHECKOUT_SESSION_KEY);
 
     const rejectionMessages = {
       cc_rejected_insufficient_amount: 'Tu banco rechazo el pago por fondos o cupo insuficiente.',
@@ -366,13 +393,13 @@ export default function CheckoutPage() {
       return;
     }
 
-    const cartHash = cartItems.map(i => `${i.producto.id}|${i.talla}|${i.cantidad}`).join(',');
+    const cartHash = currentCartHash;
     // Clave de idempotencia corta: absorbe doble-clicks y retries inmediatos
     // en pedido y preferencia de pago, pero cada intento nuevo sigue creando su propia sesion.
     const minuteBucket    = Math.floor(Date.now() / 60000);
     const idempotencyKey  = `${form.email || 'anon'}-${cartHash}-${minuteBucket}`;
 
-    sessionStorage.removeItem('pavoa-checkout-session');
+    sessionStorage.removeItem(CHECKOUT_SESSION_KEY);
 
     setCargandoPago(true);
 
@@ -475,7 +502,7 @@ export default function CheckoutPage() {
         email:  form.email,
         nombre: form.nombre,
       }));
-      sessionStorage.setItem('pavoa-checkout-session', JSON.stringify({
+      sessionStorage.setItem(CHECKOUT_SESSION_KEY, JSON.stringify({
         initPoint:    dataPref.init_point,
         draftOrderId: draftOrderIdCreado,
         cartHash,
