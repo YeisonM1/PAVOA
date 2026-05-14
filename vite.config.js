@@ -16,10 +16,22 @@ export default defineConfig({
             return 'vendor-react';
           }
           if (id.includes('lucide-react')) {
-            return 'vendor-icons'; // ← eliminado react-icons
+            return 'vendor-icons';
+          }
+          if (id.includes('@fontsource')) {
+            return 'fonts';
+          }
+          if (id.includes('src/sections/Categorias') || id.includes('src/sections/Productos')) {
+            return 'home-above';
+          }
+          if (id.includes('src/sections/Filosofia') || id.includes('src/sections/Instagram') || id.includes('src/sections/Ticker')) {
+            return 'home-below';
           }
         },
       }
+    },
+    modulePreload: {
+      polyfill: false,
     },
     chunkSizeWarningLimit: 600,
     sourcemap: false,
