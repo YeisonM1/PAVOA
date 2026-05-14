@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { getInstagramPosts } from '../services/productService';
 import useSiteSettings from '../hooks/useSiteSettings';
+import { instagramImage } from '../utils/imageUrl';
 
 // ── Fallback mientras carga o si Shopify falla ──────────
 const POSTS_FALLBACK = [
@@ -60,7 +61,7 @@ export default function Instagram() {
             style={{ aspectRatio: '1/1' }}
           >
             <img
-              src={post.image}
+              src={instagramImage(post.image)}
               alt="PAVOA Instagram"
               loading="lazy"
               width={300}

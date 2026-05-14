@@ -35,7 +35,7 @@ const CATEGORIAS_FALLBACK = {
   },
 };
 
-const CategoriaCard = ({ cat, className, delay = 0 }) => {
+const CategoriaCard = ({ cat, className, delay = 0, size = 'large' }) => {
   const [isVisible, setIsVisible] = useState(false);
   const cardRef = useRef(null);
 
@@ -65,7 +65,7 @@ const CategoriaCard = ({ cat, className, delay = 0 }) => {
       `}
     >
       <img
-        src={categoryImage(cat.image)}
+        src={categoryImage(cat.image, size)}
         alt={cat.nombre}
         loading="lazy"
         className="w-full h-full object-cover transition-transform duration-[2000ms] ease-out scale-100 md:group-hover:scale-110"
@@ -174,8 +174,8 @@ export default function Categorias() {
             <CategoriaCard cat={categorias.superior} className="w-full h-full" delay={0} />
           </div>
           <div className="h-[35vh] md:h-[calc(37.5vh-0.75rem)] w-full grid grid-cols-2 gap-6 lg:gap-6">
-            <CategoriaCard cat={categorias.nicho1} className="w-full h-full" delay={0} />
-            <CategoriaCard cat={categorias.nicho2} className="w-full h-full" delay={150} />
+            <CategoriaCard cat={categorias.nicho1} className="w-full h-full" delay={0} size="small" />
+            <CategoriaCard cat={categorias.nicho2} className="w-full h-full" delay={150} size="small" />
           </div>
         </div>
       </div>

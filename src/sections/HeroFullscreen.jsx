@@ -1,5 +1,5 @@
 ﻿import { useState, useEffect, useRef } from 'react';
-import { heroImage } from '../utils/imageUrl';
+import { heroImage, heroImageMobile } from '../utils/imageUrl';
 import { useCarousel } from '../hooks/useCarousel';
 import { getHeroSlides, getHeroSection, HERO_SECTION_DEFAULTS } from '../services/productService';
 
@@ -94,8 +94,9 @@ export default function HeroFullscreen() {
           {slide.image && (
             <picture>
               {slide.imageMobile && (
-                <source media="(max-width: 767px)" srcSet={heroImage(slide.imageMobile)} />
+                <source media="(max-width: 767px)" srcSet={heroImageMobile(slide.imageMobile)} />
               )}
+              <source media="(max-width: 767px)" srcSet={heroImageMobile(slide.image)} />
               <img
                 src={heroImage(slide.image)}
                 alt={slide.tag}
