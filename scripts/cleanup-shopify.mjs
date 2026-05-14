@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 
 import fs from 'node:fs';
+import https from 'node:https';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { getShopifyToken } from '../api/_helpers/shopify-token.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -58,6 +58,11 @@ if (requestedEnvFileArg) {
 }
 
 const SHOPIFY_DOMAIN = String(process.env.VITE_SHOPIFY_DOMAIN || '').trim();
+const SHOPIFY_ADMIN_TOKEN = String(process.env.SHOPIFY_ADMIN_TOKEN || '').trim();
+const SHOPIFY_CLIENT_ID = String(process.env.SHOPIFY_CLIENT_ID || '').trim();
+const SHOPIFY_CLIENT_SECRET = String(process.env.SHOPIFY_CLIENT_SECRET || '').trim();
+
+let appTokenCache = { token: null, expiresAt: 0 };
 
 const usage = `
 Uso:
@@ -205,6 +210,88 @@ if (!SHOPIFY_DOMAIN) {
 const getTokenPreferences = (resource) =>
   resource === 'orders' ? ['admin', 'app'] : ['app', 'admin'];
 
+const httpsRequest = (url, { method = 'GET', headers = {}, body = null } = {}) =>
+  new Promise((resolve, reject) => {
+    const request = https.request(url, { method, headers }, (response) => {
+      let raw = '';
+      response.setEncoding('utf8');
+      response.on('data', (chunk) => {
+        raw += chunk;
+      });
+      response.on('end', () => {
+        resolve({
+          status: response.statusCode || 0,
+          headers: response.headers,
+          body: raw,
+        });
+      });
+    });
+
+    request.on('error', reject);
+
+    if (body) {
+      request.write(body);
+    }
+
+    request.end();
+  });
+
+const getAppToken = async () => {
+  const now = Date.now();
+  if (appTokenCache.token && appTokenCache.expiresAt - now > 60_000) {
+    return appTokenCache.token;
+  }
+
+  if (!SHOPIFY_CLIENT_ID || !SHOPIFY_CLIENT_SECRET) {
+    throw new Error('SHOPIFY_CLIENT_ID o SHOPIFY_CLIENT_SECRET no configurados.');
+  }
+
+  const body = new URLSearchParams({
+    grant_type: 'client_credentials',
+    client_id: SHOPIFY_CLIENT_ID,
+    client_secret: SHOPIFY_CLIENT_SECRET,
+  }).toString();
+
+  const response = await httpsRequest(
+    `https://${SHOPIFY_DOMAIN}/admin/oauth/access_token`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Content-Length': String(Buffer.byteLength(body)),
+      },
+      body,
+    }
+  );
+
+  if (response.status !== 200) {
+    throw new Error(`Shopify ${response.status}: ${response.body.slice(0, 300)}`);
+  }
+
+  const data = JSON.parse(response.body || '{}');
+  if (!data.access_token) {
+    throw new Error('Shopify no devolvio access_token.');
+  }
+
+  appTokenCache = {
+    token: data.access_token,
+    expiresAt: now + Number(data.expires_in || 86399) * 1000,
+  };
+
+  return appTokenCache.token;
+};
+
+const getTokenForPreference = async (preferred) => {
+  if (preferred === 'admin') {
+    if (!SHOPIFY_ADMIN_TOKEN) {
+      throw new Error('SHOPIFY_ADMIN_TOKEN no configurado.');
+    }
+    return SHOPIFY_ADMIN_TOKEN;
+  }
+
+  return getAppToken();
+};
+
 const parseLinkHeader = (value = '') => {
   const match = String(value).match(/<([^>]+)>;\s*rel="next"/i);
   return match?.[1] || null;
@@ -313,29 +400,30 @@ const shopifyFetch = async (resource, url, init = {}) => {
 
   for (const preferred of getTokenPreferences(resource)) {
     try {
-      const token = await getShopifyToken(preferred);
-      const res = await fetch(url, {
-        ...init,
+      const token = await getTokenForPreference(preferred);
+      const response = await httpsRequest(url, {
+        method: init.method || 'GET',
         headers: {
           ...(init.headers || {}),
           'X-Shopify-Access-Token': token,
         },
+        body: init.body || null,
       });
 
-      if (preferred === 'admin' && resource === 'drafts' && res.ok) {
+      if (preferred === 'admin' && resource === 'drafts' && response.status >= 200 && response.status < 300) {
         console.warn('[cleanup-shopify] Draft cleanup usando fallback con SHOPIFY_ADMIN_TOKEN.');
       }
-      if (preferred === 'app' && resource === 'orders' && res.ok) {
+      if (preferred === 'app' && resource === 'orders' && response.status >= 200 && response.status < 300) {
         console.warn('[cleanup-shopify] Order cleanup usando fallback con token app de Shopify.');
       }
 
-      if (res.status === 401 || res.status === 403) {
-        console.warn(`[cleanup-shopify] Shopify respondio ${res.status} usando token ${preferred}.`);
-        lastError = new Error(`Shopify respondio ${res.status} usando token ${preferred}.`);
+      if (response.status === 401 || response.status === 403) {
+        console.warn(`[cleanup-shopify] Shopify respondio ${response.status} usando token ${preferred}.`);
+        lastError = new Error(`Shopify respondio ${response.status} usando token ${preferred}.`);
         continue;
       }
 
-      return res;
+      return response;
     } catch (error) {
       console.warn(`[cleanup-shopify] Fallo consultando Shopify con token ${preferred}: ${error.message}`);
       lastError = error;
@@ -354,7 +442,7 @@ const fetchCandidates = async (resource, currentConfig) => {
   while (url && page < currentConfig.maxPages) {
     page += 1;
     const res = await shopifyFetch(resource, url);
-    const raw = await res.text();
+    const raw = res.body;
     let data = {};
 
     try {
@@ -363,7 +451,7 @@ const fetchCandidates = async (resource, currentConfig) => {
       throw new Error(`Respuesta invalida de Shopify: ${raw.slice(0, 300)}`);
     }
 
-    if (!res.ok) {
+    if (res.status < 200 || res.status >= 300) {
       throw new Error(`Shopify ${res.status}: ${raw.slice(0, 400)}`);
     }
 
@@ -374,7 +462,7 @@ const fetchCandidates = async (resource, currentConfig) => {
       }
     }
 
-    url = parseLinkHeader(res.headers.get('link'));
+    url = parseLinkHeader(res.headers.link);
   }
 
   return candidates;
@@ -422,9 +510,9 @@ const printTable = (resource, records) => {
 const deleteDraft = async (draftId) => {
   const url = `https://${SHOPIFY_DOMAIN}/admin/api/${API_VERSION}/draft_orders/${draftId}.json`;
   const res = await shopifyFetch('drafts', url, { method: 'DELETE' });
-  const body = await res.text();
+  const body = res.body;
 
-  if (res.ok || res.status === 404) {
+  if ((res.status >= 200 && res.status < 300) || res.status === 404) {
     return { ok: true, status: res.status, body };
   }
 
@@ -434,9 +522,9 @@ const deleteDraft = async (draftId) => {
 const deleteOrder = async (orderId) => {
   const url = `https://${SHOPIFY_DOMAIN}/admin/api/${API_VERSION}/orders/${orderId}.json`;
   const res = await shopifyFetch('orders', url, { method: 'DELETE' });
-  const body = await res.text();
+  const body = res.body;
 
-  if (res.ok || res.status === 404) {
+  if ((res.status >= 200 && res.status < 300) || res.status === 404) {
     return { ok: true, status: res.status, body };
   }
 
@@ -450,9 +538,9 @@ const cancelOrder = async (orderId) => {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({}),
   });
-  const body = await res.text();
+  const body = res.body;
 
-  if (res.ok) {
+  if (res.status >= 200 && res.status < 300) {
     return { ok: true, status: res.status, body };
   }
 
