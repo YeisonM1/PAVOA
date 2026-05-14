@@ -855,6 +855,48 @@ export const HOME_PRODUCTOS_DEFAULTS = {
   categoriasLink: 'Explorar',
 };
 
+export const TICKER_DEFAULTS = [
+  'Nueva Colección 2026',
+  'Envíos a todo el país',
+  'Pagos contraentrega',
+  'Hecha para rendir',
+  'Diseñada para brillar',
+  'Colección limitada disponible',
+];
+
+export const getTickerItems = () => {
+  const cached = getCached('ticker-bar');
+  if (cached) return cached;
+
+  const promise = (async () => {
+    try {
+      const data = await shopifyFetch(`
+        query {
+          metaobjects(type: "ticker_bar", first: 1) {
+            edges {
+              node {
+                fields { key value }
+              }
+            }
+          }
+        }
+      `);
+      const node = data.metaobjects.edges[0]?.node;
+      if (!node) return TICKER_DEFAULTS;
+      const items = node.fields
+        .filter(f => f.key.startsWith('item_') && f.value?.trim())
+        .sort((a, b) => a.key.localeCompare(b.key))
+        .map(f => f.value.trim());
+      return items.length > 0 ? items : TICKER_DEFAULTS;
+    } catch {
+      return TICKER_DEFAULTS;
+    }
+  })();
+
+  setCache('ticker-bar', promise);
+  return promise;
+};
+
 export const getHomeProductosSection = () => {
   const cached = getCached('home-productos-section');
   if (cached) return cached;

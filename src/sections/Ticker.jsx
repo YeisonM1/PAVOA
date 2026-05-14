@@ -1,16 +1,13 @@
-import { useEffect, useRef } from 'react';
-
-const items = [
-  'Nueva Colección 2026',
-  'Envíos a todo el país',
-  'Pagos contraentrega',
-  'Hecha para rendir',
-  'Diseñada para brillar',
-  'Colección limitada disponible',
-];
+import { useEffect, useRef, useState } from 'react';
+import { getTickerItems, TICKER_DEFAULTS } from '../services/productService';
 
 export default function Ticker() {
   const trackRef = useRef(null);
+  const [items, setItems] = useState(TICKER_DEFAULTS);
+
+  useEffect(() => {
+    getTickerItems().then(data => setItems(data)).catch(() => {});
+  }, []);
 
   useEffect(() => {
     const track = trackRef.current;
@@ -28,7 +25,7 @@ export default function Ticker() {
 
     const raf = requestAnimationFrame(step);
     return () => cancelAnimationFrame(raf);
-  }, []);
+  }, [items]);
 
   const repeated = [...items, ...items];
 
