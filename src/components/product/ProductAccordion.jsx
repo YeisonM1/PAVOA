@@ -1,6 +1,6 @@
 import { Plus, Minus } from 'lucide-react';
 
-export default function ProductAccordion({ detallesArray, cuidadosTexto, openAccordion, onToggle }) {
+export default function ProductAccordion({ detallesArray, cuidadosArray, openAccordion, onToggle }) {
   return (
     <div className="flex flex-col">
       <div className="border-b border-stone-200">
@@ -22,10 +22,15 @@ export default function ProductAccordion({ detallesArray, cuidadosTexto, openAcc
           {openAccordion === 'cuidados' ? <Minus size={14} className="text-stone-500" /> : <Plus size={14} className="text-stone-500" />}
         </button>
         <div className={`overflow-hidden transition-all duration-300 ease-in-out ${openAccordion === 'cuidados' ? 'max-h-[600px] pb-6' : 'max-h-0'}`}>
-          {cuidadosTexto
-            ? <p className="text-[11px] text-stone-600 tracking-[0.1em] leading-relaxed uppercase">{cuidadosTexto}</p>
-            : <p className="text-[11px] text-stone-400 tracking-[0.1em] uppercase">Sin indicaciones especiales.</p>
-          }
+          {cuidadosArray.length > 0 ? (
+            <ul className="list-disc pl-4 flex flex-col gap-2">
+              {cuidadosArray.map((c, i) => (
+                <li key={i} className="text-[11px] text-stone-600 tracking-[0.1em] uppercase">{c.trim()}</li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-[11px] text-stone-400 tracking-[0.1em] uppercase">Sin indicaciones especiales.</p>
+          )}
         </div>
       </div>
     </div>

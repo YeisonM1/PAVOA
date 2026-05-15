@@ -257,8 +257,16 @@ export default function ProductPage() {
     );
   }
 
-  const detallesArray = producto.detalles ? producto.detalles.split(';') : ['Diseño exclusivo PAVOA', 'Material de alta compresión'];
-  const cuidadosTexto = producto.cuidados || null;
+  const splitProductMetaList = (value) =>
+    String(value || '')
+      .split(/[;\n]/)
+      .map((item) => item.trim())
+      .filter(Boolean);
+
+  const detallesArray = producto.detalles
+    ? splitProductMetaList(producto.detalles)
+    : ['Diseño exclusivo PAVOA', 'Material de alta compresión'];
+  const cuidadosArray = splitProductMetaList(producto.cuidados);
 
   const productJsonLd = {
     '@context': 'https://schema.org', '@type': 'Product',
@@ -338,7 +346,7 @@ export default function ProductPage() {
             />
 
             <div className="w-full h-[1px] bg-stone-200 my-12" />
-            <ProductAccordion detallesArray={detallesArray} cuidadosTexto={cuidadosTexto} openAccordion={openAccordion} onToggle={toggleAccordion} />
+            <ProductAccordion detallesArray={detallesArray} cuidadosArray={cuidadosArray} openAccordion={openAccordion} onToggle={toggleAccordion} />
           </div>
         </div>
       </div>
