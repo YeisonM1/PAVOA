@@ -45,8 +45,8 @@ Leer siempre en este orden:
 
 ## Enfoque recomendado para proximos cambios
 
-1. Mejorar confianza de compra.
-2. Mejorar medicion del embudo.
+1. Validar que el embudo este registrando data real en Supabase.
+2. Dar visibilidad operativa a pagos y pedidos en `PAVOA Control`.
 3. Mejorar newsletter por backend.
 4. Mejorar escalabilidad del catalogo.
 

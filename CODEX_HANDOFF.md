@@ -144,10 +144,13 @@ Para agregar una nueva hay que consolidar dos existentes primero.
 
 ## Siguientes frentes pendientes
 
-1. Abandono de carrito — evento `beforeunload` + email de recuperacion via Resend.
-2. Reviews/valoraciones de producto — campo editable en Shopify, mostrar en PDP.
-3. Validar que el embudo este registrando data real en Supabase.
-4. Dar visibilidad operativa a pagos y pedidos en `PAVOA Control`.
+1. Validar que el embudo este registrando data real en Supabase.
+2. Dar visibilidad operativa a pagos y pedidos en `PAVOA Control`.
+
+## Descartados
+
+- Abandono de carrito con email de recuperacion — el tracking ya existe (checkout_abandon en funnel), el email se descarto.
+- Reviews/valoraciones en PDP — descartado.
 
 ## Archivos locales que no deben tocarse
 
