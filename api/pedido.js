@@ -160,6 +160,15 @@ const crearDraftOrder = async (token, { form, trustedItems, orderOwnerEmail }) =
       note_attributes: [
         { name: 'customer_email', value: orderOwnerEmail || '' },
         { name: 'payer_email', value: normalizeEmail(form.email) || '' },
+        { name: 'customer_name', value: form.nombre || '' },
+        { name: 'cart_items', value: JSON.stringify(trustedItems.map((item) => ({
+          nombre: item.title,
+          talla: item.talla || '',
+          color: item.color || '',
+          cantidad: item.quantity,
+          precio: `$${Number(item.unitPrice).toLocaleString('es-CO')}`,
+          imagen: item.image || '',
+        }))) },
       ],
     },
   };

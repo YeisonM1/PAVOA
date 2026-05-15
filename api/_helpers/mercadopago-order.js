@@ -42,6 +42,12 @@ const completarDraftOrder = async (draftOrderId) => {
   });
   const { draft_order: draft } = await resDraft.json();
   const emailCliente = draft?.note_attributes?.find((a) => a.name === 'customer_email')?.value || null;
+  const customerName = draft?.note_attributes?.find((a) => a.name === 'customer_name')?.value || null;
+  let cartItems = null;
+  try {
+    const raw = draft?.note_attributes?.find((a) => a.name === 'cart_items')?.value;
+    if (raw) cartItems = JSON.parse(raw);
+  } catch {}
 
   const res = await fetch(
     `${base}/draft_orders/${draftOrderId}/complete.json?payment_pending=false`,
@@ -56,7 +62,7 @@ const completarDraftOrder = async (draftOrderId) => {
   }
 
   const data = await res.json();
-  return { ...data, _emailCliente: emailCliente };
+  return { ...data, _emailCliente: emailCliente, _customerName: customerName, _cartItems: cartItems };
 };
 
 const enviarEmailConfirmacion = async (order, paymentId, totalReal, descuentoAplicado = false) => {
@@ -149,7 +155,7 @@ const processMercadoPagoPaymentInternal = async (paymentId) => {
     }
 
     const emailMP = emailRef || pagoInfo.payer?.email || null;
-    const primerNombre = pagoInfo.payer?.first_name || 'Cliente';
+    let primerNombre = pagoInfo.payer?.first_name || 'Cliente';
     const itemsMP = (pagoInfo.additional_info?.items || []).map((i) => ({
       nombre: i.title,
       cantidad: Number(i.quantity),
@@ -164,11 +170,14 @@ const processMercadoPagoPaymentInternal = async (paymentId) => {
 
     let order = null;
     let emailCliente = emailMP;
+    let cartItemsFromDraft = null;
     let shouldPersistOrder = true;
     try {
       const shopifyResponse = await completarDraftOrder(draftOrderId);
       order = shopifyResponse.draft_order || shopifyResponse.order;
       emailCliente = shopifyResponse._emailCliente || emailMP;
+      cartItemsFromDraft = shopifyResponse._cartItems || null;
+      if (shopifyResponse._customerName) primerNombre = shopifyResponse._customerName.trim().split(/\s+/)[0] || primerNombre;
       await eliminarDraftOrder(draftOrderId);
     } catch (shopifyErr) {
       if (isDraftAlreadyProcessingError(shopifyErr.message)) {
@@ -183,15 +192,21 @@ const processMercadoPagoPaymentInternal = async (paymentId) => {
 
     let insertedOrder = false;
     let itemsFinales = order?.line_items
-      ? order.line_items.map((i) => ({
-          nombre: i.title,
-          cantidad: i.quantity,
-          precio: i.price,
-          product_id: i.product_id || null,
-          variant_id: i.variant_id || null,
-          variant_title: i.variant_title || null,
-          sku: i.sku || null,
-        }))
+      ? order.line_items.map((i, idx) => {
+          const cart = cartItemsFromDraft?.[idx] || null;
+          return {
+            nombre: i.title,
+            cantidad: i.quantity,
+            precio: i.price,
+            product_id: i.product_id || null,
+            variant_id: i.variant_id || null,
+            variant_title: i.variant_title || null,
+            sku: i.sku || null,
+            talla: cart?.talla || i.variant_title || null,
+            color: cart?.color || null,
+            imagen: cart?.imagen || null,
+          };
+        })
       : itemsMP;
     if (emailCliente) {
       const addr = order?.shipping_address;
