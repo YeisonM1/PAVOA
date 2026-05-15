@@ -107,6 +107,10 @@ export default function ProductPage() {
     return variantes.find(v => v.color === colorSeleccionado && v.talla === tallaSeleccionada) || null;
   }, [variantes, colorSeleccionado, tallaSeleccionada]);
 
+  const precioTextoActual = varianteSeleccionada?.precio || producto?.precio || '';
+  const compareAtPrecioTextoActual =
+    varianteSeleccionada?.compareAtPrecio || producto?.compareAtPrecio || '';
+
   const esTallaUnica   = tallasDisponibles.length === 1 && tallasDisponibles[0]?.talla === 'ÚNICA';
   const tieneVariantes = variantes.length > 0;
   const puedeSeleccionarCantidad = tieneVariantes ? (colorSeleccionado && (esTallaUnica || tallaSeleccionada)) : true;
@@ -295,14 +299,29 @@ export default function ProductPage() {
     <div className="min-h-screen bg-white">
       <SEO title={producto.nombre} description={producto.descripcion || `Compra ${producto.nombre} en PAVOA. Alta calidad deportiva con envío a toda Colombia.`} url={`/producto/${id}`} image={producto.imagen1} type="product" jsonLd={[productJsonLd, breadcrumbJsonLd]} />
 
-      {showStickyBar && <StickyAddBar producto={producto} tallaSeleccionada={tallaSeleccionada} stockActual={stockActual} adding={adding} onAddToCart={handleAddToCart} />}
+      {showStickyBar && (
+        <StickyAddBar
+          producto={producto}
+          tallaSeleccionada={tallaSeleccionada}
+          stockActual={stockActual}
+          adding={adding}
+          onAddToCart={handleAddToCart}
+          precioTexto={precioTextoActual}
+          compareAtPrecioTexto={compareAtPrecioTextoActual}
+        />
+      )}
 
       <div className="flex flex-col md:flex-row max-w-[1600px] mx-auto pt-[115px] md:pt-[120px]">
         <ProductGallery imagenes={imagenes} selectedImage={selectedImage} onSelectImage={handleSelectImage} onOpenLightbox={() => setIsLightboxOpen(true)} producto={producto} isTransitioning={isTransitioning} />
 
         <div className="w-full md:w-2/5 px-6 py-8 md:px-10 md:py-6 xl:px-16 xl:py-16 relative">
           <div className="md:sticky md:top-[120px] xl:top-[160px]">
-            <ProductInfo producto={producto} id={id} />
+            <ProductInfo
+              producto={producto}
+              id={id}
+              precioTexto={precioTextoActual}
+              compareAtPrecioTexto={compareAtPrecioTextoActual}
+            />
 
             <ProductVariantSelector
               variantes={variantes} coloresUnicos={coloresUnicos} tallasDisponibles={tallasDisponibles}

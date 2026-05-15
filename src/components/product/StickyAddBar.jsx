@@ -1,6 +1,14 @@
 import { thumbImage } from '../../utils/imageUrl';
 
-export default function StickyAddBar({ producto, tallaSeleccionada, stockActual, adding, onAddToCart }) {
+export default function StickyAddBar({
+  producto,
+  tallaSeleccionada,
+  stockActual,
+  adding,
+  onAddToCart,
+  precioTexto = producto.precio,
+  compareAtPrecioTexto = producto.compareAtPrecio,
+}) {
   return (
     <div className="fixed top-[64px] md:top-[80px] left-0 right-0 z-40 bg-white border-b border-stone-200 shadow-sm">
       <div className="max-w-[1600px] mx-auto px-5 py-3 flex items-center gap-4">
@@ -9,7 +17,12 @@ export default function StickyAddBar({ producto, tallaSeleccionada, stockActual,
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-[10px] font-bold tracking-[0.15em] text-stone-900 uppercase truncate">{producto.nombre}</p>
-          <p className="text-[11px] text-stone-500">{producto.precio}</p>
+          <div className="flex items-center gap-2">
+            {compareAtPrecioTexto ? (
+              <p className="text-[10px] text-stone-400 line-through">{compareAtPrecioTexto}</p>
+            ) : null}
+            <p className="text-[11px] text-stone-500">{precioTexto}</p>
+          </div>
         </div>
         {tallaSeleccionada && (
           <p className="text-[10px] tracking-[0.1em] text-stone-500 uppercase hidden sm:block">Talla: {tallaSeleccionada}</p>

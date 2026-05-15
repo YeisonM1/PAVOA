@@ -329,21 +329,39 @@ export const shopifyFetch = async (query, variables = {}) => {
   return data;
 };
 
+const formatPrice = (amount) => {
+  const numericAmount = Number(amount);
+  if (!Number.isFinite(numericAmount)) return '';
+  return `$${numericAmount.toLocaleString('es-CO')}`;
+};
+
 // Convierte producto Shopify -> estructura PAVOA
 const mapProducto = (node) => {
   const variantes = node.variants.edges.map(({ node: v }) => {
     const hexRaw = v.metafield?.value || '#888888';
     const hex = hexRaw.startsWith('#') ? hexRaw : `#${hexRaw}`;
+    const precioNumerico = Number(v.price?.amount ?? node.priceRange.minVariantPrice.amount ?? 0);
+    const compareAtPrecioNumericoRaw = Number(v.compareAtPrice?.amount ?? 0);
+    const compareAtPrecioNumerico =
+      compareAtPrecioNumericoRaw > precioNumerico ? compareAtPrecioNumericoRaw : null;
     return {
       color:     v.selectedOptions.find(o => o.name === 'Color')?.value || '',
       hex,
       talla:     v.selectedOptions.find(o => o.name === 'Talla')?.value || 'ÚNICA',
       stock:     v.quantityAvailable ?? 0,
       variantId: v.id,
+      precio: formatPrice(precioNumerico),
+      precioNumerico,
+      compareAtPrecio: compareAtPrecioNumerico ? formatPrice(compareAtPrecioNumerico) : '',
+      compareAtPrecioNumerico,
     };
   });
 
   const imgs = node.images.edges.map(e => e.node.url);
+  const precioNumerico = Number(node.priceRange.minVariantPrice.amount ?? 0);
+  const compareAtPrecioNumericoRaw = Number(node.compareAtPriceRange?.minVariantPrice?.amount ?? 0);
+  const compareAtPrecioNumerico =
+    compareAtPrecioNumericoRaw > precioNumerico ? compareAtPrecioNumericoRaw : null;
 
   return {
     id:          node.handle,
@@ -351,8 +369,10 @@ const mapProducto = (node) => {
     nombre:      node.title,
     descripcion: node.description,
     descripcionHtml: node.descriptionHtml || '',
-    precio:      `$${Number(node.priceRange.minVariantPrice.amount).toLocaleString('es-CO')}`,
-    precioNumerico: Number(node.priceRange.minVariantPrice.amount),
+    precio:      formatPrice(precioNumerico),
+    precioNumerico,
+    compareAtPrecio: compareAtPrecioNumerico ? formatPrice(compareAtPrecioNumerico) : '',
+    compareAtPrecioNumerico,
     imagen1:     imgs[0] || '',
     imagen2:     imgs[1] || '',
     imagen3:     imgs[2] || '',
@@ -370,6 +390,7 @@ const mapProducto = (node) => {
 const PRODUCT_FIELDS = `
   id handle title description descriptionHtml productType tags
   priceRange { minVariantPrice { amount } }
+  compareAtPriceRange { minVariantPrice { amount } }
   images(first: 10) { edges { node { url } } }
   detallesField: metafield(namespace: "pavoa", key: "detalles") { value }
   cuidadosField: metafield(namespace: "pavoa", key: "cuidados") { value }
@@ -377,6 +398,8 @@ const PRODUCT_FIELDS = `
     edges {
       node {
         id quantityAvailable
+        price { amount }
+        compareAtPrice { amount }
         selectedOptions { name value }
         metafield(namespace: "custom", key: "hex_color") { value }
       }
@@ -388,11 +411,14 @@ const PRODUCT_FIELDS = `
 const PRODUCT_FIELDS_LIGHT = `
   id handle title description descriptionHtml productType tags
   priceRange { minVariantPrice { amount } }
+  compareAtPriceRange { minVariantPrice { amount } }
   images(first: 2) { edges { node { url } } }
   variants(first: 20) {
     edges {
       node {
         id quantityAvailable
+        price { amount }
+        compareAtPrice { amount }
         selectedOptions { name value }
         metafield(namespace: "custom", key: "hex_color") { value }
       }

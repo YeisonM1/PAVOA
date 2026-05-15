@@ -205,9 +205,16 @@ function ProductCard({ producto }) {
           </div>
 
           <div className="h-[24px] overflow-hidden">
-            <p className="text-[14px] md:text-[15px] font-semibold tracking-[0.06em] text-stone-700 transform translate-y-0 opacity-100 md:translate-y-full md:opacity-0 md:group-hover:translate-y-0 md:group-hover:opacity-100 md:group-hover:text-stone-900 transition-all duration-500 ease-out">
-              {producto.precio}
-            </p>
+            <div className="flex items-center justify-center gap-2 transform translate-y-0 opacity-100 md:translate-y-full md:opacity-0 md:group-hover:translate-y-0 md:group-hover:opacity-100 transition-all duration-500 ease-out">
+              {producto.compareAtPrecio ? (
+                <p className="text-[11px] md:text-[12px] font-medium tracking-[0.04em] text-stone-400 line-through">
+                  {producto.compareAtPrecio}
+                </p>
+              ) : null}
+              <p className="text-[14px] md:text-[15px] font-semibold tracking-[0.06em] text-stone-700 md:group-hover:text-stone-900">
+                {producto.precio}
+              </p>
+            </div>
           </div>
         </div>
       </div>

@@ -169,7 +169,12 @@ export default function SearchOverlay({ isSearchOpen, setIsSearchOpen }) {
                       <h4 className="text-[11px] font-bold tracking-[0.15em] text-stone-900 uppercase mb-1.5 group-hover:text-stone-500 transition-colors truncate">
                         {producto.nombre}
                       </h4>
-                      <p className="text-[12px] text-stone-500">{producto.precio}</p>
+                      <div className="flex items-center gap-2">
+                        {producto.compareAtPrecio ? (
+                          <p className="text-[11px] text-stone-400 line-through">{producto.compareAtPrecio}</p>
+                        ) : null}
+                        <p className="text-[12px] text-stone-500">{producto.precio}</p>
+                      </div>
                     </div>
 
                     {/* Flecha */}

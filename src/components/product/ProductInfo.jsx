@@ -28,7 +28,11 @@ const parseDescriptionHtmlParagraphs = (html) => {
   }
 };
 
-export default function ProductInfo({ producto }) {
+export default function ProductInfo({
+  producto,
+  precioTexto = producto.precio,
+  compareAtPrecioTexto = producto.compareAtPrecio,
+}) {
   const { isWished, toggle } = useWishlist();
   const descripcionHtmlParrafos = parseDescriptionHtmlParagraphs(producto.descripcionHtml);
   const descripcionRaw = normalizeDescription(producto.descripcion);
@@ -81,9 +85,16 @@ export default function ProductInfo({ producto }) {
         {producto.nombre}
       </h1>
       <div className="flex items-center justify-between mb-6 md:mb-10">
-        <p className="text-sm md:text-base font-medium text-stone-600 tracking-[0.1em]">
-          {producto.precio}
-        </p>
+        <div className="flex items-end gap-3">
+          {compareAtPrecioTexto ? (
+            <p className="text-xs md:text-sm font-medium text-stone-400 tracking-[0.08em] line-through">
+              {compareAtPrecioTexto}
+            </p>
+          ) : null}
+          <p className="text-sm md:text-base font-medium text-stone-600 tracking-[0.1em]">
+            {precioTexto}
+          </p>
+        </div>
         <button
           onClick={() => toggle(producto.id)}
           className="text-stone-300 hover:text-stone-900 transition-colors"

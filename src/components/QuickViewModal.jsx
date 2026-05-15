@@ -82,6 +82,10 @@ export default function QuickViewModal({ productoId, onClose }) {
     return variantes.find(v => v.color === colorSeleccionado && v.talla === tallaSeleccionada) || null;
   }, [variantes, colorSeleccionado, tallaSeleccionada]);
 
+  const precioTextoActual = varianteSeleccionada?.precio || producto?.precio || '';
+  const compareAtPrecioTextoActual =
+    varianteSeleccionada?.compareAtPrecio || producto?.compareAtPrecio || '';
+
   const handleAddToCart = () => {
     if (!colorSeleccionado || (!esTallaUnica && !tallaSeleccionada)) return;
     setAdding(true);
@@ -155,7 +159,12 @@ export default function QuickViewModal({ productoId, onClose }) {
               <div className="flex items-start justify-between gap-4 pr-6">
                 <div>
                   <h2 className="text-lg font-light text-stone-900 tracking-[0.15em] uppercase leading-tight">{producto.nombre}</h2>
-                  <p className="text-sm font-semibold text-stone-600 tracking-[0.1em] mt-2">{producto.precio}</p>
+                  <div className="flex items-center gap-2 mt-2">
+                    {compareAtPrecioTextoActual ? (
+                      <p className="text-xs font-medium text-stone-400 tracking-[0.06em] line-through">{compareAtPrecioTextoActual}</p>
+                    ) : null}
+                    <p className="text-sm font-semibold text-stone-600 tracking-[0.1em]">{precioTextoActual}</p>
+                  </div>
                 </div>
                 <button onClick={() => toggle(producto.id)} className="flex-shrink-0 mt-1 text-stone-300 hover:text-stone-900 transition-colors" aria-label="Guardar en favoritos">
                   <HeartIcon filled={isWished(producto.id)} />

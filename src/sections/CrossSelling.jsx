@@ -48,7 +48,12 @@ export default function CrossSelling({ currentProductId }) {
               </div>
               <div className="text-center mt-4">
                 <h3 className="text-[10px] font-bold tracking-[0.15em] uppercase text-stone-900">{producto.nombre}</h3>
-                <p className="text-[12px] font-medium text-stone-500 mt-1">{producto.precio}</p>
+                <div className="mt-1 flex items-center justify-center gap-2">
+                  {producto.compareAtPrecio ? (
+                    <p className="text-[11px] font-medium text-stone-400 line-through">{producto.compareAtPrecio}</p>
+                  ) : null}
+                  <p className="text-[12px] font-medium text-stone-500">{producto.precio}</p>
+                </div>
               </div>
             </Link>
           ))}
