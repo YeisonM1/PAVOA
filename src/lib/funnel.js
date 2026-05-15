@@ -30,6 +30,7 @@ export const trackFunnelEvent = (eventType, payload = {}) => {
   const cliente = getCliente();
   const body = {
     type: 'funnel-event',
+    eventKey: normalizeOptional(payload.eventKey),
     eventType,
     source: 'frontend',
     sessionId: getSessionId(),

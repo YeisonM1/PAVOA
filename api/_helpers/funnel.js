@@ -141,6 +141,7 @@ const chooseStatus = (journey, eventType) => {
   if (eventType === 'payment_approved' || journey.completed_at) return 'purchase_completed';
   if (eventType === 'payment_rejected') return 'payment_rejected';
   if (eventType === 'payment_pending') return 'payment_pending';
+  if (eventType === 'checkout_abandon') return 'checkout_abandoned';
   if (JOURNEY_ERROR_EVENTS.has(eventType)) return 'checkout_error';
   if (journey.payment_click_at || journey.begin_checkout_at || journey.order_id || journey.payment_id) {
     return 'in_checkout';

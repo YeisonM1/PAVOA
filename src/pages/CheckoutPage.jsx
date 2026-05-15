@@ -67,6 +67,27 @@ const getJsonHeaders = () => {
   return headers;
 };
 
+const readCheckoutSession = () => {
+  try {
+    const raw = sessionStorage.getItem(CHECKOUT_SESSION_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+};
+
+const writeCheckoutSession = (session) => {
+  try {
+    sessionStorage.setItem(CHECKOUT_SESSION_KEY, JSON.stringify(session));
+  } catch {}
+};
+
+const clearCheckoutSession = () => {
+  try {
+    sessionStorage.removeItem(CHECKOUT_SESSION_KEY);
+  } catch {}
+};
+
 const limpiarDraftPendiente = async (draftOrderId) => {
   const id = String(draftOrderId || '').trim();
   if (!id) return false;
@@ -114,6 +135,8 @@ const CAMPO = ({ label, name, value, onChange, onBlur, placeholder, type = 'text
 export default function CheckoutPage() {
   const { cartItems, cartTotal, cartCount } = useContext(CartContext);
   const [searchParams] = useSearchParams();
+  const isRedirectingToPaymentRef = React.useRef(false);
+  const abandonTrackingReadyRef = React.useRef(false);
 
   useEffect(() => {
     if (cartItems.length > 0) {
@@ -181,11 +204,75 @@ export default function CheckoutPage() {
   const paymentIdFromMP = (searchParams.get('payment_id') || '').trim();
   const currentCartHash = buildCheckoutCartHash(cartItems);
 
+  const trackCheckoutAbandon = (reason, extraMeta = {}) => {
+    const isReturningFromMercadoPago = Boolean(statusFromMP || paymentIdFromMP);
+    if (isReturningFromMercadoPago || isRedirectingToPaymentRef.current) return false;
+
+    const checkoutSession = readCheckoutSession();
+    const draftOrderId = String(checkoutSession?.draftOrderId || '').trim() || null;
+    const sessionCartHash = String(checkoutSession?.cartHash || '').trim() || currentCartHash;
+    const abandonKey = `checkout_abandon:${funnelSessionId}:${draftOrderId || sessionCartHash}:${checkoutSession?.ts || 'no-ts'}`;
+
+    if (checkoutSession?.abandonEventKey && checkoutSession.abandonEventKey === abandonKey) {
+      return false;
+    }
+
+    if (checkoutSession) {
+      writeCheckoutSession({
+        ...checkoutSession,
+        abandonEventKey: abandonKey,
+        abandonReason: reason,
+        abandonTrackedAt: Date.now(),
+      });
+    }
+
+    const singleItem = getSingleCheckoutItem(cartItems);
+    trackFunnelEvent('checkout_abandon', {
+      eventKey: abandonKey,
+      productId: singleItem?.productId || null,
+      productName: singleItem?.productName || null,
+      variantId: singleItem?.variantId || null,
+      color: singleItem?.color || null,
+      size: singleItem?.size || null,
+      orderId: draftOrderId,
+      amount: cartTotal,
+      meta: {
+        reason,
+        line_count: cartItems.length,
+        item_count: cartItems.reduce((total, item) => total + Number(item.cantidad || 0), 0),
+        line_items: buildCheckoutLineItems(cartItems),
+        ...extraMeta,
+      },
+    });
+
+    return true;
+  };
+
   useEffect(() => {
     try {
       sessionStorage.setItem(CHECKOUT_FORM_KEY, JSON.stringify(form));
     } catch {}
   }, [form]);
+
+  useEffect(() => {
+    const activationTimer = window.setTimeout(() => {
+      abandonTrackingReadyRef.current = true;
+    }, 0);
+
+    const handleBeforeUnload = () => {
+      if (!abandonTrackingReadyRef.current) return;
+      trackCheckoutAbandon('page_exit');
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    return () => {
+      window.clearTimeout(activationTimer);
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      if (!abandonTrackingReadyRef.current) return;
+      trackCheckoutAbandon('route_exit');
+    };
+  }, []);
 
   useEffect(() => {
     if (!estaAutenticado()) return;
@@ -209,10 +296,8 @@ export default function CheckoutPage() {
     if (isReturningFromMercadoPago) return;
 
     try {
-      const raw = sessionStorage.getItem(CHECKOUT_SESSION_KEY);
-      if (!raw) return;
-
-      const checkoutSession = JSON.parse(raw);
+      const checkoutSession = readCheckoutSession();
+      if (!checkoutSession) return;
       const storedDraftOrderId = String(checkoutSession?.draftOrderId || '').trim();
       const storedCartHash = String(checkoutSession?.cartHash || '').trim();
       const storedTs = Number(checkoutSession?.ts || 0);
@@ -221,11 +306,18 @@ export default function CheckoutPage() {
 
       if (!isExpired && !cartChanged) return;
 
+      if (!checkoutSession?.abandonTrackedAt) {
+        trackCheckoutAbandon(isExpired ? 'session_expired' : 'cart_changed', {
+          stored_cart_hash: storedCartHash || null,
+          current_cart_hash: currentCartHash || null,
+        });
+      }
+
       if (storedDraftOrderId) {
         limpiarDraftPendiente(storedDraftOrderId);
       }
 
-      sessionStorage.removeItem(CHECKOUT_SESSION_KEY);
+      clearCheckoutSession();
     } catch {}
   }, [currentCartHash, paymentIdFromMP, statusFromMP]);
 
@@ -250,14 +342,14 @@ export default function CheckoutPage() {
     });
 
     try {
-      const checkoutSession = JSON.parse(sessionStorage.getItem(CHECKOUT_SESSION_KEY) || 'null');
+      const checkoutSession = readCheckoutSession();
       const draftOrderId = checkoutSession?.draftOrderId || '';
       if (draftOrderId) {
         limpiarDraftPendiente(draftOrderId);
       }
     } catch {}
 
-    sessionStorage.removeItem(CHECKOUT_SESSION_KEY);
+    clearCheckoutSession();
 
     const rejectionMessages = {
       cc_rejected_insufficient_amount: 'Tu banco rechazo el pago por fondos o cupo insuficiente.',
@@ -399,7 +491,7 @@ export default function CheckoutPage() {
     const minuteBucket    = Math.floor(Date.now() / 60000);
     const idempotencyKey  = `${form.email || 'anon'}-${cartHash}-${minuteBucket}`;
 
-    sessionStorage.removeItem(CHECKOUT_SESSION_KEY);
+    clearCheckoutSession();
 
     setCargandoPago(true);
 
@@ -502,14 +594,15 @@ export default function CheckoutPage() {
         email:  form.email,
         nombre: form.nombre,
       }));
-      sessionStorage.setItem(CHECKOUT_SESSION_KEY, JSON.stringify({
+      writeCheckoutSession({
         initPoint:    dataPref.init_point,
         draftOrderId: draftOrderIdCreado,
         cartHash,
         ts:           Date.now(),
-      }));
+      });
 
       // Paso 5 - Redirigir a MercadoPago
+      isRedirectingToPaymentRef.current = true;
       window.location.href = dataPref.init_point;
 
     } catch (err) {

@@ -5,6 +5,18 @@ import { verificarStock } from '../services/productService';
 import { useNavigate, Link } from 'react-router-dom';
 import { thumbImage } from '../utils/imageUrl';
 import { getRecentlyViewed } from '../hooks/useRecentlyViewed';
+import { trackFunnelEvent } from '../lib/funnel';
+
+const buildCartLineItems = (cartItems = []) =>
+  cartItems.map((item) => ({
+    product_id: item?.producto?.id || null,
+    product_name: item?.producto?.nombre || null,
+    variant_id: item?.producto?.selectedVariantId || null,
+    color: item?.producto?.colorSeleccionado || null,
+    size: item?.talla || null,
+    quantity: Number(item?.cantidad || 0),
+    amount: Number(item?.producto?.precioNumerico || 0),
+  }));
 
 export default function CartDrawer({ cartOpen, setCartOpen }) {
   const navigate = useNavigate();
@@ -19,6 +31,15 @@ export default function CartDrawer({ cartOpen, setCartOpen }) {
     if (cartOpen) {
       setRecentlyViewed(getRecentlyViewed().slice(0, 3));
       setStockErrores([]);
+      trackFunnelEvent('view_cart', {
+        amount: cartTotal,
+        meta: {
+          line_count: cartItems.length,
+          item_count: cartItems.reduce((total, item) => total + Number(item.cantidad || 0), 0),
+          line_items: buildCartLineItems(cartItems),
+          source: 'cart_drawer',
+        },
+      });
     }
   }, [cartOpen]);
 
@@ -127,7 +148,7 @@ export default function CartDrawer({ cartOpen, setCartOpen }) {
                         {item.producto.nombre}
                       </h4>
                       <button 
-                        onClick={() => removeFromCart(item.producto.id, item.talla)}
+                        onClick={() => removeFromCart(item.producto.id, item.talla, item.producto.selectedVariantId || null)}
                         className="text-stone-400 hover:text-stone-900 transition-colors"
                         aria-label={`Eliminar ${item.producto.nombre} del carrito`}
                       >
@@ -150,7 +171,7 @@ export default function CartDrawer({ cartOpen, setCartOpen }) {
                     <div className="flex justify-between items-end mt-auto">
                       <div className="flex items-center border border-stone-200/80">
                         <button
-                          onClick={() => updateQuantity(item.producto.id, item.talla, -1)}
+                          onClick={() => updateQuantity(item.producto.id, item.talla, -1, item.producto.selectedVariantId || null)}
                           className="w-11 h-11 flex items-center justify-center text-stone-500 hover:text-stone-900 hover:bg-stone-50 transition-colors"
                           aria-label={`Reducir cantidad de ${item.producto.nombre}`}
                         >-</button>
@@ -161,7 +182,7 @@ export default function CartDrawer({ cartOpen, setCartOpen }) {
                           {item.cantidad}
                         </span>
                         <button
-                          onClick={() => updateQuantity(item.producto.id, item.talla, 1)}
+                          onClick={() => updateQuantity(item.producto.id, item.talla, 1, item.producto.selectedVariantId || null)}
                           className="w-11 h-11 flex items-center justify-center text-stone-500 hover:text-stone-900 hover:bg-stone-50 transition-colors"
                           aria-label={`Aumentar cantidad de ${item.producto.nombre}`}
                         >+</button>

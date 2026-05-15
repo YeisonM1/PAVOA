@@ -4,6 +4,7 @@ import { productImage } from '../utils/imageUrl';
 import { useWishlist } from '../context/WishlistContext';
 import { useCart } from '../hooks/useCart';
 import { getProductoById } from '../services/productService';
+import { trackFunnelEvent } from '../lib/funnel';
 
 const HeartIcon = ({ filled }) => (
   <svg width="15" height="15" viewBox="0 0 24 24" fill={filled ? '#0B0B0B' : 'none'} stroke={filled ? '#0B0B0B' : 'currentColor'} strokeWidth="1.5">
@@ -51,7 +52,19 @@ function ProductCard({ producto }) {
   return (
     <Link
       to={`/producto/${producto.id}`}
-      onClick={() => window.scrollTo(0, 0)}
+      onClick={() => {
+        trackFunnelEvent('product_click', {
+          productId: producto.id,
+          productName: producto.nombre,
+          amount: producto.precioNumerico || 0,
+          meta: {
+            category: producto.categoria || '',
+            tag: producto.tag || '',
+            source: 'product_card',
+          },
+        });
+        window.scrollTo(0, 0);
+      }}
       onMouseEnter={() => getProductoById(producto.id)}
       className="group cursor-pointer flex flex-col gap-4 w-full flex-shrink-0 snap-center relative block overflow-hidden isolate"
     >

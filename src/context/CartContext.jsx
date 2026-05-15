@@ -13,6 +13,14 @@ const sameCartItem = (item, producto, talla) => {
   return item.producto.id === producto.id && item.talla === talla;
 };
 
+const getCartItemAmount = (producto, cantidad = 1) =>
+  (producto?.precioNumerico || parsePrice(producto?.precio) || 0) * cantidad;
+
+const buildCartEventMeta = (item, extra = {}) => ({
+  quantity: Number(item?.cantidad || 0),
+  ...extra,
+});
+
 export function CartProvider({ children }) {
   const [cartItems, setCartItems]             = useLocalStorage('pavoa-cart', []);
   const [isCartAnimating, setIsCartAnimating] = useState(false);
@@ -39,10 +47,8 @@ export function CartProvider({ children }) {
       variantId: producto.selectedVariantId || null,
       color: producto.colorSeleccionado || null,
       size: talla,
-      amount: (producto.precioNumerico || parsePrice(producto?.precio) || 0) * cantidad,
-      meta: {
-        quantity: cantidad,
-      },
+      amount: getCartItemAmount(producto, cantidad),
+      meta: buildCartEventMeta({ cantidad }, { quantity_added: cantidad }),
     });
     setIsCartAnimating(true);
     setToastKey(k => k + 1);
@@ -51,24 +57,87 @@ export function CartProvider({ children }) {
     setTimeout(() => setShowToast(null), 3000);
   }, [setCartItems]);
 
-  const removeFromCart = useCallback((productoId, talla) => {
-    setCartItems(prev =>
-      prev.filter(item => !(item.producto.id === productoId && item.talla === talla))
-    );
-  }, [setCartItems]);
+  const removeFromCart = useCallback((productoId, talla, variantId = null) => {
+    const itemToRemove = cartItems.find((item) => {
+      const sameVariant = variantId && item.producto?.selectedVariantId
+        ? item.producto.selectedVariantId === variantId
+        : true;
+      return item.producto.id === productoId && item.talla === talla && sameVariant;
+    });
 
-  const updateQuantity = useCallback((productoId, talla, delta) => {
+    if (itemToRemove) {
+      trackFunnelEvent('remove_from_cart', {
+        productId: itemToRemove.producto.id,
+        productName: itemToRemove.producto.nombre,
+        variantId: itemToRemove.producto.selectedVariantId || null,
+        color: itemToRemove.producto.colorSeleccionado || null,
+        size: itemToRemove.talla,
+        amount: getCartItemAmount(itemToRemove.producto, itemToRemove.cantidad),
+        meta: buildCartEventMeta(itemToRemove, { action: 'remove' }),
+      });
+    }
+
+    setCartItems(prev =>
+      prev.filter((item) => {
+        const sameVariant = variantId && item.producto?.selectedVariantId
+          ? item.producto.selectedVariantId === variantId
+          : true;
+        return !(item.producto.id === productoId && item.talla === talla && sameVariant);
+      })
+    );
+  }, [cartItems, setCartItems]);
+
+  const updateQuantity = useCallback((productoId, talla, delta, variantId = null) => {
+    const itemToUpdate = cartItems.find((item) => {
+      const sameVariant = variantId && item.producto?.selectedVariantId
+        ? item.producto.selectedVariantId === variantId
+        : true;
+      return item.producto.id === productoId && item.talla === talla && sameVariant;
+    });
+
+    if (!itemToUpdate || !delta) return;
+
+    const nextQuantity = itemToUpdate.cantidad + delta;
+    if (nextQuantity <= 0) {
+      trackFunnelEvent('remove_from_cart', {
+        productId: itemToUpdate.producto.id,
+        productName: itemToUpdate.producto.nombre,
+        variantId: itemToUpdate.producto.selectedVariantId || null,
+        color: itemToUpdate.producto.colorSeleccionado || null,
+        size: itemToUpdate.talla,
+        amount: getCartItemAmount(itemToUpdate.producto, itemToUpdate.cantidad),
+        meta: buildCartEventMeta(itemToUpdate, { action: 'quantity_to_zero', quantity_delta: delta }),
+      });
+    } else {
+      trackFunnelEvent('update_cart_quantity', {
+        productId: itemToUpdate.producto.id,
+        productName: itemToUpdate.producto.nombre,
+        variantId: itemToUpdate.producto.selectedVariantId || null,
+        color: itemToUpdate.producto.colorSeleccionado || null,
+        size: itemToUpdate.talla,
+        amount: getCartItemAmount(itemToUpdate.producto, nextQuantity),
+        meta: buildCartEventMeta(itemToUpdate, {
+          previous_quantity: itemToUpdate.cantidad,
+          quantity: nextQuantity,
+          quantity_delta: delta,
+        }),
+      });
+    }
+
     setCartItems(prev =>
       prev
         .map(item => {
-          if (item.producto.id === productoId && item.talla === talla) {
+          const sameVariant = variantId && item.producto?.selectedVariantId
+            ? item.producto.selectedVariantId === variantId
+            : true;
+          if (item.producto.id === productoId && item.talla === talla && sameVariant) {
             return { ...item, cantidad: item.cantidad + delta };
           }
           return item;
         })
         .filter(item => item.cantidad > 0)
     );
-  }, [setCartItems]);
+  }, [cartItems, setCartItems]);
 
   const cartCount = useMemo(
     () => cartItems.reduce((total, item) => total + item.cantidad, 0),
