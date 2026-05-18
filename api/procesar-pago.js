@@ -1,19 +1,14 @@
 import mercadopago from 'mercadopago';
-import { createClient } from '@supabase/supabase-js';
 import { getShopifyToken, eliminarDraftOrder } from './_helpers/shopify-token.js';
 import { processMercadoPagoPayment } from './_helpers/mercadopago-order.js';
 import { validateCartWithShopify } from './_helpers/cart-validation.js';
 import { verifyToken } from './_helpers/auth.js';
 import { trackFunnelEvent } from './_helpers/funnel.js';
+import { supabase, getSupabaseMode } from './_helpers/supabase.js';
 
 const client = new mercadopago.MercadoPagoConfig({
   accessToken: process.env.MP_ACCESS_TOKEN,
 });
-
-const supabase = createClient(
-  process.env.VITE_SUPABASE_URL,
-  process.env.VITE_SUPABASE_ANON_KEY
-);
 
 const APP_URL = process.env.VITE_APP_URL || 'https://pavoa.vercel.app';
 const SHOPIFY_DOMAIN = process.env.VITE_SHOPIFY_DOMAIN;
@@ -650,6 +645,10 @@ export default async function handler(req, res) {
         },
       });
     } catch (error) {
+      console.error(
+        `[PAVOA] mp-summary fallo consultando pedidos [mode=${getSupabaseMode()}]:`,
+        error?.message || error,
+      );
       return res.status(500).json({ error: error?.message || 'No se pudo resumir el pago.' });
     }
   }

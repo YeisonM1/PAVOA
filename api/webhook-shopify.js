@@ -1,12 +1,11 @@
 import crypto from 'crypto';
-import { createClient } from '@supabase/supabase-js';
 import { emailDespacho, emailEntregado } from './_helpers/email-templates.js';
 import { getShopifyToken } from './_helpers/shopify-token.js';
 import { sendTransactionalEmail } from './_helpers/mail.js';
+import { supabase, getSupabaseMode } from './_helpers/supabase.js';
 
 const SHOPIFY_DOMAIN = process.env.VITE_SHOPIFY_DOMAIN;
 const SHOPIFY_SECRET = process.env.SHOPIFY_WEBHOOK_SECRET;
-const supabase = createClient(process.env.VITE_SUPABASE_URL, process.env.VITE_SUPABASE_ANON_KEY);
 
 const TRANSPORTADORAS = [
   { nombre: 'Servientrega',    dominios: ['servientrega.com.co', 'servientrega.com'],     claves: ['servientrega']                       },
@@ -184,7 +183,7 @@ export default async function handler(req, res) {
         .from('pedidos')
         .update({ fulfillment_status: 'unfulfilled', tracking_number: null, tracking_company: null, tracking_url: null })
         .eq('shopify_order_id', shopifyOrderId);
-      if (error) console.error('⚠️ Error limpiando guía:', error.message);
+      if (error) console.error(`⚠️ Error limpiando guía [mode=${getSupabaseMode()}]:`, error.message);
       else console.log(`🔄 Fulfillment cancelado — guía limpiada: ${shopifyOrderId}`);
       return res.status(200).send('OK');
     }
@@ -199,7 +198,7 @@ export default async function handler(req, res) {
         .eq('shopify_order_id', shopifyOrderId);
 
       if (error) {
-        console.error('⚠️ Error actualizando fulfillment:', error.message);
+        console.error(`⚠️ Error actualizando fulfillment [mode=${getSupabaseMode()}]:`, error.message);
         return res.status(200).send('OK');
       }
       console.log(`✅ Fulfillment actualizado: ${shopifyOrderId} → ${fulfillmentStatus} | corrección: ${esCorreccion}`);

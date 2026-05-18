@@ -1,13 +1,12 @@
 import mercadopago from 'mercadopago';
-import { createClient } from '@supabase/supabase-js';
 import { getShopifyToken, eliminarDraftOrder } from './shopify-token.js';
 import { emailConfirmacion } from './email-templates.js';
 import { sendTransactionalEmail } from './mail.js';
 import { trackFunnelEvent } from './funnel.js';
+import { supabase, getSupabaseMode } from './supabase.js';
 
 const client = new mercadopago.MercadoPagoConfig({ accessToken: process.env.MP_ACCESS_TOKEN });
 const SHOPIFY_DOMAIN = process.env.VITE_SHOPIFY_DOMAIN;
-const supabase = createClient(process.env.VITE_SUPABASE_URL, process.env.VITE_SUPABASE_ANON_KEY);
 const _paymentInflight = new Map();
 
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -232,7 +231,10 @@ const processMercadoPagoPaymentInternal = async (paymentId) => {
             console.info(`Pedido ya persistido para payment ${pagoInfo.id}; omitiendo insercion duplicada.`);
             shouldPersistOrder = false;
           } else {
-            console.error('Error guardando pedido en Supabase:', sbError.message);
+            console.error(
+              `Error guardando pedido en Supabase [mode=${getSupabaseMode()}]:`,
+              sbError.message,
+            );
           }
         } else {
           insertedOrder = true;
