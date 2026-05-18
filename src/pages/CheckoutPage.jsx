@@ -138,26 +138,6 @@ export default function CheckoutPage() {
   const isRedirectingToPaymentRef = React.useRef(false);
   const abandonTrackingReadyRef = React.useRef(false);
 
-  useEffect(() => {
-    if (cartItems.length > 0) {
-      const singleItem = getSingleCheckoutItem(cartItems);
-      trackBeginCheckout(cartItems, cartTotal);
-      trackFunnelEvent('begin_checkout', {
-        productId: singleItem?.productId || null,
-        productName: singleItem?.productName || null,
-        variantId: singleItem?.variantId || null,
-        color: singleItem?.color || null,
-        size: singleItem?.size || null,
-        amount: cartTotal,
-        meta: {
-          line_count: cartItems.length,
-          item_count: cartItems.reduce((total, item) => total + item.cantidad, 0),
-          line_items: buildCheckoutLineItems(cartItems),
-        },
-      });
-    }
-  }, []);
-
   const [form, setForm] = useState({
     nombre: '',
     email: '',
@@ -320,6 +300,51 @@ export default function CheckoutPage() {
       clearCheckoutSession();
     } catch {}
   }, [currentCartHash, paymentIdFromMP, statusFromMP]);
+
+  useEffect(() => {
+    if (cartItems.length === 0) return;
+
+    const isReturningFromMercadoPago = Boolean(statusFromMP || paymentIdFromMP);
+    if (isReturningFromMercadoPago) return;
+
+    const checkoutSession = readCheckoutSession();
+    const storedCartHash = String(checkoutSession?.cartHash || '').trim();
+    const storedTs = Number(checkoutSession?.ts || 0);
+    const isExpired = !storedTs || (Date.now() - storedTs > CHECKOUT_SESSION_MAX_AGE_MS);
+    const sameCart = storedCartHash && storedCartHash === currentCartHash;
+
+    if (sameCart && !isExpired && checkoutSession?.beginCheckoutEventKey) {
+      return;
+    }
+
+    const sessionTimestamp = sameCart && !isExpired ? storedTs : Date.now();
+    const beginCheckoutEventKey = `begin_checkout:${funnelSessionId}:${currentCartHash}:${sessionTimestamp}`;
+    const singleItem = getSingleCheckoutItem(cartItems);
+
+    writeCheckoutSession({
+      ...(checkoutSession && typeof checkoutSession === 'object' ? checkoutSession : {}),
+      cartHash: currentCartHash,
+      ts: sessionTimestamp,
+      beginCheckoutEventKey,
+    });
+
+    trackBeginCheckout(cartItems, cartTotal);
+    trackFunnelEvent('begin_checkout', {
+      eventKey: beginCheckoutEventKey,
+      productId: singleItem?.productId || null,
+      productName: singleItem?.productName || null,
+      variantId: singleItem?.variantId || null,
+      color: singleItem?.color || null,
+      size: singleItem?.size || null,
+      amount: cartTotal,
+      meta: {
+        line_count: cartItems.length,
+        item_count: cartItems.reduce((total, item) => total + item.cantidad, 0),
+        line_items: buildCheckoutLineItems(cartItems),
+        cart_hash: currentCartHash,
+      },
+    });
+  }, [cartItems, cartTotal, currentCartHash, funnelSessionId, paymentIdFromMP, statusFromMP]);
 
   useEffect(() => {
     if (cartCount !== 0) return;
