@@ -274,6 +274,8 @@ const processMercadoPagoPaymentInternal = async (paymentId) => {
     }
 
     const latestOrder = await getExistingOrderByPaymentId(pagoInfo.id);
+    const shopifyCompleted = Boolean(order || latestOrder?.shopify_order_id);
+    const shopifyOrderName = order?.name || latestOrder?.shopify_order_name || null;
     const singleItem = getSingleLineItem(itemsFinales);
     await trackFunnelEvent({
       eventKey: `payment_approved:${pagoInfo.id}`,
@@ -289,19 +291,46 @@ const processMercadoPagoPaymentInternal = async (paymentId) => {
       paymentId: String(pagoInfo.id),
       amount: totalPagado,
       meta: {
-        shopify_order_name: order?.name || latestOrder?.shopify_order_name || null,
+        shopify_order_name: shopifyOrderName,
+        shopify_completed: shopifyCompleted,
         already_processed: !insertedOrder,
         first_name: pagoInfo.payer?.first_name || null,
         line_items: toLineItemSummary(itemsFinales),
       },
     });
+
+    if (shopifyCompleted) {
+      await trackFunnelEvent({
+        eventKey: `purchase_completed:${pagoInfo.id}`,
+        eventType: 'purchase_completed',
+        source: 'backend',
+        userEmail: emailCliente || emailRef || pagoInfo.payer?.email || null,
+        productId: singleItem?.productId || null,
+        productName: singleItem?.productName || null,
+        variantId: singleItem?.variantId || null,
+        color: singleItem?.color || null,
+        size: singleItem?.size || null,
+        orderId: draftOrderId,
+        paymentId: String(pagoInfo.id),
+        amount: totalPagado,
+        meta: {
+          shopify_order_name: shopifyOrderName,
+          shopify_completed: true,
+          mirror_persisted: Boolean(insertedOrder || latestOrder),
+          already_processed: !insertedOrder,
+          first_name: pagoInfo.payer?.first_name || null,
+          line_items: toLineItemSummary(itemsFinales),
+        },
+      });
+    }
+
     return {
       ok: true,
       status: 'approved',
       paymentId: String(pagoInfo.id),
       draftOrderId,
-      shopifyCompleted: Boolean(order || latestOrder?.shopify_order_id),
-      shopifyOrderName: order?.name || latestOrder?.shopify_order_name || null,
+      shopifyCompleted,
+      shopifyOrderName,
       alreadyProcessed: !insertedOrder,
     };
   }

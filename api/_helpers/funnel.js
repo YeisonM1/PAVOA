@@ -138,7 +138,8 @@ const incrementEventTypes = (currentValue = {}, eventType) => {
 };
 
 const chooseStatus = (journey, eventType) => {
-  if (eventType === 'payment_approved' || journey.completed_at) return 'purchase_completed';
+  if (eventType === 'purchase_completed' || journey.completed_at) return 'purchase_completed';
+  if (eventType === 'payment_approved') return 'payment_approved';
   if (eventType === 'payment_rejected') return 'payment_rejected';
   if (eventType === 'payment_pending') return 'payment_pending';
   if (eventType === 'checkout_abandon') return 'checkout_abandoned';
@@ -266,7 +267,7 @@ const buildJourneyPayload = ({ existingJourney, payload, createdAt }) => {
       eventType === 'payment_approved' || eventType === 'payment_pending' || eventType === 'payment_rejected'
         ? createdAt
         : (existingJourney?.payment_result_at || null),
-    completed_at: eventType === 'payment_approved' ? createdAt : (existingJourney?.completed_at || null),
+    completed_at: eventType === 'purchase_completed' ? createdAt : (existingJourney?.completed_at || null),
     last_event_at: maxIso(existingJourney?.last_event_at, createdAt) || createdAt,
     order_id: normalizeOptional(payload.orderId) || existingJourney?.order_id || null,
     payment_id: normalizeOptional(payload.paymentId) || existingJourney?.payment_id || null,
