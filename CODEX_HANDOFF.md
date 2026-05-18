@@ -92,6 +92,17 @@ Para operaciones admin de Shopify desde CLI usar scripts `.mjs` con Node (no Pow
 - Checkout y pago solidos con idempotencia y validacion de drafts.
 - Sitemap dinamico generado en build con productos reales de Shopify.
 
+### Endurecimientos recientes del embudo
+
+- `payment_approved` ya no equivale automaticamente a `purchase_completed`.
+  - `payment_approved` ahora significa solo aprobacion de Mercado Pago.
+  - `purchase_completed` solo se emite cuando el cierre final ya quedo consolidado.
+- `begin_checkout` ya no se dispara sin control en cada mount del checkout.
+  - ahora se deduplica por sesion de checkout y huella de carrito.
+- Los journeys de checkout ya no se amarran a `session + primary product`.
+  - ahora se agrupan por huella del carrito completo.
+  - esto evita que carritos multi-producto queden atribuidos solo al primer producto.
+
 ## Stock alerts
 
 - Causa raiz resuelta en Supabase: unicidad solo para alertas pendientes.
@@ -164,6 +175,26 @@ Rutas activas dentro de `Operacion`:
 - `Nuevo producto`
 - `Home productos`
 
+### Operacion ya mejorada
+
+- `Pedidos`
+  - ya no solo lista pedidos espejo.
+  - ahora detecta:
+    - compras completadas sin espejo
+    - aprobados sin referencia Shopify
+    - pendientes viejos
+    - aprobados listos para despacho
+    - enviados sin guia
+- `Embudo`
+  - ya no mezcla igual abandono explicito y abandono inferido.
+  - ahora distingue recorridos de `checkout` y recorridos de `producto`.
+  - ahora separa:
+    - pagos aprobados
+    - compras completadas
+    - salida explicita del checkout
+    - checkout vencido por inactividad
+    - carrito vencido por inactividad
+
 ### Contenido del sitio ya migrado
 
 Pantallas editoriales ya creadas dentro de `Contenido del sitio`:
@@ -189,6 +220,32 @@ Pantallas editoriales ya creadas dentro de `Contenido del sitio`:
 - `Home barra superior`
   - Metaobject: `announcement_bar`
   - Edita si la franja esta activa y sus 3 mensajes rotativos
+
+### Lo que falta en Contenido del sitio
+
+Orden recomendado para seguir sin volverlo caotico:
+
+1. `Hero principal`
+   - Metaobjects implicados:
+     - `hero_slide`
+     - `hero_section`
+   - Conviene separarlo en:
+     - slides
+     - badge o copy debajo del CTA
+2. `Ticker`
+   - Metaobject: `ticker_bar`
+3. `Categorias destacadas`
+   - Metaobject: `categoria_destacada`
+4. `Filosofia`
+   - Metaobject: `filosofia_section`
+
+Regla practica:
+- no intentar una pantalla unica de “Home completa”
+- seguir por subbloques pequenos con el patron ya usado:
+  - que estas cambiando
+  - donde se ve
+  - vista rapida
+  - link a tienda
 
 ### Reglas editoriales que ya quedaron definidas
 
@@ -222,6 +279,32 @@ Pantallas editoriales ya creadas dentro de `Contenido del sitio`:
   - si una ruta cliente necesita defaults o helpers compartidos, moverlos a un archivo no server o duplicarlos localmente si es pequeno
 - Validar siempre con `npm run build` en `pavoa-control` despues de cada pantalla nueva.
 
+### Estado operativo del embudo despues de esta ronda
+
+Storefront principal:
+
+- `src/pages/CheckoutPage.jsx`
+  - `begin_checkout` deduplicado por sesion de checkout
+- `api/_helpers/funnel.js`
+  - journeys de checkout agrupados por huella de carrito
+  - `purchase_completed` separado de `payment_approved`
+- `api/_helpers/mercadopago-order.js`
+  - emite `purchase_completed` solo cuando el cierre final ya quedo consolidado
+
+`PAVOA Control`:
+
+- `app/supabase.server.js`
+  - clasifica journeys por `checkout` vs `product`
+  - separa abandono explicito vs abandono inferido
+- `app/routes/app.embudo.jsx`
+  - ya puede filtrar recorridos por scope
+  - ya muestra mejor el tipo de abandono
+
+Lo importante:
+- el embudo ya esta bastante mas serio en logica
+- sigue siendo un sistema propio de journeys con lectura operativa
+- todavia falta cruzar mejor `journey -> pago -> pedido espejo -> pedido Shopify` dentro del modulo `Embudo`
+
 ### Cosas pendientes que no hay que repetir a ciegas
 
 - Los links `Ver:` desde `PAVOA Control` hacia anchors del storefront siguen sin bajar fino al bloque correcto dentro del contexto embebido de Shopify.
@@ -241,12 +324,13 @@ Pantallas editoriales ya creadas dentro de `Contenido del sitio`:
 
 ### Lo siguiente mas natural en Contenido del sitio
 
-Si se sigue esta linea, el siguiente bloque recomendado es Home editorial por partes:
+Si se sigue esta linea, el siguiente bloque recomendado es `Hero principal`.
 
-1. `Hero principal`
-2. `Ticker`
-3. `Categorias destacadas`
-4. `Filosofia`
+Luego seguir con:
+
+1. `Ticker`
+2. `Categorias destacadas`
+3. `Filosofia`
 
 No conviene intentar “editar toda la home” en una sola vista.
 
@@ -256,11 +340,21 @@ No conviene intentar “editar toda la home” en una sola vista.
 - `695d88e` - `Polish admin sidebar accordions`
 - `51fdb7a` - `Add nosotros pillars editor`
 - `e56507c` - `Add announcement bar editor`
+- `8566c68` - `Add operational diagnostics to orders panel`
+- `7a66850` - `Reflect completed purchase status in funnel panel`
+- `7a31c9b` - `Clarify funnel abandonment and journey scope`
+
+### Commits utiles de esta ronda en storefront
+
+- `cfd39ae` - `Separate approved payments from completed purchases`
+- `b973af2` - `Deduplicate begin checkout funnel event`
+- `4fcb18b` - `Use cart fingerprint for checkout journeys`
 
 ## Siguientes frentes pendientes
 
-1. Validar que el embudo este registrando data real en Supabase.
-2. Dar visibilidad operativa a pagos y pedidos en `PAVOA Control`.
+1. Validar con data real en Supabase que los nuevos journeys de checkout no esten duplicando recorridos viejos.
+2. Cruzar mejor `journey -> pago -> pedido espejo -> pedido Shopify` dentro del modulo `Embudo`, no solo en `Pedidos`.
+3. Seguir `Contenido del sitio` por `Hero principal`.
 
 ## Descartados
 
