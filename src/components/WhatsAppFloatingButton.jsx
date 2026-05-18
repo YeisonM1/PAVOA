@@ -51,24 +51,13 @@ export default function WhatsAppFloatingButton() {
       aria-label={phoneLabel ? `Hablar por WhatsApp al ${phoneLabel}` : 'Hablar por WhatsApp'}
       className="group fixed bottom-5 right-5 z-[95] md:bottom-7 md:right-7"
     >
-      <span className="absolute inset-0 rounded-full bg-[radial-gradient(circle,_rgba(173,125,60,0.18)_0%,_rgba(173,125,60,0)_72%)] blur-xl scale-110 opacity-80 transition-transform duration-500 group-hover:scale-[1.18]" />
-      <span className="relative flex items-center gap-3 rounded-full border border-stone-700/70 bg-stone-950/92 pl-3.5 pr-4 py-3 text-white shadow-[0_18px_45px_rgba(0,0,0,0.28)] backdrop-blur-md transition-all duration-300 group-hover:-translate-y-0.5 group-hover:shadow-[0_22px_55px_rgba(0,0,0,0.34)]">
-        <span className="absolute inset-x-5 top-0 h-px bg-gradient-to-r from-transparent via-[rgba(214,182,124,0.75)] to-transparent" />
-        <span className="flex h-11 w-11 items-center justify-center rounded-full border border-[#1f8f5f]/35 bg-[linear-gradient(145deg,#f8f4ec_0%,#e8decf_100%)] text-[#145c3f] shadow-[inset_0_1px_0_rgba(255,255,255,0.65),0_10px_22px_rgba(0,0,0,0.16)]">
+      <span className="absolute inset-0 rounded-full bg-[radial-gradient(circle,_rgba(173,125,60,0.22)_0%,_rgba(173,125,60,0)_72%)] blur-xl scale-110 opacity-80 transition-transform duration-500 group-hover:scale-[1.24]" />
+      <span className="relative flex h-[66px] w-[66px] items-center justify-center rounded-full border border-stone-800/85 bg-[linear-gradient(155deg,rgba(11,11,11,0.96)_0%,rgba(29,24,19,0.94)_100%)] text-[#184f39] shadow-[0_18px_48px_rgba(0,0,0,0.28)] transition-all duration-300 group-hover:-translate-y-0.5 group-hover:shadow-[0_24px_58px_rgba(0,0,0,0.34)]">
+        <span className="absolute inset-[6px] rounded-full border border-[rgba(214,182,124,0.34)]" />
+        <span className="absolute inset-[11px] rounded-full bg-[linear-gradient(145deg,#fbf7ef_0%,#e9ddcc_100%)] shadow-[inset_0_1px_0_rgba(255,255,255,0.72)]" />
+        <span className="absolute inset-x-5 top-[8px] h-px bg-gradient-to-r from-transparent via-[rgba(214,182,124,0.82)] to-transparent opacity-90" />
+        <span className="relative z-10 flex items-center justify-center">
           <WhatsAppIcon />
-        </span>
-        <span className="hidden min-w-0 md:flex md:flex-col md:items-start">
-          <span className="text-[8px] font-semibold uppercase tracking-[0.28em] text-stone-400">
-            Asesoría privada
-          </span>
-          <span className="text-[11px] font-semibold tracking-[0.1em] text-stone-100">
-            WhatsApp
-          </span>
-          {phoneLabel ? (
-            <span className="text-[10px] tracking-[0.08em] text-stone-400">
-              {phoneLabel}
-            </span>
-          ) : null}
         </span>
       </span>
     </a>
