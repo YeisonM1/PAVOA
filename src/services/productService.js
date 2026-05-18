@@ -1,6 +1,21 @@
 ﻿const SHOPIFY_DOMAIN   = import.meta.env.VITE_SHOPIFY_DOMAIN;
 const SHOPIFY_TOKEN    = import.meta.env.VITE_SHOPIFY_TOKEN;
 const SHOPIFY_ENDPOINT = `https://${SHOPIFY_DOMAIN}/api/2026-04/graphql.json`;
+const HOME_PRODUCT_TAB_KEYS = ['nuevo', 'bestseller', 'tendencia'];
+const HOME_PRODUCT_TAG_LABELS = {
+  nuevo: 'NUEVO',
+  bestseller: 'MÁS VENDIDO',
+  tendencia: 'TENDENCIA',
+};
+
+const normalizeProductTag = (value) => String(value || '').trim().toLowerCase();
+
+const getGlobalHomeProductTag = (tags = []) => {
+  const normalizedTags = (Array.isArray(tags) ? tags : [])
+    .map(normalizeProductTag)
+    .filter(Boolean);
+  return HOME_PRODUCT_TAB_KEYS.find((tagKey) => normalizedTags.includes(tagKey)) || '';
+};
 
 export const SITE_SETTINGS_DEFAULTS = {
   contactEmail: 'hola@pavoa.co',
@@ -362,6 +377,8 @@ const mapProducto = (node) => {
   const compareAtPrecioNumericoRaw = Number(node.compareAtPriceRange?.minVariantPrice?.amount ?? 0);
   const compareAtPrecioNumerico =
     compareAtPrecioNumericoRaw > precioNumerico ? compareAtPrecioNumericoRaw : null;
+  const normalizedTags = Array.isArray(node.tags) ? node.tags.filter(Boolean) : [];
+  const globalHomeTag = getGlobalHomeProductTag(normalizedTags);
 
   return {
     id:          node.handle,
@@ -379,7 +396,8 @@ const mapProducto = (node) => {
     imagen4:     imgs[3] || '',
     imagen5:     imgs[4] || '',
     categoria:   node.productType?.toLowerCase() || '',
-    tag:         node.tags[0] || '',
+    tag:         globalHomeTag ? HOME_PRODUCT_TAG_LABELS[globalHomeTag] : '',
+    tags:        normalizedTags,
     detalles:    node.detallesField?.value || '',
     cuidados:    node.cuidadosField?.value || '',
     variantes,

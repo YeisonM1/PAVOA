@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { getProductos, getHomeProductosSection, HOME_PRODUCTOS_DEFAULTS } from '../services/productService';
+import { getCuratedProductsForTab } from '../utils/homeProductTags';
 import ProductCard from '../components/ProductCard';
 import SkeletonCard from '../components/SkeletonCard';
 
@@ -27,9 +28,7 @@ export default function Productos() {
   ];
 
   // Filtrar por tab activo — máximo 2 productos
-  const productosFiltrados = productos
-    .filter((p) => p.tag?.toLowerCase() === activeTab)
-    .slice(0, 2);
+  const productosFiltrados = getCuratedProductsForTab(productos, activeTab);
 
   // Skeleton
   if (loading) {

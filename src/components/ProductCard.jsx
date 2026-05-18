@@ -5,6 +5,7 @@ import { useWishlist } from '../context/WishlistContext';
 import { useCart } from '../hooks/useCart';
 import { getProductoById } from '../services/productService';
 import { trackFunnelEvent } from '../lib/funnel';
+import { HOME_PRODUCT_TAG_LABELS, getGlobalHomeProductTag } from '../utils/homeProductTags';
 
 const HeartIcon = ({ filled }) => (
   <svg width="15" height="15" viewBox="0 0 24 24" fill={filled ? '#0B0B0B' : 'none'} stroke={filled ? '#0B0B0B' : 'currentColor'} strokeWidth="1.5">
@@ -16,6 +17,8 @@ function ProductCard({ producto }) {
   const [showMobileSizes, setShowMobileSizes] = useState(false);
   const { isWished, toggle } = useWishlist();
   const { addToCart } = useCart();
+  const globalHomeTag = getGlobalHomeProductTag(producto?.tags);
+  const productBadge = globalHomeTag ? HOME_PRODUCT_TAG_LABELS[globalHomeTag] : producto?.tag || '';
 
   // ── Leer variantes ──────────────────────────────────────
   const variantes = (() => {
@@ -59,7 +62,7 @@ function ProductCard({ producto }) {
           amount: producto.precioNumerico || 0,
           meta: {
             category: producto.categoria || '',
-            tag: producto.tag || '',
+            tag: productBadge,
             source: 'product_card',
           },
         });
@@ -70,9 +73,9 @@ function ProductCard({ producto }) {
     >
       <div className="relative overflow-hidden bg-stone-100" style={{ aspectRatio: '3/4' }}>
 
-        {producto.tag && (
+        {productBadge && (
           <span className="absolute top-4 left-4 z-30 text-[8px] font-bold text-white bg-stone-900 px-3 py-1.5 uppercase tracking-[0.15em]">
-            {producto.tag}
+            {productBadge}
           </span>
         )}
         {totalStock === 0 ? (
