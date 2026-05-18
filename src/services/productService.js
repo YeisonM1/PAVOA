@@ -24,6 +24,7 @@ export const SITE_SETTINGS_DEFAULTS = {
   responseTime: 'Respondemos todos los mensajes en un máximo de 24 horas hábiles.',
   instagramUrl: 'https://www.instagram.com/pavoacolombia/',
   facebookUrl: 'https://facebook.com/pavoa',
+  whatsappNumber: import.meta.env.VITE_WHATSAPP_NUMBER || '',
 };
 
 export const FILOSOFIA_SECTION_DEFAULTS = {
@@ -874,6 +875,7 @@ export const getSiteSettings = () => {
         responseTime: get('response_time') || SITE_SETTINGS_DEFAULTS.responseTime,
         instagramUrl: get('instagram_url') || SITE_SETTINGS_DEFAULTS.instagramUrl,
         facebookUrl: get('facebook_url') || SITE_SETTINGS_DEFAULTS.facebookUrl,
+        whatsappNumber: get('whatsapp_number') || SITE_SETTINGS_DEFAULTS.whatsappNumber,
       };
     } catch (err) {
       console.error('Error getSiteSettings:', err);

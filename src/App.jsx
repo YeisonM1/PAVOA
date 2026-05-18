@@ -6,6 +6,7 @@ import { WishlistProvider } from './context/WishlistContext';
 import AnnouncementBar from './sections/AnnouncementBar';
 import Header from './sections/Header';
 import Footer from './sections/Footer';
+import WhatsAppFloatingButton from './components/WhatsAppFloatingButton';
 
 const HomePage        = lazy(() => import('./pages/HomePage'));
 const CategoriaPage   = lazy(() => import('./pages/CategoriaPage'));
@@ -133,6 +134,7 @@ function AppShell() {
         </div>
 
         {!esRutaLimpia && <Footer />}
+        {!esRutaLimpia && <WhatsAppFloatingButton />}
         <Toast />
       </div>
     </>
