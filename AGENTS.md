@@ -34,6 +34,8 @@ Leer siempre en este orden:
 - El intento de agregar un bloque extra de decision en PDP no gusto y fue revertido.
 - El texto actual del producto debe seguir siendo la base principal de beneficios en PDP.
 - La mejora futura mas segura en PDP es un bloque de confianza debajo del CTA, no arriba del texto.
+- PAVOA Control: Contenido del sitio esta completado — todos los metaobjects renderizados tienen editor.
+- Boton flotante de WhatsApp rediseñado como pilula minimalista (no el circulo con glows anterior).
 
 ## Estado operativo que conviene recordar
 
@@ -49,7 +51,6 @@ Leer siempre en este orden:
 2. Dar visibilidad operativa a pagos y pedidos en `PAVOA Control`.
 3. Mejorar newsletter por backend.
 4. Mejorar escalabilidad del catalogo.
-
 ## Repos y produccion
 
 - Storefront principal:

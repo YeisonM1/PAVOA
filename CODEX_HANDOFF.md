@@ -22,6 +22,7 @@ Estado de continuidad al 2026-05-18.
 - La mejora segura para PDP sigue siendo confianza debajo del CTA, no mas texto arriba.
 - `Nosotros` ya fue reorientada a filosofia de marca.
 - El contenido editorial principal ya depende de Shopify metaobjects — practicamente sin hardcode en el home ni en paginas editoriales.
+- Boton flotante de WhatsApp rediseñado como pilula minimalista oscura con borde dorado PAVOA y texto "Escribenos" que se expande al hover en desktop.
 
 ## Performance
 
@@ -63,10 +64,9 @@ Metaobjects confirmados y poblados:
 - `hero_section` — badge_text debajo del CTA del hero
 - `categoria_destacada` — 4 categorias con imagen, nombre, href, posicion
 - `announcement_bar` — 3 mensajes activos
-- `ticker_bar` — 6 items del ticker animado
+- `ticker_bar` — 6 items del ticker animado (no renderizado en storefront actualmente)
 - `home_productos_section` — eyebrow, titulo (2 lineas), tabs, textos de categorias, estado vacio
 - `instagram_post` — 2 posts con imagen
-- `announcement_bar` — mensajes del announcement bar
 
 Nota util:
 - en esta tienda el campo de referencias de ayuda puede venir como `blocks_1` o `blocks`
@@ -150,7 +150,6 @@ Para agregar una nueva hay que consolidar dos existentes primero.
 ## PAVOA Control
 
 - Desplegado y estable en Vercel, repo separado.
-- No es el frente principal de este repo, pero en esta ronda ya se avanzo bastante en su capa editorial.
 - Conviene abrirlo despues de deploys relevantes para que vuelva a registrar `inventory_levels/update`.
 
 ### Lo que ya se organizo en UI
@@ -195,62 +194,39 @@ Rutas activas dentro de `Operacion`:
     - checkout vencido por inactividad
     - carrito vencido por inactividad
 
-### Contenido del sitio ya migrado
+### Contenido del sitio — completado
 
-Pantallas editoriales ya creadas dentro de `Contenido del sitio`:
+Todas las pantallas editoriales estan creadas. Cobertura completa de metaobjects:
 
-- `Ajustes generales`
-  - Metaobject: `site_settings`
-  - Edita: correo, horario, nota, tiempo de respuesta, WhatsApp, Instagram, Facebook
-- `Footer y newsletter`
-  - Metaobject: `footer_content`
-  - Edita solo textos editoriales del footer y newsletter
-  - No duplica email, horario ni redes
-- `Contacto`
-  - Metaobject: `contact_page`
-  - Edita estructura y textos de la pagina
-  - No duplica datos operativos que ya viven en `site_settings`
-- `Nosotros`
-  - Metaobject: `nosotros_page`
-  - Edita cabecera, manifiesto, introduccion y cierre editorial
-- `Nosotros pilares`
-  - Metaobject: `nosotros_block`
-  - Edita la grilla de principios de la marca
-  - Orden, etiqueta, titulo y cuerpo por bloque
-- `Home barra superior`
-  - Metaobject: `announcement_bar`
-  - Edita si la franja esta activa y sus 3 mensajes rotativos
+- `Ajustes generales` — `site_settings`
+- `Footer y newsletter` — `footer_content`
+- `Contacto` — `contact_page`
+- `Nosotros` — `nosotros_page`
+- `Nosotros pilares` — `nosotros_block`
+- `Home barra superior` — `announcement_bar`
+- `Hero principal` — `hero_slide` + `hero_section`
+- `Categorias destacadas` — `categoria_destacada`
+- `Filosofia` — `filosofia_section`
+- `Paginas de ayuda` — `help_page`
 
-### Lo que falta en Contenido del sitio
+Metaobjects sin editor (por decision):
+- `ticker_bar` — no se renderiza en el storefront, no tiene editor.
+- `instagram_post` — solo imagenes, se gestiona directo en Shopify.
 
-Orden recomendado para seguir sin volverlo caotico:
+### Patron de diseño unificado en PAVOA Control
 
-1. `Hero principal`
-   - Metaobjects implicados:
-     - `hero_slide`
-     - `hero_section`
-   - Conviene separarlo en:
-     - slides
-     - badge o copy debajo del CTA
-2. `Ticker`
-   - Metaobject: `ticker_bar`
-3. `Categorias destacadas`
-   - Metaobject: `categoria_destacada`
-4. `Filosofia`
-   - Metaobject: `filosofia_section`
-
-Regla practica:
-- no intentar una pantalla unica de “Home completa”
-- seguir por subbloques pequenos con el patron ya usado:
-  - que estas cambiando
-  - donde se ve
-  - vista rapida
-  - link a tienda
+Todas las pestañas (Operacion y Contenido) usan:
+- `cardStyle`: `border: #f3f4f6`, `borderRadius: 12px`, `boxShadow: 0 1px 3px rgba(0,0,0,0.05)`
+- Contenedor: `maxWidth: 1100px`
+- Bordes internos: `#f3f4f6`
+- Boton principal: pill `borderRadius: 999px`, `background: #111827`
+- Pantallas editoriales: un solo `<Form>` global, un boton "Guardar" sticky al fondo
+- Cada card tiene bloque "Donde se ve" con link `Ver:` al storefront
 
 ### Reglas editoriales que ya quedaron definidas
 
 - Hablarle siempre en segunda persona dentro de `PAVOA Control`.
-- No usar textos tipo “la clienta” o “la dueña” dentro de la UI.
+- No usar textos tipo "la clienta" o "la dueña" dentro de la UI.
 - Cada pantalla nueva debe explicar:
   - que estas cambiando
   - donde se ve
@@ -261,15 +237,19 @@ Regla practica:
 
 ### Reglas tecnicas que ya aparecieron y no conviene olvidar
 
-- Los editores nuevos de Shopify se estan apoyando en server files dedicados, por ejemplo:
+- Los editores de Shopify se apoyan en server files dedicados:
   - `site-settings.server.js`
   - `footer-content.server.js`
   - `contact-page.server.js`
   - `nosotros-page.server.js`
   - `nosotros-blocks.server.js`
   - `announcement-bar.server.js`
+  - `hero.server.js`
+  - `categorias.server.js`
+  - `filosofia.server.js`
+  - `help-pages.server.js`
 - Estos helpers ya crean fields faltantes en definiciones cuando hace falta, si la app tiene scopes suficientes.
-- Scopes que ya hubo que agregar para esto:
+- Scopes necesarios:
   - `read_metaobjects`
   - `write_metaobjects`
   - `read_metaobject_definitions`
@@ -279,7 +259,7 @@ Regla practica:
   - si una ruta cliente necesita defaults o helpers compartidos, moverlos a un archivo no server o duplicarlos localmente si es pequeno
 - Validar siempre con `npm run build` en `pavoa-control` despues de cada pantalla nueva.
 
-### Estado operativo del embudo despues de esta ronda
+### Estado operativo del embudo
 
 Storefront principal:
 
@@ -300,18 +280,10 @@ Storefront principal:
   - ya puede filtrar recorridos por scope
   - ya muestra mejor el tipo de abandono
 
-Lo importante:
-- el embudo ya esta bastante mas serio en logica
-- sigue siendo un sistema propio de journeys con lectura operativa
-- todavia falta cruzar mejor `journey -> pago -> pedido espejo -> pedido Shopify` dentro del modulo `Embudo`
-
 ### Cosas pendientes que no hay que repetir a ciegas
 
 - Los links `Ver:` desde `PAVOA Control` hacia anchors del storefront siguen sin bajar fino al bloque correcto dentro del contexto embebido de Shopify.
-  - ya se intento:
-    - ids en storefront
-    - soporte de `hash`
-    - reintento de scroll
+  - ya se intento: ids en storefront, soporte de hash, reintento de scroll
   - sigue pendiente
   - no asumir que ya esta resuelto
 - No mezclar datos operativos con textos editoriales:
@@ -322,44 +294,16 @@ Lo importante:
   - `Nosotros pilares` para la grilla
   - no volver a fusionarlos en una sola pantalla pesada
 
-### Lo siguiente mas natural en Contenido del sitio
-
-Si se sigue esta linea, el siguiente bloque recomendado es `Hero principal`.
-
-Luego seguir con:
-
-1. `Ticker`
-2. `Categorias destacadas`
-3. `Filosofia`
-
-No conviene intentar “editar toda la home” en una sola vista.
-
-### Commits utiles de esta ronda en `pavoa-control`
-
-- `50812df` - `Reorganize admin navigation layout`
-- `695d88e` - `Polish admin sidebar accordions`
-- `51fdb7a` - `Add nosotros pillars editor`
-- `e56507c` - `Add announcement bar editor`
-- `8566c68` - `Add operational diagnostics to orders panel`
-- `7a66850` - `Reflect completed purchase status in funnel panel`
-- `7a31c9b` - `Clarify funnel abandonment and journey scope`
-
-### Commits utiles de esta ronda en storefront
-
-- `cfd39ae` - `Separate approved payments from completed purchases`
-- `b973af2` - `Deduplicate begin checkout funnel event`
-- `4fcb18b` - `Use cart fingerprint for checkout journeys`
-
 ## Siguientes frentes pendientes
 
 1. Validar con data real en Supabase que los nuevos journeys de checkout no esten duplicando recorridos viejos.
 2. Cruzar mejor `journey -> pago -> pedido espejo -> pedido Shopify` dentro del modulo `Embudo`, no solo en `Pedidos`.
-3. Seguir `Contenido del sitio` por `Hero principal`.
 
 ## Descartados
 
 - Abandono de carrito con email de recuperacion — el tracking ya existe (checkout_abandon en funnel), el email se descarto.
 - Reviews/valoraciones en PDP — descartado.
+- Ticker en storefront — componente existe pero no se renderiza, no se agrego editor.
 
 ## Archivos locales que no deben tocarse
 
