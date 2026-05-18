@@ -294,7 +294,42 @@ Storefront principal:
   - `Nosotros pilares` para la grilla
   - no volver a fusionarlos en una sola pantalla pesada
 
-## Siguientes frentes pendientes
+## Deploy de PAVOA Control en Vercel
+
+### Como funciona actualmente (NO tocar sin entender esto)
+
+El deploy usa un approach manual con esbuild porque `@vercel/react-router@1.3.0` genera un `server-index.mjs` que importa `react-router` como externo, pero Vercel no incluye `node_modules` en el bundle de esa funcion — lo que causa `ERR_MODULE_NOT_FOUND` en runtime.
+
+**Estructura del deploy:**
+
+1. `react-router.config.ts` — solo `ssr: true`, SIN `vercelPreset()`. El preset de Vercel esta desactivado.
+2. `scripts/bundle-api.mjs` — script que usa esbuild para generar `api/index.js` self-contained con `react-router` bundleado adentro.
+3. `api/index.js` — generado por el script, NO editar a mano. Es el handler de la serverless function.
+4. `vercel.json` — `framework: null`, `buildCommand` que corre el build + el script de bundle, rewrite de todo a `/api/index`.
+
+**Build command en Vercel dashboard:**
+```
+npx prisma generate && npm run build && node scripts/bundle-api.mjs
+```
+
+**Reglas criticas:**
+- NO agregar `vercelPreset()` a `react-router.config.ts` — rompe el deploy.
+- NO cambiar `framework: null` en `vercel.json` — rompe el deploy.
+- NO editar `api/index.js` a mano — se regenera en cada build.
+- Si se agrega una dependencia nueva que usa `require()` de Node (CJS), agregarla a `external` en `scripts/bundle-api.mjs`.
+- Si el deploy falla con `Dynamic require of "X" is not supported`, agregar `"X"` al array `external` del script.
+
+**Paquetes actualmente en external (no bundleados):**
+- Node built-ins: `node:*`, `stream`, `crypto`, `fs`, etc.
+- `@prisma/client`, `prisma` (bindings nativos)
+- `exceljs` (usa require() de CJS)
+- `@shopify/shopify-api`, `@shopify/shopify-app-react-router`, `@shopify/shopify-app-session-storage-prisma`
+- `react`, `react-dom`
+
+**Por que no usamos el preset de Vercel:**
+`@vercel/react-router@1.3.0` genera un `server-index.mjs` que importa `react-router` directamente. Vercel no incluye `node_modules/react-router` en el bundle de esa funcion. Esto es un bug del preset que no tiene fix disponible a mayo 2026.
+
+
 
 1. Validar con data real en Supabase que los nuevos journeys de checkout no esten duplicando recorridos viejos.
 2. Cruzar mejor `journey -> pago -> pedido espejo -> pedido Shopify` dentro del modulo `Embudo`, no solo en `Pedidos`.
