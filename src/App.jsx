@@ -68,18 +68,26 @@ function ScrollToTop() {
   useEffect(() => {
     if (hash) {
       const targetId = hash.replace(/^#/, '');
+      let attempts = 0;
+      const maxAttempts = 40;
+
       const scrollToTarget = () => {
         const element = document.getElementById(targetId);
         if (element) {
           element.scrollIntoView({ behavior: 'smooth', block: 'start' });
           return;
         }
-        window.scrollTo(0, 0);
+
+        attempts += 1;
+        if (attempts >= maxAttempts) {
+          window.scrollTo(0, 0);
+          return;
+        }
+
+        window.setTimeout(scrollToTarget, 120);
       };
 
-      requestAnimationFrame(() => {
-        requestAnimationFrame(scrollToTarget);
-      });
+      window.setTimeout(scrollToTarget, 60);
       return;
     }
 
