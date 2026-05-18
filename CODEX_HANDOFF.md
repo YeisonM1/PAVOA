@@ -1,6 +1,6 @@
 # CODEX_HANDOFF.md
 
-Estado de continuidad al 2026-05-14.
+Estado de continuidad al 2026-05-18.
 
 ## Leer junto con
 
@@ -139,8 +139,123 @@ Para agregar una nueva hay que consolidar dos existentes primero.
 ## PAVOA Control
 
 - Desplegado y estable en Vercel, repo separado.
-- No es el frente principal de este repo.
+- No es el frente principal de este repo, pero en esta ronda ya se avanzo bastante en su capa editorial.
 - Conviene abrirlo despues de deploys relevantes para que vuelva a registrar `inventory_levels/update`.
+
+### Lo que ya se organizo en UI
+
+- La navegacion superior improvisada ya no existe.
+- Ahora `PAVOA Control` usa sidebar izquierdo con estilo alineado a PAVOA.
+- El sidebar esta dividido en 2 grupos desplegables:
+  - `Operacion`
+  - `Contenido del sitio`
+- El grupo activo se abre automaticamente segun la ruta actual.
+
+### Operacion ya agrupada
+
+Rutas activas dentro de `Operacion`:
+
+- `Resumen`
+- `Pedidos`
+- `Newsletter`
+- `Wishlist`
+- `Embudo`
+- `Stock alerts`
+- `Nuevo producto`
+- `Home productos`
+
+### Contenido del sitio ya migrado
+
+Pantallas editoriales ya creadas dentro de `Contenido del sitio`:
+
+- `Ajustes generales`
+  - Metaobject: `site_settings`
+  - Edita: correo, horario, nota, tiempo de respuesta, WhatsApp, Instagram, Facebook
+- `Footer y newsletter`
+  - Metaobject: `footer_content`
+  - Edita solo textos editoriales del footer y newsletter
+  - No duplica email, horario ni redes
+- `Contacto`
+  - Metaobject: `contact_page`
+  - Edita estructura y textos de la pagina
+  - No duplica datos operativos que ya viven en `site_settings`
+- `Nosotros`
+  - Metaobject: `nosotros_page`
+  - Edita cabecera, manifiesto, introduccion y cierre editorial
+- `Nosotros pilares`
+  - Metaobject: `nosotros_block`
+  - Edita la grilla de principios de la marca
+  - Orden, etiqueta, titulo y cuerpo por bloque
+- `Home barra superior`
+  - Metaobject: `announcement_bar`
+  - Edita si la franja esta activa y sus 3 mensajes rotativos
+
+### Reglas editoriales que ya quedaron definidas
+
+- Hablarle siempre en segunda persona dentro de `PAVOA Control`.
+- No usar textos tipo “la clienta” o “la dueña” dentro de la UI.
+- Cada pantalla nueva debe explicar:
+  - que estas cambiando
+  - donde se ve
+  - una vista rapida
+  - link para abrir la tienda
+- No mezclar demasiadas partes en una sola pantalla.
+- Si una pagina grande tiene varias zonas, dividirla en subpantallas.
+
+### Reglas tecnicas que ya aparecieron y no conviene olvidar
+
+- Los editores nuevos de Shopify se estan apoyando en server files dedicados, por ejemplo:
+  - `site-settings.server.js`
+  - `footer-content.server.js`
+  - `contact-page.server.js`
+  - `nosotros-page.server.js`
+  - `nosotros-blocks.server.js`
+  - `announcement-bar.server.js`
+- Estos helpers ya crean fields faltantes en definiciones cuando hace falta, si la app tiene scopes suficientes.
+- Scopes que ya hubo que agregar para esto:
+  - `read_metaobjects`
+  - `write_metaobjects`
+  - `read_metaobject_definitions`
+  - `write_metaobject_definitions`
+- Importante con React Router:
+  - no importar modulos `*.server.js` directamente en codigo cliente fuera de `loader` y `action`
+  - si una ruta cliente necesita defaults o helpers compartidos, moverlos a un archivo no server o duplicarlos localmente si es pequeno
+- Validar siempre con `npm run build` en `pavoa-control` despues de cada pantalla nueva.
+
+### Cosas pendientes que no hay que repetir a ciegas
+
+- Los links `Ver:` desde `PAVOA Control` hacia anchors del storefront siguen sin bajar fino al bloque correcto dentro del contexto embebido de Shopify.
+  - ya se intento:
+    - ids en storefront
+    - soporte de `hash`
+    - reintento de scroll
+  - sigue pendiente
+  - no asumir que ya esta resuelto
+- No mezclar datos operativos con textos editoriales:
+  - `site_settings` concentra datos globales
+  - `footer_content` y `contact_page` no deben duplicar esos datos
+- `Nosotros` ya esta partido correctamente:
+  - `Nosotros` para manifiesto y cierre
+  - `Nosotros pilares` para la grilla
+  - no volver a fusionarlos en una sola pantalla pesada
+
+### Lo siguiente mas natural en Contenido del sitio
+
+Si se sigue esta linea, el siguiente bloque recomendado es Home editorial por partes:
+
+1. `Hero principal`
+2. `Ticker`
+3. `Categorias destacadas`
+4. `Filosofia`
+
+No conviene intentar “editar toda la home” en una sola vista.
+
+### Commits utiles de esta ronda en `pavoa-control`
+
+- `50812df` - `Reorganize admin navigation layout`
+- `695d88e` - `Polish admin sidebar accordions`
+- `51fdb7a` - `Add nosotros pillars editor`
+- `e56507c` - `Add announcement bar editor`
 
 ## Siguientes frentes pendientes
 
