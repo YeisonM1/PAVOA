@@ -13,6 +13,21 @@ const JOURNEY_ERROR_EVENTS = new Set([
   'checkout_error',
 ]);
 
+const CHECKOUT_JOURNEY_EVENTS = new Set([
+  'begin_checkout',
+  'draft_order_created',
+  'draft_order_failed',
+  'payment_click',
+  'payment_preference_created',
+  'payment_preference_failed',
+  'payment_approved',
+  'payment_pending',
+  'payment_rejected',
+  'purchase_completed',
+  'checkout_abandon',
+  'checkout_error',
+]);
+
 const normalizeOptional = (value) => {
   const normalized = String(value ?? '').trim();
   return normalized || null;
@@ -84,6 +99,37 @@ const getPrimaryItem = (payload = {}) => {
 const getVariantLabel = ({ color = null, size = null } = {}) =>
   [normalizeOptional(color), normalizeOptional(size)].filter(Boolean).join(' / ') || null;
 
+const buildCartFingerprint = (lineItems = []) => {
+  if (!Array.isArray(lineItems) || lineItems.length === 0) return null;
+
+  const normalizedItems = lineItems
+    .map((item) => ({
+      product_id: normalizeOptional(item?.product_id),
+      variant_id: normalizeOptional(item?.variant_id),
+      color: normalizeOptional(item?.color),
+      size: normalizeOptional(item?.size),
+      quantity: Number(item?.quantity || 0),
+    }))
+    .filter((item) => item.product_id || item.variant_id);
+
+  if (normalizedItems.length === 0) return null;
+
+  return normalizedItems
+    .sort((left, right) => {
+      const leftKey = `${left.product_id || ''}|${left.variant_id || ''}|${left.color || ''}|${left.size || ''}|${left.quantity}`;
+      const rightKey = `${right.product_id || ''}|${right.variant_id || ''}|${right.color || ''}|${right.size || ''}|${right.quantity}`;
+      return leftKey.localeCompare(rightKey);
+    })
+    .map((item) => `${item.product_id || ''}:${item.variant_id || ''}:${item.color || ''}:${item.size || ''}:${item.quantity}`)
+    .join(',');
+};
+
+const getJourneyCartFingerprint = (payload = {}, lineItems = []) => {
+  const metaCartHash = normalizeOptional(payload?.meta?.cart_hash);
+  if (metaCartHash) return metaCartHash;
+  return buildCartFingerprint(lineItems);
+};
+
 const toIsoOrNull = (value) => {
   if (!value) return null;
   const date = value instanceof Date ? value : new Date(value);
@@ -152,9 +198,13 @@ const chooseStatus = (journey, eventType) => {
   return 'interest_only';
 };
 
-const buildJourneyKey = (payload, primaryItem) => {
+const buildJourneyKey = (payload, primaryItem, lineItems = []) => {
+  const cartFingerprint = getJourneyCartFingerprint(payload, lineItems);
   if (payload.paymentId) return `payment:${payload.paymentId}`;
   if (payload.orderId) return `order:${payload.orderId}`;
+  if (payload.sessionId && CHECKOUT_JOURNEY_EVENTS.has(payload.eventType) && cartFingerprint) {
+    return `session:${payload.sessionId}:cart:${cartFingerprint}`;
+  }
   if (payload.sessionId && primaryItem?.productId) {
     return `session:${payload.sessionId}:product:${primaryItem.productId}`;
   }
@@ -171,7 +221,7 @@ const pickOpenJourney = (journeys = []) => {
   return active || journeys[0] || null;
 };
 
-const findExistingJourney = async (payload, primaryItem) => {
+const findExistingJourney = async (payload, primaryItem, lineItems = []) => {
   if (!supabase) return null;
 
   if (payload.paymentId) {
@@ -194,6 +244,17 @@ const findExistingJourney = async (payload, primaryItem) => {
     if (data) return data;
   }
 
+  const expectedJourneyKey = buildJourneyKey(payload, primaryItem, lineItems);
+  if (expectedJourneyKey) {
+    const { data } = await supabase
+      .from('funnel_journeys')
+      .select('*')
+      .eq('journey_key', expectedJourneyKey)
+      .limit(1)
+      .maybeSingle();
+    if (data) return data;
+  }
+
   if (payload.sessionId) {
     let query = supabase
       .from('funnel_journeys')
@@ -203,7 +264,10 @@ const findExistingJourney = async (payload, primaryItem) => {
       .limit(10);
 
     if (primaryItem?.productId) {
-      query = query.eq('primary_product_id', primaryItem.productId);
+      const shouldFilterByPrimaryProduct = !CHECKOUT_JOURNEY_EVENTS.has(payload.eventType);
+      if (shouldFilterByPrimaryProduct) {
+        query = query.eq('primary_product_id', primaryItem.productId);
+      }
     }
 
     const { data } = await query;
@@ -237,7 +301,7 @@ const buildJourneyPayload = ({ existingJourney, payload, createdAt }) => {
 
   const startedAt = existingJourney?.started_at || createdAt;
   const next = {
-    journey_key: existingJourney?.journey_key || buildJourneyKey(payload, primaryLineItem),
+    journey_key: existingJourney?.journey_key || buildJourneyKey(payload, primaryLineItem, lineItems),
     session_id: normalizeOptional(payload.sessionId) || existingJourney?.session_id || null,
     user_id: normalizeOptional(payload.userId) || existingJourney?.user_id || null,
     user_email: normalizeOptional(payload.userEmail)?.toLowerCase() || existingJourney?.user_email || null,
@@ -302,7 +366,8 @@ const syncJourney = async (payload, createdAt) => {
   if (!supabase) return false;
 
   const primaryItem = getPrimaryItem(payload);
-  const existingJourney = await findExistingJourney(payload, primaryItem);
+  const lineItems = getEffectiveLineItems(payload);
+  const existingJourney = await findExistingJourney(payload, primaryItem, lineItems);
   const journeyPayload = buildJourneyPayload({ existingJourney, payload, createdAt });
 
   const { error } = await supabase
