@@ -37,6 +37,16 @@ const sendWithResend = async ({ from, to, subject, html, text }) => {
     throw new Error('Falta RESEND_API_KEY para enviar correos con Resend.');
   }
 
+  const sender = buildSender(from);
+  const senderEmail = String(sender.email || '').trim();
+  if (!senderEmail) {
+    throw new Error('Falta MAIL_FROM_EMAIL o remitente válido para enviar correos con Resend.');
+  }
+
+  const formattedFrom = sender.name
+    ? `${sender.name} <${senderEmail}>`
+    : senderEmail;
+
   const response = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: {
@@ -44,7 +54,7 @@ const sendWithResend = async ({ from, to, subject, html, text }) => {
       Authorization: `Bearer ${apiKey}`,
     },
     body: JSON.stringify({
-      from,
+      from: formattedFrom,
       to: normalizeRecipients(to),
       subject,
       html,
