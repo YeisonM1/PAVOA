@@ -63,8 +63,28 @@ class ErrorBoundary extends Component {
 }
 
 function ScrollToTop() {
-  const { pathname } = useLocation();
-  useEffect(() => { window.scrollTo(0, 0); }, [pathname]);
+  const { pathname, hash } = useLocation();
+
+  useEffect(() => {
+    if (hash) {
+      const targetId = hash.replace(/^#/, '');
+      const scrollToTarget = () => {
+        const element = document.getElementById(targetId);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          return;
+        }
+        window.scrollTo(0, 0);
+      };
+
+      requestAnimationFrame(() => {
+        requestAnimationFrame(scrollToTarget);
+      });
+      return;
+    }
+
+    window.scrollTo(0, 0);
+  }, [pathname, hash]);
   return null;
 }
 

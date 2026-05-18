@@ -53,8 +53,8 @@ export default function Footer() {
   };
 
   return (
-    <footer style={{ backgroundColor: '#0B0B0B' }} className="w-full text-stone-400">
-      <div className="border-b border-stone-800">
+    <footer id="footer-root" style={{ backgroundColor: '#0B0B0B' }} className="w-full text-stone-400">
+      <div id="footer-newsletter" className="border-b border-stone-800">
         <div className="max-w-7xl mx-auto px-6 md:px-12 py-14 flex flex-col md:flex-row items-center justify-between gap-8">
           <div>
             <p style={{ letterSpacing: '0.2em' }} className="text-[10px] font-medium text-stone-400 mb-2">
@@ -101,7 +101,7 @@ export default function Footer() {
       </div>
 
       <div className="max-w-7xl mx-auto px-6 md:px-12 py-16 grid grid-cols-2 md:grid-cols-4 gap-10">
-        <div className="col-span-2 md:col-span-1">
+        <div id="footer-brand" className="col-span-2 md:col-span-1">
           <img
             src={logo}
             alt="PAVOA"
@@ -118,7 +118,7 @@ export default function Footer() {
           </div>
         </div>
 
-        <nav aria-label="Tienda">
+        <nav id="footer-store" aria-label="Tienda">
           <p style={{ letterSpacing: '0.2em' }} className="text-[10px] font-semibold text-white mb-6">{content.storeHeading}</p>
           <ul className="space-y-3 text-[11px] font-light">
             <li><Link to="/categoria" className="text-stone-400 hover:text-white transition-colors">Nueva Colección</Link></li>
@@ -128,7 +128,7 @@ export default function Footer() {
           </ul>
         </nav>
 
-        <nav aria-label="Ayuda">
+        <nav id="footer-help" aria-label="Ayuda">
           <p style={{ letterSpacing: '0.2em' }} className="text-[10px] font-semibold text-white mb-6">{content.helpHeading}</p>
           <ul className="space-y-3 text-[11px] font-light">
             <li><Link to="/envios-y-entregas" className="text-stone-400 hover:text-white transition-colors">Envíos y entregas</Link></li>
@@ -138,7 +138,7 @@ export default function Footer() {
           </ul>
         </nav>
 
-        <div>
+        <div id="footer-contact">
           <p style={{ letterSpacing: '0.2em' }} className="text-[10px] font-semibold text-white mb-6">{content.contactHeading}</p>
           <ul className="space-y-3 text-[11px] font-light">
             <li className="text-stone-400">Email: <a href={`mailto:${settings.contactEmail}`} className="hover:text-white transition-colors">{settings.contactEmail}</a></li>

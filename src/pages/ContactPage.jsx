@@ -151,9 +151,9 @@ export default function ContactPage() {
         </div>
       </section>
 
-      <section className="w-full py-10 md:py-16 px-6 md:px-12 lg:px-16">
+      <section id="contact-page-content" className="w-full py-10 md:py-16 px-6 md:px-12 lg:px-16">
         <div className="max-w-[1400px] mx-auto grid grid-cols-1 lg:grid-cols-5 gap-16 lg:gap-24">
-          <aside className="lg:col-span-2 flex flex-col gap-10">
+          <aside id="contact-info" className="lg:col-span-2 flex flex-col gap-10">
             <div>
               <p className="text-[9px] font-bold tracking-[0.3em] uppercase text-stone-400 mb-6">{content.informationHeading}</p>
               <div className="flex flex-col gap-8">
@@ -193,7 +193,7 @@ export default function ContactPage() {
               </div>
             </div>
             <div className="h-[1px] w-full bg-stone-100" />
-            <div>
+            <div id="contact-response-time">
               <p className="text-[9px] font-bold tracking-[0.3em] uppercase text-stone-400 mb-3">{content.responseTimeHeading}</p>
               <p className="text-[12px] text-stone-500 leading-relaxed">
                 {settings.responseTime}
@@ -201,7 +201,7 @@ export default function ContactPage() {
             </div>
           </aside>
 
-          <div className="lg:col-span-3">
+          <div id="contact-form" className="lg:col-span-3">
             <p className="text-[9px] font-bold tracking-[0.3em] uppercase text-stone-400 mb-10">
               {content.formHeading}
             </p>
