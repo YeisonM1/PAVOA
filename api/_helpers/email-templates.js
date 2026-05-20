@@ -1,6 +1,6 @@
 ﻿const APP_URL = process.env.VITE_APP_URL || "https://pavoa.vercel.app";
 const LOGO_URL = `${APP_URL}/logo-pavoa.png`;
-const ICON_URL = `${APP_URL}/favicon.svg`;
+const MARK_URL = `${APP_URL}/pavoa-mark.png`;
 const EMAIL_FONT_LINK = "https://fonts.googleapis.com/css2?family=Raleway:wght@300;400;500;600;700&family=Montserrat:wght@300;400;500;600;700&display=swap";
 const EMAIL_FONT_PRIMARY = "'Raleway', 'Helvetica Neue', Helvetica, Arial, sans-serif";
 const EMAIL_FONT_SECONDARY = "'Montserrat', 'Helvetica Neue', Helvetica, Arial, sans-serif";
@@ -74,18 +74,10 @@ const renderBrandLockup = () => `
   <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 auto;">
     <tr>
       <td style="padding:0 12px 0 0;vertical-align:middle;">
-        <table role="presentation" cellpadding="0" cellspacing="0" style="background-color:${EMAIL_COLOR_BLACK};border-radius:999px;">
-          <tr>
-            <td style="width:42px;height:42px;padding:0;text-align:center;vertical-align:middle;">
-              <img src="${ICON_URL}" alt="" width="20" style="display:block;margin:0 auto;height:auto;">
-            </td>
-          </tr>
-        </table>
+        <img src="${MARK_URL}" alt="" width="28" style="display:block;width:28px;height:auto;">
       </td>
       <td style="vertical-align:middle;">
-        <span style="display:block;font-size:28px;line-height:1;font-weight:500;letter-spacing:0.28em;color:${EMAIL_COLOR_BLACK};font-family:${EMAIL_FONT_PRIMARY};text-transform:uppercase;">
-          PAVOA
-        </span>
+        <img src="${LOGO_URL}" alt="PAVOA" width="210" style="display:block;width:210px;max-width:100%;height:auto;">
       </td>
     </tr>
   </table>
