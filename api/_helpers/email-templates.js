@@ -50,7 +50,7 @@ const renderRow = (label, value, options = {}) => `
 const renderSection = (title, content) => `
   <tr>
     <td style="padding:28px 40px 0;font-family:${EMAIL_FONT_PRIMARY};">
-      <div style="border-top:1px solid ${EMAIL_COLOR_GOLD_SOFT};padding-top:24px;">
+      <div style="border-top:1px solid ${EMAIL_COLOR_BORDER};padding-top:24px;">
         <p style="margin:0 0 14px;font-size:11px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:${EMAIL_COLOR_MUTED};font-family:${EMAIL_FONT_SECONDARY};">
           ${escapeHtml(title)}
         </p>
@@ -61,7 +61,7 @@ const renderSection = (title, content) => `
 `;
 
 const renderInfoCard = (content) => `
-  <table width="100%" cellpadding="0" cellspacing="0" style="border:1px solid ${EMAIL_COLOR_GOLD_SOFT};background-color:${EMAIL_COLOR_IVORY};border-radius:16px;font-family:${EMAIL_FONT_PRIMARY};">
+  <table width="100%" cellpadding="0" cellspacing="0" style="border:1px solid ${EMAIL_COLOR_BORDER};background-color:${EMAIL_COLOR_IVORY};border-radius:16px;font-family:${EMAIL_FONT_PRIMARY};">
     <tr>
       <td style="padding:20px 22px;">
         ${content}
@@ -74,7 +74,7 @@ const renderBrandLockup = () => `
   <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 auto;">
     <tr>
       <td style="vertical-align:middle;">
-        <img src="${LOGO_URL}" alt="PAVOA" width="178" style="display:block;width:178px;max-width:100%;height:auto;">
+        <img src="${LOGO_URL}" alt="PAVOA" width="164" style="display:block;width:164px;max-width:100%;height:auto;">
       </td>
       <td style="padding:0 0 0 8px;vertical-align:middle;">
         <img src="${MARK_URL}" alt="" width="22" style="display:block;width:22px;height:auto;">
@@ -108,12 +108,12 @@ const renderLayout = ({
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:${EMAIL_COLOR_BG};padding:32px 16px;">
       <tr>
         <td align="center">
-          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:620px;background-color:${EMAIL_COLOR_IVORY};border:1px solid ${EMAIL_COLOR_GOLD};padding:10px;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:620px;background-color:${EMAIL_COLOR_IVORY};border:1px solid ${EMAIL_COLOR_BORDER};padding:10px;">
             <tr>
-              <td style="border:1px solid ${EMAIL_COLOR_GOLD_SOFT};background-color:#ffffff;">
+              <td style="border:1px solid ${EMAIL_COLOR_BORDER};background-color:#ffffff;">
                 <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
                   <tr>
-                    <td align="center" style="padding:30px 32px 26px;background-color:${EMAIL_COLOR_IVORY};border-bottom:1px solid ${EMAIL_COLOR_GOLD_SOFT};">
+                    <td align="center" style="padding:30px 32px 26px;background-color:${EMAIL_COLOR_IVORY};border-bottom:1px solid ${EMAIL_COLOR_BORDER};">
                       ${renderBrandLockup()}
                     </td>
                   </tr>
@@ -134,7 +134,7 @@ const renderLayout = ({
 
                   ${primaryCta ? `
                   <tr>
-                    <td style="padding:28px 40px 0;background-color:${EMAIL_COLOR_BG};">
+                    <td style="padding:28px 40px 30px;background-color:${EMAIL_COLOR_BG};">
                       ${renderButton(primaryCta.href, primaryCta.label)}
                     </td>
                   </tr>` : ""}
@@ -143,7 +143,7 @@ const renderLayout = ({
 
                   <tr>
                     <td style="padding:32px 40px 40px;background-color:#ffffff;">
-                      <div style="border-top:1px solid ${EMAIL_COLOR_GOLD_SOFT};padding-top:24px;">
+                      <div style="border-top:1px solid ${EMAIL_COLOR_BORDER};padding-top:24px;">
                         <p style="margin:0;font-size:12px;line-height:1.7;color:${EMAIL_COLOR_MUTED};font-family:${EMAIL_FONT_PRIMARY};">
                           ${footerNote}
                         </p>

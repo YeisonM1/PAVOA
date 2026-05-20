@@ -51,7 +51,7 @@ const renderBrandLockup = () => `
   <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 auto;">
     <tr>
       <td style="vertical-align:middle;">
-        <img src="${LOGO_URL}" alt="PAVOA" width="178" style="display:block;width:178px;max-width:100%;height:auto;">
+        <img src="${LOGO_URL}" alt="PAVOA" width="164" style="display:block;width:164px;max-width:100%;height:auto;">
       </td>
       <td style="padding:0 0 0 8px;vertical-align:middle;">
         <img src="${MARK_URL}" alt="" width="22" style="display:block;width:22px;height:auto;">
@@ -393,9 +393,9 @@ export default async function handler(req, res) {
       to: ['gyeison184@gmail.com'],
       subject: `Nuevo mensaje - ${safeAsunto}`,
       html: renderEmailDocument(`
-          <div style="font-family:${EMAIL_FONT_PRIMARY};max-width:620px;margin:0 auto;background:${EMAIL_COLOR_IVORY};border:1px solid ${EMAIL_COLOR_GOLD};padding:10px;">
-            <div style="border:1px solid ${EMAIL_COLOR_GOLD_SOFT};background:#ffffff;">
-            <div style="background:${EMAIL_COLOR_IVORY};padding:30px 40px 26px;text-align:center;border-bottom:1px solid ${EMAIL_COLOR_GOLD_SOFT};">
+          <div style="font-family:${EMAIL_FONT_PRIMARY};max-width:620px;margin:0 auto;background:${EMAIL_COLOR_IVORY};border:1px solid ${EMAIL_COLOR_BORDER};padding:10px;">
+            <div style="border:1px solid ${EMAIL_COLOR_BORDER};background:#ffffff;">
+            <div style="background:${EMAIL_COLOR_IVORY};padding:30px 40px 26px;text-align:center;border-bottom:1px solid ${EMAIL_COLOR_BORDER};">
               ${renderBrandLockup()}
             </div>
 
@@ -411,7 +411,7 @@ export default async function handler(req, res) {
             </div>
 
             <div style="padding:28px 40px 0;">
-              <table style="width:100%;border-collapse:collapse;border:1px solid ${EMAIL_COLOR_GOLD_SOFT};background:${EMAIL_COLOR_IVORY};border-radius:16px;">
+              <table style="width:100%;border-collapse:collapse;border:1px solid ${EMAIL_COLOR_BORDER};background:${EMAIL_COLOR_IVORY};border-radius:16px;">
                 <tr>
                   <td style="padding:16px 18px;border-bottom:1px solid ${EMAIL_COLOR_BORDER};font-size:11px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:${EMAIL_COLOR_MUTED};width:30%;font-family:${EMAIL_FONT_SECONDARY};">Nombre</td>
                   <td style="padding:16px 18px;border-bottom:1px solid ${EMAIL_COLOR_BORDER};font-size:13px;color:${EMAIL_COLOR_BLACK};font-family:${EMAIL_FONT_PRIMARY};">${safeNombre}</td>
@@ -432,7 +432,7 @@ export default async function handler(req, res) {
             </div>
 
             <div style="padding:32px 40px 40px;">
-              <div style="border-top:1px solid ${EMAIL_COLOR_GOLD_SOFT};padding-top:24px;text-align:center;">
+              <div style="border-top:1px solid ${EMAIL_COLOR_BORDER};padding-top:24px;text-align:center;">
               <p style="font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:${EMAIL_COLOR_MUTED};margin:0;font-family:${EMAIL_FONT_SECONDARY};">
                 PAVOA - www.pavoa.com.co
               </p>
@@ -450,9 +450,9 @@ export default async function handler(req, res) {
           to: [contactoEmail],
           subject: 'Recibimos tu mensaje - PAVOA',
           html: renderEmailDocument(`
-            <div style="font-family:${EMAIL_FONT_PRIMARY};max-width:620px;margin:0 auto;background:${EMAIL_COLOR_IVORY};border:1px solid ${EMAIL_COLOR_GOLD};padding:10px;">
-              <div style="border:1px solid ${EMAIL_COLOR_GOLD_SOFT};background:#ffffff;">
-              <div style="background:${EMAIL_COLOR_IVORY};padding:30px 40px 26px;text-align:center;border-bottom:1px solid ${EMAIL_COLOR_GOLD_SOFT};">
+            <div style="font-family:${EMAIL_FONT_PRIMARY};max-width:620px;margin:0 auto;background:${EMAIL_COLOR_IVORY};border:1px solid ${EMAIL_COLOR_BORDER};padding:10px;">
+              <div style="border:1px solid ${EMAIL_COLOR_BORDER};background:#ffffff;">
+              <div style="background:${EMAIL_COLOR_IVORY};padding:30px 40px 26px;text-align:center;border-bottom:1px solid ${EMAIL_COLOR_BORDER};">
                 ${renderBrandLockup()}
               </div>
 
@@ -470,7 +470,7 @@ export default async function handler(req, res) {
                 <p style="font-size:14px;color:${EMAIL_COLOR_CHARCOAL};line-height:1.8;max-width:380px;margin:0 auto 32px;font-family:${EMAIL_FONT_PRIMARY};">
                   Hola <strong style="color:${EMAIL_COLOR_BLACK};">${safeNombre}</strong>, recibimos tu mensaje sobre <em>${safeAsunto}</em>. Te respondemos en un máximo de 24 horas hábiles.
                 </p>
-                <div style="height:1px;background:${EMAIL_COLOR_GOLD_SOFT};margin:0 auto 28px;max-width:420px;"></div>
+                <div style="height:1px;background:${EMAIL_COLOR_BORDER};margin:0 auto 28px;max-width:420px;"></div>
                 <p style="font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:${EMAIL_COLOR_MUTED};font-family:${EMAIL_FONT_SECONDARY};">
                   Mientras tanto, explora nuestra colección
                 </p>
@@ -481,7 +481,7 @@ export default async function handler(req, res) {
               </div>
 
               <div style="padding:0 40px 40px;">
-                <div style="border-top:1px solid ${EMAIL_COLOR_GOLD_SOFT};padding-top:24px;text-align:center;">
+                <div style="border-top:1px solid ${EMAIL_COLOR_BORDER};padding-top:24px;text-align:center;">
                   <p style="font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:${EMAIL_COLOR_MUTED};margin:0;font-family:${EMAIL_FONT_SECONDARY};">
                     PAVOA - www.pavoa.com.co
                   </p>
