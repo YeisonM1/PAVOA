@@ -20,8 +20,8 @@ const escapeHtml = (str) =>
 const EMAIL_FONT_LINK = 'https://fonts.googleapis.com/css2?family=Raleway:wght@300;400;500;600;700&family=Montserrat:wght@300;400;500;600;700&display=swap';
 const EMAIL_FONT_PRIMARY = "'Raleway', 'Helvetica Neue', Helvetica, Arial, sans-serif";
 const EMAIL_FONT_SECONDARY = "'Montserrat', 'Helvetica Neue', Helvetica, Arial, sans-serif";
-const LOGO_URL = `${process.env.VITE_APP_URL || 'https://pavoa.vercel.app'}/logo-pavoa.png`;
-const MARK_URL = `${process.env.VITE_APP_URL || 'https://pavoa.vercel.app'}/pavoa-mark.png`;
+const LOGO_URL = `${process.env.VITE_APP_URL || 'https://www.pavoa.com.co'}/logo-pavoa.png`;
+const MARK_URL = `${process.env.VITE_APP_URL || 'https://www.pavoa.com.co'}/pavoa-mark.png`;
 const EMAIL_COLOR_BG = '#F2E4E1';
 const EMAIL_COLOR_IVORY = '#F6F1EA';
 const EMAIL_COLOR_GOLD = '#DFCDB4';
@@ -395,10 +395,7 @@ export default async function handler(req, res) {
       html: renderEmailDocument(`
           <div style="font-family:${EMAIL_FONT_PRIMARY};max-width:620px;margin:0 auto;background:${EMAIL_COLOR_IVORY};border:1px solid ${EMAIL_COLOR_GOLD};padding:10px;">
             <div style="border:1px solid ${EMAIL_COLOR_GOLD_SOFT};background:#ffffff;">
-            <div style="background:${EMAIL_COLOR_IVORY};padding:18px 40px 0;text-align:center;">
-              <div style="width:100%;height:8px;background:${EMAIL_COLOR_GOLD};border-radius:999px 999px 0 0;"></div>
-            </div>
-            <div style="background:${EMAIL_COLOR_IVORY};padding:26px 40px 24px;text-align:center;border-bottom:1px solid ${EMAIL_COLOR_GOLD_SOFT};">
+            <div style="background:${EMAIL_COLOR_IVORY};padding:30px 40px 26px;text-align:center;border-bottom:1px solid ${EMAIL_COLOR_GOLD_SOFT};">
               ${renderBrandLockup()}
             </div>
 
@@ -407,7 +404,7 @@ export default async function handler(req, res) {
                 Nuevo mensaje de contacto
               </p>
               <h2 style="margin:0 0 16px;font-size:28px;line-height:1.2;font-weight:600;color:${EMAIL_COLOR_BLACK};font-family:${EMAIL_FONT_PRIMARY};">Te escribieron desde la tienda</h2>
-              <div style="width:44px;height:2px;background:${EMAIL_COLOR_GOLD};margin:0 0 20px;"></div>
+              <div style="width:36px;height:1px;background:${EMAIL_COLOR_BORDER};margin:0 0 22px;"></div>
               <p style="margin:0;font-size:14px;line-height:1.8;color:${EMAIL_COLOR_CHARCOAL};font-family:${EMAIL_FONT_PRIMARY};">
                 Recibiste un nuevo mensaje desde el formulario de contacto de PAVOA.
               </p>
@@ -437,7 +434,7 @@ export default async function handler(req, res) {
             <div style="padding:32px 40px 40px;">
               <div style="border-top:1px solid ${EMAIL_COLOR_GOLD_SOFT};padding-top:24px;text-align:center;">
               <p style="font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:${EMAIL_COLOR_MUTED};margin:0;font-family:${EMAIL_FONT_SECONDARY};">
-                PAVOA - pavoa.vercel.app
+                PAVOA - www.pavoa.com.co
               </p>
               </div>
             </div>
@@ -455,10 +452,7 @@ export default async function handler(req, res) {
           html: renderEmailDocument(`
             <div style="font-family:${EMAIL_FONT_PRIMARY};max-width:620px;margin:0 auto;background:${EMAIL_COLOR_IVORY};border:1px solid ${EMAIL_COLOR_GOLD};padding:10px;">
               <div style="border:1px solid ${EMAIL_COLOR_GOLD_SOFT};background:#ffffff;">
-              <div style="background:${EMAIL_COLOR_IVORY};padding:18px 40px 0;text-align:center;">
-                <div style="width:100%;height:8px;background:${EMAIL_COLOR_GOLD};border-radius:999px 999px 0 0;"></div>
-              </div>
-              <div style="background:${EMAIL_COLOR_IVORY};padding:26px 40px 24px;text-align:center;border-bottom:1px solid ${EMAIL_COLOR_GOLD_SOFT};">
+              <div style="background:${EMAIL_COLOR_IVORY};padding:30px 40px 26px;text-align:center;border-bottom:1px solid ${EMAIL_COLOR_GOLD_SOFT};">
                 ${renderBrandLockup()}
               </div>
 
@@ -472,7 +466,7 @@ export default async function handler(req, res) {
                 <h2 style="font-size:26px;font-weight:600;letter-spacing:0.04em;color:${EMAIL_COLOR_BLACK};margin:0 0 16px;font-family:${EMAIL_FONT_PRIMARY};">
                   Mensaje recibido
                 </h2>
-                <div style="width:44px;height:2px;background:${EMAIL_COLOR_GOLD};margin:0 auto 20px;"></div>
+                <div style="width:36px;height:1px;background:${EMAIL_COLOR_BORDER};margin:0 auto 22px;"></div>
                 <p style="font-size:14px;color:${EMAIL_COLOR_CHARCOAL};line-height:1.8;max-width:380px;margin:0 auto 32px;font-family:${EMAIL_FONT_PRIMARY};">
                   Hola <strong style="color:${EMAIL_COLOR_BLACK};">${safeNombre}</strong>, recibimos tu mensaje sobre <em>${safeAsunto}</em>. Te respondemos en un máximo de 24 horas hábiles.
                 </p>
@@ -480,8 +474,8 @@ export default async function handler(req, res) {
                 <p style="font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:${EMAIL_COLOR_MUTED};font-family:${EMAIL_FONT_SECONDARY};">
                   Mientras tanto, explora nuestra colección
                 </p>
-                <a href="https://pavoa.vercel.app/categoria"
-                  style="display:inline-block;margin-top:16px;padding:15px 28px;background:${EMAIL_COLOR_BLACK};color:#ffffff;font-size:10px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;text-decoration:none;border-radius:999px;font-family:${EMAIL_FONT_SECONDARY};">
+                <a href="https://www.pavoa.com.co/categoria"
+                  style="display:inline-block;min-width:232px;margin-top:16px;padding:17px 34px;background:${EMAIL_COLOR_BLACK};color:#ffffff;font-size:10px;font-weight:700;letter-spacing:0.28em;text-transform:uppercase;text-align:center;text-decoration:none;border-radius:3px;font-family:${EMAIL_FONT_SECONDARY};border:1px solid ${EMAIL_COLOR_BLACK};">
                   Ver colección
                 </a>
               </div>
@@ -489,7 +483,7 @@ export default async function handler(req, res) {
               <div style="padding:0 40px 40px;">
                 <div style="border-top:1px solid ${EMAIL_COLOR_GOLD_SOFT};padding-top:24px;text-align:center;">
                   <p style="font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:${EMAIL_COLOR_MUTED};margin:0;font-family:${EMAIL_FONT_SECONDARY};">
-                    PAVOA - pavoa.vercel.app
+                    PAVOA - www.pavoa.com.co
                   </p>
                 </div>
               </div>

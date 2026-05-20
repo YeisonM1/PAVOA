@@ -1,6 +1,6 @@
 ﻿import { Helmet } from 'react-helmet-async'
 
-const SITE_URL = (import.meta.env.VITE_APP_URL || 'https://pavoa.vercel.app').replace(/\/$/, '')
+const SITE_URL = (import.meta.env.VITE_APP_URL || 'https://www.pavoa.com.co').replace(/\/$/, '')
 const DEFAULT_DESCRIPTION = 'Ropa deportiva femenina premium de diseño. Piezas de edición limitada para moverte con elegancia, rendimiento y presencia.'
 const DEFAULT_OG_IMAGE = `${SITE_URL}/og-image.jpg`
 

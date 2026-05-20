@@ -1,4 +1,4 @@
-﻿const APP_URL = process.env.VITE_APP_URL || "https://pavoa.vercel.app";
+﻿const APP_URL = process.env.VITE_APP_URL || "https://www.pavoa.com.co";
 const LOGO_URL = `${APP_URL}/logo-pavoa.png`;
 const MARK_URL = `${APP_URL}/pavoa-mark.png`;
 const EMAIL_FONT_LINK = "https://fonts.googleapis.com/css2?family=Raleway:wght@300;400;500;600;700&family=Montserrat:wght@300;400;500;600;700&display=swap";
@@ -31,7 +31,7 @@ const formatVariantLabel = (value) => {
 
 const renderButton = (href, label) => `
   <a href="${href}"
-    style="display:inline-block;background-color:${EMAIL_COLOR_BLACK};color:#ffffff;text-decoration:none;font-size:12px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;padding:15px 28px;border-radius:999px;font-family:${EMAIL_FONT_SECONDARY};border:1px solid ${EMAIL_COLOR_BLACK};">
+    style="display:inline-block;min-width:232px;background-color:${EMAIL_COLOR_BLACK};color:#ffffff;text-decoration:none;text-align:center;font-size:10px;font-weight:700;letter-spacing:0.28em;text-transform:uppercase;padding:17px 34px;border-radius:3px;font-family:${EMAIL_FONT_SECONDARY};border:1px solid ${EMAIL_COLOR_BLACK};">
     ${escapeHtml(label)}
   </a>
 `;
@@ -113,12 +113,7 @@ const renderLayout = ({
               <td style="border:1px solid ${EMAIL_COLOR_GOLD_SOFT};background-color:#ffffff;">
                 <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
                   <tr>
-                    <td align="center" style="padding:18px 32px 0;background-color:${EMAIL_COLOR_IVORY};">
-                      <div style="width:100%;height:8px;background-color:${EMAIL_COLOR_GOLD};border-radius:999px 999px 0 0;"></div>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td align="center" style="padding:26px 32px 24px;background-color:${EMAIL_COLOR_IVORY};border-bottom:1px solid ${EMAIL_COLOR_GOLD_SOFT};">
+                    <td align="center" style="padding:30px 32px 26px;background-color:${EMAIL_COLOR_IVORY};border-bottom:1px solid ${EMAIL_COLOR_GOLD_SOFT};">
                       ${renderBrandLockup()}
                     </td>
                   </tr>
@@ -130,7 +125,7 @@ const renderLayout = ({
                       <h1 style="margin:0 0 16px;font-size:30px;line-height:1.15;font-weight:600;color:${EMAIL_COLOR_BLACK};font-family:${EMAIL_FONT_PRIMARY};">
                         ${escapeHtml(title)}
                       </h1>
-                      <div style="width:44px;height:2px;background-color:${EMAIL_COLOR_GOLD};margin:0 0 20px;"></div>
+                      <div style="width:36px;height:1px;background-color:${EMAIL_COLOR_BORDER};margin:0 0 22px;"></div>
                       <p style="margin:0;font-size:15px;line-height:1.8;color:${EMAIL_COLOR_CHARCOAL};font-family:${EMAIL_FONT_PRIMARY};">
                         ${body}
                       </p>

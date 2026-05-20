@@ -9,7 +9,7 @@ const supabase = createClient(
   process.env.VITE_SUPABASE_ANON_KEY,
 );
 
-const APP_URL = process.env.VITE_APP_URL || 'https://pavoa.vercel.app';
+const APP_URL = process.env.VITE_APP_URL || 'https://www.pavoa.com.co';
 
 const _registerAttempts = new Map();
 const REG_LIMIT = 5;

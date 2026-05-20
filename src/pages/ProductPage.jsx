@@ -17,6 +17,8 @@ import ProductVariantSelector from '../components/product/ProductVariantSelector
 import ProductAccordion from '../components/product/ProductAccordion';
 import StickyAddBar from '../components/product/StickyAddBar';
 
+const SITE_URL = (import.meta.env.VITE_APP_URL || 'https://www.pavoa.com.co').replace(/\/$/, '');
+
 export default function ProductPage() {
   const { id } = useParams();
   const { addToCart } = useContext(CartContext);
@@ -275,10 +277,10 @@ export default function ProductPage() {
   const productJsonLd = {
     '@context': 'https://schema.org', '@type': 'Product',
     name: producto.nombre, description: producto.descripcion, image: producto.imagen1,
-    url: `https://pavoa.vercel.app/producto/${id}`,
+    url: `${SITE_URL}/producto/${id}`,
     brand: { '@type': 'Brand', name: 'PAVOA' },
     offers: {
-      '@type': 'Offer', url: `https://pavoa.vercel.app/producto/${id}`, priceCurrency: 'COP',
+      '@type': 'Offer', url: `${SITE_URL}/producto/${id}`, priceCurrency: 'COP',
       price: producto.precioNumerico,
       availability: variantes.some(v => (v.stock ?? 0) > 0) ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
       seller: { '@type': 'Organization', name: 'PAVOA' },
@@ -288,10 +290,10 @@ export default function ProductPage() {
   const breadcrumbJsonLd = {
     '@context': 'https://schema.org', '@type': 'BreadcrumbList',
     itemListElement: [
-      { '@type': 'ListItem', position: 1, name: 'Inicio', item: 'https://pavoa.vercel.app/' },
-      { '@type': 'ListItem', position: 2, name: 'Catálogo', item: 'https://pavoa.vercel.app/categoria' },
-      ...(producto.categoria ? [{ '@type': 'ListItem', position: 3, name: producto.categoria, item: `https://pavoa.vercel.app/categoria/${producto.categoria.toLowerCase()}` }] : []),
-      { '@type': 'ListItem', position: producto.categoria ? 4 : 3, name: producto.nombre, item: `https://pavoa.vercel.app/producto/${id}` },
+      { '@type': 'ListItem', position: 1, name: 'Inicio', item: `${SITE_URL}/` },
+      { '@type': 'ListItem', position: 2, name: 'Catálogo', item: `${SITE_URL}/categoria` },
+      ...(producto.categoria ? [{ '@type': 'ListItem', position: 3, name: producto.categoria, item: `${SITE_URL}/categoria/${producto.categoria.toLowerCase()}` }] : []),
+      { '@type': 'ListItem', position: producto.categoria ? 4 : 3, name: producto.nombre, item: `${SITE_URL}/producto/${id}` },
     ],
   };
 
