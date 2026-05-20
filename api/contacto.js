@@ -20,6 +20,7 @@ const escapeHtml = (str) =>
 const EMAIL_FONT_LINK = 'https://fonts.googleapis.com/css2?family=Raleway:wght@300;400;500;600;700&family=Montserrat:wght@300;400;500;600;700&display=swap';
 const EMAIL_FONT_PRIMARY = "'Raleway', 'Helvetica Neue', Helvetica, Arial, sans-serif";
 const EMAIL_FONT_SECONDARY = "'Montserrat', 'Helvetica Neue', Helvetica, Arial, sans-serif";
+const ICON_URL = `${process.env.VITE_APP_URL || 'https://pavoa.vercel.app'}/favicon.svg`;
 const EMAIL_COLOR_BG = '#F2E4E1';
 const EMAIL_COLOR_IVORY = '#F6F1EA';
 const EMAIL_COLOR_GOLD = '#DFCDB4';
@@ -43,6 +44,27 @@ const renderEmailDocument = (content) => `
       ${content}
     </body>
   </html>
+`;
+
+const renderBrandLockup = () => `
+  <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 auto;">
+    <tr>
+      <td style="padding:0 12px 0 0;vertical-align:middle;">
+        <table role="presentation" cellpadding="0" cellspacing="0" style="background-color:${EMAIL_COLOR_BLACK};border-radius:999px;">
+          <tr>
+            <td style="width:42px;height:42px;padding:0;text-align:center;vertical-align:middle;">
+              <img src="${ICON_URL}" alt="" width="20" style="display:block;margin:0 auto;height:auto;">
+            </td>
+          </tr>
+        </table>
+      </td>
+      <td style="vertical-align:middle;">
+        <span style="display:block;font-size:28px;line-height:1;font-weight:500;letter-spacing:0.28em;color:${EMAIL_COLOR_BLACK};font-family:${EMAIL_FONT_PRIMARY};text-transform:uppercase;">
+          PAVOA
+        </span>
+      </td>
+    </tr>
+  </table>
 `;
 
 const isValidEmail = (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value || '').trim());
@@ -378,12 +400,13 @@ export default async function handler(req, res) {
       to: ['gyeison184@gmail.com'],
       subject: `Nuevo mensaje - ${safeAsunto}`,
       html: renderEmailDocument(`
-          <div style="font-family:${EMAIL_FONT_PRIMARY};max-width:600px;margin:0 auto;background:#ffffff;border:1px solid ${EMAIL_COLOR_BORDER};border-radius:22px;overflow:hidden;">
+          <div style="font-family:${EMAIL_FONT_PRIMARY};max-width:620px;margin:0 auto;background:${EMAIL_COLOR_IVORY};border:1px solid ${EMAIL_COLOR_GOLD};padding:10px;">
+            <div style="border:1px solid ${EMAIL_COLOR_GOLD_SOFT};background:#ffffff;">
             <div style="background:${EMAIL_COLOR_IVORY};padding:18px 40px 0;text-align:center;">
               <div style="width:100%;height:8px;background:${EMAIL_COLOR_GOLD};border-radius:999px 999px 0 0;"></div>
             </div>
-            <div style="background:${EMAIL_COLOR_IVORY};padding:28px 40px 24px;text-align:center;border-bottom:1px solid ${EMAIL_COLOR_GOLD_SOFT};">
-              <h1 style="color:${EMAIL_COLOR_BLACK};font-size:28px;font-weight:300;letter-spacing:0.3em;margin:0;font-family:${EMAIL_FONT_PRIMARY};">PAVOA</h1>
+            <div style="background:${EMAIL_COLOR_IVORY};padding:26px 40px 24px;text-align:center;border-bottom:1px solid ${EMAIL_COLOR_GOLD_SOFT};">
+              ${renderBrandLockup()}
             </div>
 
             <div style="padding:36px 40px 10px;background:${EMAIL_COLOR_BG};">
@@ -425,6 +448,7 @@ export default async function handler(req, res) {
               </p>
               </div>
             </div>
+            </div>
           </div>
         `),
     });
@@ -436,12 +460,13 @@ export default async function handler(req, res) {
           to: [contactoEmail],
           subject: 'Recibimos tu mensaje - PAVOA',
           html: renderEmailDocument(`
-            <div style="font-family:${EMAIL_FONT_PRIMARY};max-width:600px;margin:0 auto;background:#ffffff;border:1px solid ${EMAIL_COLOR_BORDER};border-radius:22px;overflow:hidden;">
+            <div style="font-family:${EMAIL_FONT_PRIMARY};max-width:620px;margin:0 auto;background:${EMAIL_COLOR_IVORY};border:1px solid ${EMAIL_COLOR_GOLD};padding:10px;">
+              <div style="border:1px solid ${EMAIL_COLOR_GOLD_SOFT};background:#ffffff;">
               <div style="background:${EMAIL_COLOR_IVORY};padding:18px 40px 0;text-align:center;">
                 <div style="width:100%;height:8px;background:${EMAIL_COLOR_GOLD};border-radius:999px 999px 0 0;"></div>
               </div>
-              <div style="background:${EMAIL_COLOR_IVORY};padding:28px 40px 24px;text-align:center;border-bottom:1px solid ${EMAIL_COLOR_GOLD_SOFT};">
-                <h1 style="color:${EMAIL_COLOR_BLACK};font-size:28px;font-weight:300;letter-spacing:0.3em;margin:0;font-family:${EMAIL_FONT_PRIMARY};">PAVOA</h1>
+              <div style="background:${EMAIL_COLOR_IVORY};padding:26px 40px 24px;text-align:center;border-bottom:1px solid ${EMAIL_COLOR_GOLD_SOFT};">
+                ${renderBrandLockup()}
               </div>
 
               <div style="padding:40px;background:${EMAIL_COLOR_BG};text-align:center;">
@@ -474,6 +499,7 @@ export default async function handler(req, res) {
                     PAVOA - pavoa.vercel.app
                   </p>
                 </div>
+              </div>
               </div>
             </div>
           `),

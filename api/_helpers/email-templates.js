@@ -1,5 +1,6 @@
 ﻿const APP_URL = process.env.VITE_APP_URL || "https://pavoa.vercel.app";
 const LOGO_URL = `${APP_URL}/logo-pavoa.png`;
+const ICON_URL = `${APP_URL}/favicon.svg`;
 const EMAIL_FONT_LINK = "https://fonts.googleapis.com/css2?family=Raleway:wght@300;400;500;600;700&family=Montserrat:wght@300;400;500;600;700&display=swap";
 const EMAIL_FONT_PRIMARY = "'Raleway', 'Helvetica Neue', Helvetica, Arial, sans-serif";
 const EMAIL_FONT_SECONDARY = "'Montserrat', 'Helvetica Neue', Helvetica, Arial, sans-serif";
@@ -69,6 +70,27 @@ const renderInfoCard = (content) => `
   </table>
 `;
 
+const renderBrandLockup = () => `
+  <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 auto;">
+    <tr>
+      <td style="padding:0 12px 0 0;vertical-align:middle;">
+        <table role="presentation" cellpadding="0" cellspacing="0" style="background-color:${EMAIL_COLOR_BLACK};border-radius:999px;">
+          <tr>
+            <td style="width:42px;height:42px;padding:0;text-align:center;vertical-align:middle;">
+              <img src="${ICON_URL}" alt="" width="20" style="display:block;margin:0 auto;height:auto;">
+            </td>
+          </tr>
+        </table>
+      </td>
+      <td style="vertical-align:middle;">
+        <span style="display:block;font-size:28px;line-height:1;font-weight:500;letter-spacing:0.28em;color:${EMAIL_COLOR_BLACK};font-family:${EMAIL_FONT_PRIMARY};text-transform:uppercase;">
+          PAVOA
+        </span>
+      </td>
+    </tr>
+  </table>
+`;
+
 const renderLayout = ({
   preheader,
   eyebrow,
@@ -94,52 +116,57 @@ const renderLayout = ({
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:${EMAIL_COLOR_BG};padding:32px 16px;">
       <tr>
         <td align="center">
-          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;background-color:#ffffff;border:1px solid ${EMAIL_COLOR_BORDER};border-radius:22px;overflow:hidden;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:620px;background-color:${EMAIL_COLOR_IVORY};border:1px solid ${EMAIL_COLOR_GOLD};padding:10px;">
             <tr>
-              <td align="center" style="padding:18px 32px 0;background-color:${EMAIL_COLOR_IVORY};">
-                <div style="width:100%;height:8px;background-color:${EMAIL_COLOR_GOLD};border-radius:999px 999px 0 0;"></div>
-              </td>
-            </tr>
-            <tr>
-              <td align="center" style="padding:28px 32px 24px;background-color:${EMAIL_COLOR_IVORY};border-bottom:1px solid ${EMAIL_COLOR_GOLD_SOFT};">
-                <img src="${LOGO_URL}" alt="PAVOA" width="118" style="display:block;height:auto;max-height:48px;object-fit:contain;">
-              </td>
-            </tr>
+              <td style="border:1px solid ${EMAIL_COLOR_GOLD_SOFT};background-color:#ffffff;">
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                  <tr>
+                    <td align="center" style="padding:18px 32px 0;background-color:${EMAIL_COLOR_IVORY};">
+                      <div style="width:100%;height:8px;background-color:${EMAIL_COLOR_GOLD};border-radius:999px 999px 0 0;"></div>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td align="center" style="padding:26px 32px 24px;background-color:${EMAIL_COLOR_IVORY};border-bottom:1px solid ${EMAIL_COLOR_GOLD_SOFT};">
+                      ${renderBrandLockup()}
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="padding:36px 40px 10px;background-color:${EMAIL_COLOR_BG};">
+                      <p style="margin:0 0 12px;font-size:11px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:${EMAIL_COLOR_MUTED_SOFT};font-family:${EMAIL_FONT_SECONDARY};">
+                        ${escapeHtml(eyebrow)}
+                      </p>
+                      <h1 style="margin:0 0 16px;font-size:30px;line-height:1.15;font-weight:600;color:${EMAIL_COLOR_BLACK};font-family:${EMAIL_FONT_PRIMARY};">
+                        ${escapeHtml(title)}
+                      </h1>
+                      <div style="width:44px;height:2px;background-color:${EMAIL_COLOR_GOLD};margin:0 0 20px;"></div>
+                      <p style="margin:0;font-size:15px;line-height:1.8;color:${EMAIL_COLOR_CHARCOAL};font-family:${EMAIL_FONT_PRIMARY};">
+                        ${body}
+                      </p>
+                    </td>
+                  </tr>
 
-            <tr>
-              <td style="padding:36px 40px 10px;background-color:${EMAIL_COLOR_BG};">
-                <p style="margin:0 0 12px;font-size:11px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:${EMAIL_COLOR_MUTED_SOFT};font-family:${EMAIL_FONT_SECONDARY};">
-                  ${escapeHtml(eyebrow)}
-                </p>
-                <h1 style="margin:0 0 16px;font-size:30px;line-height:1.15;font-weight:600;color:${EMAIL_COLOR_BLACK};font-family:${EMAIL_FONT_PRIMARY};">
-                  ${escapeHtml(title)}
-                </h1>
-                <div style="width:44px;height:2px;background-color:${EMAIL_COLOR_GOLD};margin:0 0 20px;"></div>
-                <p style="margin:0;font-size:15px;line-height:1.8;color:${EMAIL_COLOR_CHARCOAL};font-family:${EMAIL_FONT_PRIMARY};">
-                  ${body}
-                </p>
-              </td>
-            </tr>
+                  ${primaryCta ? `
+                  <tr>
+                    <td style="padding:28px 40px 0;background-color:${EMAIL_COLOR_BG};">
+                      ${renderButton(primaryCta.href, primaryCta.label)}
+                    </td>
+                  </tr>` : ""}
 
-            ${primaryCta ? `
-            <tr>
-              <td style="padding:28px 40px 0;">
-                ${renderButton(primaryCta.href, primaryCta.label)}
-              </td>
-            </tr>` : ""}
+                  ${afterHero}
 
-            ${afterHero}
-
-            <tr>
-              <td style="padding:32px 40px 40px;">
-                <div style="border-top:1px solid ${EMAIL_COLOR_GOLD_SOFT};padding-top:24px;">
-                  <p style="margin:0;font-size:12px;line-height:1.7;color:${EMAIL_COLOR_MUTED};font-family:${EMAIL_FONT_PRIMARY};">
-                    ${footerNote}
-                  </p>
-                  <p style="margin:18px 0 0;font-size:10px;letter-spacing:0.22em;text-transform:uppercase;color:${EMAIL_COLOR_MUTED_SOFT};font-family:${EMAIL_FONT_SECONDARY};">
-                    PAVOA
-                  </p>
-                </div>
+                  <tr>
+                    <td style="padding:32px 40px 40px;background-color:#ffffff;">
+                      <div style="border-top:1px solid ${EMAIL_COLOR_GOLD_SOFT};padding-top:24px;">
+                        <p style="margin:0;font-size:12px;line-height:1.7;color:${EMAIL_COLOR_MUTED};font-family:${EMAIL_FONT_PRIMARY};">
+                          ${footerNote}
+                        </p>
+                        <p style="margin:18px 0 0;font-size:10px;letter-spacing:0.22em;text-transform:uppercase;color:${EMAIL_COLOR_MUTED_SOFT};font-family:${EMAIL_FONT_SECONDARY};">
+                          PAVOA
+                        </p>
+                      </div>
+                    </td>
+                  </tr>
+                </table>
               </td>
             </tr>
           </table>
