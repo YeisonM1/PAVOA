@@ -73,11 +73,11 @@ const renderInfoCard = (content) => `
 const renderBrandLockup = () => `
   <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 auto;">
     <tr>
-      <td style="padding:0 12px 0 0;vertical-align:middle;">
-        <img src="${MARK_URL}" alt="" width="28" style="display:block;width:28px;height:auto;">
-      </td>
       <td style="vertical-align:middle;">
-        <img src="${LOGO_URL}" alt="PAVOA" width="210" style="display:block;width:210px;max-width:100%;height:auto;">
+        <img src="${LOGO_URL}" alt="PAVOA" width="178" style="display:block;width:178px;max-width:100%;height:auto;">
+      </td>
+      <td style="padding:0 0 0 8px;vertical-align:middle;">
+        <img src="${MARK_URL}" alt="" width="22" style="display:block;width:22px;height:auto;">
       </td>
     </tr>
   </table>
