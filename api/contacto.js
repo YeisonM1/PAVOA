@@ -17,6 +17,26 @@ const escapeHtml = (str) =>
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
 
+const EMAIL_FONT_LINK = 'https://fonts.googleapis.com/css2?family=Raleway:wght@300;400;500;600;700&family=Montserrat:wght@300;400;500;600;700&display=swap';
+const EMAIL_FONT_PRIMARY = "'Raleway', 'Helvetica Neue', Helvetica, Arial, sans-serif";
+const EMAIL_FONT_SECONDARY = "'Montserrat', 'Helvetica Neue', Helvetica, Arial, sans-serif";
+
+const renderEmailDocument = (content) => `
+  <!DOCTYPE html>
+  <html lang="es">
+    <head>
+      <meta charset="utf-8">
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <link href="${EMAIL_FONT_LINK}" rel="stylesheet">
+      <title>PAVOA</title>
+    </head>
+    <body style="margin:0;padding:24px 0;background:#f5f4f1;font-family:${EMAIL_FONT_PRIMARY};color:#0e0e0e;">
+      ${content}
+    </body>
+  </html>
+`;
+
 const isValidEmail = (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value || '').trim());
 
 const normalizeOptional = (value) => {
@@ -349,44 +369,44 @@ export default async function handler(req, res) {
       from: 'PAVOA Contacto <onboarding@resend.dev>',
       to: ['gyeison184@gmail.com'],
       subject: `Nuevo mensaje - ${safeAsunto}`,
-      html: `
-          <div style="font-family: 'Helvetica Neue', sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff;">
+      html: renderEmailDocument(`
+          <div style="font-family:${EMAIL_FONT_PRIMARY};max-width:600px;margin:0 auto;background:#ffffff;border:1px solid #eee7dd;">
             <div style="background: #0e0e0e; padding: 32px 40px; text-align: center;">
-              <h1 style="color: #ffffff; font-size: 28px; font-weight: 300; letter-spacing: 0.3em; margin: 0;">PAVOA</h1>
+              <h1 style="color:#ffffff;font-size:28px;font-weight:300;letter-spacing:0.3em;margin:0;font-family:${EMAIL_FONT_PRIMARY};">PAVOA</h1>
             </div>
 
             <div style="padding: 40px;">
-              <p style="font-size: 11px; font-weight: 600; letter-spacing: 0.25em; text-transform: uppercase; color: #888; margin-bottom: 24px;">
+              <p style="font-size:11px;font-weight:600;letter-spacing:0.25em;text-transform:uppercase;color:#888;margin-bottom:24px;font-family:${EMAIL_FONT_SECONDARY};">
                 Nuevo mensaje de contacto
               </p>
 
               <table style="width: 100%; border-collapse: collapse;">
                 <tr>
-                  <td style="padding: 14px 0; border-bottom: 1px solid #f0f0f0; font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: #888; width: 30%;">Nombre</td>
-                  <td style="padding: 14px 0; border-bottom: 1px solid #f0f0f0; font-size: 13px; color: #0e0e0e;">${safeNombre}</td>
+                  <td style="padding:14px 0;border-bottom:1px solid #f0f0f0;font-size:11px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:#888;width:30%;font-family:${EMAIL_FONT_SECONDARY};">Nombre</td>
+                  <td style="padding:14px 0;border-bottom:1px solid #f0f0f0;font-size:13px;color:#0e0e0e;font-family:${EMAIL_FONT_PRIMARY};">${safeNombre}</td>
                 </tr>
                 <tr>
-                  <td style="padding: 14px 0; border-bottom: 1px solid #f0f0f0; font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: #888;">Contacto</td>
-                  <td style="padding: 14px 0; border-bottom: 1px solid #f0f0f0; font-size: 13px; color: #0e0e0e;">${safeContacto}</td>
+                  <td style="padding:14px 0;border-bottom:1px solid #f0f0f0;font-size:11px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:#888;font-family:${EMAIL_FONT_SECONDARY};">Contacto</td>
+                  <td style="padding:14px 0;border-bottom:1px solid #f0f0f0;font-size:13px;color:#0e0e0e;font-family:${EMAIL_FONT_PRIMARY};">${safeContacto}</td>
                 </tr>
                 <tr>
-                  <td style="padding: 14px 0; border-bottom: 1px solid #f0f0f0; font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: #888;">Asunto</td>
-                  <td style="padding: 14px 0; border-bottom: 1px solid #f0f0f0; font-size: 13px; color: #0e0e0e;">${safeAsunto}</td>
+                  <td style="padding:14px 0;border-bottom:1px solid #f0f0f0;font-size:11px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:#888;font-family:${EMAIL_FONT_SECONDARY};">Asunto</td>
+                  <td style="padding:14px 0;border-bottom:1px solid #f0f0f0;font-size:13px;color:#0e0e0e;font-family:${EMAIL_FONT_PRIMARY};">${safeAsunto}</td>
                 </tr>
                 <tr>
-                  <td style="padding: 14px 0; font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: #888; vertical-align: top;">Mensaje</td>
-                  <td style="padding: 14px 0; font-size: 13px; color: #0e0e0e; line-height: 1.7;">${safeMensaje}</td>
+                  <td style="padding:14px 0;font-size:11px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:#888;vertical-align:top;font-family:${EMAIL_FONT_SECONDARY};">Mensaje</td>
+                  <td style="padding:14px 0;font-size:13px;color:#0e0e0e;line-height:1.7;font-family:${EMAIL_FONT_PRIMARY};">${safeMensaje}</td>
                 </tr>
               </table>
             </div>
 
             <div style="background: #f5f4f1; padding: 20px 40px; text-align: center;">
-              <p style="font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: #888; margin: 0;">
+              <p style="font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:#888;margin:0;font-family:${EMAIL_FONT_SECONDARY};">
                 PAVOA - pavoa.vercel.app
               </p>
             </div>
           </div>
-        `,
+        `),
     });
 
     if (contactoEmail) {
@@ -395,39 +415,39 @@ export default async function handler(req, res) {
           from: 'PAVOA <onboarding@resend.dev>',
           to: [contactoEmail],
           subject: 'Recibimos tu mensaje - PAVOA',
-          html: `
-            <div style="font-family: 'Helvetica Neue', sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff;">
+          html: renderEmailDocument(`
+            <div style="font-family:${EMAIL_FONT_PRIMARY};max-width:600px;margin:0 auto;background:#ffffff;border:1px solid #eee7dd;">
               <div style="background: #0e0e0e; padding: 32px 40px; text-align: center;">
-                <h1 style="color: #ffffff; font-size: 28px; font-weight: 300; letter-spacing: 0.3em; margin: 0;">PAVOA</h1>
+                <h1 style="color:#ffffff;font-size:28px;font-weight:300;letter-spacing:0.3em;margin:0;font-family:${EMAIL_FONT_PRIMARY};">PAVOA</h1>
               </div>
 
               <div style="padding: 48px 40px; text-align: center;">
                 <div style="width: 48px; height: 48px; border: 1px solid #0e0e0e; display: flex; align-items: center; justify-content: center; margin: 0 auto 24px;">
                   <span style="font-size: 20px;">&#10003;</span>
                 </div>
-                <h2 style="font-size: 18px; font-weight: 300; letter-spacing: 0.15em; text-transform: uppercase; color: #0e0e0e; margin-bottom: 16px;">
+                <h2 style="font-size:18px;font-weight:300;letter-spacing:0.15em;text-transform:uppercase;color:#0e0e0e;margin-bottom:16px;font-family:${EMAIL_FONT_PRIMARY};">
                   Mensaje recibido
                 </h2>
-                <p style="font-size: 13px; color: #888; line-height: 1.8; max-width: 360px; margin: 0 auto 32px;">
+                <p style="font-size:13px;color:#888;line-height:1.8;max-width:360px;margin:0 auto 32px;font-family:${EMAIL_FONT_PRIMARY};">
                   Hola <strong style="color: #0e0e0e;">${safeNombre}</strong>, recibimos tu mensaje sobre <em>${safeAsunto}</em>. Te respondemos en un máximo de 24 horas hábiles.
                 </p>
                 <div style="height: 1px; background: #f0f0f0; margin-bottom: 32px;"></div>
-                <p style="font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: #888;">
+                <p style="font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:#888;font-family:${EMAIL_FONT_SECONDARY};">
                   Mientras tanto, explora nuestra colección
                 </p>
                 <a href="https://pavoa.vercel.app/categoria"
-                  style="display: inline-block; margin-top: 16px; padding: 14px 32px; background: #0e0e0e; color: #ffffff; font-size: 10px; font-weight: 600; letter-spacing: 0.2em; text-transform: uppercase; text-decoration: none;">
+                  style="display:inline-block;margin-top:16px;padding:14px 32px;background:#0e0e0e;color:#ffffff;font-size:10px;font-weight:600;letter-spacing:0.2em;text-transform:uppercase;text-decoration:none;font-family:${EMAIL_FONT_SECONDARY};">
                   Ver colección
                 </a>
               </div>
 
               <div style="background: #f5f4f1; padding: 20px 40px; text-align: center;">
-                <p style="font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: #888; margin: 0;">
+                <p style="font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:#888;margin:0;font-family:${EMAIL_FONT_SECONDARY};">
                   PAVOA - pavoa.vercel.app
                 </p>
               </div>
             </div>
-          `,
+          `),
       });
     }
 

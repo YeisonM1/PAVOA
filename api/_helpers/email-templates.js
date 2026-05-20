@@ -1,5 +1,8 @@
 ﻿const APP_URL = process.env.VITE_APP_URL || "https://pavoa.vercel.app";
 const LOGO_URL = `${APP_URL}/logo-pavoa.png`;
+const EMAIL_FONT_LINK = "https://fonts.googleapis.com/css2?family=Raleway:wght@300;400;500;600;700&family=Montserrat:wght@300;400;500;600;700&display=swap";
+const EMAIL_FONT_PRIMARY = "'Raleway', 'Helvetica Neue', Helvetica, Arial, sans-serif";
+const EMAIL_FONT_SECONDARY = "'Montserrat', 'Helvetica Neue', Helvetica, Arial, sans-serif";
 
 const escapeHtml = (value) =>
   String(value || "")
@@ -18,17 +21,17 @@ const formatVariantLabel = (value) => {
 
 const renderButton = (href, label) => `
   <a href="${href}"
-    style="display:inline-block;background-color:#111111;color:#ffffff;text-decoration:none;font-size:12px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;padding:14px 24px;border-radius:999px;">
+    style="display:inline-block;background-color:#111111;color:#ffffff;text-decoration:none;font-size:12px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;padding:14px 24px;border-radius:999px;font-family:${EMAIL_FONT_SECONDARY};">
     ${escapeHtml(label)}
   </a>
 `;
 
 const renderRow = (label, value, options = {}) => `
   <tr>
-    <td style="padding:${options.padding || "12px 0"};${options.border === false ? "" : "border-bottom:1px solid #eee7dd;"}font-size:12px;letter-spacing:0.12em;text-transform:uppercase;color:#8a8175;width:38%;vertical-align:top;">
+    <td style="padding:${options.padding || "12px 0"};${options.border === false ? "" : "border-bottom:1px solid #eee7dd;"}font-size:12px;letter-spacing:0.12em;text-transform:uppercase;color:#8a8175;width:38%;vertical-align:top;font-family:${EMAIL_FONT_SECONDARY};">
       ${escapeHtml(label)}
     </td>
-    <td style="padding:${options.padding || "12px 0"};${options.border === false ? "" : "border-bottom:1px solid #eee7dd;"}font-size:14px;line-height:1.6;color:#161616;text-align:right;vertical-align:top;">
+    <td style="padding:${options.padding || "12px 0"};${options.border === false ? "" : "border-bottom:1px solid #eee7dd;"}font-size:14px;line-height:1.6;color:#161616;text-align:right;vertical-align:top;font-family:${EMAIL_FONT_PRIMARY};">
       ${value}
     </td>
   </tr>
@@ -36,9 +39,9 @@ const renderRow = (label, value, options = {}) => `
 
 const renderSection = (title, content) => `
   <tr>
-    <td style="padding:28px 40px 0;">
+    <td style="padding:28px 40px 0;font-family:${EMAIL_FONT_PRIMARY};">
       <div style="border-top:1px solid #eee7dd;padding-top:24px;">
-        <p style="margin:0 0 14px;font-size:11px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:#6f665b;">
+        <p style="margin:0 0 14px;font-size:11px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:#6f665b;font-family:${EMAIL_FONT_SECONDARY};">
           ${escapeHtml(title)}
         </p>
         ${content}
@@ -48,7 +51,7 @@ const renderSection = (title, content) => `
 `;
 
 const renderInfoCard = (content) => `
-  <table width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #eee7dd;background-color:#faf7f2;border-radius:16px;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #eee7dd;background-color:#faf7f2;border-radius:16px;font-family:${EMAIL_FONT_PRIMARY};">
     <tr>
       <td style="padding:20px 22px;">
         ${content}
@@ -72,9 +75,10 @@ const renderLayout = ({
     <meta charset="utf-8">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="${EMAIL_FONT_LINK}" rel="stylesheet">
     <title>PAVOA</title>
   </head>
-  <body style="margin:0;padding:0;background-color:#f5f1ea;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;color:#161616;">
+  <body style="margin:0;padding:0;background-color:#f5f1ea;font-family:${EMAIL_FONT_PRIMARY};color:#161616;">
     <div style="display:none;max-height:0;overflow:hidden;opacity:0;mso-hide:all;">
       ${escapeHtml(preheader || "")}
     </div>
@@ -90,14 +94,14 @@ const renderLayout = ({
 
             <tr>
               <td style="padding:36px 40px 8px;">
-                <p style="margin:0 0 12px;font-size:11px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:#8a8175;">
+                <p style="margin:0 0 12px;font-size:11px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:#8a8175;font-family:${EMAIL_FONT_SECONDARY};">
                   ${escapeHtml(eyebrow)}
                 </p>
-                <h1 style="margin:0 0 16px;font-size:30px;line-height:1.15;font-weight:600;color:#161616;">
+                <h1 style="margin:0 0 16px;font-size:30px;line-height:1.15;font-weight:600;color:#161616;font-family:${EMAIL_FONT_PRIMARY};">
                   ${escapeHtml(title)}
                 </h1>
                 <div style="width:36px;height:2px;background-color:#dbc7ae;margin:0 0 20px;"></div>
-                <p style="margin:0;font-size:15px;line-height:1.8;color:#4f4a44;">
+                <p style="margin:0;font-size:15px;line-height:1.8;color:#4f4a44;font-family:${EMAIL_FONT_PRIMARY};">
                   ${body}
                 </p>
               </td>
@@ -115,10 +119,10 @@ const renderLayout = ({
             <tr>
               <td style="padding:32px 40px 40px;">
                 <div style="border-top:1px solid #eee7dd;padding-top:24px;">
-                  <p style="margin:0;font-size:12px;line-height:1.7;color:#7b746b;">
+                  <p style="margin:0;font-size:12px;line-height:1.7;color:#7b746b;font-family:${EMAIL_FONT_PRIMARY};">
                     ${footerNote}
                   </p>
-                  <p style="margin:18px 0 0;font-size:10px;letter-spacing:0.18em;text-transform:uppercase;color:#b4aca2;">
+                  <p style="margin:18px 0 0;font-size:10px;letter-spacing:0.18em;text-transform:uppercase;color:#b4aca2;font-family:${EMAIL_FONT_SECONDARY};">
                     PAVOA
                   </p>
                 </div>
@@ -184,9 +188,9 @@ export const emailConfirmacion = ({
   const orderTable = `
     <table width="100%" cellpadding="0" cellspacing="0">
       <tr>
-        <td style="padding-bottom:10px;font-size:12px;letter-spacing:0.12em;text-transform:uppercase;color:#8a8175;">Producto</td>
-        <td style="padding-bottom:10px;text-align:center;font-size:12px;letter-spacing:0.12em;text-transform:uppercase;color:#8a8175;">Cant.</td>
-        <td style="padding-bottom:10px;text-align:right;font-size:12px;letter-spacing:0.12em;text-transform:uppercase;color:#8a8175;">Valor</td>
+        <td style="padding-bottom:10px;font-size:12px;letter-spacing:0.12em;text-transform:uppercase;color:#8a8175;font-family:${EMAIL_FONT_SECONDARY};">Producto</td>
+        <td style="padding-bottom:10px;text-align:center;font-size:12px;letter-spacing:0.12em;text-transform:uppercase;color:#8a8175;font-family:${EMAIL_FONT_SECONDARY};">Cant.</td>
+        <td style="padding-bottom:10px;text-align:right;font-size:12px;letter-spacing:0.12em;text-transform:uppercase;color:#8a8175;font-family:${EMAIL_FONT_SECONDARY};">Valor</td>
       </tr>
       ${itemsHtml}
     </table>
