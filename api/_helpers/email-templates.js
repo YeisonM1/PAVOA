@@ -498,3 +498,85 @@ export const emailResetPassword = ({ firstName, resetLink }) =>
       `,
     }),
   });
+
+export const emailContactoCliente = ({ nombre, asunto }) =>
+  renderLayout({
+    preheader: "Recibimos tu mensaje en PAVOA",
+    eyebrow: "Confirmación de contacto",
+    title: "Recibimos tu mensaje",
+    body:
+      "Ya recibimos tu mensaje y lo estamos revisando. Si nos escribiste por una duda, cambio o disponibilidad, te responderemos en el menor tiempo posible.",
+    primaryCta: {
+      href: `${APP_URL}/categoria`,
+      label: "Ver colección",
+    },
+    afterHero:
+      renderCard({
+        background: "linear-gradient(180deg, rgba(246,241,234,0.92), rgba(255,253,250,0.96))",
+        content: `
+          <div align="center">
+            <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 auto 18px;">
+              <tr>
+                <td style="padding:10px 14px;border:1px solid rgba(223,205,180,0.9);background:rgba(238,229,216,0.72);font-size:10px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:${EMAIL_COLOR_BLACK};font-family:${EMAIL_FONT_SECONDARY};">
+                  Mensaje recibido
+                </td>
+              </tr>
+            </table>
+            <p style="margin:0 0 12px;font-size:30px;line-height:1.15;color:${EMAIL_COLOR_BLACK};font-family:${EMAIL_FONT_PRIMARY};font-weight:600;">
+              Te responderemos pronto
+            </p>
+            <p style="margin:0 auto;max-width:380px;font-size:13px;line-height:1.8;color:${EMAIL_COLOR_CHARCOAL};font-family:${EMAIL_FONT_PRIMARY};">
+              Hola ${escapeHtml(nombre)}, tu mensaje ya quedó registrado y nuestro equipo lo revisará lo antes posible.
+            </p>
+            <p style="margin:18px 0 0;padding-top:18px;border-top:1px solid ${EMAIL_COLOR_BORDER};font-size:10px;letter-spacing:0.16em;text-transform:uppercase;color:${EMAIL_COLOR_MUTED_SOFT};font-family:${EMAIL_FONT_SECONDARY};">
+              Asunto: ${escapeHtml(asunto)}
+            </p>
+          </div>
+        `,
+      }) +
+      `<div style="height:18px;line-height:18px;">&nbsp;</div>` +
+      renderCard({
+        content: `
+          ${renderSectionHeading("Mientras tanto")}
+          ${renderTextBlock("Si quieres, puedes seguir explorando la colección mientras te respondemos.")}
+        `,
+      }),
+    footerNote:
+      "Si necesitas agregar algo más a tu consulta, puedes responder a este mismo correo.",
+  });
+
+export const emailContactoInterno = ({ nombre, contacto, asunto, mensaje }) =>
+  renderLayout({
+    preheader: `Nuevo mensaje de contacto: ${asunto}`,
+    eyebrow: "Nuevo mensaje de contacto",
+    title: "Te escribieron desde la tienda",
+    body:
+      "Correo operativo para revisar rápido quién escribió, desde qué contacto y cuál fue el mensaje recibido desde el formulario.",
+    afterHero:
+      renderCard({
+        background: "linear-gradient(180deg, rgba(246,241,234,0.92), rgba(255,253,250,0.96))",
+        padding: "0",
+        content: `
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+            ${renderInfoRows([
+              { label: "Nombre", value: escapeHtml(nombre) },
+              { label: "Contacto", value: escapeHtml(contacto) },
+              { label: "Asunto", value: escapeHtml(asunto) },
+              {
+                label: "Mensaje",
+                value: `<div style="text-align:left;white-space:pre-line;">${escapeHtml(mensaje)}</div>`,
+              },
+            ])}
+          </table>
+        `,
+      }) +
+      `<div style="height:18px;line-height:18px;">&nbsp;</div>` +
+      renderCard({
+        content: `
+          ${renderSectionHeading("Base operativa")}
+          ${renderTextBlock("Diseñado para responder rápido sin perder la línea visual general de PAVOA.")}
+        `,
+      }),
+    footerNote:
+      "Mensaje recibido desde el formulario de contacto de PAVOA.",
+  });
