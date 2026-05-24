@@ -516,7 +516,7 @@ export const emailEntregado = ({ nombreCliente, orderName }) =>
 export const emailVerificacion = ({ firstName, verifyLink }) =>
   renderLayout({
     preheader: "Verifica tu correo para activar tu cuenta PAVOA",
-    eyebrow: "Bienvenida",
+    eyebrow: "Verifica tu correo",
     title: `Hola, ${firstName}`,
     body:
       "Gracias por unirte a PAVOA. Solo necesitas verificar tu correo para activar tu cuenta y empezar a gestionar pedidos, wishlist y beneficios.",
