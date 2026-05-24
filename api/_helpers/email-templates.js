@@ -558,15 +558,44 @@ export const emailContactoInterno = ({ nombre, contacto, asunto, mensaje }) =>
         padding: "0",
         content: `
           <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
-            ${renderInfoRows([
-              { label: "Nombre", value: escapeHtml(nombre) },
-              { label: "Contacto", value: escapeHtml(contacto) },
-              { label: "Asunto", value: escapeHtml(asunto) },
-              {
-                label: "Mensaje",
-                value: `<div style="text-align:left;white-space:pre-line;">${escapeHtml(mensaje)}</div>`,
-              },
-            ])}
+            <tr>
+              <td style="padding:10px 20px 0;">
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                  <tr>
+                    <td style="padding:18px 10px 18px 0;border-bottom:1px solid ${EMAIL_COLOR_BORDER};font-size:10px;letter-spacing:0.18em;text-transform:uppercase;color:${EMAIL_COLOR_MUTED_SOFT};vertical-align:top;font-family:${EMAIL_FONT_SECONDARY};">
+                      Nombre
+                    </td>
+                    <td style="padding:18px 0 18px 10px;border-bottom:1px solid ${EMAIL_COLOR_BORDER};font-size:15px;line-height:1.55;color:${EMAIL_COLOR_BLACK};text-align:right;vertical-align:top;font-family:${EMAIL_FONT_PRIMARY};">
+                      ${escapeHtml(nombre)}
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="padding:18px 10px 18px 0;border-bottom:1px solid ${EMAIL_COLOR_BORDER};font-size:10px;letter-spacing:0.18em;text-transform:uppercase;color:${EMAIL_COLOR_MUTED_SOFT};vertical-align:top;font-family:${EMAIL_FONT_SECONDARY};">
+                      Contacto
+                    </td>
+                    <td style="padding:18px 0 18px 10px;border-bottom:1px solid ${EMAIL_COLOR_BORDER};font-size:15px;line-height:1.55;color:${EMAIL_COLOR_BLACK};text-align:right;vertical-align:top;font-family:${EMAIL_FONT_PRIMARY};">
+                      ${escapeHtml(contacto)}
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="padding:18px 10px 18px 0;border-bottom:1px solid ${EMAIL_COLOR_BORDER};font-size:10px;letter-spacing:0.18em;text-transform:uppercase;color:${EMAIL_COLOR_MUTED_SOFT};vertical-align:top;font-family:${EMAIL_FONT_SECONDARY};">
+                      Asunto
+                    </td>
+                    <td style="padding:18px 0 18px 10px;border-bottom:1px solid ${EMAIL_COLOR_BORDER};font-size:15px;line-height:1.55;color:${EMAIL_COLOR_BLACK};text-align:right;vertical-align:top;font-family:${EMAIL_FONT_PRIMARY};">
+                      ${escapeHtml(asunto)}
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="padding:18px 10px 18px 0;font-size:10px;letter-spacing:0.18em;text-transform:uppercase;color:${EMAIL_COLOR_MUTED_SOFT};vertical-align:top;font-family:${EMAIL_FONT_SECONDARY};">
+                      Mensaje
+                    </td>
+                    <td style="padding:18px 0 18px 10px;font-size:15px;line-height:1.75;color:${EMAIL_COLOR_BLACK};text-align:left;vertical-align:top;font-family:${EMAIL_FONT_PRIMARY};white-space:pre-line;">
+                      ${escapeHtml(mensaje)}
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
           </table>
         `,
       }) +
