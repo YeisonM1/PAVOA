@@ -31,9 +31,9 @@ const formatVariantLabel = (value) => {
 };
 
 const renderButton = (href, label) => `
-  <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+  <table role="presentation" cellpadding="0" cellspacing="0" border="0" class="email-button-table">
     <tr>
-      <td align="center" bgcolor="${EMAIL_COLOR_BLACK}" style="border:1px solid ${EMAIL_COLOR_BLACK};">
+      <td align="center" bgcolor="${EMAIL_COLOR_BLACK}" class="email-button-cell" style="border:1px solid ${EMAIL_COLOR_BLACK};">
         <a
           href="${href}"
           class="email-button-link"
@@ -264,10 +264,15 @@ const renderLayout = ({
         }
         .email-button-link {
           min-width: 0 !important;
-          width: 100% !important;
           display: block !important;
-          padding: 17px 18px !important;
-          letter-spacing: 0.22em !important;
+          padding: 16px 14px !important;
+          letter-spacing: 0.18em !important;
+        }
+        .email-button-table {
+          width: 100% !important;
+        }
+        .email-button-cell {
+          display: block !important;
         }
       }
     </style>
