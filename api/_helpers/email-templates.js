@@ -2,8 +2,9 @@ const APP_URL = process.env.VITE_APP_URL || "https://www.pavoa.com.co";
 const LOGO_URL = `${APP_URL}/logo-pavoa.png`;
 const MARK_URL = `${APP_URL}/pavoa-mark.png`;
 const EMAIL_FONT_LINK = "https://fonts.googleapis.com/css2?family=Raleway:wght@300;400;500;600;700&family=Montserrat:wght@300;400;500;600;700&display=swap";
-const EMAIL_FONT_PRIMARY = "'Raleway', 'Helvetica Neue', Helvetica, Arial, sans-serif";
-const EMAIL_FONT_SECONDARY = "'Montserrat', 'Helvetica Neue', Helvetica, Arial, sans-serif";
+const EMAIL_FONT_TITLE = "'Raleway', 'Helvetica Neue', Helvetica, Arial, sans-serif";
+const EMAIL_FONT_BODY = "'Helvetica Neue', Helvetica, Arial, sans-serif";
+const EMAIL_FONT_UI = "'Montserrat', 'Helvetica Neue', Helvetica, Arial, sans-serif";
 const EMAIL_COLOR_BG = "#F2E4E1";
 const EMAIL_COLOR_IVORY = "#F6F1EA";
 const EMAIL_COLOR_GOLD = "#DFCDB4";
@@ -35,7 +36,8 @@ const renderButton = (href, label) => `
       <td align="center" bgcolor="${EMAIL_COLOR_BLACK}" style="border:1px solid ${EMAIL_COLOR_BLACK};">
         <a
           href="${href}"
-          style="display:inline-block;min-width:232px;padding:18px 30px;color:${EMAIL_COLOR_IVORY};text-decoration:none;text-align:center;font-size:10px;font-weight:700;letter-spacing:0.28em;text-transform:uppercase;font-family:${EMAIL_FONT_SECONDARY};"
+          class="email-button-link"
+          style="display:inline-block;min-width:232px;padding:18px 30px;color:${EMAIL_COLOR_IVORY};text-decoration:none;text-align:center;font-size:10px;font-weight:700;letter-spacing:0.28em;text-transform:uppercase;font-family:${EMAIL_FONT_UI};"
         >
           ${escapeHtml(label)}
         </a>
@@ -45,7 +47,7 @@ const renderButton = (href, label) => `
 `;
 
 const renderSectionHeading = (title) => `
-  <p style="margin:0 0 16px;text-align:center;font-size:10px;font-weight:700;letter-spacing:0.28em;text-transform:uppercase;color:${EMAIL_COLOR_MUTED_SOFT};font-family:${EMAIL_FONT_SECONDARY};">
+  <p style="margin:0 0 16px;text-align:center;font-size:10px;font-weight:700;letter-spacing:0.28em;text-transform:uppercase;color:${EMAIL_COLOR_MUTED_SOFT};font-family:${EMAIL_FONT_UI};">
     ${escapeHtml(title)}
   </p>
 `;
@@ -57,10 +59,10 @@ const renderInfoRows = (rows) =>
       const showBorder = index !== allRows.length - 1;
       return `
         <tr>
-          <td style="padding:14px 0;${showBorder ? `border-bottom:1px solid ${EMAIL_COLOR_BORDER};` : ""}font-size:10px;letter-spacing:0.18em;text-transform:uppercase;color:${EMAIL_COLOR_MUTED_SOFT};vertical-align:top;font-family:${EMAIL_FONT_SECONDARY};">
+          <td style="padding:14px 0;${showBorder ? `border-bottom:1px solid ${EMAIL_COLOR_BORDER};` : ""}font-size:10px;letter-spacing:0.18em;text-transform:uppercase;color:${EMAIL_COLOR_MUTED_SOFT};vertical-align:top;font-family:${EMAIL_FONT_UI};">
             ${escapeHtml(row.label)}
           </td>
-          <td style="padding:14px 0;${showBorder ? `border-bottom:1px solid ${EMAIL_COLOR_BORDER};` : ""}font-size:15px;line-height:1.55;color:${EMAIL_COLOR_BLACK};text-align:right;vertical-align:top;font-family:${EMAIL_FONT_PRIMARY};">
+          <td style="padding:14px 0;${showBorder ? `border-bottom:1px solid ${EMAIL_COLOR_BORDER};` : ""}font-size:15px;line-height:1.6;color:${EMAIL_COLOR_BLACK};text-align:right;vertical-align:top;font-family:${EMAIL_FONT_BODY};">
             ${row.value}
           </td>
         </tr>
@@ -79,7 +81,7 @@ const renderCard = ({ content, background = "#ffffff", padding = "22px 24px" }) 
 `;
 
 const renderTextBlock = (html) => `
-  <p style="margin:0;font-size:13px;line-height:1.8;color:${EMAIL_COLOR_CHARCOAL};font-family:${EMAIL_FONT_PRIMARY};">
+  <p style="margin:0;font-size:14px;line-height:1.85;color:${EMAIL_COLOR_CHARCOAL};font-family:${EMAIL_FONT_BODY};">
     ${html}
   </p>
 `;
@@ -95,10 +97,10 @@ const renderHeroStatusCard = ({ title, body, badge, rows }) =>
             <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
               <tr>
                 <td style="padding:0 0 14px;">
-                  <p style="margin:0 0 6px;font-size:28px;line-height:1.1;color:${EMAIL_COLOR_BLACK};font-family:${EMAIL_FONT_PRIMARY};font-weight:600;">
+                  <p class="email-section-title" style="margin:0 0 6px;font-size:28px;line-height:1.1;color:${EMAIL_COLOR_BLACK};font-family:${EMAIL_FONT_TITLE};font-weight:500;">
                     ${escapeHtml(title)}
                   </p>
-                  <p style="margin:0;font-size:13px;line-height:1.7;color:${EMAIL_COLOR_CHARCOAL};font-family:${EMAIL_FONT_PRIMARY};">
+                  <p style="margin:0;font-size:14px;line-height:1.8;color:${EMAIL_COLOR_CHARCOAL};font-family:${EMAIL_FONT_BODY};">
                     ${body}
                   </p>
                 </td>
@@ -109,7 +111,7 @@ const renderHeroStatusCard = ({ title, body, badge, rows }) =>
                 <td>
                   <table role="presentation" cellpadding="0" cellspacing="0" border="0">
                     <tr>
-                      <td style="padding:10px 14px;border:1px solid rgba(223,205,180,0.9);background:rgba(238,229,216,0.72);font-size:10px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:${EMAIL_COLOR_BLACK};font-family:${EMAIL_FONT_SECONDARY};">
+                      <td style="padding:10px 14px;border:1px solid rgba(223,205,180,0.9);background:rgba(238,229,216,0.72);font-size:10px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:${EMAIL_COLOR_BLACK};font-family:${EMAIL_FONT_UI};">
                         ${escapeHtml(badge)}
                       </td>
                     </tr>
@@ -143,10 +145,10 @@ const renderStepsCard = (title, steps) =>
             <td style="padding:${index === 0 ? "0 0 12px" : "12px 0"};${index !== steps.length - 1 ? `border-bottom:1px solid ${EMAIL_COLOR_BORDER};` : ""}">
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
                 <tr>
-                  <td width="28" valign="top" style="padding:0 12px 0 0;font-size:10px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:${EMAIL_COLOR_MUTED_SOFT};font-family:${EMAIL_FONT_SECONDARY};">
+                  <td width="28" valign="top" style="padding:0 12px 0 0;font-size:10px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:${EMAIL_COLOR_MUTED_SOFT};font-family:${EMAIL_FONT_UI};">
                     ${index + 1}
                   </td>
-                  <td valign="top" style="font-size:13px;line-height:1.7;color:${EMAIL_COLOR_CHARCOAL};font-family:${EMAIL_FONT_PRIMARY};">
+                  <td valign="top" style="font-size:14px;line-height:1.8;color:${EMAIL_COLOR_CHARCOAL};font-family:${EMAIL_FONT_BODY};">
                     ${escapeHtml(step)}
                   </td>
                 </tr>
@@ -178,22 +180,22 @@ const renderOrderItemsCard = (lineItems = []) =>
                           <tr>
                             <td align="center" valign="middle" style="padding:14px 8px;">
                               <img src="${MARK_URL}" alt="" width="18" style="display:block;width:18px;height:auto;opacity:0.72;">
-                              <p style="margin:8px 0 0;font-size:8px;letter-spacing:0.18em;text-transform:uppercase;color:${EMAIL_COLOR_MUTED_SOFT};font-family:${EMAIL_FONT_SECONDARY};">
+                              <p style="margin:8px 0 0;font-size:8px;letter-spacing:0.18em;text-transform:uppercase;color:${EMAIL_COLOR_MUTED_SOFT};font-family:${EMAIL_FONT_UI};">
                                 Prenda
                               </p>
                             </td>
                           </tr>
                         </table>
                       </td>
-                      <td valign="top" style="font-family:${EMAIL_FONT_PRIMARY};">
-                        <p style="margin:0 0 6px;font-size:20px;line-height:1.2;color:${EMAIL_COLOR_BLACK};font-weight:600;">
+                      <td valign="top" style="font-family:${EMAIL_FONT_BODY};">
+                        <p style="margin:0 0 6px;font-size:18px;line-height:1.25;color:${EMAIL_COLOR_BLACK};font-weight:600;font-family:${EMAIL_FONT_TITLE};">
                           ${escapeHtml(item.title)}
                         </p>
-                        <p style="margin:0;font-size:11px;line-height:1.7;color:${EMAIL_COLOR_MUTED};letter-spacing:0.12em;text-transform:uppercase;">
+                        <p style="margin:0;font-size:11px;line-height:1.75;color:${EMAIL_COLOR_MUTED};letter-spacing:0.12em;text-transform:uppercase;font-family:${EMAIL_FONT_UI};">
                           ${variantLabel ? `${escapeHtml(variantLabel)} · ` : ""}Cantidad ${escapeHtml(item.quantity)}
                         </p>
                       </td>
-                      <td valign="top" align="right" style="white-space:nowrap;font-size:14px;line-height:1.4;color:${EMAIL_COLOR_BLACK};font-weight:700;font-family:${EMAIL_FONT_PRIMARY};">
+                      <td valign="top" align="right" style="white-space:nowrap;font-size:14px;line-height:1.4;color:${EMAIL_COLOR_BLACK};font-weight:700;font-family:${EMAIL_FONT_BODY};">
                         $${formatMoney(item.price)}
                       </td>
                     </tr>
@@ -224,38 +226,83 @@ const renderLayout = ({
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="${EMAIL_FONT_LINK}" rel="stylesheet">
     <title>PAVOA</title>
+    <style>
+      @media only screen and (max-width: 640px) {
+        .email-outer-pad {
+          padding: 18px 8px !important;
+        }
+        .email-shell-pad {
+          padding: 8px !important;
+        }
+        .email-hero {
+          padding: 34px 20px 24px !important;
+        }
+        .email-logo {
+          width: 138px !important;
+        }
+        .email-mark {
+          width: 20px !important;
+        }
+        .email-eyebrow {
+          letter-spacing: 0.28em !important;
+        }
+        .email-title {
+          font-size: 34px !important;
+          line-height: 1.06 !important;
+        }
+        .email-body {
+          max-width: 100% !important;
+          font-size: 15px !important;
+          line-height: 1.8 !important;
+        }
+        .email-content {
+          padding: 14px 16px 22px !important;
+        }
+        .email-section-title {
+          font-size: 24px !important;
+          line-height: 1.12 !important;
+        }
+        .email-button-link {
+          min-width: 0 !important;
+          width: 100% !important;
+          display: block !important;
+          padding: 17px 18px !important;
+          letter-spacing: 0.22em !important;
+        }
+      }
+    </style>
   </head>
-  <body style="margin:0;padding:0;background-color:${EMAIL_COLOR_BG};font-family:${EMAIL_FONT_PRIMARY};color:${EMAIL_COLOR_BLACK};">
+  <body style="margin:0;padding:0;background-color:${EMAIL_COLOR_BG};font-family:${EMAIL_FONT_BODY};color:${EMAIL_COLOR_BLACK};">
     <div style="display:none;max-height:0;overflow:hidden;opacity:0;mso-hide:all;">
       ${escapeHtml(preheader || "")}
     </div>
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:${EMAIL_COLOR_BG};">
       <tr>
-        <td align="center" style="padding:32px 16px;">
+        <td align="center" class="email-outer-pad" style="padding:32px 16px;">
           <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:620px;background-color:rgba(246,241,234,0.82);border:1px solid rgba(223,205,180,0.7);">
             <tr>
-              <td style="padding:12px;">
+              <td class="email-shell-pad" style="padding:12px;">
                 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid rgba(238,229,216,0.9);background:#fffdfa;">
                   <tr>
-                    <td align="center" style="padding:44px 24px 28px;background:${EMAIL_COLOR_IVORY};border-bottom:1px solid ${EMAIL_COLOR_BORDER};">
+                    <td align="center" class="email-hero" style="padding:44px 24px 28px;background:${EMAIL_COLOR_IVORY};border-bottom:1px solid ${EMAIL_COLOR_BORDER};">
                       <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 auto 24px;">
                         <tr>
                           <td style="vertical-align:middle;">
-                            <img src="${LOGO_URL}" alt="PAVOA" width="168" style="display:block;width:168px;max-width:100%;height:auto;">
+                            <img src="${LOGO_URL}" alt="PAVOA" width="168" class="email-logo" style="display:block;width:168px;max-width:100%;height:auto;">
                           </td>
                           <td style="padding-left:10px;vertical-align:middle;">
-                            <img src="${MARK_URL}" alt="" width="24" style="display:block;width:24px;height:auto;">
+                            <img src="${MARK_URL}" alt="" width="24" class="email-mark" style="display:block;width:24px;height:auto;">
                           </td>
                         </tr>
                       </table>
-                      <p style="margin:0 0 14px;font-size:10px;font-weight:700;letter-spacing:0.34em;text-transform:uppercase;color:${EMAIL_COLOR_MUTED_SOFT};font-family:${EMAIL_FONT_SECONDARY};">
+                      <p class="email-eyebrow" style="margin:0 0 14px;font-size:10px;font-weight:700;letter-spacing:0.34em;text-transform:uppercase;color:${EMAIL_COLOR_MUTED_SOFT};font-family:${EMAIL_FONT_UI};">
                         ${escapeHtml(eyebrow)}
                       </p>
-                      <h1 style="margin:0;font-size:42px;line-height:1.08;font-weight:500;color:${EMAIL_COLOR_BLACK};font-family:${EMAIL_FONT_PRIMARY};">
+                      <h1 class="email-title" style="margin:0;font-size:42px;line-height:1.08;font-weight:500;color:${EMAIL_COLOR_BLACK};font-family:${EMAIL_FONT_TITLE};">
                         ${escapeHtml(title)}
                       </h1>
                       <div style="width:44px;height:1px;background:${EMAIL_COLOR_GOLD};margin:24px auto 22px;"></div>
-                      <p style="margin:0 auto;max-width:420px;font-size:14px;line-height:1.85;color:${EMAIL_COLOR_CHARCOAL};font-family:${EMAIL_FONT_PRIMARY};">
+                      <p class="email-body" style="margin:0 auto;max-width:420px;font-size:14px;line-height:1.85;color:${EMAIL_COLOR_CHARCOAL};font-family:${EMAIL_FONT_BODY};">
                         ${body}
                       </p>
                     </td>
@@ -263,7 +310,7 @@ const renderLayout = ({
                   ${primaryCta
                     ? `
                   <tr>
-                    <td align="center" style="padding:26px 24px 0;background:#fffdfa;">
+                    <td align="center" class="email-content" style="padding:26px 24px 0;background:#fffdfa;">
                       ${renderButton(primaryCta.href, primaryCta.label)}
                     </td>
                   </tr>`
@@ -271,14 +318,14 @@ const renderLayout = ({
                   ${afterHero
                     ? `
                   <tr>
-                    <td style="padding:18px 24px 28px;background:#fffdfa;">
+                    <td class="email-content" style="padding:18px 24px 28px;background:#fffdfa;">
                       ${afterHero}
                     </td>
                   </tr>`
                     : ""}
                   <tr>
-                    <td style="padding:24px 24px 32px;background:#fffdfa;border-top:1px solid ${EMAIL_COLOR_BORDER};">
-                      <p style="margin:0;text-align:center;font-size:11px;line-height:1.8;color:${EMAIL_COLOR_MUTED};letter-spacing:0.12em;text-transform:uppercase;font-family:${EMAIL_FONT_SECONDARY};">
+                    <td class="email-content" style="padding:24px 24px 32px;background:#fffdfa;border-top:1px solid ${EMAIL_COLOR_BORDER};">
+                      <p style="margin:0;text-align:center;font-size:11px;line-height:1.8;color:${EMAIL_COLOR_MUTED};letter-spacing:0.12em;text-transform:uppercase;font-family:${EMAIL_FONT_UI};">
                         ${footerNote}
                       </p>
                     </td>
@@ -314,7 +361,7 @@ export const emailConfirmacion = ({
     },
     {
       label: "Total pagado",
-      value: `<span style="font-size:20px;font-weight:600;font-family:${EMAIL_FONT_PRIMARY};">$${escapeHtml(total)}</span>`,
+      value: `<span style="font-size:20px;font-weight:600;font-family:${EMAIL_FONT_TITLE};">$${escapeHtml(total)}</span>`,
     },
   ];
 
@@ -395,7 +442,7 @@ export const emailDespacho = ({
           },
           {
             label: "Guía",
-            value: `<span style="font-size:18px;font-weight:600;font-family:${EMAIL_FONT_PRIMARY};">${escapeHtml(trackingNumber || "Pendiente")}</span>`,
+            value: `<span style="font-size:18px;font-weight:600;font-family:${EMAIL_FONT_TITLE};">${escapeHtml(trackingNumber || "Pendiente")}</span>`,
           },
         ],
       }) +
@@ -428,23 +475,23 @@ export const emailEntregado = ({ nombreCliente, orderName }) =>
           <div align="center">
             <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 auto 18px;">
               <tr>
-                <td style="padding:10px 14px;border:1px solid rgba(223,205,180,0.9);background:rgba(238,229,216,0.72);font-size:10px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:${EMAIL_COLOR_BLACK};font-family:${EMAIL_FONT_SECONDARY};">
+                <td style="padding:10px 14px;border:1px solid rgba(223,205,180,0.9);background:rgba(238,229,216,0.72);font-size:10px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:${EMAIL_COLOR_BLACK};font-family:${EMAIL_FONT_UI};">
                   Entregado
                 </td>
               </tr>
             </table>
-            <p style="margin:0 0 12px;font-size:30px;line-height:1.15;color:${EMAIL_COLOR_BLACK};font-family:${EMAIL_FONT_PRIMARY};font-weight:600;">
+            <p class="email-section-title" style="margin:0 0 12px;font-size:30px;line-height:1.15;color:${EMAIL_COLOR_BLACK};font-family:${EMAIL_FONT_TITLE};font-weight:500;">
               Esperamos que lo disfrutes mucho
             </p>
-            <p style="margin:0 auto;max-width:380px;font-size:13px;line-height:1.8;color:${EMAIL_COLOR_CHARCOAL};font-family:${EMAIL_FONT_PRIMARY};">
+            <p style="margin:0 auto;max-width:380px;font-size:14px;line-height:1.85;color:${EMAIL_COLOR_CHARCOAL};font-family:${EMAIL_FONT_BODY};">
               Si necesitas apoyo con tu compra, cambios o cualquier detalle posterior, seguimos disponibles para ayudarte.
             </p>
             <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:18px auto 0;">
               <tr>
-                <td style="padding:0 10px;font-size:10px;letter-spacing:0.16em;text-transform:uppercase;color:${EMAIL_COLOR_MUTED_SOFT};font-family:${EMAIL_FONT_SECONDARY};">
+                <td style="padding:0 10px;font-size:10px;letter-spacing:0.16em;text-transform:uppercase;color:${EMAIL_COLOR_MUTED_SOFT};font-family:${EMAIL_FONT_UI};">
                   Pedido ${escapeHtml(orderName)}
                 </td>
-                <td style="padding:0 10px;font-size:10px;letter-spacing:0.16em;text-transform:uppercase;color:${EMAIL_COLOR_MUTED_SOFT};font-family:${EMAIL_FONT_SECONDARY};">
+                <td style="padding:0 10px;font-size:10px;letter-spacing:0.16em;text-transform:uppercase;color:${EMAIL_COLOR_MUTED_SOFT};font-family:${EMAIL_FONT_UI};">
                   Entrega confirmada
                 </td>
               </tr>
@@ -517,18 +564,18 @@ export const emailContactoCliente = ({ nombre, asunto }) =>
           <div align="center">
             <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 auto 18px;">
               <tr>
-                <td style="padding:10px 14px;border:1px solid rgba(223,205,180,0.9);background:rgba(238,229,216,0.72);font-size:10px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:${EMAIL_COLOR_BLACK};font-family:${EMAIL_FONT_SECONDARY};">
+                <td style="padding:10px 14px;border:1px solid rgba(223,205,180,0.9);background:rgba(238,229,216,0.72);font-size:10px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:${EMAIL_COLOR_BLACK};font-family:${EMAIL_FONT_UI};">
                   Mensaje recibido
                 </td>
               </tr>
             </table>
-            <p style="margin:0 0 12px;font-size:30px;line-height:1.15;color:${EMAIL_COLOR_BLACK};font-family:${EMAIL_FONT_PRIMARY};font-weight:600;">
+            <p class="email-section-title" style="margin:0 0 12px;font-size:30px;line-height:1.15;color:${EMAIL_COLOR_BLACK};font-family:${EMAIL_FONT_TITLE};font-weight:500;">
               Te responderemos pronto
             </p>
-            <p style="margin:0 auto;max-width:380px;font-size:13px;line-height:1.8;color:${EMAIL_COLOR_CHARCOAL};font-family:${EMAIL_FONT_PRIMARY};">
+            <p style="margin:0 auto;max-width:380px;font-size:14px;line-height:1.85;color:${EMAIL_COLOR_CHARCOAL};font-family:${EMAIL_FONT_BODY};">
               Hola ${escapeHtml(nombre)}, tu mensaje ya quedó registrado y nuestro equipo lo revisará lo antes posible.
             </p>
-            <p style="margin:18px 0 0;padding-top:18px;border-top:1px solid ${EMAIL_COLOR_BORDER};font-size:10px;letter-spacing:0.16em;text-transform:uppercase;color:${EMAIL_COLOR_MUTED_SOFT};font-family:${EMAIL_FONT_SECONDARY};">
+            <p style="margin:18px 0 0;padding-top:18px;border-top:1px solid ${EMAIL_COLOR_BORDER};font-size:10px;letter-spacing:0.16em;text-transform:uppercase;color:${EMAIL_COLOR_MUTED_SOFT};font-family:${EMAIL_FONT_UI};">
               Asunto: ${escapeHtml(asunto)}
             </p>
           </div>
@@ -555,34 +602,34 @@ export const emailContactoInterno = ({ nombre, contacto, asunto, mensaje }) =>
               <td style="padding:10px 20px 0;">
                 <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
                   <tr>
-                    <td style="padding:18px 10px 18px 0;border-bottom:1px solid ${EMAIL_COLOR_BORDER};font-size:10px;letter-spacing:0.18em;text-transform:uppercase;color:${EMAIL_COLOR_MUTED_SOFT};vertical-align:top;font-family:${EMAIL_FONT_SECONDARY};">
+                    <td style="padding:18px 10px 18px 0;border-bottom:1px solid ${EMAIL_COLOR_BORDER};font-size:10px;letter-spacing:0.18em;text-transform:uppercase;color:${EMAIL_COLOR_MUTED_SOFT};vertical-align:top;font-family:${EMAIL_FONT_UI};">
                       Nombre
                     </td>
-                    <td style="padding:18px 0 18px 10px;border-bottom:1px solid ${EMAIL_COLOR_BORDER};font-size:15px;line-height:1.55;color:${EMAIL_COLOR_BLACK};text-align:right;vertical-align:top;font-family:${EMAIL_FONT_PRIMARY};">
+                    <td style="padding:18px 0 18px 10px;border-bottom:1px solid ${EMAIL_COLOR_BORDER};font-size:15px;line-height:1.6;color:${EMAIL_COLOR_BLACK};text-align:right;vertical-align:top;font-family:${EMAIL_FONT_BODY};">
                       ${escapeHtml(nombre)}
                     </td>
                   </tr>
                   <tr>
-                    <td style="padding:18px 10px 18px 0;border-bottom:1px solid ${EMAIL_COLOR_BORDER};font-size:10px;letter-spacing:0.18em;text-transform:uppercase;color:${EMAIL_COLOR_MUTED_SOFT};vertical-align:top;font-family:${EMAIL_FONT_SECONDARY};">
+                    <td style="padding:18px 10px 18px 0;border-bottom:1px solid ${EMAIL_COLOR_BORDER};font-size:10px;letter-spacing:0.18em;text-transform:uppercase;color:${EMAIL_COLOR_MUTED_SOFT};vertical-align:top;font-family:${EMAIL_FONT_UI};">
                       Contacto
                     </td>
-                    <td style="padding:18px 0 18px 10px;border-bottom:1px solid ${EMAIL_COLOR_BORDER};font-size:15px;line-height:1.55;color:${EMAIL_COLOR_BLACK};text-align:right;vertical-align:top;font-family:${EMAIL_FONT_PRIMARY};">
+                    <td style="padding:18px 0 18px 10px;border-bottom:1px solid ${EMAIL_COLOR_BORDER};font-size:15px;line-height:1.6;color:${EMAIL_COLOR_BLACK};text-align:right;vertical-align:top;font-family:${EMAIL_FONT_BODY};">
                       ${escapeHtml(contacto)}
                     </td>
                   </tr>
                   <tr>
-                    <td style="padding:18px 10px 18px 0;border-bottom:1px solid ${EMAIL_COLOR_BORDER};font-size:10px;letter-spacing:0.18em;text-transform:uppercase;color:${EMAIL_COLOR_MUTED_SOFT};vertical-align:top;font-family:${EMAIL_FONT_SECONDARY};">
+                    <td style="padding:18px 10px 18px 0;border-bottom:1px solid ${EMAIL_COLOR_BORDER};font-size:10px;letter-spacing:0.18em;text-transform:uppercase;color:${EMAIL_COLOR_MUTED_SOFT};vertical-align:top;font-family:${EMAIL_FONT_UI};">
                       Asunto
                     </td>
-                    <td style="padding:18px 0 18px 10px;border-bottom:1px solid ${EMAIL_COLOR_BORDER};font-size:15px;line-height:1.55;color:${EMAIL_COLOR_BLACK};text-align:right;vertical-align:top;font-family:${EMAIL_FONT_PRIMARY};">
+                    <td style="padding:18px 0 18px 10px;border-bottom:1px solid ${EMAIL_COLOR_BORDER};font-size:15px;line-height:1.6;color:${EMAIL_COLOR_BLACK};text-align:right;vertical-align:top;font-family:${EMAIL_FONT_BODY};">
                       ${escapeHtml(asunto)}
                     </td>
                   </tr>
                   <tr>
-                    <td style="padding:18px 10px 18px 0;font-size:10px;letter-spacing:0.18em;text-transform:uppercase;color:${EMAIL_COLOR_MUTED_SOFT};vertical-align:top;font-family:${EMAIL_FONT_SECONDARY};">
+                    <td style="padding:18px 10px 18px 0;font-size:10px;letter-spacing:0.18em;text-transform:uppercase;color:${EMAIL_COLOR_MUTED_SOFT};vertical-align:top;font-family:${EMAIL_FONT_UI};">
                       Mensaje
                     </td>
-                    <td style="padding:18px 0 18px 10px;font-size:15px;line-height:1.75;color:${EMAIL_COLOR_BLACK};text-align:left;vertical-align:top;font-family:${EMAIL_FONT_PRIMARY};white-space:pre-line;">
+                    <td style="padding:18px 0 18px 10px;font-size:15px;line-height:1.8;color:${EMAIL_COLOR_BLACK};text-align:left;vertical-align:top;font-family:${EMAIL_FONT_BODY};white-space:pre-line;">
                       ${escapeHtml(mensaje)}
                     </td>
                   </tr>
