@@ -72,7 +72,7 @@ export default async function handler(req, res) {
     await sendTransactionalEmail({
       from: 'PAVOA <onboarding@resend.dev>',
       to: email,
-      subject: 'Recupera tu contrasena - PAVOA',
+      subject: 'Recupera tu contraseña - PAVOA',
       html: emailResetPassword({
         firstName: usuario.first_name,
         resetLink,
