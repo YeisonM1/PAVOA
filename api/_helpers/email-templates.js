@@ -533,13 +533,6 @@ export const emailContactoCliente = ({ nombre, asunto }) =>
             </p>
           </div>
         `,
-      }) +
-      `<div style="height:18px;line-height:18px;">&nbsp;</div>` +
-      renderCard({
-        content: `
-          ${renderSectionHeading("Mientras tanto")}
-          ${renderTextBlock("Si quieres, puedes seguir explorando la colección mientras te respondemos.")}
-        `,
       }),
     footerNote:
       "Si necesitas agregar algo más a tu consulta, puedes responder a este mismo correo.",
@@ -597,13 +590,6 @@ export const emailContactoInterno = ({ nombre, contacto, asunto, mensaje }) =>
               </td>
             </tr>
           </table>
-        `,
-      }) +
-      `<div style="height:18px;line-height:18px;">&nbsp;</div>` +
-      renderCard({
-        content: `
-          ${renderSectionHeading("Base operativa")}
-          ${renderTextBlock("Diseñado para responder rápido sin perder la línea visual general de PAVOA.")}
         `,
       }),
     footerNote:
