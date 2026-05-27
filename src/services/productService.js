@@ -459,7 +459,7 @@ const buildCanonicalFaqBlocks = (existingBlocks = [], fallbackBlocks = []) => {
       order: resolveUniqueHelpBlockOrder(usedOrders, block.order, defaults.length + index + 1),
     }));
 
-  return [...canonicalBlocks, ...extraBlocks];
+  return [...canonicalBlocks, ...extraBlocks].sort((a, b) => (a.order || 0) - (b.order || 0));
 };
 
 const getCached = (key) => {
