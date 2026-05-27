@@ -1466,6 +1466,7 @@ export const getHelpPage = (pageKey) => {
       title: getMetaobjectFieldValue(fields, 'title'),
       body: getMetaobjectFieldValue(fields, 'body'),
       label: getMetaobjectFieldValue(fields, 'label'),
+      activo: getMetaobjectFieldValue(fields, 'activo') !== 'false',
     };
   };
 
@@ -1516,13 +1517,7 @@ export const getHelpPage = (pageKey) => {
         .filter((block) => block.title || block.body)
         .sort((a, b) => a.order - b.order);
 
-      const resolvedBlocks = blocks.length > 0
-        ? (normalizedPageKey === 'faq'
-            ? buildCanonicalFaqBlocks(blocks, fallback?.blocks || [])
-            : blocks)
-        : (normalizedPageKey === 'faq'
-            ? buildCanonicalFaqBlocks([], fallback?.blocks || [])
-            : (fallback?.blocks || []));
+      const resolvedBlocks = blocks.length > 0 ? blocks : (fallback?.blocks || []);
 
       return {
         pageKey: getMetaobjectFieldValue(fields, 'page_key') || fallback?.pageKey || normalizedPageKey,

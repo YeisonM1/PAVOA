@@ -33,7 +33,9 @@ export default function PreguntasFrecuentesPage() {
     };
   }, []);
 
-  const sortedBlocks = [...content.blocks].sort((a, b) => Number(a.order || 0) - Number(b.order || 0));
+  const sortedBlocks = [...content.blocks]
+    .filter((block) => block.activo !== false)
+    .sort((a, b) => Number(a.order || 0) - Number(b.order || 0));
   const careBlocks = sortedBlocks.filter((block) => block.blockType === 'care');
   const regularBlocks = sortedBlocks.filter((block) => block.blockType !== 'care');
 
