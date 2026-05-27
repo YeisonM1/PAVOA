@@ -413,6 +413,55 @@ const mergeHelpBlocks = (primaryBlocks = [], fallbackBlocks = []) => {
   return merged.sort((a, b) => (a.order || 0) - (b.order || 0));
 };
 
+const resolveUniqueHelpBlockOrder = (usedOrders, requestedOrder, fallbackOrder) => {
+  const parsedRequested = Number(requestedOrder || 0);
+  const parsedFallback = Number(fallbackOrder || 0);
+
+  if (Number.isInteger(parsedRequested) && parsedRequested > 0 && !usedOrders.has(parsedRequested)) {
+    usedOrders.add(parsedRequested);
+    return parsedRequested;
+  }
+
+  let nextOrder = Number.isInteger(parsedFallback) && parsedFallback > 0 ? parsedFallback : usedOrders.size + 1;
+  while (usedOrders.has(nextOrder)) {
+    nextOrder += 1;
+  }
+
+  usedOrders.add(nextOrder);
+  return nextOrder;
+};
+
+const buildCanonicalFaqBlocks = (existingBlocks = [], fallbackBlocks = []) => {
+  const defaults = Array.isArray(fallbackBlocks) ? fallbackBlocks : [];
+  const existingByKey = new Map(
+    (Array.isArray(existingBlocks) ? existingBlocks : [])
+      .map((block) => [normalizeHelpBlockKey(block), block])
+      .filter(([key]) => Boolean(key)),
+  );
+  const usedOrders = new Set();
+  const defaultKeys = new Set(defaults.map(normalizeHelpBlockKey).filter(Boolean));
+
+  const canonicalBlocks = defaults.map((fallbackBlock, index) => {
+    const existingBlock = existingByKey.get(normalizeHelpBlockKey(fallbackBlock));
+    const mergedBlock = existingBlock ? { ...fallbackBlock, ...existingBlock } : { ...fallbackBlock };
+
+    return {
+      ...mergedBlock,
+      order: resolveUniqueHelpBlockOrder(usedOrders, mergedBlock.order, fallbackBlock.order || index + 1),
+    };
+  });
+
+  const extraBlocks = (Array.isArray(existingBlocks) ? existingBlocks : [])
+    .filter((block) => !defaultKeys.has(normalizeHelpBlockKey(block)))
+    .sort((a, b) => (a.order || 0) - (b.order || 0))
+    .map((block, index) => ({
+      ...block,
+      order: resolveUniqueHelpBlockOrder(usedOrders, block.order, defaults.length + index + 1),
+    }));
+
+  return [...canonicalBlocks, ...extraBlocks];
+};
+
 const getCached = (key) => {
   const entry = _cache.get(key);
   if (!entry) return null;
@@ -1469,9 +1518,11 @@ export const getHelpPage = (pageKey) => {
 
       const resolvedBlocks = blocks.length > 0
         ? (normalizedPageKey === 'faq'
-            ? mergeHelpBlocks(blocks, fallback?.blocks || [])
+            ? buildCanonicalFaqBlocks(blocks, fallback?.blocks || [])
             : blocks)
-        : (fallback?.blocks || []);
+        : (normalizedPageKey === 'faq'
+            ? buildCanonicalFaqBlocks([], fallback?.blocks || [])
+            : (fallback?.blocks || []));
 
       return {
         pageKey: getMetaobjectFieldValue(fields, 'page_key') || fallback?.pageKey || normalizedPageKey,
