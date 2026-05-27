@@ -1,6 +1,6 @@
 # CODEX_HANDOFF.md
 
-Estado de continuidad al 2026-05-18.
+Estado de continuidad al 2026-05-27.
 
 ## Leer junto con
 
@@ -331,8 +331,34 @@ npx prisma generate && npm run build && node scripts/bundle-api.mjs
 
 
 
-1. Validar con data real en Supabase que los nuevos journeys de checkout no esten duplicando recorridos viejos.
-2. Cruzar mejor `journey -> pago -> pedido espejo -> pedido Shopify` dentro del modulo `Embudo`, no solo en `Pedidos`.
+## Sesion 2026-05-27 — FAQ y bloques de ayuda
+
+### Problema resuelto: bloques FAQ no aparecian en storefront
+
+- Causa raiz: los metaobjects `help_page_block` creados por la app no tenian la capacidad `publishable` activada. La Storefront API devuelve `null` para metaobjects no publicados aunque el ID sea valido.
+- Fix aplicado: `help-pages.server.js` ahora incluye `capabilities: { publishable: { status: "ACTIVE" } }` en las mutaciones de creacion y actualizacion de bloques.
+- Fix adicional: `getHelpPage` en `productService.js` ahora usa dos queries — primero lee los IDs del campo `blocks_1` (value raw), luego los trae con `nodes(ids: [...])` que bypasea la restriccion de publicacion.
+- Todos los bloques de todas las paginas de ayuda (22 en total) estan publicados y accesibles.
+
+### Logica de ordenamiento FAQ
+
+- `app.help-pages.jsx`: `updateBlock` re-ordena visualmente en tiempo real cuando cambia `order` o `blockType`, usando `Number()` para comparar strings.
+- `PreguntasFrecuentesPage.jsx`: sort explicito por `order` (Number) antes de separar `careBlocks` y `regularBlocks`.
+- Se elimino `injectFaqDefaultBlocks` del loader — los bloques se muestran exactamente como estan en Shopify.
+- Se agrego campo `activo` (boolean) a los bloques: permite desactivar bloques sin borrarlos. Storefront filtra los inactivos.
+
+### Scopes de PAVOA Control
+
+- `shopify.app.toml` actualizado con lista completa de scopes.
+- Deploy realizado via `shopify app deploy` — version `pavoa-control-13` liberada.
+- Scopes nuevos agregados: `read_publications`, `write_publications`, `read_orders`, `read_draft_orders`, `read_customers`, `read_fulfillments`, `read_inventory`, `read_metaobjects`, `read_metaobject_definitions`, `read_locations`, `read_files`, `write_files`.
+- La proxima vez que se entre a PAVOA Control, Shopify pedira aceptar los nuevos permisos.
+
+### Nota tecnica importante
+
+- Para operaciones Admin de Shopify desde scripts: usar `client_credentials` con `SHOPIFY_API_KEY` + `SHOPIFY_API_SECRET` del Partners Dashboard. El token expira en 24h.
+- El `SHOPIFY_ADMIN_TOKEN` del storefront es un token de Storefront API, no sirve para Admin GraphQL.
+- Los tokens `shpss_` son tokens de sesion de la app embebida, no funcionan desde scripts externos.
 
 ## Descartados
 

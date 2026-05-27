@@ -47,10 +47,10 @@ Leer siempre en este orden:
 
 ## Enfoque recomendado para proximos cambios
 
-1. Validar que el embudo este registrando data real en Supabase.
-2. Dar visibilidad operativa a pagos y pedidos en `PAVOA Control`.
-3. Mejorar newsletter por backend.
-4. Mejorar escalabilidad del catalogo.
+1. Validar con data real en Supabase que los journeys de checkout no esten duplicando recorridos viejos.
+2. Cruzar mejor `journey -> pago -> pedido espejo -> pedido Shopify` dentro del modulo `Embudo`, no solo en `Pedidos`.
+3. Notificaciones de stock alerts al cliente cuando el producto vuelve a estar disponible.
+4. Mejorar newsletter por backend.
 ## Repos y produccion
 
 - Storefront principal:
