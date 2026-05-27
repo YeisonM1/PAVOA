@@ -377,10 +377,27 @@ const getMetaobjectFieldReferences = (fields, ...keys) =>
     .map((key) => fields.find((field) => field.key === key)?.references?.nodes || [])
     .find((references) => references.length > 0) || [];
 
-const normalizeHelpBlockKey = (block) =>
-  String(block?.internalName || block?.title || block?.id || '')
+const normalizeHelpBlockText = (value) =>
+  String(value || '')
     .trim()
-    .toLowerCase();
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[¿?¡!.,:;()[\]"]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+const normalizeHelpBlockKey = (block) => {
+  const candidates = [
+    block?.internalName,
+    block?.title,
+    block?.id,
+  ]
+    .map(normalizeHelpBlockText)
+    .filter(Boolean);
+
+  return candidates[0] || '';
+};
 
 const mergeHelpBlocks = (primaryBlocks = [], fallbackBlocks = []) => {
   const seenKeys = new Set(primaryBlocks.map(normalizeHelpBlockKey).filter(Boolean));
