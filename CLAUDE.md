@@ -2,7 +2,7 @@
 
 PAVOA es el storefront headless principal de la marca.
 
-- URL: `https://pavoa.vercel.app`
+- URL: `https://pavoa.com.co`
 - Shopify: `pavoa-4502.myshopify.com`
 - Stack: React 19 + Vite 8 + Tailwind CSS v4 + Vercel serverless en `api/`
 

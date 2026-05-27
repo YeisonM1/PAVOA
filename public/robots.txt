@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://www.pavoa.com.co/sitemap.xml
+Sitemap: https://pavoa.com.co/sitemap.xml

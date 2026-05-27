@@ -17,7 +17,7 @@ import ProductVariantSelector from '../components/product/ProductVariantSelector
 import ProductAccordion from '../components/product/ProductAccordion';
 import StickyAddBar from '../components/product/StickyAddBar';
 
-const SITE_URL = (import.meta.env.VITE_APP_URL || 'https://www.pavoa.com.co').replace(/\/$/, '');
+const SITE_URL = (import.meta.env.VITE_APP_URL || 'https://pavoa.com.co').replace(/\/$/, '');
 
 export default function ProductPage() {
   const { id } = useParams();

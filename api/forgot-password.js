@@ -8,7 +8,7 @@ const supabase = createClient(
   process.env.VITE_SUPABASE_ANON_KEY
 );
 
-const APP_URL = process.env.VITE_APP_URL || 'https://www.pavoa.com.co';
+const APP_URL = process.env.VITE_APP_URL || 'https://pavoa.com.co';
 
 const _forgotAttempts = new Map();
 const FORGOT_LIMIT = 3;

@@ -10,7 +10,7 @@ const client = new mercadopago.MercadoPagoConfig({
   accessToken: process.env.MP_ACCESS_TOKEN,
 });
 
-const APP_URL = process.env.VITE_APP_URL || 'https://www.pavoa.com.co';
+const APP_URL = process.env.VITE_APP_URL || 'https://pavoa.com.co';
 const SHOPIFY_DOMAIN = process.env.VITE_SHOPIFY_DOMAIN;
 const MP_EXPECTED_USER_ID = String(
   process.env.MP_EXPECTED_USER_ID || process.env.MP_SELLER_USER_ID || ''

@@ -1,4 +1,4 @@
-const APP_URL = process.env.VITE_APP_URL || "https://www.pavoa.com.co";
+const APP_URL = process.env.VITE_APP_URL || "https://pavoa.com.co";
 const LOGO_URL = `${APP_URL}/logo-pavoa.png`;
 const MARK_URL = `${APP_URL}/pavoa-mark.png`;
 const EMAIL_FONT_LINK = "https://fonts.googleapis.com/css2?family=Raleway:wght@300;400;500;600;700&family=Montserrat:wght@300;400;500;600;700&display=swap";

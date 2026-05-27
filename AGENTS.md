@@ -55,7 +55,7 @@ Leer siempre en este orden:
 
 - Storefront principal:
   - `C:\Users\Usuario\PAVOA`
-  - `https://pavoa.vercel.app`
+  - `https://pavoa.com.co`
 - App embebida Shopify:
   - `C:\Users\Usuario\PAVOA\pavoa-control\pavoa-control`
   - `https://pavoa-control.vercel.app`
