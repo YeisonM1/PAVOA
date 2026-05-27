@@ -33,9 +33,8 @@ export default function PreguntasFrecuentesPage() {
     };
   }, []);
 
-  const sortedBlocks = [...content.blocks].sort((a, b) => (a.order || 0) - (b.order || 0));
-  const careBlocks = sortedBlocks.filter((block) => block.blockType === 'care');
-  const regularBlocks = sortedBlocks.filter((block) => block.blockType !== 'care');
+  const careBlocks = content.blocks.filter((block) => block.blockType === 'care');
+  const regularBlocks = content.blocks.filter((block) => block.blockType !== 'care');
 
   return (
     <div className="min-h-screen bg-white">
