@@ -1474,6 +1474,7 @@ export const getHelpPage = (pageKey) => {
     if (!normalizedPageKey) return fallback;
 
     try {
+      // Primera query: traer la página y los IDs de los bloques desde el value del campo
       const data = await shopifyFetch(`
         query {
           metaobjects(type: "help_page", first: 20) {
@@ -1483,17 +1484,6 @@ export const getHelpPage = (pageKey) => {
                 fields {
                   key
                   value
-                  references(first: 50) {
-                    nodes {
-                      ... on Metaobject {
-                        id
-                        fields {
-                          key
-                          value
-                        }
-                      }
-                    }
-                  }
                 }
               }
             }
@@ -1511,16 +1501,41 @@ export const getHelpPage = (pageKey) => {
       if (!pageNode) return fallback;
 
       const fields = pageNode.fields || [];
-      const referencedBlocks = getMetaobjectFieldReferences(fields, 'blocks_1', 'blocks');
 
-      // DEBUG TEMPORAL — borrar después de diagnosticar
+      // Leer los IDs de bloques directamente del value (JSON array de GIDs)
       const blocksField = fields.find((f) => f.key === 'blocks_1') || fields.find((f) => f.key === 'blocks');
-      console.error(`[FAQ DEBUG] pageKey=${normalizedPageKey} campo=${blocksField?.key ?? 'no encontrado'} referencias=${referencedBlocks.length} value_raw=${blocksField?.value ?? 'null'}`);
+      let blockIds = [];
+      try {
+        const parsed = JSON.parse(blocksField?.value || '[]');
+        blockIds = Array.isArray(parsed) ? parsed.filter(Boolean) : [];
+      } catch {
+        blockIds = [];
+      }
 
-      const blocks = referencedBlocks
-        .map((node, index) => mapHelpPageBlock(node, index))
-        .filter((block) => block.title || block.body)
-        .sort((a, b) => a.order - b.order);
+      // Segunda query: traer todos los bloques por ID usando nodes()
+      // Esto bypasea la restricción de publicación de la Storefront API
+      let blocks = [];
+      if (blockIds.length > 0) {
+        const nodesData = await shopifyFetch(`
+          query($ids: [ID!]!) {
+            nodes(ids: $ids) {
+              ... on Metaobject {
+                id
+                fields {
+                  key
+                  value
+                }
+              }
+            }
+          }
+        `, { ids: blockIds });
+
+        blocks = (nodesData?.nodes || [])
+          .filter(Boolean)
+          .map((node, index) => mapHelpPageBlock(node, index))
+          .filter((block) => block.title || block.body)
+          .sort((a, b) => a.order - b.order);
+      }
 
       const resolvedBlocks = blocks.length > 0 ? blocks : (fallback?.blocks || []);
 
