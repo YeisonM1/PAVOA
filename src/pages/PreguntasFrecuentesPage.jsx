@@ -17,19 +17,14 @@ const getCareItems = (body) =>
 
 export default function PreguntasFrecuentesPage() {
   const [content, setContent] = useState(HELP_PAGES_DEFAULTS.faq);
-  const [careContent, setCareContent] = useState(HELP_PAGES_DEFAULTS.cuidados_prendas);
 
   useEffect(() => {
     let active = true;
 
-    Promise.all([
-      getHelpPage('faq'),
-      getHelpPage('cuidados_prendas'),
-    ])
-      .then(([faqData, careData]) => {
-        if (!active) return;
-        if (faqData) setContent(faqData);
-        if (careData) setCareContent(careData);
+    getHelpPage('faq')
+      .then((faqData) => {
+        if (!active || !faqData) return;
+        setContent(faqData);
       })
       .catch(() => {});
 
@@ -37,6 +32,9 @@ export default function PreguntasFrecuentesPage() {
       active = false;
     };
   }, []);
+
+  const careBlocks = content.blocks.filter((block) => block.blockType === 'care');
+  const regularBlocks = content.blocks.filter((block) => block.blockType !== 'care');
 
   return (
     <div className="min-h-screen bg-white">
@@ -63,7 +61,7 @@ export default function PreguntasFrecuentesPage() {
 
       <section className="w-full py-10 md:py-16 px-6 md:px-12 lg:px-16">
         <div className="max-w-[1000px] mx-auto grid gap-4">
-          {content.blocks.map((block) => (
+          {regularBlocks.map((block) => (
             <article key={block.id} className="border border-stone-100 p-7 md:p-9">
               <h2 className="text-[11px] font-bold tracking-[0.2em] uppercase text-stone-900 mb-4">{block.title}</h2>
               <HelpBlockBody
@@ -75,58 +73,60 @@ export default function PreguntasFrecuentesPage() {
         </div>
       </section>
 
-      <section className="w-full pb-14 md:pb-20 px-6 md:px-12 lg:px-16">
-        <div className="max-w-[1000px] mx-auto border border-stone-100 p-7 md:p-9" style={{ background: 'var(--color-ivory)' }}>
-          <span className="text-[9px] font-medium tracking-[0.3em] uppercase text-stone-400 block mb-3">
-            {careContent.eyebrow}
-          </span>
-          <h2 className="text-2xl md:text-3xl font-light text-stone-900 tracking-[0.12em] uppercase">
-            {careContent.title}
-          </h2>
-          <p className="text-[12px] text-stone-500 leading-relaxed tracking-[0.06em] mt-4 max-w-2xl">
-            Recomendaciones generales para conservar mejor la horma, el color y la vida útil de tus prendas. Si una referencia tiene una indicación especial, prima lo que aparezca en su propia página de producto.
-          </p>
+      {careBlocks.length > 0 && (
+        <section className="w-full pb-14 md:pb-20 px-6 md:px-12 lg:px-16">
+          <div className="max-w-[1000px] mx-auto border border-stone-100 p-7 md:p-9" style={{ background: 'var(--color-ivory)' }}>
+            <span className="text-[9px] font-medium tracking-[0.3em] uppercase text-stone-400 block mb-3">
+              Cuidado de producto
+            </span>
+            <h2 className="text-2xl md:text-3xl font-light text-stone-900 tracking-[0.12em] uppercase">
+              Cuidados para tus prendas
+            </h2>
+            <p className="text-[12px] text-stone-500 leading-relaxed tracking-[0.06em] mt-4 max-w-2xl">
+              Recomendaciones generales para conservar mejor la horma, el color y la vida útil de tus prendas. Si una referencia tiene una indicación especial, prima lo que aparezca en su propia página de producto.
+            </p>
 
-          <div className="grid md:grid-cols-2 gap-4 mt-8">
-            {careContent.blocks.map((block) => {
-              const isDo = block.label === 'do';
-              const items = getCareItems(block.body);
+            <div className="grid md:grid-cols-2 gap-4 mt-8">
+              {careBlocks.map((block) => {
+                const isDo = block.label === 'do';
+                const items = getCareItems(block.body);
 
-              return (
-                <article
-                  key={block.id}
-                  className="border border-stone-200 bg-white p-6 md:p-7"
-                >
-                  <div className="flex items-center gap-3 mb-5">
-                    <div
-                      className={`w-10 h-10 rounded-full flex items-center justify-center text-sm ${
-                        isDo
-                          ? 'bg-[#d8bf79] text-stone-900'
-                          : 'bg-stone-900 text-white'
-                      }`}
-                      aria-hidden="true"
-                    >
-                      {isDo ? '✓' : '×'}
+                return (
+                  <article
+                    key={block.id}
+                    className="border border-stone-200 bg-white p-6 md:p-7"
+                  >
+                    <div className="flex items-center gap-3 mb-5">
+                      <div
+                        className={`w-10 h-10 rounded-full flex items-center justify-center text-sm ${
+                          isDo
+                            ? 'bg-[#d8bf79] text-stone-900'
+                            : 'bg-stone-900 text-white'
+                        }`}
+                        aria-hidden="true"
+                      >
+                        {isDo ? '✓' : '×'}
+                      </div>
+                      <h3 className="text-[11px] font-bold tracking-[0.2em] uppercase text-stone-900">
+                        {block.title}
+                      </h3>
                     </div>
-                    <h3 className="text-[11px] font-bold tracking-[0.2em] uppercase text-stone-900">
-                      {block.title}
-                    </h3>
-                  </div>
 
-                  <ul className="space-y-3">
-                    {items.map((item) => (
-                      <li key={item} className="flex items-start gap-3 text-[12px] text-stone-600 leading-relaxed">
-                        <span className="mt-[7px] h-1.5 w-1.5 rounded-full bg-[#c8a75a] flex-shrink-0" aria-hidden="true" />
-                        <span>{item}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </article>
-              );
-            })}
+                    <ul className="space-y-3">
+                      {items.map((item) => (
+                        <li key={item} className="flex items-start gap-3 text-[12px] text-stone-600 leading-relaxed">
+                          <span className="mt-[7px] h-1.5 w-1.5 rounded-full bg-[#c8a75a] flex-shrink-0" aria-hidden="true" />
+                          <span>{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </article>
+                );
+              })}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
     </div>
   );
 }

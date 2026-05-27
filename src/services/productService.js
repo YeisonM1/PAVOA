@@ -300,22 +300,10 @@ export const HELP_PAGES_DEFAULTS = {
         title: '¿No encuentras tu respuesta?',
         body: 'Escríbenos desde Contacto y te respondemos en menos de 24 horas hábiles.',
       },
-    ],
-  },
-  cuidados_prendas: {
-    pageKey: 'cuidados_prendas',
-    internalName: 'Cuidados para tus prendas',
-    eyebrow: 'Cuidado de producto',
-    title: 'Cuidados para tus prendas',
-    seoTitle: 'Cuidados para tus prendas',
-    seoDescription: 'Recomendaciones generales para cuidar tus prendas PAVOA y prolongar su vida útil.',
-    ctaLabel: '',
-    ctaUrl: '',
-    blocks: [
       {
         id: 'cuidados-prendas-si',
         internalName: 'Qué sí hacer',
-        order: 1,
+        order: 11,
         blockType: 'care',
         title: 'Qué sí hacer',
         body: 'Utiliza agua tibia, jabón de barra o líquido especial para ropa delicada.\nLava tus prendas a mano o en el ciclo delicado de tu lavadora.\nSeca tus prendas a la sombra de manera natural.',
@@ -324,7 +312,7 @@ export const HELP_PAGES_DEFAULTS = {
       {
         id: 'cuidados-prendas-no',
         internalName: 'Qué evitar',
-        order: 2,
+        order: 12,
         blockType: 'care',
         title: 'Qué evitar',
         body: 'No uses cloro ni detergentes agresivos del mercado.\nNo retuerzas tus prendas para acelerar el secado.\nNo dejes las prendas en remojo.\nNo expongas tus prendas directamente al sol.',
