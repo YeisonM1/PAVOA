@@ -4,16 +4,32 @@ import HelpBlockBody from '../components/HelpBlockBody';
 import SEO from '../components/SEO';
 import { getHelpPage, HELP_PAGES_DEFAULTS } from '../services/productService';
 
+const normalizeCareBody = (value) =>
+  String(value || '')
+    .replace(/\\n\\n/g, '\n')
+    .replace(/\\n/g, '\n');
+
+const getCareItems = (body) =>
+  normalizeCareBody(body)
+    .split('\n')
+    .map((item) => item.trim())
+    .filter(Boolean);
+
 export default function PreguntasFrecuentesPage() {
   const [content, setContent] = useState(HELP_PAGES_DEFAULTS.faq);
+  const [careContent, setCareContent] = useState(HELP_PAGES_DEFAULTS.cuidados_prendas);
 
   useEffect(() => {
     let active = true;
 
-    getHelpPage('faq')
-      .then((data) => {
-        if (!active || !data) return;
-        setContent(data);
+    Promise.all([
+      getHelpPage('faq'),
+      getHelpPage('cuidados_prendas'),
+    ])
+      .then(([faqData, careData]) => {
+        if (!active) return;
+        if (faqData) setContent(faqData);
+        if (careData) setCareContent(careData);
       })
       .catch(() => {});
 
@@ -56,6 +72,59 @@ export default function PreguntasFrecuentesPage() {
               />
             </article>
           ))}
+        </div>
+      </section>
+
+      <section className="w-full pb-14 md:pb-20 px-6 md:px-12 lg:px-16">
+        <div className="max-w-[1000px] mx-auto border border-stone-100 p-7 md:p-9" style={{ background: 'var(--color-ivory)' }}>
+          <span className="text-[9px] font-medium tracking-[0.3em] uppercase text-stone-400 block mb-3">
+            {careContent.eyebrow}
+          </span>
+          <h2 className="text-2xl md:text-3xl font-light text-stone-900 tracking-[0.12em] uppercase">
+            {careContent.title}
+          </h2>
+          <p className="text-[12px] text-stone-500 leading-relaxed tracking-[0.06em] mt-4 max-w-2xl">
+            Recomendaciones generales para conservar mejor la horma, el color y la vida útil de tus prendas. Si una referencia tiene una indicación especial, prima lo que aparezca en su propia página de producto.
+          </p>
+
+          <div className="grid md:grid-cols-2 gap-4 mt-8">
+            {careContent.blocks.map((block) => {
+              const isDo = block.label === 'do';
+              const items = getCareItems(block.body);
+
+              return (
+                <article
+                  key={block.id}
+                  className="border border-stone-200 bg-white p-6 md:p-7"
+                >
+                  <div className="flex items-center gap-3 mb-5">
+                    <div
+                      className={`w-10 h-10 rounded-full flex items-center justify-center text-sm ${
+                        isDo
+                          ? 'bg-[#d8bf79] text-stone-900'
+                          : 'bg-stone-900 text-white'
+                      }`}
+                      aria-hidden="true"
+                    >
+                      {isDo ? '✓' : '×'}
+                    </div>
+                    <h3 className="text-[11px] font-bold tracking-[0.2em] uppercase text-stone-900">
+                      {block.title}
+                    </h3>
+                  </div>
+
+                  <ul className="space-y-3">
+                    {items.map((item) => (
+                      <li key={item} className="flex items-start gap-3 text-[12px] text-stone-600 leading-relaxed">
+                        <span className="mt-[7px] h-1.5 w-1.5 rounded-full bg-[#c8a75a] flex-shrink-0" aria-hidden="true" />
+                        <span>{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </article>
+              );
+            })}
+          </div>
         </div>
       </section>
     </div>

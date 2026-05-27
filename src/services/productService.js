@@ -9,6 +9,19 @@ const HOME_PRODUCT_TAG_LABELS = {
 };
 
 const normalizeProductTag = (value) => String(value || '').trim().toLowerCase();
+const CANONICAL_CONTACT_EMAIL = 'pavoacol@gmail.com';
+const LEGACY_CONTACT_EMAILS = new Set(['hola@pavoa.co', 'hola@correo.com']);
+
+const normalizeContactEmail = (value) => {
+  const raw = String(value || '').trim();
+  const normalized = raw.toLowerCase();
+
+  if (!normalized || LEGACY_CONTACT_EMAILS.has(normalized)) {
+    return CANONICAL_CONTACT_EMAIL;
+  }
+
+  return raw;
+};
 
 const getGlobalHomeProductTag = (tags = []) => {
   const normalizedTags = (Array.isArray(tags) ? tags : [])
@@ -18,7 +31,7 @@ const getGlobalHomeProductTag = (tags = []) => {
 };
 
 export const SITE_SETTINGS_DEFAULTS = {
-  contactEmail: 'hola@pavoa.co',
+  contactEmail: CANONICAL_CONTACT_EMAIL,
   contactSchedule: 'Lunes a sábado: 8am – 6pm',
   contactNote: 'Haz tu compra en línea 24/7h',
   responseTime: 'Respondemos todos los mensajes en un máximo de 24 horas hábiles.',
@@ -208,17 +221,49 @@ export const HELP_PAGES_DEFAULTS = {
     ctaUrl: '',
     blocks: [
       {
+        id: 'faq-medios-de-pago',
+        internalName: '¿Qué medios de pago manejan?',
+        order: 1,
+        blockType: 'faq',
+        title: '¿Qué medios de pago manejan?',
+        body: 'Puedes pagar de forma segura con los métodos habilitados en checkout. Antes de confirmar verás las opciones disponibles para tu compra.',
+      },
+      {
+        id: 'faq-envios-colombia',
+        internalName: '¿Realizan envíos a toda Colombia?',
+        order: 2,
+        blockType: 'faq',
+        title: '¿Realizan envíos a toda Colombia?',
+        body: 'Sí. Realizamos envíos a ciudades principales y a gran parte del territorio nacional. El tiempo final depende de la cobertura de la transportadora.',
+      },
+      {
         id: 'faq-como-se-cuanto-tarda-mi-pedido',
         internalName: '¿Cómo sé cuánto tarda mi pedido?',
-        order: 1,
+        order: 3,
         blockType: 'faq',
         title: '¿Cómo sé cuánto tarda mi pedido?',
         body: 'Al despachar tu compra te enviamos la guía para rastreo. El tiempo depende de la ciudad destino.',
       },
       {
+        id: 'faq-como-hago-seguimiento',
+        internalName: '¿Cómo hago seguimiento a mi pedido?',
+        order: 4,
+        blockType: 'faq',
+        title: '¿Cómo hago seguimiento a mi pedido?',
+        body: 'Cuando tu pedido sea despachado te compartimos la guía para que puedas rastrearlo. Si no la encuentras, escríbenos por Contacto con tu número de pedido.',
+      },
+      {
+        id: 'faq-como-se-mi-talla',
+        internalName: '¿Cómo sé cuál es mi talla?',
+        order: 5,
+        blockType: 'faq',
+        title: '¿Cómo sé cuál es mi talla?',
+        body: 'Puedes apoyarte en nuestra Guía de tallas y, si quieres una recomendación más precisa, escríbenos antes de comprar para orientarte según la referencia.',
+      },
+      {
         id: 'faq-puedo-cambiar-la-talla',
         internalName: '¿Puedo cambiar la talla?',
-        order: 2,
+        order: 6,
         blockType: 'faq',
         title: '¿Puedo cambiar la talla?',
         body: 'Sí, siempre que la prenda cumpla condiciones de cambio y lo solicites dentro del plazo.',
@@ -226,26 +271,64 @@ export const HELP_PAGES_DEFAULTS = {
       {
         id: 'faq-que-pasa-si-mi-producto-llega-con-novedad',
         internalName: '¿Qué pasa si mi producto llega con novedad?',
-        order: 3,
+        order: 7,
         blockType: 'faq',
         title: '¿Qué pasa si mi producto llega con novedad?',
         body: 'Te ayudamos a gestionarlo de inmediato. Escríbenos con fotos y número de pedido.',
       },
       {
-        id: 'faq-tienen-atencion-personalizada',
-        internalName: '¿Tienen atención personalizada?',
-        order: 4,
+        id: 'faq-asesoria-antes-de-comprar',
+        internalName: '¿Puedo recibir asesoría antes de comprar?',
+        order: 8,
         blockType: 'faq',
-        title: '¿Tienen atención personalizada?',
-        body: 'Sí. Te orientamos por contacto para talla, uso y disponibilidad.',
+        title: '¿Puedo recibir asesoría antes de comprar?',
+        body: 'Sí. Te ayudamos con talla, disponibilidad, uso de la prenda y dudas generales antes de que finalices tu compra.',
+      },
+      {
+        id: 'faq-como-cuidar-prendas',
+        internalName: '¿Cómo debo cuidar mis prendas PAVOA?',
+        order: 9,
+        blockType: 'faq',
+        title: '¿Cómo debo cuidar mis prendas PAVOA?',
+        body: 'Más abajo encontrarás una guía rápida de cuidados generales. Además, algunas referencias incluyen cuidados específicos dentro de su propia página de producto.',
       },
       {
         id: 'faq-no-encuentras-tu-respuesta',
         internalName: '¿No encuentras tu respuesta?',
-        order: 5,
+        order: 10,
         blockType: 'text',
         title: '¿No encuentras tu respuesta?',
         body: 'Escríbenos desde Contacto y te respondemos en menos de 24 horas hábiles.',
+      },
+    ],
+  },
+  cuidados_prendas: {
+    pageKey: 'cuidados_prendas',
+    internalName: 'Cuidados para tus prendas',
+    eyebrow: 'Cuidado de producto',
+    title: 'Cuidados para tus prendas',
+    seoTitle: 'Cuidados para tus prendas',
+    seoDescription: 'Recomendaciones generales para cuidar tus prendas PAVOA y prolongar su vida útil.',
+    ctaLabel: '',
+    ctaUrl: '',
+    blocks: [
+      {
+        id: 'cuidados-prendas-si',
+        internalName: 'Qué sí hacer',
+        order: 1,
+        blockType: 'care',
+        title: 'Qué sí hacer',
+        body: 'Utiliza agua tibia, jabón de barra o líquido especial para ropa delicada.\nLava tus prendas a mano o en el ciclo delicado de tu lavadora.\nSeca tus prendas a la sombra de manera natural.',
+        label: 'do',
+      },
+      {
+        id: 'cuidados-prendas-no',
+        internalName: 'Qué evitar',
+        order: 2,
+        blockType: 'care',
+        title: 'Qué evitar',
+        body: 'No uses cloro ni detergentes agresivos del mercado.\nNo retuerzas tus prendas para acelerar el secado.\nNo dejes las prendas en remojo.\nNo expongas tus prendas directamente al sol.',
+        label: 'dont',
       },
     ],
   },
@@ -305,6 +388,25 @@ const getMetaobjectFieldReferences = (fields, ...keys) =>
   keys
     .map((key) => fields.find((field) => field.key === key)?.references?.nodes || [])
     .find((references) => references.length > 0) || [];
+
+const normalizeHelpBlockKey = (block) =>
+  String(block?.internalName || block?.title || block?.id || '')
+    .trim()
+    .toLowerCase();
+
+const mergeHelpBlocks = (primaryBlocks = [], fallbackBlocks = []) => {
+  const seenKeys = new Set(primaryBlocks.map(normalizeHelpBlockKey).filter(Boolean));
+  const merged = [...primaryBlocks];
+
+  fallbackBlocks.forEach((block) => {
+    const key = normalizeHelpBlockKey(block);
+    if (!key || seenKeys.has(key)) return;
+    seenKeys.add(key);
+    merged.push(block);
+  });
+
+  return merged.sort((a, b) => (a.order || 0) - (b.order || 0));
+};
 
 const getCached = (key) => {
   const entry = _cache.get(key);
@@ -869,7 +971,7 @@ export const getSiteSettings = () => {
       const get = (key) => node.fields.find((field) => field.key === key)?.value?.trim() || '';
 
       return {
-        contactEmail: get('contact_email') || SITE_SETTINGS_DEFAULTS.contactEmail,
+        contactEmail: normalizeContactEmail(get('contact_email') || SITE_SETTINGS_DEFAULTS.contactEmail),
         contactSchedule: get('contact_schedule') || SITE_SETTINGS_DEFAULTS.contactSchedule,
         contactNote: get('contact_note') || SITE_SETTINGS_DEFAULTS.contactNote,
         responseTime: get('response_time') || SITE_SETTINGS_DEFAULTS.responseTime,
@@ -1360,6 +1462,12 @@ export const getHelpPage = (pageKey) => {
         .filter((block) => block.title || block.body)
         .sort((a, b) => a.order - b.order);
 
+      const resolvedBlocks = blocks.length > 0
+        ? (normalizedPageKey === 'faq'
+            ? mergeHelpBlocks(blocks, fallback?.blocks || [])
+            : blocks)
+        : (fallback?.blocks || []);
+
       return {
         pageKey: getMetaobjectFieldValue(fields, 'page_key') || fallback?.pageKey || normalizedPageKey,
         internalName: getMetaobjectFieldValue(fields, 'internal_name') || fallback?.internalName || '',
@@ -1369,7 +1477,7 @@ export const getHelpPage = (pageKey) => {
         seoDescription: getMetaobjectFieldValue(fields, 'seo_description') || fallback?.seoDescription || '',
         ctaLabel: getMetaobjectFieldValue(fields, 'cta_label') || fallback?.ctaLabel || '',
         ctaUrl: getMetaobjectFieldValue(fields, 'cta_url') || fallback?.ctaUrl || '',
-        blocks: blocks.length > 0 ? blocks : (fallback?.blocks || []),
+        blocks: resolvedBlocks,
       };
     } catch (err) {
       console.error(`Error getHelpPage ${normalizedPageKey}:`, err);
