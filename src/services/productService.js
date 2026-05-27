@@ -1512,6 +1512,11 @@ export const getHelpPage = (pageKey) => {
 
       const fields = pageNode.fields || [];
       const referencedBlocks = getMetaobjectFieldReferences(fields, 'blocks_1', 'blocks');
+
+      // DEBUG TEMPORAL — borrar después de diagnosticar
+      const blocksField = fields.find((f) => f.key === 'blocks_1') || fields.find((f) => f.key === 'blocks');
+      console.error(`[FAQ DEBUG] pageKey=${normalizedPageKey} campo=${blocksField?.key ?? 'no encontrado'} referencias=${referencedBlocks.length} value_raw=${blocksField?.value ?? 'null'}`);
+
       const blocks = referencedBlocks
         .map((node, index) => mapHelpPageBlock(node, index))
         .filter((block) => block.title || block.body)
