@@ -331,7 +331,18 @@ npx prisma generate && npm run build && node scripts/bundle-api.mjs
 
 
 
-## Sesion 2026-05-27 — FAQ y bloques de ayuda
+## Sesion 2026-05-28 — Revisión de pendientes y fix carrito
+
+### Pendientes anteriores — todos implementados
+- Journeys en Supabase: completo con diagnósticos de duplicados y consistencia.
+- Cruce embudo ↔ pedidos: `buildJourneyTrace` en `supabase.server.js` cruza journey → pago → pedido espejo → Shopify.
+- Stock alerts → email al cliente: `stock-alerts.server.js` tiene el flujo completo via webhook `inventory_levels/update`.
+- Newsletter por backend: completo, visible en PAVOA Control.
+
+### Fix: productos vistos recientemente con imagen rota
+- `CartDrawer.jsx`: extraído `RecentlyViewedCard` como componente con estado `visible`.
+- Si la imagen falla (`onError`), el card completo se oculta — sin texto alt suelto ni espacio vacío.
+- Aplica cuando un producto fue eliminado de Shopify pero sigue en el localStorage del cliente.
 
 ### Problema resuelto: bloques FAQ no aparecian en storefront
 
