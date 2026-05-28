@@ -7,6 +7,34 @@ import { thumbImage } from '../utils/imageUrl';
 import { getRecentlyViewed } from '../hooks/useRecentlyViewed';
 import { trackFunnelEvent } from '../lib/funnel';
 
+// Card de producto visto recientemente — se oculta si la imagen no carga
+function RecentlyViewedCard({ producto: p, onClose }) {
+  const [visible, setVisible] = useState(true);
+  if (!visible) return null;
+  return (
+    <Link
+      to={`/producto/${p.id}`}
+      onClick={onClose}
+      className="flex-shrink-0 flex flex-col gap-2 w-[88px] group"
+    >
+      <div className="w-[88px] h-[116px] bg-stone-100 overflow-hidden">
+        <img
+          src={thumbImage(p.imagen1)}
+          alt={p.nombre}
+          width={88}
+          height={116}
+          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+          onError={() => setVisible(false)}
+        />
+      </div>
+      <p className="text-[9px] font-bold text-stone-900 tracking-[0.08em] uppercase leading-tight line-clamp-2">
+        {p.nombre}
+      </p>
+      <p className="text-[10px] text-stone-500">{p.precio}</p>
+    </Link>
+  );
+}
+
 const buildCartLineItems = (cartItems = []) =>
   cartItems.map((item) => ({
     product_id: item?.producto?.id || null,
@@ -115,15 +143,11 @@ export default function CartDrawer({ cartOpen, setCartOpen }) {
                   <p className="text-[9px] font-bold tracking-[0.25em] text-stone-600 uppercase mb-4">Visto recientemente</p>
                   <div className="flex gap-3 overflow-x-auto pb-2 -mx-1 px-1">
                     {recentlyViewed.map(p => (
-                      <Link key={p.id} to={`/producto/${p.id}`} onClick={() => setCartOpen(false)}
-                        className="flex-shrink-0 flex flex-col gap-2 w-[88px] group">
-                        <div className="w-[88px] h-[116px] bg-stone-100 overflow-hidden">
-                          <img src={thumbImage(p.imagen1)} alt={p.nombre} width={88} height={116}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                        </div>
-                        <p className="text-[9px] font-bold text-stone-900 tracking-[0.08em] uppercase leading-tight line-clamp-2">{p.nombre}</p>
-                        <p className="text-[10px] text-stone-500">{p.precio}</p>
-                      </Link>
+                      <RecentlyViewedCard
+                        key={p.id}
+                        producto={p}
+                        onClose={() => setCartOpen(false)}
+                      />
                     ))}
                   </div>
                 </div>
