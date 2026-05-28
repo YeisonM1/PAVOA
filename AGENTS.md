@@ -47,10 +47,9 @@ Leer siempre en este orden:
 
 ## Enfoque recomendado para proximos cambios
 
-1. Validar con data real en Supabase que los journeys de checkout no esten duplicando recorridos viejos.
-2. Cruzar mejor `journey -> pago -> pedido espejo -> pedido Shopify` dentro del modulo `Embudo`, no solo en `Pedidos`.
-3. Notificaciones de stock alerts al cliente cuando el producto vuelve a estar disponible.
-4. Mejorar newsletter por backend.
+1. Revisar si hay oportunidades de mejora en conversion en el storefront (PDP, checkout).
+2. Evaluar si el embudo esta registrando data real y util en produccion.
+3. Considerar mejoras de escalabilidad del catalogo si el volumen de productos crece.
 ## Repos y produccion
 
 - Storefront principal:
