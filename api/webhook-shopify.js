@@ -1,5 +1,5 @@
 import crypto from 'crypto';
-import { emailDespacho, emailEntregado } from './_helpers/email-templates.js';
+import { emailDespacho, emailEntregado, emailPedidoCancelado } from './_helpers/email-templates.js';
 import { getShopifyToken } from './_helpers/shopify-token.js';
 import { sendTransactionalEmail } from './_helpers/mail.js';
 import { supabase, getSupabaseMode } from './_helpers/supabase.js';
@@ -99,6 +99,130 @@ const restockRefund = async (refund) => {
   }
 };
 
+const formatMoney = (value) => Number(value || 0).toLocaleString('es-CO');
+
+const getCustomerEmail = (order, pedido) =>
+  pedido?.email ||
+  order?.email ||
+  order?.contact_email ||
+  order?.customer?.email ||
+  null;
+
+const getCustomerName = (order, pedido) => {
+  const fromPedido = String(pedido?.nombre || '').trim();
+  if (fromPedido) return fromPedido;
+
+  const shipping = order?.shipping_address;
+  const customer = order?.customer;
+  const name = [
+    shipping?.first_name || customer?.first_name || '',
+    shipping?.last_name || customer?.last_name || '',
+  ].filter(Boolean).join(' ').trim();
+
+  return name || 'Cliente';
+};
+
+const mapOrderLineItems = (order, pedido) => {
+  if (Array.isArray(pedido?.items) && pedido.items.length > 0) {
+    return pedido.items.map((item) => ({
+      title: item.nombre || item.title || 'Prenda PAVOA',
+      quantity: item.cantidad || item.quantity || 1,
+      price: item.precio || item.price || 0,
+      variant_title: item.talla || item.variant_title || item.color || null,
+    }));
+  }
+
+  return (order?.line_items || []).map((item) => ({
+    title: item.title || item.name || 'Prenda PAVOA',
+    quantity: item.quantity || 1,
+    price: item.price || 0,
+    variant_title: item.variant_title || null,
+  }));
+};
+
+const getCancelReasonLabel = (reason) => {
+  const normalized = String(reason || '').trim().toLowerCase();
+  const labels = {
+    customer: 'Solicitud del cliente',
+    fraud: 'Validacion de seguridad',
+    inventory: 'Disponibilidad de inventario',
+    declined: 'Pago rechazado',
+    other: 'Otro motivo',
+  };
+  return labels[normalized] || normalized || '';
+};
+
+const handleOrderCancelled = async (order) => {
+  const shopifyOrderId = String(order?.id || '');
+  if (!shopifyOrderId) return;
+
+  const { data: pedido, error } = await supabase
+    .from('pedidos')
+    .select('email, shopify_order_name, nombre, status, fulfillment_status, total, items')
+    .eq('shopify_order_id', shopifyOrderId)
+    .maybeSingle();
+
+  if (error) {
+    console.error(`Error consultando pedido cancelado [mode=${getSupabaseMode()}]:`, error.message);
+  }
+
+  const wasAlreadyCancelled = String(pedido?.status || '').trim().toLowerCase() === 'cancelled';
+
+  const { error: updateError } = await supabase
+    .from('pedidos')
+    .update({
+      status: 'cancelled',
+      fulfillment_status: 'cancelled',
+      tracking_number: null,
+      tracking_company: null,
+      tracking_url: null,
+    })
+    .eq('shopify_order_id', shopifyOrderId);
+
+  if (updateError) {
+    console.error(`Error marcando pedido cancelado [mode=${getSupabaseMode()}]:`, updateError.message);
+  } else {
+    console.log(`Pedido marcado como cancelado: ${shopifyOrderId}`);
+  }
+
+  if (wasAlreadyCancelled) {
+    console.log(`Cancelacion ya procesada para pedido: ${shopifyOrderId}`);
+    return;
+  }
+
+  const email = getCustomerEmail(order, pedido);
+  if (!email) {
+    console.warn(`Pedido cancelado sin email disponible: ${shopifyOrderId}`);
+    return;
+  }
+
+  const orderName = pedido?.shopify_order_name || order?.name || `#${order?.order_number || shopifyOrderId}`;
+  const nombreCliente = getCustomerName(order, pedido);
+  const total = formatMoney(pedido?.total || order?.total_price || 0);
+  const lineItems = mapOrderLineItems(order, pedido);
+  const cancelReason = getCancelReasonLabel(order?.cancel_reason);
+  const refundStatus = order?.financial_status || '';
+
+  try {
+    await sendTransactionalEmail({
+      from: 'PAVOA <onboarding@resend.dev>',
+      to: email,
+      subject: `Tu pedido ${orderName} fue cancelado - PAVOA`,
+      html: emailPedidoCancelado({
+        nombreCliente,
+        orderName,
+        lineItems,
+        total,
+        cancelReason,
+        refundStatus,
+      }),
+    });
+    console.log(`Email de cancelacion enviado a: ${email}`);
+  } catch (emailErr) {
+    console.error('Email de cancelacion no enviado:', emailErr.message);
+  }
+};
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).send('Method not allowed');
 
@@ -108,6 +232,11 @@ export default async function handler(req, res) {
 
   // Firma: Vercel re-parsea el body y rompe el HMAC — procesamos siempre
   validarFirma(rawBody, hmacHeader);
+
+  if (topic === 'orders/cancelled') {
+    await handleOrderCancelled(req.body);
+    return res.status(200).send('OK');
+  }
 
   // ── Entregado: tag "entregado" en la orden ─────────────
   if (topic === 'orders/updated') {

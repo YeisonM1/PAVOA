@@ -513,6 +513,81 @@ export const emailEntregado = ({ nombreCliente, orderName }) =>
       }),
   });
 
+export const emailPedidoCancelado = ({
+  nombreCliente,
+  orderName,
+  lineItems = [],
+  total,
+  cancelReason,
+  refundStatus,
+}) => {
+  const reasonLabel = String(cancelReason || '').trim();
+  const refundCopyByStatus = {
+    refunded: 'El reembolso ya figura procesado desde Shopify. El tiempo final de reflejo puede depender del medio de pago o entidad bancaria.',
+    partially_refunded: 'Este pedido tiene un reembolso parcial registrado. Si necesitas claridad sobre el valor, puedes responder este correo.',
+    paid: 'Como este pedido tenia pago aprobado, revisaremos o gestionaremos el proceso correspondiente segun el medio de pago.',
+    pending: 'Este pedido no figura como pagado completamente. Por eso no deberia requerir reembolso final.',
+    voided: 'El pago fue anulado correctamente antes de completarse.',
+  };
+  const refundCopy = refundCopyByStatus[String(refundStatus || '').trim().toLowerCase()]
+    || 'Si aplica algun movimiento de dinero, te acompa\u00f1aremos con la informacion correspondiente.';
+
+  const rows = [
+    {
+      label: 'Pedido',
+      value: escapeHtml(orderName),
+    },
+    {
+      label: 'Estado',
+      value: '<span style="color:#991b1b;font-weight:700;">Cancelado</span>',
+    },
+    total
+      ? {
+          label: 'Total',
+          value: `<span style="font-size:20px;font-weight:600;font-family:${EMAIL_FONT_TITLE};">$${escapeHtml(total)}</span>`,
+        }
+      : null,
+    reasonLabel
+      ? {
+          label: 'Motivo',
+          value: escapeHtml(reasonLabel),
+        }
+      : null,
+  ].filter(Boolean);
+
+  return renderLayout({
+    preheader: `Tu pedido ${orderName} fue cancelado`,
+    eyebrow: 'Actualizacion de pedido',
+    title: 'Tu pedido fue cancelado',
+    body: `Hola ${escapeHtml(nombreCliente || 'Cliente')}, queremos confirmarte que tu pedido <strong style="color:${EMAIL_COLOR_BLACK};">${escapeHtml(orderName)}</strong> fue cancelado correctamente.`,
+    afterHero:
+      renderHeroStatusCard({
+        title: 'Cancelacion confirmada',
+        body: 'Te compartimos el estado principal para que tengas claridad sobre lo ocurrido.',
+        badge: 'Pedido cancelado',
+        rows,
+      }) +
+      (lineItems?.length
+        ? `<div style="height:18px;line-height:18px;">&nbsp;</div>${renderOrderItemsCard(lineItems)}`
+        : '') +
+      `<div style="height:18px;line-height:18px;">&nbsp;</div>` +
+      renderCard({
+        content: `
+          ${renderSectionHeading('Sobre el pago')}
+          ${renderTextBlock(escapeHtml(refundCopy))}
+        `,
+      }) +
+      `<div style="height:18px;line-height:18px;">&nbsp;</div>` +
+      renderStepsCard('Que puedes hacer ahora', [
+        'Si tienes dudas sobre la cancelacion, responde a este correo.',
+        'Si quieres comprar otra prenda, puedes volver a la tienda cuando quieras.',
+        'Si el pedido ya tenia pago aprobado, te mantendremos informada sobre el proceso correspondiente.',
+      ]),
+    footerNote:
+      'Este correo confirma la cancelacion del pedido. Si necesitas ayuda, puedes responder directamente.',
+  });
+};
+
 export const emailVerificacion = ({ firstName, verifyLink }) =>
   renderLayout({
     preheader: "Verifica tu correo para activar tu cuenta PAVOA",
