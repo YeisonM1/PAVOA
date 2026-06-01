@@ -1,7 +1,8 @@
 const APP_URL = (process.env.VITE_APP_URL || "https://www.pavoa.com.co").replace(/\/$/, "");
 const EMAIL_ASSET_URL = APP_URL.replace("https://pavoa.com.co", "https://www.pavoa.com.co");
-const LOGO_URL = `${EMAIL_ASSET_URL}/logo-pavoa.png`;
-const MARK_URL = `${EMAIL_ASSET_URL}/pavoa-mark.png`;
+const EMAIL_ASSET_VERSION = "20260601";
+const LOGO_URL = `${EMAIL_ASSET_URL}/logo-pavoa.png?v=${EMAIL_ASSET_VERSION}`;
+const MARK_URL = `${EMAIL_ASSET_URL}/pavoa-mark.png?v=${EMAIL_ASSET_VERSION}`;
 const EMAIL_FONT_LINK = "https://fonts.googleapis.com/css2?family=Raleway:wght@300;400;500;600;700&family=Montserrat:wght@300;400;500;600;700&display=swap";
 const EMAIL_FONT_TITLE = "'Raleway', 'Helvetica Neue', Helvetica, Arial, sans-serif";
 const EMAIL_FONT_BODY = "'Helvetica Neue', Helvetica, Arial, sans-serif";
