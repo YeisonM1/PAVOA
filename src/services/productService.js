@@ -226,7 +226,7 @@ export const HELP_PAGES_DEFAULTS = {
         order: 1,
         blockType: 'faq',
         title: '¿Qué medios de pago manejan?',
-        body: 'Puedes pagar de forma segura con los métodos habilitados en checkout. Antes de confirmar verás las opciones disponibles para tu compra.',
+        body: 'Puedes pagar de forma segura con PSE, Nequi, tarjeta de crédito y tarjeta débito a través de Mercado Pago. Antes de confirmar verás las opciones disponibles para tu compra.',
       },
       {
         id: 'faq-envios-colombia',
