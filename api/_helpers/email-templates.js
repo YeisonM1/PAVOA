@@ -1,7 +1,6 @@
 const APP_URL = (process.env.VITE_APP_URL || "https://www.pavoa.com.co").replace(/\/$/, "");
 const EMAIL_ASSET_URL = APP_URL.replace("https://pavoa.com.co", "https://www.pavoa.com.co");
 const EMAIL_ASSET_VERSION = "20260601";
-const LOGO_URL = `${EMAIL_ASSET_URL}/logo-pavoa.png?v=${EMAIL_ASSET_VERSION}`;
 const MARK_URL = `${EMAIL_ASSET_URL}/pavoa-mark.png?v=${EMAIL_ASSET_VERSION}`;
 const EMAIL_FONT_LINK = "https://fonts.googleapis.com/css2?family=Raleway:wght@300;400;500;600;700&family=Montserrat:wght@300;400;500;600;700&display=swap";
 const EMAIL_FONT_TITLE = "'Raleway', 'Helvetica Neue', Helvetica, Arial, sans-serif";
@@ -228,6 +227,8 @@ const renderLayout = ({
     <meta charset="utf-8">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="light">
+    <meta name="supported-color-schemes" content="light">
     <link href="${EMAIL_FONT_LINK}" rel="stylesheet">
     <title>PAVOA</title>
     <style>
@@ -243,6 +244,10 @@ const renderLayout = ({
         }
         .email-logo {
           width: 138px !important;
+        }
+        .email-wordmark {
+          font-size: 30px !important;
+          letter-spacing: 0.16em !important;
         }
         .email-mark {
           width: 20px !important;
@@ -297,10 +302,12 @@ const renderLayout = ({
                       <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 auto 24px;">
                         <tr>
                           <td style="vertical-align:middle;">
-                            <img src="${LOGO_URL}" alt="PAVOA" width="168" class="email-logo" style="display:block;width:168px;max-width:100%;height:auto;">
+                            <span class="email-wordmark" style="display:block;font-size:34px;line-height:1;font-weight:500;letter-spacing:0.18em;color:${EMAIL_COLOR_BLACK};font-family:${EMAIL_FONT_TITLE};">
+                              PAVOA
+                            </span>
                           </td>
-                          <td style="padding-left:10px;vertical-align:middle;">
-                            <img src="${MARK_URL}" alt="" width="24" class="email-mark" style="display:block;width:24px;height:auto;">
+                          <td style="padding-left:14px;vertical-align:middle;">
+                            <img src="${MARK_URL}" alt="Pavoa" width="28" class="email-mark" style="display:block;width:28px;height:auto;">
                           </td>
                         </tr>
                       </table>
