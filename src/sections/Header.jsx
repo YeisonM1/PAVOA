@@ -31,10 +31,12 @@ const Header = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [catalogoOpen, setCatalogoOpen] = useState(false);
+  const [ayudaOpen, setAyudaOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
 
   const megaRef = useRef(null);
   const panelRef = useRef(null);
+  const ayudaRef = useRef(null);
   const accountRef = useRef(null);
   const navigate = useNavigate();
   const location = useLocation();
@@ -69,6 +71,9 @@ const Header = () => {
       ) {
         setCatalogoOpen(false);
       }
+      if (ayudaRef.current && !ayudaRef.current.contains(e.target)) {
+        setAyudaOpen(false);
+      }
       if (accountRef.current && !accountRef.current.contains(e.target)) {
         setAccountOpen(false);
       }
@@ -79,7 +84,7 @@ const Header = () => {
 
   useEffect(() => {
     const onKeyDown = (e) => {
-      if (e.key === 'Escape') setAccountOpen(false);
+      if (e.key === 'Escape') { setAccountOpen(false); setAyudaOpen(false); }
     };
     document.addEventListener('keydown', onKeyDown);
     return () => document.removeEventListener('keydown', onKeyDown);
@@ -178,18 +183,84 @@ const Header = () => {
                 </button>
               </div>
 
-              <Link
-                to="/contacto"
-                onClick={() => window.scrollTo(0, 0)}
-                className="transition-opacity hover:opacity-70 relative group"
-                style={{ color: '#3E2723' }}
-              >
-                CONTACTO
-                <span
-                  className="absolute -bottom-1 left-0 w-0 h-[1px] transition-all duration-300 group-hover:w-full"
-                  style={{ background: 'var(--color-gold)' }}
-                />
-              </Link>
+              <div className="relative" ref={ayudaRef}>
+                <button
+                  onClick={() => setAyudaOpen(v => !v)}
+                  aria-expanded={ayudaOpen}
+                  aria-haspopup="true"
+                  className="flex items-center gap-1.5 transition-opacity hover:opacity-70"
+                  style={{
+                    fontSize: '13.5px',
+                    fontWeight: 500,
+                    letterSpacing: '0.2em',
+                    color: '#3E2723',
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    padding: 0,
+                  }}
+                >
+                  <span style={{ position: 'relative' }}>
+                    AYUDA
+                    <span
+                      style={{
+                        position: 'absolute',
+                        bottom: 0,
+                        left: 0,
+                        height: 1,
+                        width: ayudaOpen ? '100%' : '0%',
+                        background: 'var(--color-gold)',
+                        transition: 'width 0.3s ease',
+                      }}
+                    />
+                  </span>
+                  <span
+                    style={{
+                      display: 'inline-block',
+                      width: 7,
+                      height: 7,
+                      borderRight: '1.5px solid #3E2723',
+                      borderBottom: '1.5px solid #3E2723',
+                      transform: ayudaOpen ? 'rotate(-135deg)' : 'rotate(45deg)',
+                      verticalAlign: 'middle',
+                      transition: 'transform 0.3s ease',
+                    }}
+                  />
+                </button>
+
+                <div
+                  className={`absolute left-0 top-full mt-3 w-56 z-[70] origin-top-left transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] ${
+                    ayudaOpen
+                      ? 'opacity-100 translate-y-0 visible'
+                      : 'opacity-0 -translate-y-2 invisible pointer-events-none'
+                  }`}
+                  style={{
+                    background: 'rgba(242, 228, 225, 0.98)',
+                    border: '1px solid var(--color-border)',
+                    borderTop: '1px solid var(--color-gold)',
+                    boxShadow: '0 8px 30px rgba(11,11,11,0.08)',
+                  }}
+                >
+                  <div className="py-1">
+                    {[
+                      { label: 'Envíos y entregas', to: '/envios-y-entregas' },
+                      { label: 'Cambios y devoluciones', to: '/cambios-y-devoluciones' },
+                      { label: 'Guía de tallas', to: '/guia-de-tallas' },
+                      { label: 'Preguntas frecuentes', to: '/preguntas-frecuentes' },
+                      { label: 'Contacto', to: '/contacto' },
+                    ].map((item) => (
+                      <Link
+                        key={item.to}
+                        to={item.to}
+                        onClick={() => { setAyudaOpen(false); window.scrollTo(0, 0); }}
+                        className="block px-5 py-3 text-[10px] font-bold tracking-[0.18em] uppercase text-stone-700 hover:bg-white/60 hover:text-stone-900 transition-colors"
+                      >
+                        {item.label}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              </div>
             </nav>
           </div>
 

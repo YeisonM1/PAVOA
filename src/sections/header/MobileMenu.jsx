@@ -11,6 +11,7 @@ export default function MobileMenu({
   facebookUrl = 'https://facebook.com/pavoa',
 }) {
   const [mobileCatalogoOpen, setMobileCatalogoOpen] = useState(false);
+  const [mobileAyudaOpen, setMobileAyudaOpen] = useState(false);
   const [mobileTab, setMobileTab] = useState('mujer');
 
   return (
@@ -21,7 +22,7 @@ export default function MobileMenu({
       }`}
     >
       {/* Panel principal */}
-      <div className={`absolute inset-0 pt-32 px-8 transition-transform duration-500 ease-[cubic-bezier(0.4,0,0.2,1)] ${mobileCatalogoOpen ? '-translate-x-full' : 'translate-x-0'}`}>
+      <div className={`absolute inset-0 pt-32 px-8 transition-transform duration-500 ease-[cubic-bezier(0.4,0,0.2,1)] ${(mobileCatalogoOpen || mobileAyudaOpen) ? '-translate-x-full' : 'translate-x-0'}`}>
         <nav className="flex flex-col text-[13px] font-medium tracking-[0.2em] text-stone-900">
           <Link to="/" onClick={() => { setMenuOpen(false); window.scrollTo(0, 0); }} className="hover:text-stone-900 transition-colors border-b border-stone-100 py-5">
             INICIO
@@ -34,9 +35,14 @@ export default function MobileMenu({
             CATÁLOGO
             <span style={{ fontSize: 16, color: 'var(--color-gold)', fontWeight: 300 }}>→</span>
           </button>
-          <Link to="/contacto" onClick={() => { setMenuOpen(false); window.scrollTo(0, 0); }} className="hover:text-stone-900 transition-colors border-b border-stone-100 py-5">
-            CONTACTO
-          </Link>
+          <button
+            onClick={() => setMobileAyudaOpen(true)}
+            className="w-full flex justify-between items-center py-5 border-b border-stone-100 text-stone-800 text-left"
+            style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 500, letterSpacing: '0.2em' }}
+          >
+            AYUDA
+            <span style={{ fontSize: 16, color: 'var(--color-gold)', fontWeight: 300 }}>→</span>
+          </button>
         </nav>
         <div className="flex items-center gap-5 mt-10" style={{ color: 'var(--color-charcoal)' }}>
           <a href={instagramUrl} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--color-charcoal)' }} aria-label="Síguenos en Instagram"><InstagramIcon /></a>
@@ -104,6 +110,32 @@ export default function MobileMenu({
             ))}
           </div>
         )}
+      </div>
+
+      {/* Panel ayuda */}
+      <div
+        className={`absolute inset-0 pt-32 px-6 transition-transform duration-500 ease-[cubic-bezier(0.4,0,0.2,1)] overflow-y-auto pb-12 ${mobileAyudaOpen ? 'translate-x-0' : 'translate-x-full'}`}
+        style={{ background: 'var(--color-bg)' }}
+      >
+        <button
+          onClick={() => setMobileAyudaOpen(false)}
+          className="flex items-center gap-2 mb-6 text-stone-500 hover:text-stone-900 transition-colors py-3 px-2 -ml-2 rounded-lg active:bg-stone-100/60"
+          style={{ background: 'none', border: 'none', fontSize: 11, fontWeight: 600, letterSpacing: '0.2em' }}
+        >
+          <span style={{ fontSize: 16 }}>←</span> VOLVER
+        </button>
+
+        <div className="flex flex-col gap-1 animate-fade-in">
+          {[
+            { label: 'Envíos y entregas', to: '/envios-y-entregas' },
+            { label: 'Cambios y devoluciones', to: '/cambios-y-devoluciones' },
+            { label: 'Guía de tallas', to: '/guia-de-tallas' },
+            { label: 'Preguntas frecuentes', to: '/preguntas-frecuentes' },
+            { label: 'Contacto', to: '/contacto' },
+          ].map(item => (
+            <Link key={item.to} to={item.to} onClick={() => { setMenuOpen(false); window.scrollTo(0, 0); }} className="block py-4 px-2 rounded-lg text-[12px] font-medium tracking-[0.15em] text-stone-800 active:bg-stone-100/60 transition-colors border-b border-stone-100">{item.label.toUpperCase()}</Link>
+          ))}
+        </div>
       </div>
     </div>
   );
