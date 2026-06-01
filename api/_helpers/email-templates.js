@@ -3,6 +3,20 @@ const EMAIL_ASSET_URL = APP_URL.replace("https://pavoa.com.co", "https://www.pav
 const EMAIL_ASSET_VERSION = "20260601";
 const LOGO_URL = `${EMAIL_ASSET_URL}/logo-pavoa.png?v=${EMAIL_ASSET_VERSION}`;
 const MARK_URL = `${EMAIL_ASSET_URL}/pavoa-mark.png?v=${EMAIL_ASSET_VERSION}`;
+export const EMAIL_LOGO_CID = "pavoa-wordmark";
+export const EMAIL_MARK_CID = "pavoa-mark";
+export const EMAIL_BRAND_ATTACHMENTS = [
+  {
+    path: LOGO_URL,
+    filename: "logo-pavoa.png",
+    contentId: EMAIL_LOGO_CID,
+  },
+  {
+    path: MARK_URL,
+    filename: "pavoa-mark.png",
+    contentId: EMAIL_MARK_CID,
+  },
+];
 const EMAIL_FONT_LINK = "https://fonts.googleapis.com/css2?family=Raleway:wght@300;400;500;600;700&family=Montserrat:wght@300;400;500;600;700&display=swap";
 const EMAIL_FONT_TITLE = "'Raleway', 'Helvetica Neue', Helvetica, Arial, sans-serif";
 const EMAIL_FONT_BODY = "'Helvetica Neue', Helvetica, Arial, sans-serif";
@@ -221,6 +235,8 @@ const renderLayout = ({
   primaryCta,
   afterHero = "",
   footerNote = "Si necesitas ayuda, responde a este correo o escríbenos desde PAVOA.",
+  logoUrl = LOGO_URL,
+  markUrl = MARK_URL,
 }) => `
 <!DOCTYPE html>
 <html lang="es">
@@ -297,10 +313,10 @@ const renderLayout = ({
                       <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 auto 24px;">
                         <tr>
                           <td style="vertical-align:middle;">
-                            <img src="${LOGO_URL}" alt="PAVOA" width="168" class="email-logo" style="display:block;width:168px;max-width:100%;height:auto;">
+                            <img src="${logoUrl}" alt="PAVOA" width="168" class="email-logo" style="display:block;width:168px;max-width:100%;height:auto;">
                           </td>
                           <td style="padding-left:10px;vertical-align:middle;">
-                            <img src="${MARK_URL}" alt="" width="24" class="email-mark" style="display:block;width:24px;height:auto;">
+                            <img src="${markUrl}" alt="" width="24" class="email-mark" style="display:block;width:24px;height:auto;">
                           </td>
                         </tr>
                       </table>
@@ -599,6 +615,8 @@ export const emailVerificacion = ({ firstName, verifyLink }) =>
     title: `Hola, ${firstName}`,
     body:
       "Gracias por unirte a PAVOA. Solo necesitas verificar tu correo para activar tu cuenta y empezar a gestionar tus compras, wishlist y beneficios.",
+    logoUrl: `cid:${EMAIL_LOGO_CID}`,
+    markUrl: `cid:${EMAIL_MARK_CID}`,
     primaryCta: {
       href: verifyLink,
       label: "Verificar cuenta",

@@ -1,7 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
-import { emailVerificacion } from './_helpers/email-templates.js';
+import { EMAIL_BRAND_ATTACHMENTS, emailVerificacion } from './_helpers/email-templates.js';
 import { sendTransactionalEmail } from './_helpers/mail.js';
 
 const supabase = createClient(
@@ -95,6 +95,7 @@ export default async function handler(req, res) {
         to: email,
         subject: 'Verifica tu correo - PAVOA',
         html: emailVerificacion({ firstName, verifyLink }),
+        attachments: EMAIL_BRAND_ATTACHMENTS,
       });
     } catch (emailErr) {
       console.error('Email de verificacion no enviado:', emailErr.message);

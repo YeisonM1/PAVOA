@@ -31,7 +31,7 @@ const buildSender = (from) => {
   return parseFrom(from);
 };
 
-const sendWithResend = async ({ from, to, subject, html, text }) => {
+const sendWithResend = async ({ from, to, subject, html, text, attachments }) => {
   const apiKey = getEnv('RESEND_API_KEY');
   if (!apiKey) {
     throw new Error('Falta RESEND_API_KEY para enviar correos con Resend.');
@@ -59,6 +59,7 @@ const sendWithResend = async ({ from, to, subject, html, text }) => {
       subject,
       html,
       text,
+      ...(attachments?.length ? { attachments } : {}),
     }),
   });
 
@@ -107,14 +108,14 @@ const sendWithMailtrapSandbox = async ({ from, to, subject, html, text }) => {
   return response.json().catch(() => ({}));
 };
 
-export const sendTransactionalEmail = async ({ from, to, subject, html, text }) => {
+export const sendTransactionalEmail = async ({ from, to, subject, html, text, attachments }) => {
   const provider = getMailProvider();
 
   if (provider === 'mailtrap_sandbox') {
     return sendWithMailtrapSandbox({ from, to, subject, html, text });
   }
 
-  return sendWithResend({ from, to, subject, html, text });
+  return sendWithResend({ from, to, subject, html, text, attachments });
 };
 
 export const getActiveMailProvider = () => getMailProvider();
