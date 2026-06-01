@@ -10,16 +10,6 @@ const MOTIVOS = [
     motivo: 'Cambio de talla',
     mensaje: 'Necesito ajustar la talla de una prenda de mi pedido.',
   },
-  {
-    titulo: 'Cambio por otra referencia',
-    motivo: 'Cambio por otra referencia',
-    mensaje: 'Quiero cambiar una prenda por otra referencia de la tienda.',
-  },
-  {
-    titulo: 'Devolución por inconformidad',
-    motivo: 'Devolución por inconformidad',
-    mensaje: 'Quiero solicitar devolución del dinero de esta compra.',
-  },
 ];
 
 const buildContactoUrl = ({ pedido, motivo, mensaje }) => {
