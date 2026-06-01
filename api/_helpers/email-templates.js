@@ -1,6 +1,7 @@
-const APP_URL = process.env.VITE_APP_URL || "https://pavoa.com.co";
-const LOGO_URL = `${APP_URL}/logo-pavoa.png`;
-const MARK_URL = `${APP_URL}/pavoa-mark.png`;
+const APP_URL = (process.env.VITE_APP_URL || "https://www.pavoa.com.co").replace(/\/$/, "");
+const EMAIL_ASSET_URL = APP_URL.replace("https://pavoa.com.co", "https://www.pavoa.com.co");
+const LOGO_URL = `${EMAIL_ASSET_URL}/logo-pavoa.png`;
+const MARK_URL = `${EMAIL_ASSET_URL}/pavoa-mark.png`;
 const EMAIL_FONT_LINK = "https://fonts.googleapis.com/css2?family=Raleway:wght@300;400;500;600;700&family=Montserrat:wght@300;400;500;600;700&display=swap";
 const EMAIL_FONT_TITLE = "'Raleway', 'Helvetica Neue', Helvetica, Arial, sans-serif";
 const EMAIL_FONT_BODY = "'Helvetica Neue', Helvetica, Arial, sans-serif";
@@ -10,6 +11,8 @@ const EMAIL_COLOR_IVORY = "#F6F1EA";
 const EMAIL_COLOR_GOLD = "#DFCDB4";
 const EMAIL_COLOR_GOLD_SOFT = "#EEE5D8";
 const EMAIL_COLOR_BORDER = "#E0D8CE";
+const EMAIL_COLOR_COFFEE = "#6F4E37";
+const EMAIL_COLOR_COFFEE_SOFT = "#A7856D";
 const EMAIL_COLOR_BLACK = "#0B0B0B";
 const EMAIL_COLOR_CHARCOAL = "#3A3A3A";
 const EMAIL_COLOR_MUTED = "#7B746B";
@@ -284,10 +287,10 @@ const renderLayout = ({
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:${EMAIL_COLOR_BG};">
       <tr>
         <td align="center" class="email-outer-pad" style="padding:32px 16px;">
-          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:620px;background-color:rgba(246,241,234,0.82);border:1px solid rgba(223,205,180,0.7);">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:620px;background-color:rgba(246,241,234,0.88);border:2px solid ${EMAIL_COLOR_COFFEE};box-shadow:0 18px 44px rgba(111,78,55,0.18);">
             <tr>
               <td class="email-shell-pad" style="padding:12px;">
-                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid rgba(238,229,216,0.9);background:#fffdfa;">
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid ${EMAIL_COLOR_COFFEE_SOFT};background:#fffdfa;">
                   <tr>
                     <td align="center" class="email-hero" style="padding:44px 24px 28px;background:${EMAIL_COLOR_IVORY};border-bottom:1px solid ${EMAIL_COLOR_BORDER};">
                       <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 auto 24px;">
@@ -594,7 +597,7 @@ export const emailVerificacion = ({ firstName, verifyLink }) =>
     eyebrow: "Verifica tu correo",
     title: `Hola, ${firstName}`,
     body:
-      "Gracias por unirte a PAVOA. Solo necesitas verificar tu correo para activar tu cuenta y empezar a gestionar pedidos, wishlist y beneficios.",
+      "Gracias por unirte a PAVOA. Solo necesitas verificar tu correo para activar tu cuenta y empezar a gestionar tus compras, wishlist y beneficios.",
     primaryCta: {
       href: verifyLink,
       label: "Verificar cuenta",
