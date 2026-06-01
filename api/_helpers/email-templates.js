@@ -2,6 +2,7 @@ const APP_URL = (process.env.VITE_APP_URL || "https://www.pavoa.com.co").replace
 const EMAIL_ASSET_URL = APP_URL.replace("https://pavoa.com.co", "https://www.pavoa.com.co");
 const EMAIL_ASSET_VERSION = "20260601";
 const MARK_URL = `${EMAIL_ASSET_URL}/pavoa-mark.png?v=${EMAIL_ASSET_VERSION}`;
+const LOGO_URL = `${EMAIL_ASSET_URL}/logo-pavoa.png?v=${EMAIL_ASSET_VERSION}`;
 const EMAIL_FONT_LINK = "https://fonts.googleapis.com/css2?family=Raleway:wght@300;400;500;600;700&family=Montserrat:wght@300;400;500;600;700&display=swap";
 const EMAIL_FONT_TITLE = "'Raleway', 'Helvetica Neue', Helvetica, Arial, sans-serif";
 const EMAIL_FONT_BODY = "'Helvetica Neue', Helvetica, Arial, sans-serif";
@@ -302,12 +303,10 @@ const renderLayout = ({
                       <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 auto 24px;">
                         <tr>
                           <td style="vertical-align:middle;">
-                            <span class="email-wordmark" style="display:block;font-size:34px;line-height:1;font-weight:500;letter-spacing:0.18em;color:${EMAIL_COLOR_BLACK};font-family:${EMAIL_FONT_TITLE};">
-                              PAVOA
-                            </span>
+                            <img src="${LOGO_URL}" alt="PAVOA" width="138" class="email-logo" style="display:block;width:138px;height:auto;">
                           </td>
                           <td style="padding-left:14px;vertical-align:middle;">
-                            <img src="${MARK_URL}" alt="Pavoa" width="28" class="email-mark" style="display:block;width:28px;height:auto;">
+                            <img src="${MARK_URL}" alt="" width="28" class="email-mark" style="display:block;width:28px;height:auto;">
                           </td>
                         </tr>
                       </table>
