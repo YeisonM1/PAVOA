@@ -17,6 +17,13 @@ const TABS_VALIDOS = new Set(['pedidos', 'deseos', 'perfil']);
 const resolverTab = (tab) => (TABS_VALIDOS.has(tab) ? tab : 'pedidos');
 
 const getEstadoResumen = (pedido) => {
+  if (pedido.financialStatus === 'CANCELLED' || pedido.fulfillmentStatus === 'CANCELLED') {
+    return {
+      titulo: 'Pedido cancelado',
+      detalle: 'Este pedido fue cancelado. Si tenias un pago aprobado, revisaremos el proceso correspondiente.',
+    };
+  }
+
   if (pedido.fulfillmentStatus === 'DELIVERED') {
     return {
       titulo: 'Pedido entregado',
@@ -45,6 +52,7 @@ const EstadoBadge = ({ status }) => {
     FULFILLED:   { label: 'Enviado',    bg: 'bg-blue-50',    text: 'text-blue-600',    dot: 'bg-blue-400'    },
     UNFULFILLED: { label: 'En proceso', bg: 'bg-stone-50',   text: 'text-stone-500',   dot: 'bg-stone-400'   },
     REFUNDED:    { label: 'Reembolsado',bg: 'bg-stone-50',   text: 'text-stone-400',   dot: 'bg-stone-300'   },
+    CANCELLED:   { label: 'Cancelado',  bg: 'bg-red-50',     text: 'text-red-700',     dot: 'bg-red-500'     },
   };
   const s = map[status] || { label: status, bg: 'bg-stone-50', text: 'text-stone-500', dot: 'bg-stone-300' };
   return (
@@ -378,7 +386,7 @@ export default function AccountPage() {
 
   const pedidosEntregados = pedidos.filter((pedido) => pedido.fulfillmentStatus === 'DELIVERED').length;
   const pedidosEnCamino = pedidos.filter((pedido) => pedido.fulfillmentStatus === 'FULFILLED').length;
-  const pedidosEnProceso = pedidos.filter((pedido) => pedido.fulfillmentStatus === 'UNFULFILLED').length;
+  const pedidosEnProceso = pedidos.filter((pedido) => pedido.fulfillmentStatus === 'UNFULFILLED' && pedido.financialStatus !== 'CANCELLED').length;
 
   if (loading) {
     return (

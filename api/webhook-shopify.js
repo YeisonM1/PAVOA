@@ -299,9 +299,14 @@ export default async function handler(req, res) {
     // Leer estado actual del pedido para comparar guía
     const { data: pedidoActual } = await supabase
       .from('pedidos')
-      .select('email, shopify_order_name, nombre, tracking_number')
+      .select('email, shopify_order_name, nombre, status, tracking_number')
       .eq('shopify_order_id', shopifyOrderId)
       .single();
+
+    if (String(pedidoActual?.status || '').trim().toLowerCase() === 'cancelled') {
+      console.log(`Pedido cancelado: se ignora update de fulfillment para ${shopifyOrderId}`);
+      return res.status(200).send('OK');
+    }
 
     // Si ya está marcado como entregado, no sobreescribir el estado
     if (esEntregado) return res.status(200).send('OK');

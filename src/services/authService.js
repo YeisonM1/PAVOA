@@ -93,17 +93,25 @@ export const getPedidos = async () => {
   if (!res.ok) throw new Error(data.error || 'Error al obtener pedidos');
 
   const mapFulfillment = (s) => {
+    if (s === 'cancelled')  return 'CANCELLED';
     if (s === 'delivered')  return 'DELIVERED';
     if (s === 'fulfilled')  return 'FULFILLED';
     if (s === 'partial')    return 'UNFULFILLED';
     return 'UNFULFILLED';
   };
 
+  const mapFinancial = (s) => {
+    if (s === 'cancelled') return 'CANCELLED';
+    if (s === 'refunded') return 'REFUNDED';
+    if (s === 'pending') return 'PENDING';
+    return 'PAID';
+  };
+
   return (data.pedidos || []).map(p => ({
     id:                p.id,
     name:              p.shopify_order_name || `#${p.id.slice(0, 6).toUpperCase()}`,
     processedAt:       p.created_at,
-    financialStatus:   'PAID',
+    financialStatus:   mapFinancial(p.status),
     fulfillmentStatus: mapFulfillment(p.fulfillment_status),
     totalPrice:        { amount: p.total, currencyCode: 'COP' },
     totalOriginal:     p.total_original || 0,
