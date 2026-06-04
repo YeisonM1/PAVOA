@@ -1,6 +1,7 @@
 const getEnv = (key) => String(process.env[key] || '').trim();
 
 const getMailProvider = () => (getEnv('MAIL_PROVIDER') || 'resend').toLowerCase();
+const getReplyToEmail = () => getEnv('MAIL_REPLY_TO_EMAIL') || 'pavoacol@gmail.com';
 
 const normalizeRecipients = (value) =>
   (Array.isArray(value) ? value : [value])
@@ -59,6 +60,7 @@ const sendWithResend = async ({ from, to, subject, html, text, attachments }) =>
       subject,
       html,
       text,
+      reply_to: getReplyToEmail(),
       ...(attachments?.length ? { attachments } : {}),
     }),
   });

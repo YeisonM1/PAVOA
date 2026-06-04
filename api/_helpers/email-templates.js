@@ -3,6 +3,7 @@ const EMAIL_ASSET_URL = APP_URL.replace("https://pavoa.com.co", "https://www.pav
 const EMAIL_ASSET_VERSION = "20260601";
 const MARK_URL = `${EMAIL_ASSET_URL}/pavoa-mark.png?v=${EMAIL_ASSET_VERSION}`;
 const LOGO_URL = `${EMAIL_ASSET_URL}/logo-pavoa.png?v=${EMAIL_ASSET_VERSION}`;
+const SUPPORT_EMAIL = "pavoacol@gmail.com";
 const EMAIL_FONT_LINK = "https://fonts.googleapis.com/css2?family=Raleway:wght@300;400;500;600;700&family=Montserrat:wght@300;400;500;600;700&display=swap";
 const EMAIL_FONT_TITLE = "'Raleway', 'Helvetica Neue', Helvetica, Arial, sans-serif";
 const EMAIL_FONT_BODY = "'Helvetica Neue', Helvetica, Arial, sans-serif";
@@ -89,6 +90,14 @@ const renderTextBlock = (html) => `
     ${html}
   </p>
 `;
+
+const normalizeSupportCopy = (value) => {
+  const text = String(value || "");
+  if (/responde|responder/i.test(text)) {
+    return `Si necesitas ayuda, escribenos a ${SUPPORT_EMAIL}.`;
+  }
+  return text;
+};
 
 const renderHeroStatusCard = ({ title, body, badge, rows }) =>
   renderCard({
@@ -220,7 +229,7 @@ const renderLayout = ({
   body,
   primaryCta,
   afterHero = "",
-  footerNote = "Si necesitas ayuda, responde a este correo o escríbenos desde PAVOA.",
+  footerNote = `Si necesitas ayuda, escribenos a ${SUPPORT_EMAIL}.`,
 }) => `
 <!DOCTYPE html>
 <html lang="es">
@@ -341,7 +350,7 @@ const renderLayout = ({
                   <tr>
                     <td class="email-content" style="padding:24px 24px 32px;background:#fffdfa;border-top:1px solid ${EMAIL_COLOR_BORDER};">
                       <p style="margin:0;text-align:center;font-size:11px;line-height:1.8;color:${EMAIL_COLOR_MUTED};letter-spacing:0.12em;text-transform:uppercase;font-family:${EMAIL_FONT_UI};">
-                        ${footerNote}
+                        ${normalizeSupportCopy(footerNote)}
                       </p>
                     </td>
                   </tr>
@@ -534,7 +543,7 @@ export const emailPedidoCancelado = ({
   const reasonLabel = String(cancelReason || '').trim();
   const refundCopyByStatus = {
     refunded: 'El reembolso ya quedo registrado. El tiempo final para verlo reflejado puede depender del medio de pago o de la entidad bancaria.',
-    partially_refunded: 'Este pedido tiene un reembolso parcial registrado. Si necesitas claridad sobre el valor, responde este correo y te ayudamos.',
+    partially_refunded: `Este pedido tiene un reembolso parcial registrado. Si necesitas claridad sobre el valor, escribenos a ${SUPPORT_EMAIL} y te ayudamos.`,
     paid: 'Como este pedido tenia pago aprobado, revisaremos el movimiento correspondiente y te compartiremos cualquier actualizacion necesaria.',
     pending: 'Este pedido no figura como pagado completamente. Por eso no deberia requerir un reembolso final.',
     voided: 'El pago fue anulado correctamente antes de completarse.',
@@ -593,12 +602,12 @@ export const emailPedidoCancelado = ({
       }) +
       `<div style="height:18px;line-height:18px;">&nbsp;</div>` +
       renderStepsCard('Que sigue', [
-        'Si tienes dudas sobre la cancelacion, responde a este correo o contactanos desde la tienda.',
+        `Si tienes dudas sobre la cancelacion, escribenos a ${SUPPORT_EMAIL} o contactanos desde la tienda.`,
         'Si el pedido tenia pago aprobado, te compartiremos cualquier actualizacion necesaria sobre el movimiento.',
         'Puedes volver a la tienda cuando quieras para realizar una nueva compra.',
       ]),
     footerNote:
-      'Este correo confirma la cancelacion del pedido. Si necesitas ayuda, puedes responder directamente.',
+      `Este correo confirma la cancelacion del pedido. Si necesitas ayuda, escribenos a ${SUPPORT_EMAIL}.`,
   });
 };
 
@@ -676,7 +685,7 @@ export const emailContactoCliente = ({ nombre, asunto }) =>
         `,
       }),
     footerNote:
-      "Si necesitas agregar algo más a tu consulta, puedes responder a este mismo correo.",
+      `Si necesitas agregar algo mas a tu consulta, escribenos a ${SUPPORT_EMAIL}.`,
   });
 
 export const emailContactoInterno = ({ nombre, contacto, asunto, mensaje }) =>
