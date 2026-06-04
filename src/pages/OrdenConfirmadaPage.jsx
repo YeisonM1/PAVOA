@@ -6,6 +6,19 @@ import { thumbImage } from '../utils/imageUrl';
 import { trackPurchase } from '../lib/analytics';
 import { getCliente } from '../services/authService';
 
+const formatCustomerName = (value, fallback = 'Cliente') => {
+  const normalized = String(value || '').trim().replace(/\s+/g, ' ');
+  if (!normalized) return fallback;
+
+  return normalized
+    .split(' ')
+    .map((part) => {
+      const lower = part.toLocaleLowerCase('es-CO');
+      return lower.charAt(0).toLocaleUpperCase('es-CO') + lower.slice(1);
+    })
+    .join(' ');
+};
+
 export default function OrdenConfirmadaPage() {
   const { state } = useLocation();
   const [searchParams] = useSearchParams();
@@ -126,7 +139,7 @@ export default function OrdenConfirmadaPage() {
   }
 
   const cliente = getCliente();
-  const firstName = explicitFirstName || nombre?.split(' ')[0] || cliente?.firstName || 'Cliente';
+  const firstName = formatCustomerName(explicitFirstName || nombre?.split(' ')[0] || cliente?.firstName);
   const eyebrow = isApproved
     ? 'Pago aprobado'
     : isPending || verifyingPayment
@@ -251,7 +264,7 @@ export default function OrdenConfirmadaPage() {
           </ul>
         </div>
 
-        <div className="flex flex-col sm:flex-row gap-3">
+        <div className="flex flex-col sm:flex-row gap-4 sm:gap-5">
           <button
             onClick={() => navigate(isApproved || isPending || verifyingPayment ? '/categoria' : '/checkout')}
             className="flex-1 h-12 bg-stone-900 text-white text-[10px] font-bold tracking-[0.25em] uppercase hover:bg-stone-800 transition-colors"

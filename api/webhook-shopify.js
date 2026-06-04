@@ -101,6 +101,59 @@ const restockRefund = async (refund) => {
 
 const formatMoney = (value) => Number(value || 0).toLocaleString('es-CO');
 
+const normalizeEmail = (value) => String(value || '').trim().toLowerCase();
+
+const toNumber = (value) => {
+  const amount = Number(value || 0);
+  return Number.isFinite(amount) ? amount : 0;
+};
+
+const getRefundAmount = (refund) =>
+  (refund?.transactions || []).reduce((sum, transaction) => {
+    const kind = String(transaction?.kind || '').toLowerCase();
+    const status = String(transaction?.status || '').toLowerCase();
+    if (kind !== 'refund' || (status && status !== 'success')) return sum;
+    return sum + toNumber(transaction?.amount);
+  }, 0);
+
+const maybeReactivateWelcomeDiscount = async ({ email, shopifyOrderId, reason }) => {
+  const normalizedEmail = normalizeEmail(email);
+  if (!normalizedEmail) return;
+
+  const { data: pedidos, error } = await supabase
+    .from('pedidos')
+    .select('shopify_order_id, status, descuento_aplicado')
+    .ilike('email', normalizedEmail);
+
+  if (error) {
+    console.error(`Error revisando descuento de bienvenida [mode=${getSupabaseMode()}]:`, error.message);
+    return;
+  }
+
+  const currentOrderId = String(shopifyOrderId || '');
+  const currentOrder = (pedidos || []).find((pedido) => String(pedido.shopify_order_id || '') === currentOrderId);
+  const usedWelcomeDiscount = currentOrder?.descuento_aplicado === true;
+  const hasOtherActiveApprovedOrder = (pedidos || []).some((pedido) => {
+    const pedidoOrderId = String(pedido.shopify_order_id || '');
+    const status = String(pedido.status || '').trim().toLowerCase();
+    return pedidoOrderId !== currentOrderId && status === 'approved';
+  });
+
+  if (!usedWelcomeDiscount || hasOtherActiveApprovedOrder) return;
+
+  const { error: updateError } = await supabase
+    .from('usuarios')
+    .update({ descuento_bienvenida_usado: false })
+    .ilike('email', normalizedEmail);
+
+  if (updateError) {
+    console.error(`Error reactivando descuento de bienvenida [mode=${getSupabaseMode()}]:`, updateError.message);
+    return;
+  }
+
+  console.log(`Descuento de bienvenida reactivado para ${normalizedEmail} por ${reason || 'pedido no vigente'}`);
+};
+
 const getCustomerEmail = (order, pedido) =>
   pedido?.email ||
   order?.email ||
@@ -158,7 +211,7 @@ const handleOrderCancelled = async (order) => {
 
   const { data: pedido, error } = await supabase
     .from('pedidos')
-    .select('email, shopify_order_name, nombre, status, fulfillment_status, total, items')
+    .select('email, shopify_order_name, nombre, status, fulfillment_status, total, items, descuento_aplicado')
     .eq('shopify_order_id', shopifyOrderId)
     .maybeSingle();
 
@@ -184,6 +237,12 @@ const handleOrderCancelled = async (order) => {
   } else {
     console.log(`Pedido marcado como cancelado: ${shopifyOrderId}`);
   }
+
+  await maybeReactivateWelcomeDiscount({
+    email: getCustomerEmail(order, pedido),
+    shopifyOrderId,
+    reason: 'order_cancelled',
+  });
 
   if (wasAlreadyCancelled) {
     console.log(`Cancelacion ya procesada para pedido: ${shopifyOrderId}`);
@@ -223,6 +282,88 @@ const handleOrderCancelled = async (order) => {
   }
 };
 
+const handleOrderDeleted = async (order) => {
+  const shopifyOrderId = String(order?.id || '');
+  if (!shopifyOrderId) return;
+
+  const { data: pedido, error } = await supabase
+    .from('pedidos')
+    .select('email, status, descuento_aplicado')
+    .eq('shopify_order_id', shopifyOrderId)
+    .maybeSingle();
+
+  if (error) {
+    console.error(`Error consultando pedido eliminado [mode=${getSupabaseMode()}]:`, error.message);
+  }
+
+  const { error: updateError } = await supabase
+    .from('pedidos')
+    .update({
+      status: 'cancelled',
+      fulfillment_status: 'cancelled',
+      tracking_number: null,
+      tracking_company: null,
+      tracking_url: null,
+    })
+    .eq('shopify_order_id', shopifyOrderId);
+
+  if (updateError) {
+    console.error(`Error marcando pedido eliminado [mode=${getSupabaseMode()}]:`, updateError.message);
+  } else {
+    console.log(`Pedido eliminado en Shopify marcado como cancelado: ${shopifyOrderId}`);
+  }
+
+  await maybeReactivateWelcomeDiscount({
+    email: pedido?.email || order?.email || order?.contact_email || order?.customer?.email,
+    shopifyOrderId,
+    reason: 'order_deleted',
+  });
+};
+
+const handleRefundCreated = async (refund) => {
+  const shopifyOrderId = String(refund?.order_id || '');
+  if (!shopifyOrderId) return;
+
+  const { data: pedido, error } = await supabase
+    .from('pedidos')
+    .select('email, total, status, descuento_aplicado')
+    .eq('shopify_order_id', shopifyOrderId)
+    .maybeSingle();
+
+  if (error) {
+    console.error(`Error consultando pedido reembolsado [mode=${getSupabaseMode()}]:`, error.message);
+    return;
+  }
+
+  if (!pedido) return;
+
+  const refundAmount = getRefundAmount(refund);
+  const orderTotal = toNumber(pedido.total);
+  const isFullRefund = orderTotal > 0 && refundAmount >= orderTotal - 1;
+
+  if (!isFullRefund) {
+    console.log(`Reembolso parcial recibido para ${shopifyOrderId}: ${refundAmount}/${orderTotal}`);
+    return;
+  }
+
+  const { error: updateError } = await supabase
+    .from('pedidos')
+    .update({ status: 'refunded' })
+    .eq('shopify_order_id', shopifyOrderId);
+
+  if (updateError) {
+    console.error(`Error marcando pedido reembolsado [mode=${getSupabaseMode()}]:`, updateError.message);
+  } else {
+    console.log(`Pedido marcado como reembolsado: ${shopifyOrderId}`);
+  }
+
+  await maybeReactivateWelcomeDiscount({
+    email: pedido.email,
+    shopifyOrderId,
+    reason: 'full_refund',
+  });
+};
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).send('Method not allowed');
 
@@ -235,6 +376,11 @@ export default async function handler(req, res) {
 
   if (topic === 'orders/cancelled') {
     await handleOrderCancelled(req.body);
+    return res.status(200).send('OK');
+  }
+
+  if (topic === 'orders/delete') {
+    await handleOrderDeleted(req.body);
     return res.status(200).send('OK');
   }
 
@@ -382,6 +528,12 @@ export default async function handler(req, res) {
     await restockRefund(refund);
   } catch (err) {
     console.error('❌ Error procesando restock:', err.message);
+  }
+
+  try {
+    await handleRefundCreated(refund);
+  } catch (err) {
+    console.error('Error procesando reembolso:', err.message);
   }
 
   return res.status(200).send('OK');

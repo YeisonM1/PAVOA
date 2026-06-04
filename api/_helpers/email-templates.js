@@ -3,7 +3,7 @@ const EMAIL_ASSET_URL = APP_URL.replace("https://pavoa.com.co", "https://www.pav
 const EMAIL_ASSET_VERSION = "20260601";
 const MARK_URL = `${EMAIL_ASSET_URL}/pavoa-mark.png?v=${EMAIL_ASSET_VERSION}`;
 const LOGO_URL = `${EMAIL_ASSET_URL}/logo-pavoa.png?v=${EMAIL_ASSET_VERSION}`;
-const SUPPORT_EMAIL = "pavoacol@gmail.com";
+const SUPPORT_EMAIL = process.env.MAIL_REPLY_TO_EMAIL || "pavoacol@gmail.com";
 const EMAIL_FONT_LINK = "https://fonts.googleapis.com/css2?family=Raleway:wght@300;400;500;600;700&family=Montserrat:wght@300;400;500;600;700&display=swap";
 const EMAIL_FONT_TITLE = "'Raleway', 'Helvetica Neue', Helvetica, Arial, sans-serif";
 const EMAIL_FONT_BODY = "'Helvetica Neue', Helvetica, Arial, sans-serif";
@@ -27,6 +27,19 @@ const escapeHtml = (value) =>
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#39;");
+
+const formatCustomerName = (value, fallback = "Cliente") => {
+  const normalized = String(value || "").trim().replace(/\s+/g, " ");
+  if (!normalized) return fallback;
+
+  return normalized
+    .split(" ")
+    .map((part) => {
+      const lower = part.toLocaleLowerCase("es-CO");
+      return lower.charAt(0).toLocaleUpperCase("es-CO") + lower.slice(1);
+    })
+    .join(" ");
+};
 
 const formatMoney = (value) => Number(value || 0).toLocaleString("es-CO");
 
@@ -578,7 +591,7 @@ export const emailPedidoCancelado = ({
     preheader: `Tu pedido ${orderName} fue cancelado`,
     eyebrow: 'Actualizacion de pedido',
     title: 'Pedido cancelado',
-    body: `Hola ${escapeHtml(nombreCliente || 'Cliente')}, tu pedido <strong style="color:${EMAIL_COLOR_BLACK};">${escapeHtml(orderName)}</strong> fue cancelado correctamente. Te dejamos el resumen para que tengas claridad sobre el estado de la compra.`,
+    body: `Hola ${escapeHtml(formatCustomerName(nombreCliente))}, tu pedido <strong style="color:${EMAIL_COLOR_BLACK};">${escapeHtml(orderName)}</strong> fue cancelado correctamente. Te dejamos el resumen para que tengas claridad sobre el estado de la compra.`,
     primaryCta: {
       href: `${APP_URL}/contacto?pedido=${encodeURIComponent(orderName)}`,
       label: 'Contactar soporte',
@@ -615,7 +628,7 @@ export const emailVerificacion = ({ firstName, verifyLink }) =>
   renderLayout({
     preheader: "Verifica tu correo para activar tu cuenta PAVOA",
     eyebrow: "Verifica tu correo",
-    title: `Hola, ${firstName}`,
+    title: `Hola, ${formatCustomerName(firstName)}`,
     body:
       "Gracias por unirte a PAVOA. Solo necesitas verificar tu correo para activar tu cuenta y empezar a gestionar tus compras, wishlist y beneficios.",
     primaryCta: {
@@ -676,7 +689,7 @@ export const emailContactoCliente = ({ nombre, asunto }) =>
               Te responderemos pronto
             </p>
             <p style="margin:0 auto;max-width:380px;font-size:14px;line-height:1.85;color:${EMAIL_COLOR_CHARCOAL};font-family:${EMAIL_FONT_BODY};">
-              Hola ${escapeHtml(nombre)}, tu mensaje ya quedó registrado y nuestro equipo lo revisará lo antes posible.
+              Hola ${escapeHtml(formatCustomerName(nombre))}, tu mensaje ya quedó registrado y nuestro equipo lo revisará lo antes posible.
             </p>
             <p style="margin:18px 0 0;padding-top:18px;border-top:1px solid ${EMAIL_COLOR_BORDER};font-size:10px;letter-spacing:0.16em;text-transform:uppercase;color:${EMAIL_COLOR_MUTED_SOFT};font-family:${EMAIL_FONT_UI};">
               Asunto: ${escapeHtml(asunto)}
