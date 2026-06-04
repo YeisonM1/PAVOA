@@ -533,14 +533,14 @@ export const emailPedidoCancelado = ({
 }) => {
   const reasonLabel = String(cancelReason || '').trim();
   const refundCopyByStatus = {
-    refunded: 'El reembolso ya figura procesado desde Shopify. El tiempo final de reflejo puede depender del medio de pago o entidad bancaria.',
-    partially_refunded: 'Este pedido tiene un reembolso parcial registrado. Si necesitas claridad sobre el valor, puedes responder este correo.',
-    paid: 'Como este pedido tenia pago aprobado, revisaremos o gestionaremos el proceso correspondiente segun el medio de pago.',
-    pending: 'Este pedido no figura como pagado completamente. Por eso no deberia requerir reembolso final.',
+    refunded: 'El reembolso ya quedo registrado. El tiempo final para verlo reflejado puede depender del medio de pago o de la entidad bancaria.',
+    partially_refunded: 'Este pedido tiene un reembolso parcial registrado. Si necesitas claridad sobre el valor, responde este correo y te ayudamos.',
+    paid: 'Como este pedido tenia pago aprobado, revisaremos el movimiento correspondiente y te compartiremos cualquier actualizacion necesaria.',
+    pending: 'Este pedido no figura como pagado completamente. Por eso no deberia requerir un reembolso final.',
     voided: 'El pago fue anulado correctamente antes de completarse.',
   };
   const refundCopy = refundCopyByStatus[String(refundStatus || '').trim().toLowerCase()]
-    || 'Si aplica algun movimiento de dinero, te acompa\u00f1aremos con la informacion correspondiente.';
+    || 'Si aplica algun movimiento de dinero, te acompanaremos con la informacion correspondiente.';
 
   const rows = [
     {
@@ -549,7 +549,7 @@ export const emailPedidoCancelado = ({
     },
     {
       label: 'Estado',
-      value: '<span style="color:#991b1b;font-weight:700;">Cancelado</span>',
+      value: `<span style="font-weight:700;color:${EMAIL_COLOR_BLACK};">Cancelado</span>`,
     },
     total
       ? {
@@ -568,12 +568,16 @@ export const emailPedidoCancelado = ({
   return renderLayout({
     preheader: `Tu pedido ${orderName} fue cancelado`,
     eyebrow: 'Actualizacion de pedido',
-    title: 'Tu pedido fue cancelado',
-    body: `Hola ${escapeHtml(nombreCliente || 'Cliente')}, queremos confirmarte que tu pedido <strong style="color:${EMAIL_COLOR_BLACK};">${escapeHtml(orderName)}</strong> fue cancelado correctamente.`,
+    title: 'Pedido cancelado',
+    body: `Hola ${escapeHtml(nombreCliente || 'Cliente')}, tu pedido <strong style="color:${EMAIL_COLOR_BLACK};">${escapeHtml(orderName)}</strong> fue cancelado correctamente. Te dejamos el resumen para que tengas claridad sobre el estado de la compra.`,
+    primaryCta: {
+      href: `${APP_URL}/contacto?pedido=${encodeURIComponent(orderName)}`,
+      label: 'Contactar soporte',
+    },
     afterHero:
       renderHeroStatusCard({
-        title: 'Cancelacion confirmada',
-        body: 'Te compartimos el estado principal para que tengas claridad sobre lo ocurrido.',
+        title: 'Cancelacion registrada',
+        body: 'Este es el estado actualizado del pedido y de la gestion asociada al pago.',
         badge: 'Pedido cancelado',
         rows,
       }) +
@@ -588,10 +592,10 @@ export const emailPedidoCancelado = ({
         `,
       }) +
       `<div style="height:18px;line-height:18px;">&nbsp;</div>` +
-      renderStepsCard('Que puedes hacer ahora', [
-        'Si tienes dudas sobre la cancelacion, responde a este correo.',
-        'Si quieres comprar otra prenda, puedes volver a la tienda cuando quieras.',
-        'Si el pedido ya tenia pago aprobado, te mantendremos informada sobre el proceso correspondiente.',
+      renderStepsCard('Que sigue', [
+        'Si tienes dudas sobre la cancelacion, responde a este correo o contactanos desde la tienda.',
+        'Si el pedido tenia pago aprobado, te compartiremos cualquier actualizacion necesaria sobre el movimiento.',
+        'Puedes volver a la tienda cuando quieras para realizar una nueva compra.',
       ]),
     footerNote:
       'Este correo confirma la cancelacion del pedido. Si necesitas ayuda, puedes responder directamente.',
