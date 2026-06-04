@@ -265,12 +265,12 @@ export default function OrdenConfirmadaPage() {
         </div>
 
         <div className="flex flex-col sm:flex-row gap-4 sm:gap-5">
-          <button
-            onClick={() => navigate(isApproved || isPending || verifyingPayment ? '/categoria' : '/checkout')}
-            className="flex-1 h-12 bg-stone-900 text-white text-[10px] font-bold tracking-[0.25em] uppercase hover:bg-stone-800 transition-colors"
+          <Link
+            to={isApproved || isPending || verifyingPayment ? '/categoria' : '/checkout'}
+            className="flex-1 h-12 bg-stone-900 text-white text-[10px] font-bold tracking-[0.25em] uppercase hover:bg-stone-800 transition-colors flex items-center justify-center"
           >
             {isApproved || isPending || verifyingPayment ? 'Seguir comprando' : 'Volver al checkout'}
-          </button>
+          </Link>
           <Link
             to="/cuenta"
             className="flex-1 h-12 border border-stone-200 text-stone-700 text-[10px] font-bold tracking-[0.25em] uppercase hover:border-stone-900 hover:text-stone-900 transition-colors flex items-center justify-center"
