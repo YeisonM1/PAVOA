@@ -439,8 +439,8 @@ const createPaymentPreference = async ({
       },
     });
 
-    const checkoutUrl = preference.sandbox_init_point || preference.init_point;
-    const checkoutMode = preference.sandbox_init_point ? 'sandbox' : 'live';
+    const checkoutUrl = preference.init_point || preference.sandbox_init_point;
+    const checkoutMode = preference.init_point ? 'live' : 'sandbox';
 
     console.log(
       `Preferencia MP creada: ${preference.id} | collector: ${preference.collector_id} | live_mode: ${preference.live_mode} | checkout_mode: ${checkoutMode} | draft: ${draftOrderId} | descuento: ${descuentoAplicado}`
