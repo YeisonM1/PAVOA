@@ -29,12 +29,15 @@ export default function OrdenConfirmadaPage() {
 
   const paymentId = paymentIdParam || state?.paymentId;
   const [resolvedOrderData, setResolvedOrderData] = useState(savedOrder || state || null);
+  const [verifiedPaymentStatus, setVerifiedPaymentStatus] = useState('');
+  const [verifyingPayment, setVerifyingPayment] = useState(Boolean(paymentIdParam));
   const orderData = resolvedOrderData || savedOrder || state;
   const { items = [], total, email, nombre, firstName: explicitFirstName } = orderData || {};
-  const isApproved = statusParam === 'approved';
-  const isPending = statusParam === 'pending' || statusParam === 'in_process';
-  const isRejected = ['failure', 'rejected', 'cancelled', 'cancelled_process', 'null'].includes(statusParam);
-  const isUnconfirmed = Boolean(paymentId) && !isApproved && !isPending && !isRejected;
+  const effectiveStatus = verifiedPaymentStatus || statusParam;
+  const isApproved = effectiveStatus === 'approved';
+  const isPending = effectiveStatus === 'pending' || effectiveStatus === 'in_process';
+  const isRejected = ['failure', 'rejected', 'cancelled', 'cancelled_process', 'null'].includes(effectiveStatus);
+  const isUnconfirmed = Boolean(paymentId) && !verifyingPayment && !isApproved && !isPending && !isRejected;
 
   useEffect(() => {
     if (paymentIdParam && isApproved) {
@@ -43,29 +46,39 @@ export default function OrdenConfirmadaPage() {
   }, [paymentIdParam, isApproved, clearCart]);
 
   useEffect(() => {
-    if (!paymentIdParam || !isApproved) return;
+    if (!paymentIdParam || statusParam === 'failure' || statusParam === 'rejected') return;
 
-    const timer = window.setTimeout(() => {
-      fetch('/api/procesar-pago', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ type: 'mp-finalizar', paymentId: paymentIdParam }),
+    let cancelled = false;
+    setVerifyingPayment(true);
+
+    fetch('/api/procesar-pago', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'mp-finalizar', paymentId: paymentIdParam }),
+    })
+      .then((res) => res.json().catch(() => null))
+      .then((data) => {
+        if (cancelled) return;
+        if (!data?.ok) {
+          console.warn('[PAVOA] No se pudo verificar el pago desde la pagina de confirmacion.', data);
+          return;
+        }
+        if (data.status) setVerifiedPaymentStatus(String(data.status).toLowerCase());
+        console.info('[PAVOA] Pago verificado desde la pagina de confirmacion.', data);
       })
-        .then((res) => res.json().catch(() => null))
-        .then((data) => {
-          if (!data?.ok) {
-            console.warn('[PAVOA] No se pudo finalizar el pedido aprobado desde la pagina de confirmacion.', data);
-            return;
-          }
-          console.info('[PAVOA] Pedido finalizado desde la pagina de confirmacion.', data);
-        })
-        .catch((err) => {
-          console.warn('[PAVOA] Error finalizando pedido desde la pagina de confirmacion.', err);
-        });
-    }, 3000);
+      .catch((err) => {
+        if (!cancelled) {
+          console.warn('[PAVOA] Error verificando pago desde la pagina de confirmacion.', err);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setVerifyingPayment(false);
+      });
 
-    return () => window.clearTimeout(timer);
-  }, [paymentIdParam, isApproved]);
+    return () => {
+      cancelled = true;
+    };
+  }, [paymentIdParam, statusParam]);
 
   useEffect(() => {
     const hasUsefulOrderData =
@@ -114,18 +127,22 @@ export default function OrdenConfirmadaPage() {
 
   const cliente = getCliente();
   const firstName = explicitFirstName || nombre?.split(' ')[0] || cliente?.firstName || 'Cliente';
-  const eyebrow = isApproved ? 'Pago aprobado' : isPending ? 'Pago en proceso' : 'Pago no confirmado';
+  const eyebrow = isApproved
+    ? 'Pago aprobado'
+    : isPending || verifyingPayment
+      ? 'Pago en proceso'
+      : 'Pago no confirmado';
   const message = isApproved
     ? 'Tu pedido fue confirmado. En breve recibiras un correo con los detalles.'
-    : isPending
-      ? 'Tu pago esta siendo procesado. Recibiras confirmacion por correo cuando sea aprobado.'
+    : isPending || verifyingPayment
+      ? 'Estamos verificando tu pago. Recibiras confirmacion por correo cuando sea aprobado.'
       : 'No recibimos confirmacion de pago. Si saliste del banco antes de finalizar, puedes volver al checkout e intentar de nuevo.';
   const nextSteps = isApproved
     ? [
         'Recibiras un correo de confirmacion con los detalles.',
         'Tu pedido sera preparado y enviado segun el horario acordado.',
       ]
-    : isPending
+    : isPending || verifyingPayment
       ? [
           'Tu pago sera confirmado por Mercado Pago en las proximas horas.',
           'Recibiras un correo de confirmacion cuando el pago sea aprobado.',
@@ -143,7 +160,7 @@ export default function OrdenConfirmadaPage() {
       <div className="max-w-[640px] mx-auto px-6 md:px-12 py-16 md:py-24">
         <div className="flex justify-center mb-10">
           <div className="w-16 h-16 border border-stone-200 rounded-full flex items-center justify-center">
-            {isPending ? (
+            {isPending || verifyingPayment ? (
               <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-stone-900">
                 <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
               </svg>
@@ -236,10 +253,10 @@ export default function OrdenConfirmadaPage() {
 
         <div className="flex flex-col sm:flex-row gap-3">
           <button
-            onClick={() => navigate(isApproved || isPending ? '/categoria' : '/checkout')}
+            onClick={() => navigate(isApproved || isPending || verifyingPayment ? '/categoria' : '/checkout')}
             className="flex-1 h-12 bg-stone-900 text-white text-[10px] font-bold tracking-[0.25em] uppercase hover:bg-stone-800 transition-colors"
           >
-            {isApproved || isPending ? 'Seguir comprando' : 'Volver al checkout'}
+            {isApproved || isPending || verifyingPayment ? 'Seguir comprando' : 'Volver al checkout'}
           </button>
           <Link
             to="/cuenta"
