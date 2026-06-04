@@ -161,6 +161,13 @@ const getCustomerEmail = (order, pedido) =>
   order?.customer?.email ||
   null;
 
+const getContactEmail = (order, pedido) =>
+  order?.email ||
+  order?.contact_email ||
+  order?.customer?.email ||
+  pedido?.email ||
+  null;
+
 const getCustomerName = (order, pedido) => {
   const fromPedido = String(pedido?.nombre || '').trim();
   if (fromPedido) return fromPedido;
@@ -249,7 +256,7 @@ const handleOrderCancelled = async (order) => {
     return;
   }
 
-  const email = getCustomerEmail(order, pedido);
+  const email = getContactEmail(order, pedido);
   if (!email) {
     console.warn(`Pedido cancelado sin email disponible: ${shopifyOrderId}`);
     return;
@@ -405,17 +412,18 @@ export default async function handler(req, res) {
 
         console.log(`✅ Pedido marcado como entregado: ${shopifyOrderId}`);
 
-        if (pedido.email) {
+        const deliveryEmail = getContactEmail(order, pedido);
+        if (deliveryEmail) {
           const nombreCliente = pedido.nombre || 'Cliente';
           const orderName     = pedido.shopify_order_name || shopifyOrderId;
           try {
             await sendTransactionalEmail({
               from:    'PAVOA <onboarding@resend.dev>',
-              to:      pedido.email,
+              to:      deliveryEmail,
               subject: `Tu pedido ${orderName} ha llegado — PAVOA`,
               html:    emailEntregado({ nombreCliente, orderName }),
             });
-            console.log(`📧 Email de entrega enviado a: ${pedido.email}`);
+            console.log(`📧 Email de entrega enviado a: ${deliveryEmail}`);
           } catch (emailErr) {
             console.error('⚠️ Email de entrega no enviado:', emailErr.message);
           }
@@ -483,7 +491,8 @@ export default async function handler(req, res) {
       }
       console.log(`✅ Fulfillment actualizado: ${shopifyOrderId} → ${fulfillmentStatus} | corrección: ${esCorreccion}`);
 
-      if (!pedidoActual?.email) return res.status(200).send('OK');
+      const deliveryEmail = getContactEmail(order, pedidoActual);
+      if (!deliveryEmail) return res.status(200).send('OK');
 
       const nombreCliente = pedidoActual.nombre || 'Cliente';
       const orderName     = pedidoActual.shopify_order_name || shopifyOrderId;
@@ -501,11 +510,11 @@ export default async function handler(req, res) {
       try {
         await sendTransactionalEmail({
           from:    'PAVOA <onboarding@resend.dev>',
-          to:      pedidoActual.email,
+          to:      deliveryEmail,
           subject: `${encabezado} ${orderName} — PAVOA`,
           html:    emailDespacho({ nombreCliente, orderName, subtitulo, cuerpo, trackingCompany, trackingNumber, trackingUrl }),
         });
-        console.log(`📧 Email [${esCorreccion ? 'corrección' : 'despacho'}] enviado a: ${pedidoActual.email}`);
+        console.log(`📧 Email [${esCorreccion ? 'corrección' : 'despacho'}] enviado a: ${deliveryEmail}`);
       } catch (emailErr) {
         console.error('⚠️ Email no enviado:', emailErr.message);
       }

@@ -41,6 +41,8 @@ const completarDraftOrder = async (draftOrderId) => {
   });
   const { draft_order: draft } = await resDraft.json();
   const emailCliente = draft?.note_attributes?.find((a) => a.name === 'customer_email')?.value || null;
+  const payerEmail = draft?.note_attributes?.find((a) => a.name === 'payer_email')?.value || null;
+  const accountEmail = draft?.note_attributes?.find((a) => a.name === 'account_email')?.value || null;
   const customerName = draft?.note_attributes?.find((a) => a.name === 'customer_name')?.value || null;
   let cartItems = null;
   try {
@@ -61,7 +63,14 @@ const completarDraftOrder = async (draftOrderId) => {
   }
 
   const data = await res.json();
-  return { ...data, _emailCliente: emailCliente, _customerName: customerName, _cartItems: cartItems };
+  return {
+    ...data,
+    _emailCliente: emailCliente,
+    _payerEmail: payerEmail,
+    _accountEmail: accountEmail,
+    _customerName: customerName,
+    _cartItems: cartItems,
+  };
 };
 
 const enviarEmailConfirmacion = async (order, paymentId, totalReal, descuentoAplicado = false) => {
@@ -127,7 +136,7 @@ const getSingleLineItem = (items = []) => {
 const processMercadoPagoPaymentInternal = async (paymentId) => {
   const paymentClient = new mercadopago.Payment(client);
   const pagoInfo = await paymentClient.get({ id: paymentId });
-  const [draftOrderId, emailRef, descuentoRef] = (pagoInfo.external_reference || '').split('|');
+  const [draftOrderId, accountEmailRef, descuentoRef] = (pagoInfo.external_reference || '').split('|');
 
   if (!draftOrderId) {
     return {
@@ -153,7 +162,7 @@ const processMercadoPagoPaymentInternal = async (paymentId) => {
       };
     }
 
-    const emailMP = emailRef || pagoInfo.payer?.email || null;
+    const emailMP = pagoInfo.payer?.email || accountEmailRef || null;
     let primerNombre = pagoInfo.payer?.first_name || 'Cliente';
     const itemsMP = (pagoInfo.additional_info?.items || []).map((i) => ({
       nombre: i.title,
@@ -169,12 +178,14 @@ const processMercadoPagoPaymentInternal = async (paymentId) => {
 
     let order = null;
     let emailCliente = emailMP;
+    let accountEmail = accountEmailRef || emailMP;
     let cartItemsFromDraft = null;
     let shouldPersistOrder = true;
     try {
       const shopifyResponse = await completarDraftOrder(draftOrderId);
       order = shopifyResponse.draft_order || shopifyResponse.order;
-      emailCliente = shopifyResponse._emailCliente || emailMP;
+      emailCliente = shopifyResponse._emailCliente || shopifyResponse._payerEmail || emailMP;
+      accountEmail = shopifyResponse._accountEmail || accountEmailRef || emailCliente;
       cartItemsFromDraft = shopifyResponse._cartItems || null;
       if (shopifyResponse._customerName) primerNombre = shopifyResponse._customerName.trim().split(/\s+/)[0] || primerNombre;
       await eliminarDraftOrder(draftOrderId);
@@ -207,11 +218,12 @@ const processMercadoPagoPaymentInternal = async (paymentId) => {
           };
         })
       : itemsMP;
-    if (emailCliente) {
+    const orderOwnerEmail = accountEmail || emailCliente;
+    if (orderOwnerEmail) {
       const addr = order?.shipping_address;
       if (shouldPersistOrder) {
         const { error: sbError } = await supabase.from('pedidos').insert({
-          email: emailCliente.toLowerCase(),
+          email: orderOwnerEmail.toLowerCase(),
           payment_id: String(pagoInfo.id),
           shopify_order_name: order?.name || `MP-${pagoInfo.id}`,
           shopify_order_id: String(order?.order_id || order?.id || ''),
@@ -241,11 +253,11 @@ const processMercadoPagoPaymentInternal = async (paymentId) => {
         }
       }
 
-      if (descuentoRef === '1' && insertedOrder) {
+      if (descuentoRef === '1' && insertedOrder && accountEmail) {
         const { error: descErr } = await supabase
           .from('usuarios')
           .update({ descuento_bienvenida_usado: true })
-          .eq('email', emailCliente.toLowerCase());
+          .eq('email', accountEmail.toLowerCase());
         if (descErr) {
           console.error('Error marcando descuento:', descErr.message);
         }
@@ -283,7 +295,7 @@ const processMercadoPagoPaymentInternal = async (paymentId) => {
       eventKey: `payment_approved:${pagoInfo.id}`,
       eventType: 'payment_approved',
       source: 'backend',
-      userEmail: emailCliente || emailRef || pagoInfo.payer?.email || null,
+      userEmail: accountEmail || emailCliente || pagoInfo.payer?.email || null,
       productId: singleItem?.productId || null,
       productName: singleItem?.productName || null,
       variantId: singleItem?.variantId || null,
@@ -306,7 +318,7 @@ const processMercadoPagoPaymentInternal = async (paymentId) => {
         eventKey: `purchase_completed:${pagoInfo.id}`,
         eventType: 'purchase_completed',
         source: 'backend',
-        userEmail: emailCliente || emailRef || pagoInfo.payer?.email || null,
+        userEmail: accountEmail || emailCliente || pagoInfo.payer?.email || null,
         productId: singleItem?.productId || null,
         productName: singleItem?.productName || null,
         variantId: singleItem?.variantId || null,
@@ -343,7 +355,7 @@ const processMercadoPagoPaymentInternal = async (paymentId) => {
       eventKey: `payment_rejected:${pagoInfo.id}`,
       eventType: 'payment_rejected',
       source: 'backend',
-      userEmail: emailRef || pagoInfo.payer?.email || null,
+      userEmail: accountEmailRef || pagoInfo.payer?.email || null,
       orderId: draftOrderId,
       paymentId: String(pagoInfo.id),
       amount: pagoInfo.transaction_amount || null,
@@ -364,7 +376,7 @@ const processMercadoPagoPaymentInternal = async (paymentId) => {
     eventKey: `payment_pending:${pagoInfo.id}`,
     eventType: 'payment_pending',
     source: 'backend',
-    userEmail: emailRef || pagoInfo.payer?.email || null,
+    userEmail: accountEmailRef || pagoInfo.payer?.email || null,
     orderId: draftOrderId,
     paymentId: String(pagoInfo.id),
     amount: pagoInfo.transaction_amount || null,

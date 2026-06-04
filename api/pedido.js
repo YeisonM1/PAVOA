@@ -109,7 +109,7 @@ const cachedDraftOrderStillExists = async (draftOrderId) => {
   return false;
 };
 
-const crearDraftOrder = async (token, { form, trustedItems, orderOwnerEmail }) => {
+const crearDraftOrder = async (token, { form, trustedItems, orderOwnerEmail, checkoutEmail }) => {
   const lineItems = trustedItems.map((item) => ({
     variant_id: item.variantId,
     quantity: item.quantity,
@@ -128,6 +128,7 @@ const crearDraftOrder = async (token, { form, trustedItems, orderOwnerEmail }) =
 
   const body = {
     draft_order: {
+      email: checkoutEmail || orderOwnerEmail || '',
       line_items: lineItems,
       phone: telFormateado,
       shipping_address: {
@@ -158,8 +159,9 @@ const crearDraftOrder = async (token, { form, trustedItems, orderOwnerEmail }) =
       tags: 'pavoa-web,mercadopago',
       send_receipt: false,
       note_attributes: [
-        { name: 'customer_email', value: orderOwnerEmail || '' },
-        { name: 'payer_email', value: normalizeEmail(form.email) || '' },
+        { name: 'customer_email', value: checkoutEmail || '' },
+        { name: 'payer_email', value: checkoutEmail || '' },
+        { name: 'account_email', value: orderOwnerEmail || '' },
         { name: 'customer_name', value: form.nombre || '' },
         { name: 'cart_items', value: JSON.stringify(trustedItems.map((item) => ({
           nombre: item.title,
@@ -209,6 +211,7 @@ export default async function handler(req, res) {
   const tokenPayload = verifyToken(req);
   const { form, cartItems, cartTotal, idempotencyKey, funnelSessionId } = req.body;
   const orderOwnerEmail = normalizeEmail(tokenPayload?.email || form?.email);
+  const checkoutEmail = normalizeEmail(form?.email);
   const authUserId = String(tokenPayload?.userId || tokenPayload?.id || '').trim() || null;
 
   if (!form?.nombre?.trim() || !form?.telefono?.trim()) {
@@ -216,6 +219,9 @@ export default async function handler(req, res) {
   }
   if (!orderOwnerEmail) {
     return res.status(400).json({ error: 'Correo requerido para asociar el pedido.' });
+  }
+  if (!checkoutEmail) {
+    return res.status(400).json({ error: 'Correo de pago requerido.' });
   }
   if (!Array.isArray(cartItems) || cartItems.length === 0) {
     return res.status(400).json({ error: 'El carrito esta vacio' });
@@ -244,7 +250,7 @@ export default async function handler(req, res) {
     for (const preferredToken of ['app', 'admin']) {
       try {
         const token = await getShopifyToken(preferredToken);
-        draftOrder = await crearDraftOrder(token, { form, trustedItems, orderOwnerEmail });
+        draftOrder = await crearDraftOrder(token, { form, trustedItems, orderOwnerEmail, checkoutEmail });
         if (preferredToken === 'admin') {
           console.warn('[PAVOA] Draft Order creado usando fallback con SHOPIFY_ADMIN_TOKEN.');
         }
