@@ -8,7 +8,8 @@ const outputDir = path.join(rootDir, 'dist', 'brand');
 const markPath = path.join(rootDir, 'public', 'pavoa-mark.png');
 const htmlPath = path.join(outputDir, 'patron-pavoa-blanco.html');
 
-const markSrc = `file:///${markPath.replaceAll('\\', '/')}`;
+const markBase64 = await fs.readFile(markPath, 'base64');
+const markSrc = `data:image/png;base64,${markBase64}`;
 
 const html = `<!doctype html>
 <html lang="es">
@@ -62,9 +63,11 @@ const html = `<!doctype html>
 
       .mark {
         width: 11mm;
-        height: auto;
+        aspect-ratio: 632 / 987;
         opacity: 0.82;
-        filter: brightness(0) invert(1);
+        background: #ffffff;
+        -webkit-mask: url("${markSrc}") center / contain no-repeat;
+        mask: url("${markSrc}") center / contain no-repeat;
       }
 
       .mark:nth-child(3n) {
@@ -102,7 +105,7 @@ const html = `<!doctype html>
   <body>
     <main class="page">
       <section class="pattern" aria-hidden="true">
-        ${Array.from({ length: 143 }, () => `<img class="mark" src="${markSrc}" alt="" />`).join('\n        ')}
+        ${Array.from({ length: 143 }, () => `<span class="mark"></span>`).join('\n        ')}
       </section>
       <div class="border"></div>
       <div class="brand">PAVOA</div>
