@@ -1454,6 +1454,11 @@ export const getHelpPage = (pageKey) => {
   const cached = getCached(cacheKey);
   if (cached) return cached;
 
+  const normalizeQuestionTitle = (t) => {
+    if (!t || !t.endsWith('?') || t.startsWith('¿')) return t;
+    return '¿' + t;
+  };
+
   const mapHelpPageBlock = (node, index = 0) => {
     const fields = node?.fields || [];
     const order = Number(getMetaobjectFieldValue(fields, 'order'));
@@ -1463,7 +1468,7 @@ export const getHelpPage = (pageKey) => {
       internalName: getMetaobjectFieldValue(fields, 'internal_name'),
       order: Number.isFinite(order) && order > 0 ? order : index + 1,
       blockType: getMetaobjectFieldValue(fields, 'block_type') || 'text',
-      title: getMetaobjectFieldValue(fields, 'title'),
+      title: normalizeQuestionTitle(getMetaobjectFieldValue(fields, 'title')),
       body: getMetaobjectFieldValue(fields, 'body'),
       label: getMetaobjectFieldValue(fields, 'label'),
       activo: getMetaobjectFieldValue(fields, 'activo') !== 'false',
