@@ -23,6 +23,7 @@ SHOPIFY_DOMAIN         = ENV.get("SHOPIFY_DOMAIN", "pavoa-4502.myshopify.com")
 SHOPIFY_ADMIN_TOKEN    = ENV.get("SHOPIFY_ADMIN_TOKEN", "")
 SHOPIFY_STOREFRONT_TOKEN = ENV.get("VITE_SHOPIFY_TOKEN", "")
 MP_WEBHOOK_SECRET      = ENV.get("MP_WEBHOOK_SECRET", "")
+SHOPIFY_WEBHOOK_SECRET = ENV.get("SHOPIFY_WEBHOOK_SECRET", "")
 MP_ACCESS_TOKEN        = ENV.get("MP_ACCESS_TOKEN", "")
 RESEND_API_KEY         = ENV.get("RESEND_API_KEY", "")
 VERIFY_EMAIL           = "gyeison184@gmail.com"
@@ -313,6 +314,31 @@ def check_email_status(message_id):
     return r.json(), None
 
 
+def test_webhook_shopify(topic, payload):
+    """Simula un webhook de Shopify firmado correctamente."""
+    body = json.dumps(payload, separators=(",", ":"))
+    sig  = hmac.new(
+        SHOPIFY_WEBHOOK_SECRET.encode(),
+        body.encode("utf-8"),
+        hashlib.sha256,
+    ).digest()
+    sig_b64 = __import__("base64").b64encode(sig).decode()
+
+    r = requests.post(
+        f"{BASE}/api/webhook-shopify",
+        data=body,
+        headers={
+            "Content-Type":              "application/json",
+            "X-Shopify-Hmac-Sha256":     sig_b64,
+            "X-Shopify-Topic":           topic,
+            "X-Shopify-Shop-Domain":     SHOPIFY_DOMAIN,
+            "X-Shopify-Webhook-Id":      str(uuid.uuid4()),
+        },
+        timeout=15,
+    )
+    return r
+
+
 def delete_draft_order(draft_order_id):
     r = requests.delete(
         f"https://{SHOPIFY_DOMAIN}/admin/api/2026-04/draft_orders/{draft_order_id}.json",
@@ -418,6 +444,52 @@ if __name__ == "__main__":
                 ok("email_estado", f"{estado} → {to_addr}")
     except Exception as e:
         fail("email_envio", str(e))
+
+    print("\n=== 8. WEBHOOK SHOPIFY (firma simulada) ===")
+    # Payload mínimo de orders/fulfilled con ID falso
+    shopify_payload = {
+        "id": 9999999999999,
+        "order_number": 9999,
+        "email": "test@pavoa.com.co",
+        "financial_status": "paid",
+        "fulfillment_status": "fulfilled",
+        "fulfillments": [{
+            "id": 1111111111,
+            "status": "success",
+            "tracking_number": "TEST-TRACKING-001",
+            "tracking_company": "Servientrega",
+            "tracking_url": "https://servientrega.com.co/tracking",
+        }],
+        "line_items": [{
+            "id": 2222222222,
+            "title": "MILAN COMFORT SET",
+            "quantity": 1,
+            "price": "10000.00",
+            "variant_id": 47462066618508,
+        }],
+        "shipping_address": {
+            "first_name": "Test",
+            "last_name":  "Automatico",
+            "address1":   "Calle 123 # 45-67",
+            "city":       "Bogota",
+            "country":    "Colombia",
+        },
+        "note_attributes": [
+            {"name": "customer_email", "value": "test@pavoa.com.co"},
+        ],
+    }
+
+    for topic in ["orders/fulfilled", "orders/updated"]:
+        try:
+            r = test_webhook_shopify(topic, shopify_payload)
+            if r.status_code == 200:
+                ok(f"webhook_shopify_{topic.replace('/', '_')}",
+                   f"HTTP 200 — firma aceptada")
+            else:
+                fail(f"webhook_shopify_{topic.replace('/', '_')}",
+                     f"HTTP {r.status_code} — {r.text[:100]}")
+        except Exception as e:
+            fail(f"webhook_shopify_{topic.replace('/', '_')}", str(e))
 
     print("\n=== 4. WEBHOOK MP (firma simulada) ===")
     try:
