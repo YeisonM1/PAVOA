@@ -23,6 +23,7 @@ SHOPIFY_DOMAIN         = ENV.get("SHOPIFY_DOMAIN", "pavoa-4502.myshopify.com")
 SHOPIFY_ADMIN_TOKEN    = ENV.get("SHOPIFY_ADMIN_TOKEN", "")
 SHOPIFY_STOREFRONT_TOKEN = ENV.get("VITE_SHOPIFY_TOKEN", "")
 MP_WEBHOOK_SECRET      = ENV.get("MP_WEBHOOK_SECRET", "")
+MP_ACCESS_TOKEN        = ENV.get("MP_ACCESS_TOKEN", "")
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -170,6 +171,100 @@ def test_descuento():
     }, timeout=10)
     return r
 
+# ---------------------------------------------------------------------------
+# Nuevos tests urgentes
+# ---------------------------------------------------------------------------
+
+def verify_draft_order_data(draft_order_id, variant):
+    """Verifica que el draft order llegó a Shopify con los datos correctos."""
+    r = requests.get(
+        f"https://{SHOPIFY_DOMAIN}/admin/api/2026-04/draft_orders/{draft_order_id}.json",
+        headers={"X-Shopify-Access-Token": SHOPIFY_ADMIN_TOKEN},
+        timeout=10,
+    )
+    r.raise_for_status()
+    order = r.json()["draft_order"]
+    issues = []
+
+    got_email = order.get("email", "")
+    if got_email.lower() != TEST_FORM["email"].lower():
+        issues.append(f"email: esperado '{TEST_FORM['email']}', llegó '{got_email}'")
+
+    addr = order.get("shipping_address") or {}
+    got_first = addr.get("first_name", "")
+    expected_first = TEST_FORM["nombre"].split()[0]
+    if got_first.lower() != expected_first.lower():
+        issues.append(f"nombre: esperado '{expected_first}', llegó '{got_first}'")
+
+    got_addr = addr.get("address1", "")
+    if TEST_FORM["direccion"].lower() not in got_addr.lower():
+        issues.append(f"direccion: esperado '{TEST_FORM['direccion']}', llegó '{got_addr}'")
+
+    items = order.get("line_items", [])
+    if not items:
+        issues.append("line_items: vacío en Shopify")
+    else:
+        item = items[0]
+        if str(item.get("variant_id")) != str(variant["variant_id"]):
+            issues.append(f"variant_id: esperado {variant['variant_id']}, llegó {item.get('variant_id')}")
+        if int(item.get("quantity", 0)) != 1:
+            issues.append(f"quantity: esperado 1, llegó {item.get('quantity')}")
+        got_price = float(item.get("price", 0))
+        if abs(got_price - variant["price"]) > 1:
+            issues.append(f"precio item: esperado {variant['price']}, llegó {got_price}")
+
+    return issues, order
+
+
+def test_pedido_variante_invalida():
+    """El sistema debe rechazar un carrito con variante que no existe."""
+    r = requests.post(f"{BASE}/api/pedido", json={
+        "form":           TEST_FORM,
+        "cartItems": [{
+            "producto": {
+                "id":                "gid://shopify/Product/999999999999",
+                "nombre":            "Producto Falso",
+                "selectedVariantId": "gid://shopify/ProductVariant/999999999999",
+                "colorSeleccionado": "Negro",
+                "precioNumerico":    100000,
+            },
+            "talla":    "M",
+            "cantidad": 1,
+        }],
+        "cartTotal":      100000,
+        "idempotencyKey": f"verify-invalid-{uuid.uuid4()}",
+    }, timeout=20)
+    return r
+
+
+def verify_mp_amount(init_point_url, expected_amount):
+    """Verifica que la preferencia MP tiene el monto correcto."""
+    import re
+    match = re.search(r"pref_id=([\w-]+)", init_point_url)
+    if not match:
+        return ["No se pudo extraer pref_id de la URL"]
+
+    pref_id = match.group(1)
+    r = requests.get(
+        f"https://api.mercadopago.com/checkout/preferences/{pref_id}",
+        headers={"Authorization": f"Bearer {MP_ACCESS_TOKEN}"},
+        timeout=10,
+    )
+    if not r.ok:
+        return [f"MP API {r.status_code}: {r.text[:100]}"]
+
+    pref = r.json()
+    items = pref.get("items", [])
+    if not items:
+        return ["Preferencia MP sin items"]
+
+    total_mp = sum(float(i.get("unit_price", 0)) * int(i.get("quantity", 1)) for i in items)
+    if abs(total_mp - expected_amount) > 1:
+        return [f"monto: esperado ${expected_amount:,.0f}, en MP ${total_mp:,.0f}"]
+
+    return []
+
+
 def delete_draft_order(draft_order_id):
     r = requests.delete(
         f"https://{SHOPIFY_DOMAIN}/admin/api/2026-04/draft_orders/{draft_order_id}.json",
@@ -208,18 +303,54 @@ if __name__ == "__main__":
             fail("pedido", str(e))
 
         if draft_order_id:
+            print("\n=== 2b. DATOS DEL DRAFT ORDER (Shopify admin) ===")
+            try:
+                issues, order = verify_draft_order_data(draft_order_id, variant)
+                if not issues:
+                    ok("draft_order_datos", f"email, nombre, dirección, variant y precio correctos")
+                else:
+                    for issue in issues:
+                        fail("draft_order_datos", issue)
+            except Exception as e:
+                fail("draft_order_datos", str(e))
+
             print("\n=== 3. PREFERENCIA MP (/api/procesar-pago) ===")
+            mp_link = None
             try:
                 r = test_procesar_pago(draft_order_id, variant)
                 data = r.json()
                 if r.status_code == 200 and data.get("ok"):
-                    link = data.get("initPoint") or data.get("init_point") or "—"
+                    mp_link = data.get("initPoint") or data.get("init_point") or ""
                     ok("procesar_pago", "Preferencia MP generada")
-                    print(f"     init_point: {str(link)[:80]}...")
+                    print(f"     init_point: {str(mp_link)[:80]}...")
                 else:
                     fail("procesar_pago", f"HTTP {r.status_code} — {json.dumps(data)[:250]}")
             except Exception as e:
                 fail("procesar_pago", str(e))
+
+            if mp_link:
+                print("\n=== 3b. MONTO EN PREFERENCIA MP ===")
+                try:
+                    issues = verify_mp_amount(mp_link, variant["price"])
+                    if not issues:
+                        ok("mp_monto", f"Monto correcto: ${variant['price']:,.0f}")
+                    else:
+                        for issue in issues:
+                            fail("mp_monto", issue)
+                except Exception as e:
+                    fail("mp_monto", str(e))
+
+        print("\n=== 2c. RECHAZO DE VARIANTE INVÁLIDA ===")
+        try:
+            r = test_pedido_variante_invalida()
+            if r.status_code in (400, 422, 500):
+                ok("variante_invalida", f"HTTP {r.status_code} — rechazado correctamente")
+            elif r.status_code == 200:
+                fail("variante_invalida", "Creó un pedido con variante falsa — fuga de validación")
+            else:
+                warn("variante_invalida", f"HTTP {r.status_code} inesperado")
+        except Exception as e:
+            fail("variante_invalida", str(e))
 
     print("\n=== 4. WEBHOOK MP (firma simulada) ===")
     try:
