@@ -1,7 +1,16 @@
 import { createClient } from '@supabase/supabase-js';
 import { sendTransactionalEmail } from './_helpers/mail.js';
 import { trackFunnelEvent } from './_helpers/funnel.js';
-import { emailContactoCliente, emailContactoInterno } from './_helpers/email-templates.js';
+import {
+  emailConfirmacion,
+  emailDespacho,
+  emailEntregado,
+  emailPedidoCancelado,
+  emailVerificacion,
+  emailResetPassword,
+  emailContactoCliente,
+  emailContactoInterno,
+} from './_helpers/email-templates.js';
 
 const supabaseUrl = process.env.VITE_SUPABASE_URL;
 const supabaseKey =
@@ -214,6 +223,116 @@ export default async function handler(req, res) {
     } catch (err) {
       console.error('Error newsletter subscribe:', err.message);
       return res.status(500).json({ error: 'No se pudo registrar. Intenta de nuevo.' });
+    }
+  }
+
+  if (req.body?.type === 'preview-email') {
+    const secret = process.env.PREVIEW_EMAIL_SECRET;
+    if (secret && req.headers['x-preview-secret'] !== secret) {
+      return res.status(401).json({ error: 'No autorizado.' });
+    }
+
+    const emailType = String(req.body?.emailType || '').trim();
+    const dest = String(req.body?.dest || '').trim().toLowerCase();
+
+    if (!emailType || !dest || !isValidEmail(dest)) {
+      return res.status(400).json({ error: 'emailType y dest valido son requeridos.' });
+    }
+
+    const appUrl = String(process.env.VITE_APP_URL || 'https://www.pavoa.com.co').replace(/\/$/, '');
+    const mockOrderName = '#PAVOA-1042';
+    const mockFirstName = 'Yeison';
+
+    const SUBJECTS = {
+      confirmacion: '[Preview] Confirmacion de pedido',
+      despacho: '[Preview] Pedido en camino',
+      entregado: '[Preview] Pedido entregado',
+      cancelado: '[Preview] Pedido cancelado',
+      verificacion: '[Preview] Verificacion de cuenta',
+      'reset-password': '[Preview] Reset de contrasena',
+      'contacto-cliente': '[Preview] Confirmacion de contacto',
+      'contacto-interno': '[Preview] Notificacion interna de contacto',
+    };
+
+    const buildPreviewHtml = (type) => {
+      switch (type) {
+        case 'confirmacion':
+          return emailConfirmacion({
+            firstName: mockFirstName,
+            orderName: mockOrderName,
+            paymentId: 'MP-123456789',
+            lineItems: [
+              { title: 'Vestido Siena', variant_title: 'Negro / S', quantity: '1', price: '189900' },
+              { title: 'Blusa Alma', variant_title: 'Marfil / M', quantity: '2', price: '124900' },
+            ],
+            total: '439700',
+            totalOriginal: '499700',
+            descuentoAplicado: true,
+            direccion: 'Calle 10 # 43-25, Apto 302, Medellin, Antioquia',
+          });
+        case 'despacho':
+          return emailDespacho({
+            nombreCliente: mockFirstName,
+            orderName: mockOrderName,
+            subtitulo: 'Actualizacion de envio',
+            cuerpo: 'Tu pedido ya salio de nuestras instalaciones y esta en camino. Puedes rastrearlo con la guia a continuacion.',
+            trackingCompany: 'Coordinadora',
+            trackingNumber: 'CRD-9876543210',
+            trackingUrl: 'https://coordinadora.com/rastreo?guia=CRD-9876543210',
+          });
+        case 'entregado':
+          return emailEntregado({ nombreCliente: mockFirstName, orderName: mockOrderName });
+        case 'cancelado':
+          return emailPedidoCancelado({
+            nombreCliente: mockFirstName,
+            orderName: mockOrderName,
+            lineItems: [{ title: 'Vestido Siena', variant_title: 'Negro / S', quantity: '1', price: '189900' }],
+            total: '189900',
+            cancelReason: 'Solicitud del cliente',
+            refundStatus: 'refunded',
+          });
+        case 'verificacion':
+          return emailVerificacion({
+            firstName: mockFirstName,
+            verifyLink: `${appUrl}/verify?token=PREVIEW_TOKEN_DEMO`,
+          });
+        case 'reset-password':
+          return emailResetPassword({
+            firstName: mockFirstName,
+            resetLink: `${appUrl}/reset-password?token=PREVIEW_TOKEN_DEMO`,
+          });
+        case 'contacto-cliente':
+          return emailContactoCliente({ nombre: mockFirstName, asunto: 'Consulta sobre disponibilidad' });
+        case 'contacto-interno':
+          return emailContactoInterno({
+            nombre: 'Valentina Rios',
+            contacto: 'valentina@ejemplo.com',
+            asunto: 'Quiero saber si tienen talla S',
+            mensaje: 'Hola, me interesa el Vestido Siena en talla S color negro. Esta disponible para la proxima semana?',
+          });
+        default:
+          return null;
+      }
+    };
+
+    const subject = SUBJECTS[emailType];
+    const html = buildPreviewHtml(emailType);
+
+    if (!subject || !html) {
+      return res.status(400).json({ error: `Tipo de correo desconocido: ${emailType}` });
+    }
+
+    try {
+      await sendTransactionalEmail({
+        from: 'PAVOA <onboarding@resend.dev>',
+        to: [dest],
+        subject,
+        html,
+      });
+      return res.status(200).json({ ok: true, emailType, dest });
+    } catch (err) {
+      console.error('Error preview email:', err.message);
+      return res.status(500).json({ error: err.message || 'No se pudo enviar el correo de prueba.' });
     }
   }
 
