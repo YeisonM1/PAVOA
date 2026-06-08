@@ -423,7 +423,6 @@ const createPaymentPreference = async ({
       body: {
         items: itemsMapped,
         payer: {
-          email: payerEmail,
           first_name: customerName.firstName || undefined,
           last_name: customerName.lastName || undefined,
         },
