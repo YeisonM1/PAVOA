@@ -244,14 +244,14 @@ export default async function handler(req, res) {
     const mockFirstName = 'Yeison';
 
     const SUBJECTS = {
-      confirmacion: '[Preview] Confirmacion de pedido',
+      confirmacion: '[Preview] Confirmación de pedido',
       despacho: '[Preview] Pedido en camino',
       entregado: '[Preview] Pedido entregado',
       cancelado: '[Preview] Pedido cancelado',
-      verificacion: '[Preview] Verificacion de cuenta',
-      'reset-password': '[Preview] Reset de contrasena',
-      'contacto-cliente': '[Preview] Confirmacion de contacto',
-      'contacto-interno': '[Preview] Notificacion interna de contacto',
+      verificacion: '[Preview] Verificación de cuenta',
+      'reset-password': '[Preview] Reset de contraseña',
+      'contacto-cliente': '[Preview] Confirmación de contacto',
+      'contacto-interno': '[Preview] Notificación interna de contacto',
     };
 
     const buildPreviewHtml = (type) => {
@@ -268,14 +268,14 @@ export default async function handler(req, res) {
             total: '439700',
             totalOriginal: '499700',
             descuentoAplicado: true,
-            direccion: 'Calle 10 # 43-25, Apto 302, Medellin, Antioquia',
+            direccion: 'Calle 10 # 43-25, Apto 302, Medellín, Antioquia',
           });
         case 'despacho':
           return emailDespacho({
             nombreCliente: mockFirstName,
             orderName: mockOrderName,
-            subtitulo: 'Actualizacion de envio',
-            cuerpo: 'Tu pedido ya salio de nuestras instalaciones y esta en camino. Puedes rastrearlo con la guia a continuacion.',
+            subtitulo: 'Actualización de envío',
+            cuerpo: 'Tu pedido ya salió de nuestras instalaciones y está en camino. Puedes rastrearlo con la guía a continuación.',
             trackingCompany: 'Coordinadora',
             trackingNumber: 'CRD-9876543210',
             trackingUrl: 'https://coordinadora.com/rastreo?guia=CRD-9876543210',
