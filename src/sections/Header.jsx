@@ -115,7 +115,7 @@ const Header = () => {
             <button
               className="md:hidden text-stone-800 mr-4 hover:text-stone-500 transition-colors"
               onClick={() => setMenuOpen(!menuOpen)}
-              aria-label={menuOpen ? 'Cerrar menu' : 'Abrir menu principal'}
+              aria-label={menuOpen ? 'Cerrar menú' : 'Abrir menú principal'}
               aria-expanded={menuOpen}
             >
               {menuOpen
@@ -155,7 +155,7 @@ const Header = () => {
                   }}
                 >
                   <span style={{ position: 'relative' }}>
-                    CATALOGO
+                    CATÁLOGO
                     <span
                       style={{
                         position: 'absolute',
@@ -293,7 +293,7 @@ const Header = () => {
                   target="_blank"
                   rel="noopener noreferrer"
                   className="hover:text-stone-900 transition-colors"
-                aria-label="Siguenos en Instagram"
+                aria-label="Síguenos en Instagram"
               >
                 <InstagramIcon />
               </a>
@@ -302,7 +302,7 @@ const Header = () => {
                   target="_blank"
                   rel="noopener noreferrer"
                   className="hover:text-stone-900 transition-colors"
-                aria-label="Siguenos en Facebook"
+                aria-label="Síguenos en Facebook"
               >
                 <FacebookIcon />
               </a>
@@ -313,7 +313,7 @@ const Header = () => {
             <button
               onClick={() => setIsSearchOpen(true)}
               className="hover:text-stone-900 transition-colors"
-              aria-label="Abrir busqueda"
+              aria-label="Abrir búsqueda"
             >
               <Search size={20} strokeWidth={1.8} aria-hidden="true" />
             </button>
@@ -404,7 +404,7 @@ const Header = () => {
             <button
               onClick={() => setCartOpen(true)}
               className="hover:text-stone-900 transition-colors relative"
-              aria-label={cartCount > 0 ? `Abrir carrito. Tienes ${cartCount} articulos` : 'Abrir carrito. Tu carrito esta vacio'}
+              aria-label={cartCount > 0 ? `Abrir carrito. Tienes ${cartCount} artículos` : 'Abrir carrito. Tu carrito está vacío'}
             >
               <ShoppingBag size={20} strokeWidth={1.8} />
               {cartCount > 0 ? (

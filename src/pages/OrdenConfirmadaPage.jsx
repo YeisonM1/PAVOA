@@ -130,7 +130,7 @@ export default function OrdenConfirmadaPage() {
   if (!paymentId || isRejected) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-6 bg-white">
-        <p className="text-[11px] tracking-[0.2em] uppercase text-stone-500">No hay informacion de pedido</p>
+        <p className="text-[11px] tracking-[0.2em] uppercase text-stone-500">No hay información de pedido</p>
         <Link to="/" className="text-[10px] font-bold tracking-[0.2em] uppercase border-b border-stone-900 pb-1">
           Volver al inicio
         </Link>
@@ -146,24 +146,24 @@ export default function OrdenConfirmadaPage() {
       ? 'Pago en proceso'
       : 'Pago no confirmado';
   const message = isApproved
-    ? 'Tu pedido fue confirmado. En breve recibiras un correo con los detalles.'
+    ? 'Tu pedido fue confirmado. En breve recibirás un correo con los detalles.'
     : isPending || verifyingPayment
-      ? 'Estamos verificando tu pago. Recibiras confirmacion por correo cuando sea aprobado.'
-      : 'No recibimos confirmacion de pago. Si saliste del banco antes de finalizar, puedes volver al checkout e intentar de nuevo.';
+      ? 'Estamos verificando tu pago. Recibirás confirmación por correo cuando sea aprobado.'
+      : 'No recibimos confirmación de pago. Si saliste del banco antes de finalizar, puedes volver al checkout e intentar de nuevo.';
   const nextSteps = isApproved
     ? [
-        'Recibiras un correo de confirmacion con los detalles.',
-        'Tu pedido sera preparado y enviado segun el horario acordado.',
+        'Recibirás un correo de confirmación con los detalles.',
+        'Tu pedido será preparado y enviado según el horario acordado.',
       ]
     : isPending || verifyingPayment
       ? [
-          'Tu pago sera confirmado por Mercado Pago en las proximas horas.',
-          'Recibiras un correo de confirmacion cuando el pago sea aprobado.',
+          'Tu pago será confirmado por Mercado Pago en las próximas horas.',
+          'Recibirás un correo de confirmación cuando el pago sea aprobado.',
           'Una vez confirmado, coordinaremos la entrega contigo.',
         ]
       : [
           'Tu bolsa sigue disponible para reintentar el pago.',
-          'El pedido solo se confirma cuando Mercado Pago aprueba la transaccion.',
+          'El pedido solo se confirma cuando Mercado Pago aprueba la transacción.',
         ];
 
   return (
@@ -205,7 +205,7 @@ export default function OrdenConfirmadaPage() {
           </div>
           {email && (
             <div className="text-right">
-              <p className="text-[9px] tracking-[0.25em] text-stone-400 uppercase mb-1">Confirmacion enviada a</p>
+              <p className="text-[9px] tracking-[0.25em] text-stone-400 uppercase mb-1">Confirmación enviada a</p>
               <p className="text-[12px] text-stone-700 tracking-[0.05em]">{email}</p>
             </div>
           )}
@@ -253,7 +253,7 @@ export default function OrdenConfirmadaPage() {
         )}
 
         <div className="border border-stone-100 p-6 mb-10">
-          <p className="text-[9px] font-bold tracking-[0.3em] text-stone-400 uppercase mb-3">Que sigue?</p>
+          <p className="text-[9px] font-bold tracking-[0.3em] text-stone-400 uppercase mb-3">¿Qué sigue?</p>
           <ul className="flex flex-col gap-2">
             {nextSteps.map((paso, i) => (
               <li key={i} className="flex items-start gap-3">

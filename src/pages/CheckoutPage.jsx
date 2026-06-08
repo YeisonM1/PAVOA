@@ -14,7 +14,7 @@ const CHECKOUT_STEPS = [
   { key: 'bag', label: 'Bolsa' },
   { key: 'data', label: 'Datos' },
   { key: 'payment', label: 'Pago' },
-  { key: 'done', label: 'Confirmacion' },
+  { key: 'done', label: 'Confirmación' },
 ];
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -424,13 +424,13 @@ export default function CheckoutPage() {
     }
     if (field === 'email') {
       const email = String(value || '').trim();
-      if (!email) return 'Escribe tu correo para enviarte la confirmacion.';
-      if (!EMAIL_REGEX.test(email)) return 'Escribe un correo valido.';
+      if (!email) return 'Escribe tu correo para enviarte la confirmación.';
+      if (!EMAIL_REGEX.test(email)) return 'Escribe un correo válido.';
       return '';
     }
     if (field === 'telefono') {
       const telefono = String(value || '').trim();
-      if (!telefono) return 'Escribe tu telefono.';
+      if (!telefono) return 'Escribe tu teléfono.';
       if (telefono.replace(SOLO_DIGITOS, '').length < 10) return 'Revisa tu número, parece incompleto.';
       return '';
     }
