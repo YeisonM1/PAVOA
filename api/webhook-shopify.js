@@ -225,7 +225,7 @@ const getCancelReasonLabel = (reason) => {
   const normalized = String(reason || '').trim().toLowerCase();
   const labels = {
     customer: 'Solicitud del cliente',
-    fraud: 'Validacion de seguridad',
+    fraud: 'Validación de seguridad',
     inventory: 'Disponibilidad de inventario',
     declined: 'Pago rechazado',
     other: 'Otro motivo',
