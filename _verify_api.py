@@ -24,6 +24,8 @@ SHOPIFY_ADMIN_TOKEN    = ENV.get("SHOPIFY_ADMIN_TOKEN", "")
 SHOPIFY_STOREFRONT_TOKEN = ENV.get("VITE_SHOPIFY_TOKEN", "")
 MP_WEBHOOK_SECRET      = ENV.get("MP_WEBHOOK_SECRET", "")
 MP_ACCESS_TOKEN        = ENV.get("MP_ACCESS_TOKEN", "")
+RESEND_API_KEY         = ENV.get("RESEND_API_KEY", "")
+VERIFY_EMAIL           = "gyeison184@gmail.com"
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -265,6 +267,52 @@ def verify_mp_amount(init_point_url, expected_amount):
     return []
 
 
+def test_email():
+    """Envía un correo de prueba via Resend y verifica que salió."""
+    # 1. Verificar que el API key es válido
+    r = requests.get(
+        "https://api.resend.com/domains",
+        headers={"Authorization": f"Bearer {RESEND_API_KEY}"},
+        timeout=10,
+    )
+    if not r.ok:
+        return None, f"API key inválida — HTTP {r.status_code}: {r.text[:100]}"
+
+    # 2. Enviar correo de prueba
+    r = requests.post(
+        "https://api.resend.com/emails",
+        headers={"Authorization": f"Bearer {RESEND_API_KEY}", "Content-Type": "application/json"},
+        json={
+            "from":    "PAVOA Verify <noreply@pavoa.com.co>",
+            "to":      [VERIFY_EMAIL],
+            "subject": "[verify] PAVOA — test de correo automático",
+            "html":    "<p>Este correo confirma que el sistema de envío de PAVOA está funcionando correctamente.</p><p><small>Enviado por _verify_api.py</small></p>",
+        },
+        timeout=10,
+    )
+    if not r.ok:
+        return None, f"Envío fallido — HTTP {r.status_code}: {r.text[:200]}"
+
+    data = r.json()
+    message_id = data.get("id")
+    if not message_id:
+        return None, f"Sin message_id en respuesta: {json.dumps(data)[:100]}"
+
+    return message_id, None
+
+
+def check_email_status(message_id):
+    """Consulta el estado del correo enviado."""
+    r = requests.get(
+        f"https://api.resend.com/emails/{message_id}",
+        headers={"Authorization": f"Bearer {RESEND_API_KEY}"},
+        timeout=10,
+    )
+    if not r.ok:
+        return None, f"HTTP {r.status_code}"
+    return r.json(), None
+
+
 def delete_draft_order(draft_order_id):
     r = requests.delete(
         f"https://{SHOPIFY_DOMAIN}/admin/api/2026-04/draft_orders/{draft_order_id}.json",
@@ -351,6 +399,25 @@ if __name__ == "__main__":
                 warn("variante_invalida", f"HTTP {r.status_code} inesperado")
         except Exception as e:
             fail("variante_invalida", str(e))
+
+    print("\n=== 7. CORREO (Resend) ===")
+    try:
+        message_id, err = test_email()
+        if err:
+            fail("email_envio", err)
+        else:
+            ok("email_envio", f"Salió — message_id: {message_id}")
+            # Esperar 2s y verificar estado
+            time.sleep(2)
+            status_data, status_err = check_email_status(message_id)
+            if status_err:
+                warn("email_estado", status_err)
+            else:
+                estado = status_data.get("last_event") or status_data.get("status") or "desconocido"
+                to_addr = status_data.get("to", [VERIFY_EMAIL])
+                ok("email_estado", f"{estado} → {to_addr}")
+    except Exception as e:
+        fail("email_envio", str(e))
 
     print("\n=== 4. WEBHOOK MP (firma simulada) ===")
     try:
