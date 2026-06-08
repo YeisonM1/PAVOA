@@ -7,6 +7,27 @@ import { supabase, getSupabaseMode } from './_helpers/supabase.js';
 const SHOPIFY_DOMAIN = process.env.VITE_SHOPIFY_DOMAIN;
 const SHOPIFY_SECRET = process.env.SHOPIFY_WEBHOOK_SECRET;
 
+// Deduplicación en memoria: evita emails dobles cuando Shopify dispara
+// orders/fulfilled + orders/updated para la misma acción de fulfillment.
+// Funciona porque ambas llamadas llegan con milisegundos de diferencia y
+// casi siempre tocan la misma instancia de Vercel.
+const _despachoCache = new Map();
+const DESPACHO_TTL = 90 * 1000;
+
+function isDespachoDuplicado(shopifyOrderId, trackingNumber) {
+  const key = `${shopifyOrderId}:${trackingNumber}`;
+  const now = Date.now();
+  const lastTs = _despachoCache.get(key);
+  if (lastTs && now - lastTs < DESPACHO_TTL) return true;
+  _despachoCache.set(key, now);
+  if (_despachoCache.size > 200) {
+    for (const [k, ts] of _despachoCache) {
+      if (now - ts > DESPACHO_TTL * 2) _despachoCache.delete(k);
+    }
+  }
+  return false;
+}
+
 const TRANSPORTADORAS = [
   { nombre: 'Servientrega',    dominios: ['servientrega.com.co', 'servientrega.com'],     claves: ['servientrega']                       },
   { nombre: 'Coordinadora',    dominios: ['coordinadora.com'],                             claves: ['coordinadora']                       },
@@ -481,9 +502,15 @@ export default async function handler(req, res) {
 
     // ── Casos 2 y 3: hay guía — actualizar Supabase ─────────
     if (trackingNumber) {
+      // Primera línea de defensa: caché en memoria (cubre el 99 % de los duplicados)
+      if (isDespachoDuplicado(shopifyOrderId, trackingNumber)) {
+        console.log(`🔄 Despacho duplicado (cache): guía ${trackingNumber} para ${shopifyOrderId}`);
+        return res.status(200).send('OK');
+      }
+
       const esCorreccion = !!pedidoActual?.tracking_number && pedidoActual.tracking_number !== trackingNumber;
 
-      // Actualización condicional: solo aplica si el tracking es nuevo o cambió.
+      // Segunda línea de defensa: actualización condicional en Supabase (cubre instancias distintas).
       // Si Shopify dispara orders/fulfilled + orders/updated para la misma acción,
       // el segundo webhook encuentra el tracking ya registrado y retorna sin enviar email.
       const { data: actualizados, error } = await supabase
