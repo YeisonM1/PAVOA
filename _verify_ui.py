@@ -214,7 +214,11 @@ async def main():
         # 7. ERRORES DE CONSOLA
         # ---------------------------------------------------------------
         print("\n=== 7. ERRORES DE CONSOLA ===")
-        criticos = [e for e in console_errors if not any(x in e.lower() for x in ["favicon", "chunk", "hydrat"])]
+        # Los errores HTTP se validan abajo con status y URL. Chromium tambien los
+        # duplica como un mensaje generico de consola sin indicar que request fallo.
+        criticos = [e for e in console_errors if not any(x in e.lower() for x in [
+            "favicon", "chunk", "hydrat", "failed to load resource",
+        ])]
         if criticos:
             for e in criticos[:5]:
                 warn("consola", e[:100])

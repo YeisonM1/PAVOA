@@ -533,8 +533,10 @@ if __name__ == "__main__":
         print("\n=== 2c. RECHAZO DE VARIANTE INVÁLIDA ===")
         try:
             r = test_pedido_variante_invalida()
-            if r.status_code in (400, 422, 500):
+            if r.status_code in (400, 422):
                 ok("variante_invalida", f"HTTP {r.status_code} — rechazado correctamente")
+            elif r.status_code == 500:
+                fail("variante_invalida", "HTTP 500 — una variante falsa debe ser error de entrada, no error interno")
             elif r.status_code == 200:
                 fail("variante_invalida", "Creó un pedido con variante falsa — fuga de validación")
             else:

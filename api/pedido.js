@@ -1,5 +1,5 @@
 import { getShopifyToken } from './_helpers/shopify-token.js';
-import { validateCartWithShopify } from './_helpers/cart-validation.js';
+import { CartValidationError, validateCartWithShopify } from './_helpers/cart-validation.js';
 import { verifyToken } from './_helpers/auth.js';
 import { trackFunnelEvent } from './_helpers/funnel.js';
 
@@ -314,7 +314,7 @@ export default async function handler(req, res) {
       },
     });
     console.error('Error creando draft order:', err.message);
-    return res.status(500).json({
+    return res.status(err instanceof CartValidationError ? 400 : 500).json({
       error: 'Error al crear el pedido en Shopify',
       detail: parseShopifyError(err.message),
     });

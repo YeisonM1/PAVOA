@@ -2,6 +2,13 @@ import { getShopifyToken } from './shopify-token.js';
 
 const SHOPIFY_DOMAIN = process.env.VITE_SHOPIFY_DOMAIN;
 
+export class CartValidationError extends Error {
+  constructor(message) {
+    super(message);
+    this.name = 'CartValidationError';
+  }
+}
+
 const variantNumericId = (variantId) => {
   const raw = String(variantId || '');
   const value = raw.includes('gid://') ? raw.split('/').pop() : raw;
@@ -33,22 +40,22 @@ const buildFallbackFromCart = (cartItems = []) => {
   for (const item of cartItems) {
     const quantity = Number(item?.cantidad || 0);
     if (!Number.isInteger(quantity) || quantity <= 0) {
-      throw new Error('Cantidad invalida en el carrito');
+      throw new CartValidationError('Cantidad invalida en el carrito');
     }
 
     const selectedVariantId = item?.producto?.selectedVariantId;
     if (!selectedVariantId) {
-      throw new Error(`Selecciona nuevamente talla/color para "${item?.producto?.nombre || 'un producto'}"`);
+      throw new CartValidationError(`Selecciona nuevamente talla/color para "${item?.producto?.nombre || 'un producto'}"`);
     }
 
     const numericId = variantNumericId(selectedVariantId);
     if (!numericId) {
-      throw new Error('Variante invalida en el carrito');
+      throw new CartValidationError('Variante invalida en el carrito');
     }
 
     const unitPrice = parseCartUnitPrice(item);
     if (!unitPrice) {
-      throw new Error(`No se pudo validar el precio de "${item?.producto?.nombre || 'un producto'}"`);
+      throw new CartValidationError(`No se pudo validar el precio de "${item?.producto?.nombre || 'un producto'}"`);
     }
 
     trustedItems.push({
@@ -69,7 +76,7 @@ const buildFallbackFromCart = (cartItems = []) => {
 
 const fetchVariant = async (token, variantId) => {
   const numericId = variantNumericId(variantId);
-  if (!numericId) throw new Error('Variante invalida en el carrito');
+  if (!numericId) throw new CartValidationError('Variante invalida en el carrito');
 
   const res = await fetch(
     `https://${SHOPIFY_DOMAIN}/admin/api/2026-04/variants/${numericId}.json`,
@@ -78,6 +85,9 @@ const fetchVariant = async (token, variantId) => {
 
   if (!res.ok) {
     const err = await res.text();
+    if (res.status === 404) {
+      throw new CartValidationError('Variante no encontrada en Shopify');
+    }
     throw new Error(`No se pudo validar una variante (${res.status}): ${err}`);
   }
 
@@ -101,12 +111,12 @@ export const validateCartWithShopify = async (cartItems = []) => {
       for (const item of cartItems) {
         const quantity = Number(item?.cantidad || 0);
         if (!Number.isInteger(quantity) || quantity <= 0) {
-          throw new Error('Cantidad invalida en el carrito');
+          throw new CartValidationError('Cantidad invalida en el carrito');
         }
 
         const selectedVariantId = item?.producto?.selectedVariantId;
         if (!selectedVariantId) {
-          throw new Error(`Selecciona nuevamente talla/color para "${item?.producto?.nombre || 'un producto'}"`);
+          throw new CartValidationError(`Selecciona nuevamente talla/color para "${item?.producto?.nombre || 'un producto'}"`);
         }
 
         const variant = await fetchVariant(token, selectedVariantId);
@@ -115,7 +125,7 @@ export const validateCartWithShopify = async (cartItems = []) => {
         const unitPrice = normalizeMoney(variant.price);
 
         if (stock < quantity) {
-          throw new Error(
+          throw new CartValidationError(
             stock <= 0
               ? `"${title}" ya no tiene stock disponible.`
               : `"${title}" solo tiene ${stock} unidad${stock === 1 ? '' : 'es'} disponible${stock === 1 ? '' : 's'}.`
