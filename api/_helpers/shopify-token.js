@@ -58,8 +58,8 @@ export const getShopifyToken = async (preferred = 'app') => {
   const hasAppCreds = Boolean(process.env.SHOPIFY_CLIENT_ID && process.env.SHOPIFY_CLIENT_SECRET);
 
   if (preferred === 'admin') {
-    if (adminToken) return adminToken;
     if (hasAppCreds) return getShopifyAppToken();
+    if (adminToken) return adminToken;
     throw new Error('No hay token disponible de Shopify');
   }
 
