@@ -429,6 +429,9 @@ export default async function handler(req, res) {
           }
         }
       }
+
+      // El tag "entregado" ya fue procesado — no continuar al bloque de fulfillment
+      return res.status(200).send('OK');
     }
   }
 
@@ -490,6 +493,12 @@ export default async function handler(req, res) {
         return res.status(200).send('OK');
       }
       console.log(`✅ Fulfillment actualizado: ${shopifyOrderId} → ${fulfillmentStatus} | corrección: ${esCorreccion}`);
+
+      // Enviar email solo en orders/fulfilled (primer despacho) o cuando la guía cambia (corrección).
+      // orders/updated se ignora para nuevos trackings porque Shopify siempre dispara ambos topics
+      // para la misma acción, lo que causaría emails duplicados.
+      const debeEnviarEmail = topic === 'orders/fulfilled' || esCorreccion;
+      if (!debeEnviarEmail) return res.status(200).send('OK');
 
       const deliveryEmail = getContactEmail(order, pedidoActual);
       if (!deliveryEmail) return res.status(200).send('OK');
