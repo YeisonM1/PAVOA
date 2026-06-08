@@ -268,6 +268,32 @@ def verify_mp_amount(init_point_url, expected_amount):
     return []
 
 
+def test_login_campos_vacios():
+    """Login sin campos debe retornar 400, no 500."""
+    r = requests.post(f"{BASE}/api/login", json={}, timeout=10)
+    return r
+
+def test_login_creds_invalidas():
+    """Login con creds incorrectas debe retornar 401, no 500."""
+    r = requests.post(f"{BASE}/api/login", json={
+        "email":    "noexiste@pavoa-verify.local",
+        "password": "contrasenawrong123",
+    }, timeout=10)
+    return r
+
+def test_mis_pedidos_sin_token():
+    """mis-pedidos sin Authorization debe retornar 401, no 500."""
+    r = requests.post(f"{BASE}/api/mis-pedidos", json={}, timeout=10)
+    return r
+
+def test_mis_pedidos_token_invalido():
+    """mis-pedidos con token basura debe retornar 401, no 500."""
+    r = requests.post(f"{BASE}/api/mis-pedidos", json={}, headers={
+        "Authorization": "Bearer token_falso_verify_script",
+    }, timeout=10)
+    return r
+
+
 def test_email():
     """Envía un correo de prueba via Resend y verifica que salió."""
     # 1. Verificar que el API key es válido
@@ -425,6 +451,52 @@ if __name__ == "__main__":
                 warn("variante_invalida", f"HTTP {r.status_code} inesperado")
         except Exception as e:
             fail("variante_invalida", str(e))
+
+    print("\n=== 9. LOGIN (/api/login) ===")
+    try:
+        r = test_login_campos_vacios()
+        if r.status_code == 400:
+            ok("login_campos_vacios", f"HTTP 400 — valida campos correctamente")
+        elif r.status_code == 500:
+            fail("login_campos_vacios", "HTTP 500 — explota con payload vacío")
+        else:
+            warn("login_campos_vacios", f"HTTP {r.status_code} inesperado")
+    except Exception as e:
+        fail("login_campos_vacios", str(e))
+
+    try:
+        r = test_login_creds_invalidas()
+        if r.status_code in (401, 400):
+            ok("login_creds_invalidas", f"HTTP {r.status_code} — rechaza credenciales incorrectas")
+        elif r.status_code == 500:
+            fail("login_creds_invalidas", "HTTP 500 — explota con creds incorrectas")
+        else:
+            warn("login_creds_invalidas", f"HTTP {r.status_code} — {r.text[:80]}")
+    except Exception as e:
+        fail("login_creds_invalidas", str(e))
+
+    print("\n=== 10. MIS PEDIDOS (/api/mis-pedidos) ===")
+    try:
+        r = test_mis_pedidos_sin_token()
+        if r.status_code == 401:
+            ok("mis_pedidos_sin_token", "HTTP 401 — requiere autenticación")
+        elif r.status_code == 500:
+            fail("mis_pedidos_sin_token", "HTTP 500 — explota sin token")
+        else:
+            warn("mis_pedidos_sin_token", f"HTTP {r.status_code} — {r.text[:80]}")
+    except Exception as e:
+        fail("mis_pedidos_sin_token", str(e))
+
+    try:
+        r = test_mis_pedidos_token_invalido()
+        if r.status_code == 401:
+            ok("mis_pedidos_token_invalido", "HTTP 401 — rechaza token falso")
+        elif r.status_code == 500:
+            fail("mis_pedidos_token_invalido", "HTTP 500 — explota con token inválido")
+        else:
+            warn("mis_pedidos_token_invalido", f"HTTP {r.status_code} — {r.text[:80]}")
+    except Exception as e:
+        fail("mis_pedidos_token_invalido", str(e))
 
     print("\n=== 7. CORREO (Resend) ===")
     try:
