@@ -1,4 +1,4 @@
-import sys, os, hmac, hashlib, time, uuid, json
+import sys, os, hmac, hashlib, time, uuid, json, subprocess
 import requests
 
 sys.stdout.reconfigure(encoding="utf-8")
@@ -294,6 +294,96 @@ def test_mis_pedidos_token_invalido():
     return r
 
 
+def test_register_campos_vacios():
+    """Registro sin datos debe validar antes de tocar Supabase."""
+    return requests.post(
+        f"{BASE}/api/register",
+        json={},
+        headers={"X-Forwarded-For": f"203.0.113.{uuid.uuid4().int % 200 + 1}"},
+        timeout=10,
+    )
+
+
+def test_register_password_corta():
+    """Registro con password corto debe retornar 400 y no crear usuario."""
+    return requests.post(
+        f"{BASE}/api/register",
+        json={
+            "firstName": "Test",
+            "lastName": "Automatico",
+            "email": f"verify-register-{uuid.uuid4().hex}@pavoa.invalid",
+            "password": "corta",
+        },
+        headers={"X-Forwarded-For": f"203.0.113.{uuid.uuid4().int % 200 + 1}"},
+        timeout=10,
+    )
+
+
+def test_forgot_password_sin_email():
+    """Recuperacion sin email debe retornar 400."""
+    return requests.post(
+        f"{BASE}/api/forgot-password",
+        json={},
+        headers={"X-Forwarded-For": f"198.51.100.{uuid.uuid4().int % 200 + 1}"},
+        timeout=10,
+    )
+
+
+def test_forgot_password_email_inexistente():
+    """No debe revelar si una cuenta existe y debe responder 200."""
+    return requests.post(
+        f"{BASE}/api/forgot-password",
+        json={"email": f"verify-forgot-{uuid.uuid4().hex}@pavoa.invalid"},
+        headers={"X-Forwarded-For": f"198.51.100.{uuid.uuid4().int % 200 + 1}"},
+        timeout=10,
+    )
+
+
+def verify_dispatch_email_template():
+    """Ejecuta el template real y confirma que la guia llega al HTML."""
+    tracking_number = "VERIFY-GUIA-987654"
+    tracking_company = "Servientrega"
+    tracking_url = "https://www.servientrega.com/wps/portal/rastreo-envio"
+    script = f"""
+import {{ emailDespacho }} from './api/_helpers/email-templates.js';
+const html = emailDespacho({{
+  nombreCliente: 'Test Automatico',
+  orderName: '#VERIFY-001',
+  subtitulo: 'Tu pedido esta en camino',
+  cuerpo: 'Verificacion automatica del correo de despacho.',
+  trackingCompany: {json.dumps(tracking_company)},
+  trackingNumber: {json.dumps(tracking_number)},
+  trackingUrl: {json.dumps(tracking_url)},
+}});
+process.stdout.write(JSON.stringify({{
+  trackingNumber: html.includes({json.dumps(tracking_number)}),
+  trackingCompany: html.includes({json.dumps(tracking_company)}),
+  trackingUrl: html.includes({json.dumps(tracking_url)}),
+  trackingButton: html.includes('Rastrear pedido'),
+}}));
+"""
+    completed = subprocess.run(
+        ["node", "--input-type=module", "-e", script],
+        cwd=os.path.dirname(os.path.abspath(__file__)),
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        timeout=10,
+        check=False,
+    )
+    if completed.returncode != 0:
+        return [f"Node fallo: {completed.stderr.strip()[:200]}"]
+
+    checks = json.loads(completed.stdout)
+    labels = {
+        "trackingNumber": "numero de guia",
+        "trackingCompany": "transportadora",
+        "trackingUrl": "URL de rastreo",
+        "trackingButton": "boton de rastreo",
+    }
+    return [f"Falta {labels[key]} en el HTML" for key, present in checks.items() if not present]
+
+
 def test_email():
     """Envía un correo de prueba via Resend y verifica que salió."""
     # 1. Verificar que el API key es válido
@@ -498,6 +588,63 @@ if __name__ == "__main__":
     except Exception as e:
         fail("mis_pedidos_token_invalido", str(e))
 
+    print("\n=== 11. REGISTRO (/api/register) ===")
+    try:
+        r = test_register_campos_vacios()
+        if r.status_code == 400:
+            ok("register_campos_vacios", "HTTP 400 — valida campos requeridos")
+        elif r.status_code == 429:
+            warn("register_campos_vacios", "HTTP 429 — rate limit activo; validacion no ejecutada")
+        else:
+            fail("register_campos_vacios", f"HTTP {r.status_code} — {r.text[:100]}")
+    except Exception as e:
+        fail("register_campos_vacios", str(e))
+
+    try:
+        r = test_register_password_corta()
+        if r.status_code == 400:
+            ok("register_password_corta", "HTTP 400 — exige minimo 8 caracteres")
+        elif r.status_code == 429:
+            warn("register_password_corta", "HTTP 429 — rate limit activo; validacion no ejecutada")
+        else:
+            fail("register_password_corta", f"HTTP {r.status_code} — {r.text[:100]}")
+    except Exception as e:
+        fail("register_password_corta", str(e))
+
+    print("\n=== 12. RECUPERACION (/api/forgot-password) ===")
+    try:
+        r = test_forgot_password_sin_email()
+        if r.status_code == 400:
+            ok("forgot_password_sin_email", "HTTP 400 — exige correo")
+        elif r.status_code == 429:
+            warn("forgot_password_sin_email", "HTTP 429 — rate limit activo; validacion no ejecutada")
+        else:
+            fail("forgot_password_sin_email", f"HTTP {r.status_code} — {r.text[:100]}")
+    except Exception as e:
+        fail("forgot_password_sin_email", str(e))
+
+    try:
+        r = test_forgot_password_email_inexistente()
+        if r.status_code == 200 and r.json().get("ok"):
+            ok("forgot_password_email_inexistente", "HTTP 200 — no revela si la cuenta existe")
+        elif r.status_code == 429:
+            warn("forgot_password_email_inexistente", "HTTP 429 — rate limit activo; endpoint protegido")
+        else:
+            fail("forgot_password_email_inexistente", f"HTTP {r.status_code} — {r.text[:100]}")
+    except Exception as e:
+        fail("forgot_password_email_inexistente", str(e))
+
+    print("\n=== 13. TEMPLATE CORREO DE DESPACHO ===")
+    try:
+        issues = verify_dispatch_email_template()
+        if issues:
+            for issue in issues:
+                fail("email_despacho_tracking", issue)
+        else:
+            ok("email_despacho_tracking", "guia, transportadora y enlace presentes en el HTML")
+    except Exception as e:
+        fail("email_despacho_tracking", str(e))
+
     print("\n=== 7. CORREO (Resend) ===")
     try:
         message_id, err = test_email()
@@ -562,6 +709,44 @@ if __name__ == "__main__":
                      f"HTTP {r.status_code} — {r.text[:100]}")
         except Exception as e:
             fail(f"webhook_shopify_{topic.replace('/', '_')}", str(e))
+
+    cancelled_payload = {
+        "id": 9999999999998,
+        "name": "#VERIFY-CANCELLED",
+        "order_number": 9998,
+        "cancel_reason": "customer",
+        "financial_status": "voided",
+        "cancelled_at": "2026-06-08T12:00:00-05:00",
+        "line_items": [],
+    }
+    try:
+        r = test_webhook_shopify("orders/cancelled", cancelled_payload)
+        if r.status_code == 200:
+            ok("webhook_shopify_orders_cancelled", "HTTP 200 — evento aceptado sin pedido real")
+        else:
+            fail("webhook_shopify_orders_cancelled", f"HTTP {r.status_code} — {r.text[:100]}")
+    except Exception as e:
+        fail("webhook_shopify_orders_cancelled", str(e))
+
+    refund_payload = {
+        "id": 9999999999997,
+        "order_id": 9999999999996,
+        "created_at": "2026-06-08T12:00:00-05:00",
+        "transactions": [{
+            "kind": "refund",
+            "status": "success",
+            "amount": "10000.00",
+        }],
+        "refund_line_items": [],
+    }
+    try:
+        r = test_webhook_shopify("refunds/create", refund_payload)
+        if r.status_code == 200:
+            ok("webhook_shopify_refunds_create", "HTTP 200 — evento aceptado sin restock")
+        else:
+            fail("webhook_shopify_refunds_create", f"HTTP {r.status_code} — {r.text[:100]}")
+    except Exception as e:
+        fail("webhook_shopify_refunds_create", str(e))
 
     print("\n=== 4. WEBHOOK MP (firma simulada) ===")
     try:

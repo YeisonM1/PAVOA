@@ -33,6 +33,7 @@ dist-ssr
 image.png
 TEXTO FILOSOFIA
 lighthouse-report*.json
+_verify_screenshots/
 
 # Nested repo handled independently
 pavoa-control/

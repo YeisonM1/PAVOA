@@ -590,8 +590,13 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Falta paymentId' });
     }
 
-    const result = await processMercadoPagoPayment(paymentId);
-    return res.status(result.ok ? 200 : 409).json(result);
+    try {
+      const result = await processMercadoPagoPayment(paymentId);
+      return res.status(result.ok ? 200 : 409).json(result);
+    } catch (err) {
+      console.warn('mp-finalizar: no se pudo verificar pago', paymentId, err.message);
+      return res.status(200).json({ ok: false, error: 'No se pudo verificar el pago' });
+    }
   }
 
   if (req.body?.type === 'mp-summary') {
