@@ -226,6 +226,41 @@ export default async function handler(req, res) {
     }
   }
 
+  if (req.body?.type === 'order-confirmation') {
+    const secret = process.env.PREVIEW_EMAIL_SECRET;
+    if (secret && req.headers['x-preview-secret'] !== secret) {
+      return res.status(401).json({ error: 'No autorizado.' });
+    }
+
+    const { dest, firstName, orderName, paymentId, lineItems, total, totalOriginal, descuentoAplicado, direccion } = req.body;
+
+    if (!dest || !isValidEmail(dest) || !orderName) {
+      return res.status(400).json({ error: 'dest y orderName son requeridos.' });
+    }
+
+    try {
+      await sendTransactionalEmail({
+        from: 'PAVOA <onboarding@resend.dev>',
+        to: [dest],
+        subject: `Pedido ${orderName} confirmado — PAVOA`,
+        html: emailConfirmacion({
+          firstName: firstName || 'Cliente',
+          orderName,
+          paymentId: paymentId || 'PAVOA-TEST',
+          lineItems: Array.isArray(lineItems) ? lineItems : [],
+          total: String(total || '0'),
+          totalOriginal: String(totalOriginal || total || '0'),
+          descuentoAplicado: Boolean(descuentoAplicado),
+          direccion: String(direccion || ''),
+        }),
+      });
+      return res.status(200).json({ ok: true });
+    } catch (err) {
+      console.error('Error order-confirmation:', err.message);
+      return res.status(500).json({ error: err.message || 'No se pudo enviar.' });
+    }
+  }
+
   if (req.body?.type === 'preview-email') {
     const secret = process.env.PREVIEW_EMAIL_SECRET;
     if (secret && req.headers['x-preview-secret'] !== secret) {

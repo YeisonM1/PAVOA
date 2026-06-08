@@ -483,22 +483,27 @@ export default async function handler(req, res) {
     if (trackingNumber) {
       const esCorreccion = !!pedidoActual?.tracking_number && pedidoActual.tracking_number !== trackingNumber;
 
-      const { error } = await supabase
+      // Actualización condicional: solo aplica si el tracking es nuevo o cambió.
+      // Si Shopify dispara orders/fulfilled + orders/updated para la misma acción,
+      // el segundo webhook encuentra el tracking ya registrado y retorna sin enviar email.
+      const { data: actualizados, error } = await supabase
         .from('pedidos')
         .update({ fulfillment_status: fulfillmentStatus, tracking_number: trackingNumber, tracking_company: trackingCompany, tracking_url: trackingUrl })
-        .eq('shopify_order_id', shopifyOrderId);
+        .eq('shopify_order_id', shopifyOrderId)
+        .or(`tracking_number.is.null,tracking_number.neq.${trackingNumber}`)
+        .select('shopify_order_id');
 
       if (error) {
         console.error(`⚠️ Error actualizando fulfillment [mode=${getSupabaseMode()}]:`, error.message);
         return res.status(200).send('OK');
       }
-      console.log(`✅ Fulfillment actualizado: ${shopifyOrderId} → ${fulfillmentStatus} | corrección: ${esCorreccion}`);
 
-      // Enviar email solo en orders/fulfilled (primer despacho) o cuando la guía cambia (corrección).
-      // orders/updated se ignora para nuevos trackings porque Shopify siempre dispara ambos topics
-      // para la misma acción, lo que causaría emails duplicados.
-      const debeEnviarEmail = topic === 'orders/fulfilled' || esCorreccion;
-      if (!debeEnviarEmail) return res.status(200).send('OK');
+      if (!actualizados || actualizados.length === 0) {
+        console.log(`🔄 Fulfillment duplicado ignorado: guía ${trackingNumber} ya estaba registrada para ${shopifyOrderId}`);
+        return res.status(200).send('OK');
+      }
+
+      console.log(`✅ Fulfillment actualizado: ${shopifyOrderId} → ${fulfillmentStatus} | corrección: ${esCorreccion}`);
 
       const deliveryEmail = getContactEmail(order, pedidoActual);
       if (!deliveryEmail) return res.status(200).send('OK');
