@@ -304,8 +304,8 @@ const Header = () => {
               >
                 {autenticado && usuario ? (
                   <div
-                    className="w-7 h-7 rounded-full flex items-center justify-center text-white text-[10px] font-bold"
-                    style={{ backgroundColor: '#DFCDB4' }}
+                    className="w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold"
+                    style={{ backgroundColor: 'var(--color-gold)', color: '#1C1410', boxShadow: '0 0 0 2px rgba(201,169,110,0.25)' }}
                   >
                     {usuario.firstName?.[0]?.toUpperCase()}{usuario.lastName?.[0]?.toUpperCase()}
                   </div>
@@ -316,7 +316,7 @@ const Header = () => {
 
               {autenticado && (
                 <div
-                  className={`absolute right-0 top-full mt-1 w-64 z-[70] origin-top-right transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] ${
+                  className={`absolute right-0 top-full mt-2 w-72 z-[70] origin-top-right transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] ${
                     accountOpen
                       ? 'opacity-100 translate-y-0 visible'
                       : 'opacity-0 -translate-y-2 invisible pointer-events-none'
@@ -324,52 +324,65 @@ const Header = () => {
                   style={{
                     background: 'rgba(242, 228, 225, 0.98)',
                     border: '1px solid var(--color-border)',
-                    borderTop: '1px solid var(--color-gold)',
-                    boxShadow: '0 8px 30px rgba(11,11,11,0.08)',
+                    borderTop: '2px solid var(--color-gold)',
+                    boxShadow: '0 8px 40px rgba(11,11,11,0.10)',
                   }}
                 >
-                  <div className="px-4 py-3 border-b border-stone-200/70">
-                    <p className="text-[8px] font-semibold tracking-[0.28em] uppercase text-stone-500">
-                      Mi cuenta
+                  <div className="px-5 py-4 border-b border-stone-200/70">
+                    <p className="text-[8px] font-semibold tracking-[0.28em] uppercase" style={{ color: 'var(--color-gold)' }}>
+                      HOLA,
                     </p>
-                    <p className="text-[10px] text-stone-600 tracking-[0.08em] mt-1 truncate">
+                    <p className="text-[16px] font-light tracking-[0.12em] mt-0.5" style={{ color: 'var(--color-black)' }}>
+                      {usuario?.firstName || 'Cliente'}
+                    </p>
+                    <p className="text-[9px] text-stone-400 tracking-[0.06em] mt-0.5 truncate">
                       {usuario?.email}
                     </p>
                   </div>
 
-                  <button
-                    onClick={() => { setAccountOpen(false); navigate('/cuenta?tab=pedidos'); }}
-                    className="w-full px-4 py-3 text-left text-[10px] font-bold tracking-[0.18em] uppercase text-stone-700 hover:bg-white/60 hover:text-stone-900 transition-colors flex items-center gap-3"
-                  >
-                    <Package size={15} strokeWidth={1.7} aria-hidden="true" />
-                    Pedidos
-                  </button>
-                  <button
-                    onClick={() => { setAccountOpen(false); navigate('/cuenta?tab=perfil'); }}
-                    className="w-full px-4 py-3 text-left text-[10px] font-bold tracking-[0.18em] uppercase text-stone-700 hover:bg-white/60 hover:text-stone-900 transition-colors flex items-center gap-3"
-                  >
-                    <CircleUserRound size={15} strokeWidth={1.7} aria-hidden="true" />
-                    Cuenta
-                  </button>
-                  <button
-                    onClick={() => { setAccountOpen(false); navigate('/cuenta?tab=deseos'); }}
-                    className="w-full px-4 py-3 text-left text-[10px] font-bold tracking-[0.18em] uppercase text-stone-700 hover:bg-white/60 hover:text-stone-900 transition-colors flex items-center gap-3"
-                  >
-                    <Heart size={15} strokeWidth={1.7} aria-hidden="true" />
-                    Lista de deseos
-                  </button>
-                  <div className="h-px bg-stone-200/70" />
-                  <button
-                    onClick={() => {
-                      setAccountOpen(false);
-                      cerrarSesion();
-                      navigate('/');
-                    }}
-                    className="w-full px-4 py-3 text-left text-[10px] font-bold tracking-[0.18em] uppercase text-stone-500 hover:bg-white/60 hover:text-stone-900 transition-colors flex items-center gap-3"
-                  >
-                    <LogOut size={15} strokeWidth={1.7} aria-hidden="true" />
-                    Cerrar sesión
-                  </button>
+                  <div className="py-1">
+                    <button
+                      onClick={() => { setAccountOpen(false); navigate('/cuenta?tab=pedidos'); }}
+                      onMouseEnter={e => { e.currentTarget.style.transform = 'translateX(4px)'; e.currentTarget.querySelector('svg').style.color = 'var(--color-gold)'; }}
+                      onMouseLeave={e => { e.currentTarget.style.transform = ''; e.currentTarget.querySelector('svg').style.color = ''; }}
+                      className="w-full px-5 py-3 text-left flex items-center gap-3 transition-all duration-200"
+                    >
+                      <Package size={15} strokeWidth={1.7} style={{ color: 'var(--color-charcoal)', transition: 'color 0.2s ease' }} aria-hidden="true" />
+                      <span className="text-[10px] font-bold tracking-[0.18em] uppercase text-stone-700">Pedidos</span>
+                    </button>
+                    <button
+                      onClick={() => { setAccountOpen(false); navigate('/cuenta?tab=perfil'); }}
+                      onMouseEnter={e => { e.currentTarget.style.transform = 'translateX(4px)'; e.currentTarget.querySelector('svg').style.color = 'var(--color-gold)'; }}
+                      onMouseLeave={e => { e.currentTarget.style.transform = ''; e.currentTarget.querySelector('svg').style.color = ''; }}
+                      className="w-full px-5 py-3 text-left flex items-center gap-3 transition-all duration-200"
+                    >
+                      <CircleUserRound size={15} strokeWidth={1.7} style={{ color: 'var(--color-charcoal)', transition: 'color 0.2s ease' }} aria-hidden="true" />
+                      <span className="text-[10px] font-bold tracking-[0.18em] uppercase text-stone-700">Cuenta</span>
+                    </button>
+                    <button
+                      onClick={() => { setAccountOpen(false); navigate('/cuenta?tab=deseos'); }}
+                      onMouseEnter={e => { e.currentTarget.style.transform = 'translateX(4px)'; e.currentTarget.querySelector('svg').style.color = 'var(--color-gold)'; }}
+                      onMouseLeave={e => { e.currentTarget.style.transform = ''; e.currentTarget.querySelector('svg').style.color = ''; }}
+                      className="w-full px-5 py-3 text-left flex items-center gap-3 transition-all duration-200"
+                    >
+                      <Heart size={15} strokeWidth={1.7} style={{ color: 'var(--color-charcoal)', transition: 'color 0.2s ease' }} aria-hidden="true" />
+                      <span className="text-[10px] font-bold tracking-[0.18em] uppercase text-stone-700">Lista de deseos</span>
+                    </button>
+                  </div>
+
+                  <div className="mx-5 h-px" style={{ background: 'var(--color-gold)', opacity: 0.35 }} />
+
+                  <div className="py-1">
+                    <button
+                      onClick={() => { setAccountOpen(false); cerrarSesion(); navigate('/'); }}
+                      onMouseEnter={e => { e.currentTarget.style.transform = 'translateX(4px)'; }}
+                      onMouseLeave={e => { e.currentTarget.style.transform = ''; }}
+                      className="w-full px-5 py-3 text-left flex items-center gap-3 transition-all duration-200"
+                    >
+                      <LogOut size={15} strokeWidth={1.7} className="text-stone-400" aria-hidden="true" />
+                      <span className="text-[10px] font-bold tracking-[0.18em] uppercase text-stone-400">Cerrar sesión</span>
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
