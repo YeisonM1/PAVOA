@@ -17,6 +17,7 @@ import { CartContext } from '../App';
 import CartDrawer from './CartDrawer';
 import SearchOverlay from './SearchOverlay';
 import MegaMenu from './header/MegaMenu';
+import AyudaMenu from './header/AyudaMenu';
 import MobileMenu from './header/MobileMenu';
 import { InstagramIcon, FacebookIcon } from '../components/Icons';
 import { estaAutenticado, getCliente, cerrarSesion } from '../services/authService';
@@ -37,6 +38,7 @@ const Header = () => {
   const megaRef = useRef(null);
   const panelRef = useRef(null);
   const ayudaRef = useRef(null);
+  const ayudaPanelRef = useRef(null);
   const accountRef = useRef(null);
   const navigate = useNavigate();
   const location = useLocation();
@@ -71,7 +73,10 @@ const Header = () => {
       ) {
         setCatalogoOpen(false);
       }
-      if (ayudaRef.current && !ayudaRef.current.contains(e.target)) {
+      if (
+        ayudaRef.current && !ayudaRef.current.contains(e.target) &&
+        (!ayudaPanelRef.current || !ayudaPanelRef.current.contains(e.target))
+      ) {
         setAyudaOpen(false);
       }
       if (accountRef.current && !accountRef.current.contains(e.target)) {
@@ -228,38 +233,6 @@ const Header = () => {
                   />
                 </button>
 
-                <div
-                  className={`absolute left-0 top-full mt-3 w-56 z-[70] origin-top-left transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] ${
-                    ayudaOpen
-                      ? 'opacity-100 translate-y-0 visible'
-                      : 'opacity-0 -translate-y-2 invisible pointer-events-none'
-                  }`}
-                  style={{
-                    background: 'rgba(242, 228, 225, 0.98)',
-                    border: '1px solid var(--color-border)',
-                    borderTop: '1px solid var(--color-gold)',
-                    boxShadow: '0 8px 30px rgba(11,11,11,0.08)',
-                  }}
-                >
-                  <div className="py-1">
-                    {[
-                      { label: 'Envíos y entregas', to: '/envios-y-entregas' },
-                      { label: 'Cambios y devoluciones', to: '/cambios-y-devoluciones' },
-                      { label: 'Guía de tallas', to: '/guia-de-tallas' },
-                      { label: 'Preguntas frecuentes', to: '/preguntas-frecuentes' },
-                      { label: 'Contacto', to: '/contacto' },
-                    ].map((item) => (
-                      <Link
-                        key={item.to}
-                        to={item.to}
-                        onClick={() => { setAyudaOpen(false); window.scrollTo(0, 0); }}
-                        className="block px-5 py-3 text-[10px] font-bold tracking-[0.18em] uppercase text-stone-700 hover:bg-white/60 hover:text-stone-900 transition-colors"
-                      >
-                        {item.label}
-                      </Link>
-                    ))}
-                  </div>
-                </div>
               </div>
             </nav>
           </div>
@@ -425,6 +398,7 @@ const Header = () => {
       </header>
 
       <MegaMenu catalogoOpen={catalogoOpen} setCatalogoOpen={setCatalogoOpen} isScrolled={isScrolled} panelRef={panelRef} />
+      <AyudaMenu ayudaOpen={ayudaOpen} setAyudaOpen={setAyudaOpen} isScrolled={isScrolled} panelRef={ayudaPanelRef} />
       <MobileMenu
         menuOpen={menuOpen}
         setMenuOpen={setMenuOpen}
