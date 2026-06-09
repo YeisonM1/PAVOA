@@ -63,6 +63,23 @@ const EstadoBadge = ({ status }) => {
   );
 };
 
+const PedidoEstadoBadges = ({ pedido }) => {
+  const cancelado =
+    pedido.financialStatus === 'CANCELLED' ||
+    pedido.fulfillmentStatus === 'CANCELLED';
+
+  if (cancelado) {
+    return <EstadoBadge status="CANCELLED" />;
+  }
+
+  return (
+    <>
+      <EstadoBadge status={pedido.financialStatus} />
+      <EstadoBadge status={pedido.fulfillmentStatus} />
+    </>
+  );
+};
+
 const ChevronIcon = ({ open }) => (
   <svg
     width="14" height="14" viewBox="0 0 24 24" fill="none"
@@ -130,8 +147,7 @@ function OrdenDetalle({ pedido, imagenMap }) {
               Estado
             </p>
             <div className="flex flex-wrap gap-2">
-              <EstadoBadge status={pedido.financialStatus} />
-              <EstadoBadge status={pedido.fulfillmentStatus} />
+              <PedidoEstadoBadges pedido={pedido} />
             </div>
           </div>
 
@@ -296,8 +312,7 @@ function OrdenCard({ pedido, imagenMap }) {
             </span>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
-            <EstadoBadge status={pedido.financialStatus} />
-            <EstadoBadge status={pedido.fulfillmentStatus} />
+            <PedidoEstadoBadges pedido={pedido} />
             {pedido.descuentoAplicado && (
               <span style={{ color: '#DFCDB4', letterSpacing: '0.12em' }} className="text-[8px] font-bold uppercase flex items-center gap-1">
                 ✦ −10%
