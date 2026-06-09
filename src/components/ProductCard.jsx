@@ -207,8 +207,8 @@ function ProductCard({ producto }) {
             )}
           </div>
 
-          <div className="h-[24px] overflow-hidden">
-            <div className="flex items-center justify-center gap-2 transform translate-y-0 opacity-100 md:translate-y-full md:opacity-0 md:group-hover:translate-y-0 md:group-hover:opacity-100 transition-all duration-500 ease-out">
+          <div>
+            <div className="flex items-center justify-center gap-2">
               {producto.compareAtPrecio ? (
                 <p className="text-[11px] md:text-[12px] font-medium tracking-[0.04em] text-stone-400 line-through">
                   {producto.compareAtPrecio}
