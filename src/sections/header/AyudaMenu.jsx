@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
-import logoChampan from '../../assets/Pavoa Logo Hueso Sin Fondo.svg';
 import useSiteSettings from '../../hooks/useSiteSettings';
+
+const AYUDA_IMAGE = 'https://images.unsplash.com/photo-1469334031218-e382a71b716b?w=800&q=80';
 
 const LINKS_PEDIDOS = [
   { label: 'Envíos y entregas',      to: '/envios-y-entregas' },
@@ -97,18 +98,23 @@ export default function AyudaMenu({ ayudaOpen, setAyudaOpen, isScrolled, panelRe
 
           <div style={{ background: 'var(--color-gold)', alignSelf: 'stretch' }} />
 
-          <div style={{
-            paddingLeft: 48, background: '#1C1410', minHeight: 280,
-            display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
-            padding: '32px 36px',
-          }}>
-            <img src={logoChampan} alt="PAVOA" style={{ height: 56, width: 'auto', objectFit: 'contain', alignSelf: 'flex-start' }} />
-            <div>
-              <p style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.32em', color: 'var(--color-gold)', marginBottom: 12 }}>SOPORTE</p>
-              <p style={{ fontSize: 22, fontWeight: 100, letterSpacing: '0.18em', color: '#F2E4E1', lineHeight: 1.25, textTransform: 'uppercase', marginBottom: 16 }}>
+          <div style={{ paddingLeft: 48, position: 'relative', height: 320, overflow: 'hidden' }}>
+            <div style={{
+              position: 'absolute', inset: 0,
+              backgroundImage: `url(${AYUDA_IMAGE})`,
+              backgroundSize: 'cover', backgroundPosition: 'center',
+              opacity: 0.88,
+            }} />
+            <div style={{
+              position: 'absolute', inset: 0,
+              background: 'linear-gradient(to top, rgba(242,228,225,0.92) 0%, rgba(242,228,225,0.2) 60%, transparent 100%)',
+            }} />
+            <div style={{ position: 'absolute', bottom: 28, left: 28, right: 16 }}>
+              <p style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.32em', color: 'var(--color-gold)', marginBottom: 8 }}>SOPORTE</p>
+              <p style={{ fontSize: 22, fontWeight: 300, letterSpacing: '0.18em', color: 'var(--color-black)', lineHeight: 1.25, textTransform: 'uppercase', marginBottom: 10 }}>
                 Siempre<br /><strong style={{ fontWeight: 600 }}>aquí para ti.</strong>
               </p>
-              <div style={{ height: 1, width: 40, background: 'var(--color-gold)', marginBottom: 20 }} />
+              <div style={{ height: 1, width: 40, background: 'var(--color-gold)', marginBottom: 16 }} />
               {settings.whatsappUrl && (
                 <a
                   href={settings.whatsappUrl}
