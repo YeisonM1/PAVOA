@@ -329,13 +329,10 @@ const Header = () => {
                   }}
                 >
                   <div className="px-5 py-4 border-b border-stone-200/70">
-                    <p className="text-[8px] font-semibold tracking-[0.28em] uppercase" style={{ color: 'var(--color-gold)' }}>
-                      HOLA,
+                    <p className="text-[11px] font-semibold tracking-[0.24em] uppercase" style={{ color: '#5C3D2E' }}>
+                      Hola, {usuario?.firstName || 'Cliente'}
                     </p>
-                    <p className="text-[16px] font-light tracking-[0.12em] mt-0.5" style={{ color: 'var(--color-black)' }}>
-                      {usuario?.firstName || 'Cliente'}
-                    </p>
-                    <p className="text-[9px] text-stone-400 tracking-[0.06em] mt-0.5 truncate">
+                    <p className="text-[10px] tracking-[0.06em] mt-1.5 truncate text-stone-500">
                       {usuario?.email}
                     </p>
                   </div>
