@@ -15,6 +15,7 @@ const HeartIcon = ({ filled }) => (
 
 function ProductCard({ producto }) {
   const [showMobileSizes, setShowMobileSizes] = useState(false);
+  const [colorActivo, setColorActivo] = useState(null);
   const { isWished, toggle } = useWishlist();
   const { addToCart } = useCart();
   const globalHomeTag = getGlobalHomeProductTag(producto?.tags);
@@ -39,8 +40,9 @@ function ProductCard({ producto }) {
   const pocasUnidades = totalStock > 0 && totalStock <= 3;
 
   // Colores únicos por hex (solo si hay 2+)
-  const coloresUnicos = [...new Map(variantes.map(v => [v.hex, v.hex])).values()];
+  const coloresUnicos = [...new Map(variantes.map(v => [v.hex, { hex: v.hex, imageUrl: v.variantImage || null }])).values()];
   const mostrarColores = coloresUnicos.length >= 1;
+  const imagenActiva = colorActivo?.imageUrl || productImage(producto.imagen1);
   const addVariantToCart = (talla) => {
     const varianteElegida = variantes.find(v => v.talla === talla && (v.stock ?? 0) > 0)
       || variantes.find(v => v.talla === talla);
@@ -90,14 +92,14 @@ function ProductCard({ producto }) {
 
 
         <img
-          src={productImage(producto.imagen1)}
+          src={imagenActiva}
           alt={producto.nombre}
           width={600} height={800}
           loading="lazy"
           onError={(e) => { e.target.style.display = 'none'; }}
           className="absolute inset-0 w-full h-full object-cover transition-all duration-[800ms] ease-[cubic-bezier(0.25,1,0.5,1)] md:group-hover:scale-105"
         />
-        {producto.imagen2 && (
+        {!colorActivo && producto.imagen2 && (
           <img
             src={productImage(producto.imagen2)}
             alt={producto.nombre}
@@ -194,13 +196,19 @@ function ProductCard({ producto }) {
 
           <div className="flex min-h-[18px] items-center justify-center">
             {mostrarColores && (
-              <div className="flex items-center justify-center gap-1.5">
-                {coloresUnicos.slice(0, 7).map((hex) => (
-                  <span
+              <div
+                className="flex items-center justify-center gap-1.5"
+                onMouseLeave={() => setColorActivo(null)}
+              >
+                {coloresUnicos.slice(0, 7).map(({ hex, imageUrl }) => (
+                  <button
                     key={hex}
-                    className="h-3 w-3 flex-shrink-0 rounded-full border border-stone-200"
+                    type="button"
+                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); if (imageUrl) setColorActivo(prev => prev?.hex === hex ? null : { hex, imageUrl }); }}
+                    onMouseEnter={() => { if (imageUrl) setColorActivo({ hex, imageUrl }); }}
+                    className={`h-3 w-3 flex-shrink-0 rounded-full border transition-all duration-200 ${colorActivo?.hex === hex ? 'border-stone-700 scale-125' : 'border-stone-200'}`}
                     style={{ backgroundColor: hex }}
-                    aria-hidden="true"
+                    aria-label={hex}
                   />
                 ))}
               </div>

@@ -517,11 +517,12 @@ const mapProducto = (node) => {
     const compareAtPrecioNumerico =
       compareAtPrecioNumericoRaw > precioNumerico ? compareAtPrecioNumericoRaw : null;
     return {
-      color:     v.selectedOptions.find(o => o.name === 'Color')?.value || '',
+      color:        v.selectedOptions.find(o => o.name === 'Color')?.value || '',
       hex,
-      talla:     v.selectedOptions.find(o => o.name === 'Talla')?.value || 'ÚNICA',
-      stock:     v.quantityAvailable ?? 0,
-      variantId: v.id,
+      talla:        v.selectedOptions.find(o => o.name === 'Talla')?.value || 'ÚNICA',
+      stock:        v.quantityAvailable ?? 0,
+      variantId:    v.id,
+      variantImage: v.image?.url || null,
       precio: formatPrice(precioNumerico),
       precioNumerico,
       compareAtPrecio: compareAtPrecioNumerico ? formatPrice(compareAtPrecioNumerico) : '',
@@ -529,7 +530,16 @@ const mapProducto = (node) => {
     };
   });
 
-  const imgs = node.images.edges.map(e => e.node.url);
+  const imgNodes = node.images.edges.map(e => e.node);
+  const imgs = imgNodes.map(n => n.url);
+  const colorNameSet = new Set(variantes.map(v => v.color).filter(Boolean));
+  const imagesByColor = {};
+  imgNodes.forEach(({ url, altText }) => {
+    if (altText && colorNameSet.has(altText)) {
+      if (!imagesByColor[altText]) imagesByColor[altText] = [];
+      imagesByColor[altText].push(url);
+    }
+  });
   const precioNumerico = Number(node.priceRange.minVariantPrice.amount ?? 0);
   const compareAtPrecioNumericoRaw = Number(node.compareAtPriceRange?.minVariantPrice?.amount ?? 0);
   const compareAtPrecioNumerico =
@@ -552,6 +562,7 @@ const mapProducto = (node) => {
     imagen3:     imgs[2] || '',
     imagen4:     imgs[3] || '',
     imagen5:     imgs[4] || '',
+    imagesByColor,
     categoria:   node.productType?.toLowerCase() || '',
     tag:         globalHomeTag ? HOME_PRODUCT_TAG_LABELS[globalHomeTag] : '',
     tags:        normalizedTags,
@@ -566,7 +577,7 @@ const PRODUCT_FIELDS = `
   id handle title description descriptionHtml productType tags
   priceRange { minVariantPrice { amount } }
   compareAtPriceRange { minVariantPrice { amount } }
-  images(first: 10) { edges { node { url } } }
+  images(first: 10) { edges { node { url altText } } }
   detallesField: metafield(namespace: "pavoa", key: "detalles") { value }
   cuidadosField: metafield(namespace: "pavoa", key: "cuidados") { value }
   variants(first: 20) {
@@ -596,6 +607,7 @@ const PRODUCT_FIELDS_LIGHT = `
         compareAtPrice { amount }
         selectedOptions { name value }
         metafield(namespace: "custom", key: "hex_color") { value }
+        image { url }
       }
     }
   }

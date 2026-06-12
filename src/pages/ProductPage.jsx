@@ -77,8 +77,11 @@ export default function ProductPage() {
   // ── Derived data ──
   const imagenes = useMemo(() => {
     if (!producto) return [];
+    if (colorSeleccionado && producto.imagesByColor?.[colorSeleccionado]?.length > 0) {
+      return producto.imagesByColor[colorSeleccionado];
+    }
     return [producto.imagen1, producto.imagen2, producto.imagen3, producto.imagen4, producto.imagen5].filter(Boolean);
-  }, [producto]);
+  }, [producto, colorSeleccionado]);
 
   const variantes = useMemo(() => {
     if (!producto?.variantes) return [];
@@ -174,6 +177,7 @@ export default function ProductPage() {
       });
     }
     setColorSeleccionado(nextColor);
+    setSelectedImage(0);
     setTallaSeleccionada(null);
     setCantidad(1);
     setAlertSent(false);
