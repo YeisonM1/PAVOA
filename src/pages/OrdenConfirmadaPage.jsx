@@ -1,4 +1,4 @@
-import { useEffect, useContext, useState } from 'react';
+import { useEffect, useContext, useState, useRef } from 'react';
 import { useLocation, useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { CartContext } from '../App';
 import SEO from '../components/SEO';
@@ -25,6 +25,7 @@ export default function OrdenConfirmadaPage() {
   const navigate = useNavigate();
   const { clearCart } = useContext(CartContext);
 
+  const cartClearedRef = useRef(false);
   const paymentIdParam = searchParams.get('payment_id');
   const statusParam = (searchParams.get('status') || '').toLowerCase();
 
@@ -53,7 +54,8 @@ export default function OrdenConfirmadaPage() {
   const isUnconfirmed = Boolean(paymentId) && !verifyingPayment && !isApproved && !isPending && !isRejected;
 
   useEffect(() => {
-    if (paymentIdParam && isApproved) {
+    if (paymentIdParam && isApproved && !cartClearedRef.current) {
+      cartClearedRef.current = true;
       clearCart();
     }
   }, [paymentIdParam, isApproved, clearCart]);
