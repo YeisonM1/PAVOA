@@ -445,7 +445,7 @@ export const emailConfirmacion = ({
         "Si necesitas ayuda antes, puedes escribirnos.",
       ]),
     footerNote:
-      "Si tienes dudas sobre tu pedido, puedes escribirnos y te ayudamos a resolverlo rápidamente.",
+      `Si tienes dudas sobre tu pedido, puedes escribirnos a ${SUPPORT_EMAIL} y te ayudamos a resolverlo rápidamente.`,
   });
 };
 
