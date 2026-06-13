@@ -442,7 +442,7 @@ export const emailConfirmacion = ({
       renderStepsCard("Qué sigue", [
         "Confirmamos el pedido y alistamos las prendas.",
         "Cuando se despache, te compartiremos la guía.",
-        "Si necesitas ayuda antes, puedes escribirnos.",
+        `Si necesitas ayuda antes, puedes escribirnos a ${SUPPORT_EMAIL}.`,
       ]),
     footerNote:
       `Si tienes dudas sobre tu pedido, puedes escribirnos a ${SUPPORT_EMAIL} y te ayudamos a resolverlo rápidamente.`,
@@ -496,7 +496,7 @@ export const emailDespacho = ({
         `,
       }),
     footerNote:
-      "Te recomendamos guardar este correo hasta que recibas tu pedido.",
+      `Te recomendamos guardar este correo hasta que recibas tu pedido. Si necesitas ayuda, escribenos a ${SUPPORT_EMAIL}.`,
   });
 
 export const emailEntregado = ({ nombreCliente, orderName }) =>
@@ -540,7 +540,7 @@ export const emailEntregado = ({ nombreCliente, orderName }) =>
       renderCard({
         content: `
           ${renderSectionHeading("Seguimos aquí")}
-          ${renderTextBlock("Si necesitas soporte con tu compra o quieres gestionar un cambio, puedes escribirnos y te guiaremos.")}
+          ${renderTextBlock(`Si necesitas soporte con tu compra o quieres gestionar un cambio, puedes escribirnos a ${SUPPORT_EMAIL} y te guiaremos.`)}
         `,
       }),
   });
