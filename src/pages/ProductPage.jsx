@@ -318,7 +318,7 @@ export default function ProductPage() {
       )}
 
       <div className="flex flex-col md:flex-row max-w-[1600px] mx-auto pt-[115px] md:pt-[120px]">
-        <ProductGallery imagenes={imagenes} selectedImage={selectedImage} onSelectImage={handleSelectImage} onOpenLightbox={() => setIsLightboxOpen(true)} producto={producto} isTransitioning={isTransitioning} />
+        <ProductGallery imagenes={imagenes} selectedImage={selectedImage} onSelectImage={handleSelectImage} onOpenLightbox={() => setIsLightboxOpen(true)} producto={producto} isTransitioning={isTransitioning} colorKey={colorSeleccionado} />
 
         <div className="w-full md:w-2/5 px-6 py-8 md:px-10 md:py-6 xl:px-16 xl:py-16 relative">
           <div className="md:sticky md:top-[120px] xl:top-[160px]">
