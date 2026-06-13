@@ -540,6 +540,22 @@ const mapProducto = (node) => {
       imagesByColor[altText].push(url);
     }
   });
+  variantes.forEach((variant) => {
+    if (!variant.color || !variant.variantImage) return;
+    const current = imagesByColor[variant.color] || [];
+    if (current.length === 0) {
+      imagesByColor[variant.color] = [variant.variantImage];
+      return;
+    }
+    if (!current.includes(variant.variantImage)) {
+      imagesByColor[variant.color] = [variant.variantImage, ...current];
+      return;
+    }
+    imagesByColor[variant.color] = [
+      variant.variantImage,
+      ...current.filter((url) => url !== variant.variantImage),
+    ];
+  });
   const precioNumerico = Number(node.priceRange.minVariantPrice.amount ?? 0);
   const compareAtPrecioNumericoRaw = Number(node.compareAtPriceRange?.minVariantPrice?.amount ?? 0);
   const compareAtPrecioNumerico =
