@@ -129,17 +129,25 @@ const renderSectionHeading = (title) => `
   </p>
 `;
 
-const renderInfoRows = (rows, { labelAlign = "left", valueAlign = "right" } = {}) =>
+const renderInfoRows = (
+  rows,
+  {
+    labelAlign = "left",
+    valueAlign = "right",
+    labelPadding = "14px 0",
+    valuePadding = "14px 0",
+  } = {},
+) =>
   rows
     .filter(Boolean)
     .map((row, index, allRows) => {
       const showBorder = index !== allRows.length - 1;
       return `
         <tr>
-          <td style="padding:14px 0;${showBorder ? `border-bottom:1px solid ${EMAIL_COLOR_BORDER};` : ""}font-size:10px;letter-spacing:0.18em;text-transform:uppercase;color:${EMAIL_COLOR_MUTED_SOFT};vertical-align:top;text-align:${labelAlign};font-family:${EMAIL_FONT_UI};">
+          <td style="padding:${labelPadding};${showBorder ? `border-bottom:1px solid ${EMAIL_COLOR_BORDER};` : ""}font-size:10px;letter-spacing:0.18em;text-transform:uppercase;color:${EMAIL_COLOR_MUTED_SOFT};vertical-align:top;text-align:${labelAlign};font-family:${EMAIL_FONT_UI};">
             ${escapeHtml(row.label)}
           </td>
-          <td style="padding:14px 0;${showBorder ? `border-bottom:1px solid ${EMAIL_COLOR_BORDER};` : ""}font-size:15px;line-height:1.6;color:${EMAIL_COLOR_BLACK};text-align:${valueAlign};vertical-align:top;font-family:${EMAIL_FONT_BODY};">
+          <td style="padding:${valuePadding};${showBorder ? `border-bottom:1px solid ${EMAIL_COLOR_BORDER};` : ""}font-size:15px;line-height:1.6;color:${EMAIL_COLOR_BLACK};text-align:${valueAlign};vertical-align:top;font-family:${EMAIL_FONT_BODY};">
             ${row.value}
           </td>
         </tr>
@@ -171,7 +179,14 @@ const normalizeSupportCopy = (value) => {
   return text;
 };
 
-const renderHeroStatusCard = ({ title, body, badge, rows, centered = false }) =>
+const renderHeroStatusCard = ({
+  title,
+  body,
+  badge,
+  rows,
+  centered = false,
+  rowsCentered = centered,
+}) =>
   renderCard({
     background: "linear-gradient(180deg, rgba(246,241,234,0.92), rgba(255,253,250,0.96))",
     padding: "0",
@@ -212,7 +227,17 @@ const renderHeroStatusCard = ({ title, body, badge, rows, centered = false }) =>
         <tr>
           <td style="padding:8px 24px 22px;">
             <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
-              ${renderInfoRows(rows, centered ? { labelAlign: "center", valueAlign: "center" } : undefined)}
+              ${renderInfoRows(
+                rows,
+                rowsCentered
+                  ? { labelAlign: "center", valueAlign: "center" }
+                  : {
+                      labelAlign: "left",
+                      valueAlign: "right",
+                      labelPadding: "14px 12px 14px 0",
+                      valuePadding: "14px 0 14px 12px",
+                    },
+              )}
             </table>
           </td>
         </tr>
@@ -499,7 +524,9 @@ export const emailConfirmacion = ({
     ? renderCard({
         content: `
           ${renderSectionHeading("Dirección de entrega")}
-          ${renderTextBlock(escapeHtml(direccion))}
+          <div style="text-align:center;">
+            ${renderTextBlock(escapeHtml(direccion))}
+          </div>
         `,
       })
     : "";
@@ -516,6 +543,7 @@ export const emailConfirmacion = ({
         badge: "Pago aprobado",
         rows: summaryRows,
         centered: true,
+        rowsCentered: false,
       }) +
       `<div style="height:18px;line-height:18px;">&nbsp;</div>` +
       renderOrderItemsCard(lineItems) +
