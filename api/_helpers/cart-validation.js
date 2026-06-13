@@ -67,6 +67,7 @@ const buildFallbackFromCart = (cartItems = []) => {
       talla: item?.talla || '',
       color: item?.producto?.colorSeleccionado || '',
       image: item?.producto?.imagen1 || '',
+      details: item?.producto?.detalles || '',
     });
   }
 
@@ -141,6 +142,7 @@ export const validateCartWithShopify = async (cartItems = []) => {
           talla: item?.talla || '',
           color: item?.producto?.colorSeleccionado || '',
           image: item?.producto?.imagen1 || '',
+          details: item?.producto?.detalles || '',
         });
       }
 

@@ -32,6 +32,24 @@ const getExistingOrderByPaymentId = async (paymentId) => {
   return data || null;
 };
 
+const fetchOrderById = async (token, orderId) => {
+  const normalizedId = String(orderId || '').trim();
+  if (!normalizedId) return null;
+
+  const base = `https://${SHOPIFY_DOMAIN}/admin/api/2026-04`;
+  const response = await fetch(`${base}/orders/${normalizedId}.json`, {
+    headers: { 'X-Shopify-Access-Token': token },
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`No se pudo leer la orden ${normalizedId} en Shopify: ${errorText}`);
+  }
+
+  const data = await response.json();
+  return data?.order || null;
+};
+
 const completarDraftOrder = async (draftOrderId) => {
   const token = await getShopifyToken();
   const base = `https://${SHOPIFY_DOMAIN}/admin/api/2026-04`;
@@ -63,8 +81,21 @@ const completarDraftOrder = async (draftOrderId) => {
   }
 
   const data = await res.json();
+  const completedDraft = data?.draft_order || data?.order || null;
+  const shopifyOrderId = completedDraft?.order_id || data?.order?.id || null;
+  let shopifyOrder = null;
+
+  if (shopifyOrderId) {
+    try {
+      shopifyOrder = await fetchOrderById(token, shopifyOrderId);
+    } catch (error) {
+      console.error(`No se pudo hidratar la orden final ${shopifyOrderId}: ${error.message}`);
+    }
+  }
+
   return {
     ...data,
+    _shopifyOrder: shopifyOrder,
     _emailCliente: emailCliente,
     _payerEmail: payerEmail,
     _accountEmail: accountEmail,
@@ -183,7 +214,7 @@ const processMercadoPagoPaymentInternal = async (paymentId) => {
     let shouldPersistOrder = true;
     try {
       const shopifyResponse = await completarDraftOrder(draftOrderId);
-      order = shopifyResponse.draft_order || shopifyResponse.order;
+      order = shopifyResponse._shopifyOrder || shopifyResponse.order || shopifyResponse.draft_order;
       emailCliente = shopifyResponse._emailCliente || shopifyResponse._payerEmail || emailMP;
       accountEmail = shopifyResponse._accountEmail || accountEmailRef || emailCliente;
       cartItemsFromDraft = shopifyResponse._cartItems || null;
@@ -214,7 +245,8 @@ const processMercadoPagoPaymentInternal = async (paymentId) => {
             sku: i.sku || null,
             talla: cart?.talla || i.variant_title || null,
             color: cart?.color || null,
-            imagen: cart?.imagen || null,
+            imagen: cart?.imagen || i.image_url || null,
+            detalles: cart?.detalles || '',
           };
         })
       : itemsMP;
@@ -267,7 +299,18 @@ const processMercadoPagoPaymentInternal = async (paymentId) => {
     if (insertedOrder) {
       try {
         const orderParaEmail = order
-          ? { ...order, email: emailCliente || order.email }
+          ? {
+              ...order,
+              email: emailCliente || order.email,
+              line_items: itemsFinales.map((item) => ({
+                title: item?.nombre || item?.title || 'Prenda PAVOA',
+                quantity: item?.cantidad || item?.quantity || 1,
+                price: item?.precio || item?.price || 0,
+                variant_title: item?.variant_title || item?.talla || null,
+                imagen: item?.imagen || null,
+                detalles: item?.detalles || '',
+              })),
+            }
           : {
               email: emailCliente,
               name: `MP-${pagoInfo.id}`,
@@ -277,6 +320,8 @@ const processMercadoPagoPaymentInternal = async (paymentId) => {
                 quantity: i.quantity,
                 price: i.unit_price,
                 variant_title: null,
+                imagen: i.picture_url || null,
+                detalles: '',
               })),
               shipping_address: null,
               customer: { first_name: primerNombre },

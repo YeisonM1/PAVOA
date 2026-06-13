@@ -170,6 +170,7 @@ const crearDraftOrder = async (token, { form, trustedItems, orderOwnerEmail, che
           cantidad: item.quantity,
           precio: `$${Number(item.unitPrice).toLocaleString('es-CO')}`,
           imagen: item.image || '',
+          detalles: item.details || '',
         }))) },
       ],
     },

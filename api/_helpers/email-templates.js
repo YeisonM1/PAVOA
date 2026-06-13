@@ -41,11 +41,70 @@ const formatCustomerName = (value, fallback = "Cliente") => {
     .join(" ");
 };
 
-const formatMoney = (value) => Number(value || 0).toLocaleString("es-CO");
+const formatMoney = (value) => {
+  const numeric =
+    typeof value === "number"
+      ? value
+      : Number(String(value || "").replace(/[^\d.-]/g, ""));
+  return (Number.isFinite(numeric) ? numeric : 0).toLocaleString("es-CO");
+};
 
 const formatVariantLabel = (value) => {
   const normalized = String(value || "").trim();
   return normalized && normalized !== "Default Title" ? normalized : "";
+};
+
+const splitEmailListItems = (value) =>
+  String(value || "")
+    .split(/[\r\n;]+/)
+    .map((item) => item.trim())
+    .filter(Boolean);
+
+const getLineItemPropertyValue = (item, propertyNames = []) => {
+  const normalizedNames = new Set(
+    (Array.isArray(propertyNames) ? propertyNames : [propertyNames])
+      .map((name) => String(name || "").trim().toLowerCase())
+      .filter(Boolean),
+  );
+
+  const collections = [item?.properties, item?.custom_attributes];
+  for (const collection of collections) {
+    if (!Array.isArray(collection)) continue;
+    for (const entry of collection) {
+      const entryName = String(entry?.name || entry?.key || entry?.title || "").trim().toLowerCase();
+      if (!normalizedNames.has(entryName)) continue;
+      const entryValue = String(entry?.value || "").trim();
+      if (entryValue) return entryValue;
+    }
+  }
+
+  return "";
+};
+
+const getLineItemImageUrl = (item) =>
+  String(
+    item?.imagen ||
+      item?.image ||
+      item?.image_url ||
+      item?.imageUrl ||
+      item?.featured_image?.url ||
+      item?.featured_image?.src ||
+      item?.picture_url ||
+      "",
+  ).trim();
+
+const getLineItemDesignDetails = (item) => {
+  const rawValue =
+    item?.detalles ||
+    item?.details ||
+    getLineItemPropertyValue(item, [
+      "detalles del diseño",
+      "detalles del diseno",
+      "detalles",
+      "design details",
+    ]);
+
+  return splitEmailListItems(rawValue);
 };
 
 const renderButton = (href, label) => `
@@ -70,17 +129,17 @@ const renderSectionHeading = (title) => `
   </p>
 `;
 
-const renderInfoRows = (rows) =>
+const renderInfoRows = (rows, { labelAlign = "left", valueAlign = "right" } = {}) =>
   rows
     .filter(Boolean)
     .map((row, index, allRows) => {
       const showBorder = index !== allRows.length - 1;
       return `
         <tr>
-          <td style="padding:14px 0;${showBorder ? `border-bottom:1px solid ${EMAIL_COLOR_BORDER};` : ""}font-size:10px;letter-spacing:0.18em;text-transform:uppercase;color:${EMAIL_COLOR_MUTED_SOFT};vertical-align:top;font-family:${EMAIL_FONT_UI};">
+          <td style="padding:14px 0;${showBorder ? `border-bottom:1px solid ${EMAIL_COLOR_BORDER};` : ""}font-size:10px;letter-spacing:0.18em;text-transform:uppercase;color:${EMAIL_COLOR_MUTED_SOFT};vertical-align:top;text-align:${labelAlign};font-family:${EMAIL_FONT_UI};">
             ${escapeHtml(row.label)}
           </td>
-          <td style="padding:14px 0;${showBorder ? `border-bottom:1px solid ${EMAIL_COLOR_BORDER};` : ""}font-size:15px;line-height:1.6;color:${EMAIL_COLOR_BLACK};text-align:right;vertical-align:top;font-family:${EMAIL_FONT_BODY};">
+          <td style="padding:14px 0;${showBorder ? `border-bottom:1px solid ${EMAIL_COLOR_BORDER};` : ""}font-size:15px;line-height:1.6;color:${EMAIL_COLOR_BLACK};text-align:${valueAlign};vertical-align:top;font-family:${EMAIL_FONT_BODY};">
             ${row.value}
           </td>
         </tr>
@@ -112,30 +171,32 @@ const normalizeSupportCopy = (value) => {
   return text;
 };
 
-const renderHeroStatusCard = ({ title, body, badge, rows }) =>
+const renderHeroStatusCard = ({ title, body, badge, rows, centered = false }) =>
   renderCard({
     background: "linear-gradient(180deg, rgba(246,241,234,0.92), rgba(255,253,250,0.96))",
     padding: "0",
     content: `
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
         <tr>
-          <td style="padding:22px 24px 18px;border-bottom:1px solid ${EMAIL_COLOR_BORDER};">
+          <td style="padding:22px 24px 18px;border-bottom:1px solid ${EMAIL_COLOR_BORDER};text-align:${centered ? "center" : "left"};">
             <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
               <tr>
                 <td style="padding:0 0 14px;">
-                  <p class="email-section-title" style="margin:0 0 6px;font-size:28px;line-height:1.1;color:${EMAIL_COLOR_BLACK};font-family:${EMAIL_FONT_TITLE};font-weight:500;">
+                  <p class="email-section-title" style="margin:0${body ? " 0 6px" : ""};font-size:28px;line-height:1.1;color:${EMAIL_COLOR_BLACK};font-family:${EMAIL_FONT_TITLE};font-weight:500;">
                     ${escapeHtml(title)}
                   </p>
-                  <p style="margin:0;font-size:14px;line-height:1.8;color:${EMAIL_COLOR_CHARCOAL};font-family:${EMAIL_FONT_BODY};">
+                  ${body
+                    ? `<p style="margin:0;font-size:14px;line-height:1.8;color:${EMAIL_COLOR_CHARCOAL};font-family:${EMAIL_FONT_BODY};">
                     ${body}
-                  </p>
+                  </p>`
+                    : ""}
                 </td>
               </tr>
               ${badge
                 ? `
               <tr>
                 <td>
-                  <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                  <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="${centered ? "margin:0 auto;" : ""}">
                     <tr>
                       <td style="padding:10px 14px;border:1px solid rgba(223,205,180,0.9);background:rgba(238,229,216,0.72);font-size:10px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:${EMAIL_COLOR_BLACK};font-family:${EMAIL_FONT_UI};">
                         ${escapeHtml(badge)}
@@ -151,7 +212,7 @@ const renderHeroStatusCard = ({ title, body, badge, rows }) =>
         <tr>
           <td style="padding:8px 24px 22px;">
             <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
-              ${renderInfoRows(rows)}
+              ${renderInfoRows(rows, centered ? { labelAlign: "center", valueAlign: "center" } : undefined)}
             </table>
           </td>
         </tr>
@@ -195,14 +256,18 @@ const renderOrderItemsCard = (lineItems = []) =>
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
         ${(lineItems || [])
           .map((item, index) => {
-            const variantLabel = formatVariantLabel(item.variant_title);
+            const variantLabel = formatVariantLabel(item.variant_title || item.talla);
+            const itemImageUrl = getLineItemImageUrl(item);
+            const designDetails = getLineItemDesignDetails(item);
             return `
               <tr>
                 <td style="padding:${index === 0 ? "0 0 14px" : "14px 0"};${index !== lineItems.length - 1 ? `border-bottom:1px solid ${EMAIL_COLOR_BORDER};` : ""}">
                   <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
                     <tr>
                       <td valign="top" style="padding:0 14px 0 0;">
-                        <table role="presentation" width="60" cellpadding="0" cellspacing="0" style="border:1px solid ${EMAIL_COLOR_BORDER};background:${EMAIL_COLOR_IVORY};">
+                        ${itemImageUrl
+                          ? `<img src="${escapeHtml(itemImageUrl)}" alt="${escapeHtml(item.title || "Prenda PAVOA")}" width="72" style="display:block;width:72px;height:96px;object-fit:cover;border:1px solid ${EMAIL_COLOR_BORDER};background:${EMAIL_COLOR_IVORY};">`
+                          : `<table role="presentation" width="60" cellpadding="0" cellspacing="0" style="border:1px solid ${EMAIL_COLOR_BORDER};background:${EMAIL_COLOR_IVORY};">
                           <tr>
                             <td align="center" valign="middle" style="padding:14px 8px;">
                               <img src="${MARK_URL}" alt="" width="18" style="display:block;width:18px;height:auto;opacity:0.72;">
@@ -211,7 +276,7 @@ const renderOrderItemsCard = (lineItems = []) =>
                               </p>
                             </td>
                           </tr>
-                        </table>
+                        </table>`}
                       </td>
                       <td valign="top" style="font-family:${EMAIL_FONT_BODY};">
                         <p style="margin:0 0 6px;font-size:18px;line-height:1.25;color:${EMAIL_COLOR_BLACK};font-weight:600;font-family:${EMAIL_FONT_TITLE};">
@@ -220,9 +285,26 @@ const renderOrderItemsCard = (lineItems = []) =>
                         <p style="margin:0;font-size:11px;line-height:1.75;color:${EMAIL_COLOR_MUTED};letter-spacing:0.12em;text-transform:uppercase;font-family:${EMAIL_FONT_UI};">
                           ${variantLabel ? `${escapeHtml(variantLabel)} · ` : ""}Cantidad ${escapeHtml(item.quantity)}
                         </p>
+                        ${designDetails.length > 0
+                          ? `<div style="margin-top:12px;">
+                          <p style="margin:0 0 6px;font-size:10px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:${EMAIL_COLOR_MUTED_SOFT};font-family:${EMAIL_FONT_UI};">
+                            Detalles del diseño
+                          </p>
+                          <ul style="margin:0;padding-left:18px;color:${EMAIL_COLOR_CHARCOAL};font-size:13px;line-height:1.8;font-family:${EMAIL_FONT_BODY};">
+                            ${designDetails
+                              .map(
+                                (detail) => `
+                              <li style="margin:0 0 4px;">
+                                ${escapeHtml(detail)}
+                              </li>`,
+                              )
+                              .join("")}
+                          </ul>
+                        </div>`
+                          : ""}
                       </td>
                       <td valign="top" align="right" style="white-space:nowrap;font-size:14px;line-height:1.4;color:${EMAIL_COLOR_BLACK};font-weight:700;font-family:${EMAIL_FONT_BODY};">
-                        $${formatMoney(item.price)}
+                        $${formatMoney(item.price || item.precio)}
                       </td>
                     </tr>
                   </table>
@@ -431,9 +513,9 @@ export const emailConfirmacion = ({
     afterHero:
       renderHeroStatusCard({
         title: "Tu pedido está confirmado",
-        body: "Una lectura limpia y directa con la información principal de la compra.",
         badge: "Pago aprobado",
         rows: summaryRows,
+        centered: true,
       }) +
       `<div style="height:18px;line-height:18px;">&nbsp;</div>` +
       renderOrderItemsCard(lineItems) +
@@ -442,7 +524,7 @@ export const emailConfirmacion = ({
       renderStepsCard("Qué sigue", [
         "Confirmamos el pedido y alistamos las prendas.",
         "Cuando se despache, te compartiremos la guía.",
-        `Si necesitas ayuda antes, puedes escribirnos a ${SUPPORT_EMAIL}.`,
+        `Si necesitas ayuda antes, puedes escribirnos al correo ${SUPPORT_EMAIL}.`,
       ]),
     footerNote:
       `Si tienes dudas sobre tu pedido, puedes escribirnos a ${SUPPORT_EMAIL} y te ayudamos a resolverlo rápidamente.`,

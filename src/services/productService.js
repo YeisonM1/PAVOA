@@ -242,7 +242,7 @@ export const HELP_PAGES_DEFAULTS = {
         order: 3,
         blockType: 'faq',
         title: '¿Cómo sé cuánto tarda mi pedido?',
-        body: 'Al despachar tu compra te enviamos la guía para rastreo. El tiempo depende de la ciudad destino.',
+        body: 'Por lo general para las ciudades principales de 2 a 5 días; si son otras zonas, de 3 a 8 días hábiles aproximadamente.',
       },
       {
         id: 'faq-como-hago-seguimiento',
