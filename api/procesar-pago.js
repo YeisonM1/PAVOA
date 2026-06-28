@@ -292,6 +292,7 @@ const createPaymentPreference = async ({
   form,
   cartItems,
   cartTotal,
+  shippingCost,
   draftOrderId,
   funnelSessionId,
   orderOwnerEmail,
@@ -394,6 +395,20 @@ const createPaymentPreference = async ({
       }
     } catch (descErr) {
       console.warn('No se pudo verificar descuento:', descErr.message);
+    }
+
+    const validShippingCost = Math.max(0, Number(shippingCost) || 0);
+    if (validShippingCost > 0) {
+      itemsMapped = [
+        ...itemsMapped,
+        {
+          id: 'envio',
+          title: 'Envío a domicilio',
+          quantity: 1,
+          unit_price: validShippingCost,
+          currency_id: 'COP',
+        },
+      ];
     }
 
     if (descuentoAplicado) {
@@ -658,7 +673,7 @@ export default async function handler(req, res) {
   }
 
   const tokenPayload = verifyToken(req);
-  const { form, cartItems, cartTotal, draftOrderId, funnelSessionId, idempotencyKey } = req.body;
+  const { form, cartItems, cartTotal, shippingCost, draftOrderId, funnelSessionId, idempotencyKey } = req.body;
   const orderOwnerEmail = normalizeEmail(tokenPayload?.email || form?.email);
   const payerEmail = normalizeEmail(form?.email);
   const authUserId = String(tokenPayload?.userId || tokenPayload?.id || '').trim() || null;
@@ -700,6 +715,7 @@ export default async function handler(req, res) {
     form,
     cartItems,
     cartTotal,
+    shippingCost,
     draftOrderId,
     funnelSessionId,
     orderOwnerEmail,

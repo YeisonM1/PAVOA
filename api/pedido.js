@@ -109,7 +109,7 @@ const cachedDraftOrderStillExists = async (draftOrderId) => {
   return false;
 };
 
-const crearDraftOrder = async (token, { form, trustedItems, orderOwnerEmail, checkoutEmail }) => {
+const crearDraftOrder = async (token, { form, trustedItems, orderOwnerEmail, checkoutEmail, shippingCost }) => {
   const lineItems = trustedItems.map((item) => ({
     variant_id: item.variantId,
     quantity: item.quantity,
@@ -138,7 +138,7 @@ const crearDraftOrder = async (token, { form, trustedItems, orderOwnerEmail, che
         address1: direccionEntrega,
         address2: form.barrio,
         city: form.ciudad,
-        province: form.ciudad,
+        province: form.departamento || form.ciudad,
         country: 'Colombia',
         country_code: 'CO',
         zip: '',
@@ -150,11 +150,16 @@ const crearDraftOrder = async (token, { form, trustedItems, orderOwnerEmail, che
         address1: direccionEntrega,
         address2: form.barrio,
         city: form.ciudad,
-        province: form.ciudad,
+        province: form.departamento || form.ciudad,
         country: 'Colombia',
         country_code: 'CO',
         zip: '',
       },
+      shipping_line: shippingCost > 0 ? {
+        title: 'Envío a domicilio',
+        price: String(shippingCost),
+        custom: true,
+      } : undefined,
       note: nota,
       tags: 'pavoa-web,mercadopago',
       send_receipt: false,
@@ -210,7 +215,8 @@ export default async function handler(req, res) {
   }
 
   const tokenPayload = verifyToken(req);
-  const { form, cartItems, cartTotal, idempotencyKey, funnelSessionId } = req.body;
+  const { form, cartItems, cartTotal, shippingCost, idempotencyKey, funnelSessionId } = req.body;
+  const validShippingCost = Math.max(0, Number(shippingCost) || 0);
   const orderOwnerEmail = normalizeEmail(tokenPayload?.email || form?.email);
   const checkoutEmail = normalizeEmail(form?.email);
   const authUserId = String(tokenPayload?.userId || tokenPayload?.id || '').trim() || null;
@@ -251,7 +257,7 @@ export default async function handler(req, res) {
     for (const preferredToken of ['app', 'admin']) {
       try {
         const token = await getShopifyToken(preferredToken);
-        draftOrder = await crearDraftOrder(token, { form, trustedItems, orderOwnerEmail, checkoutEmail });
+        draftOrder = await crearDraftOrder(token, { form, trustedItems, orderOwnerEmail, checkoutEmail, shippingCost: validShippingCost });
         if (preferredToken === 'admin') {
           console.warn('[PAVOA] Draft Order creado usando fallback con SHOPIFY_ADMIN_TOKEN.');
         }

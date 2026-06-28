@@ -1631,4 +1631,29 @@ export const verificarStock = async (cartItems) => {
   }
 };
 
+const SHIPPING_DEFAULT = 18900;
+
+export const getShippingConfig = async () => {
+  try {
+    const res = await fetch(SHOPIFY_ENDPOINT, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Shopify-Storefront-Access-Token': SHOPIFY_TOKEN,
+      },
+      body: JSON.stringify({
+        query: `{ shop { metafield(namespace: "pavoa_envios", key: "precio_envio") { value } } }`,
+      }),
+    });
+    if (!res.ok) return { precioEnvio: SHIPPING_DEFAULT };
+    const data = await res.json();
+    const rawValue = data?.data?.shop?.metafield?.value;
+    if (rawValue) {
+      const parsed = parseInt(rawValue, 10);
+      if (!isNaN(parsed) && parsed > 0) return { precioEnvio: parsed };
+    }
+  } catch {}
+  return { precioEnvio: SHIPPING_DEFAULT };
+};
+
 

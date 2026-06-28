@@ -5,7 +5,8 @@ import { trackBeginCheckout } from '../lib/analytics';
 import { getFunnelSessionId, trackFunnelEvent } from '../lib/funnel';
 import SEO from '../components/SEO';
 import { thumbImage } from '../utils/imageUrl';
-import { verificarStock } from '../services/productService';
+import { verificarStock, getShippingConfig } from '../services/productService';
+import { CIUDADES_POR_DEPARTAMENTO, DEPARTAMENTOS } from '../utils/ciudades';
 import { estaAutenticado, getCliente, getToken } from '../services/authService';
 
 const HORARIOS = ['Mañana (8am - 12pm)', 'Tarde (12pm - 6pm)', 'Noche (6pm - 9pm)'];
@@ -132,6 +133,29 @@ const CAMPO = ({ label, name, value, onChange, onBlur, placeholder, type = 'text
   </div>
 );
 
+const SELECTOR = ({ label, name, value, onChange, onBlur, options, placeholder, disabled = false, required = true, error = '' }) => (
+  <div className="flex flex-col gap-2">
+    <label className="text-[10px] font-bold tracking-[0.2em] text-stone-900 uppercase">
+      {label} {required && <span className="text-stone-400">*</span>}
+    </label>
+    <select
+      name={name}
+      value={value}
+      onChange={onChange}
+      onBlur={onBlur}
+      disabled={disabled}
+      required={required}
+      className={`w-full border-b outline-none py-3 text-[13px] tracking-[0.05em] transition-colors bg-transparent appearance-none cursor-pointer ${
+        disabled ? 'text-stone-300 cursor-not-allowed' : value ? 'text-stone-900' : 'text-stone-300'
+      } ${error ? 'border-red-300 focus:border-red-500' : 'border-stone-200 focus:border-stone-900'}`}
+    >
+      <option value="">{placeholder}</option>
+      {options.map(opt => <option key={opt} value={opt} className="text-stone-900">{opt}</option>)}
+    </select>
+    {error && <p className="text-[10px] text-red-400 tracking-[0.08em]">{error}</p>}
+  </div>
+);
+
 export default function CheckoutPage() {
   const { cartItems, cartTotal, cartCount } = useContext(CartContext);
   const [searchParams] = useSearchParams();
@@ -142,12 +166,14 @@ export default function CheckoutPage() {
     nombre: '',
     email: '',
     telefono: '',
+    departamento: '',
     ciudad: '',
     dirección: '',
     barrio: '',
     referencia: '',
     horario: '',
   });
+  const [shippingCost, setShippingCost] = useState(18900);
   const [touched, setTouched] = useState({});
 
   useEffect(() => {
@@ -170,6 +196,10 @@ export default function CheckoutPage() {
         }));
       }
     }
+  }, []);
+
+  useEffect(() => {
+    getShippingConfig().then(cfg => setShippingCost(cfg.precioEnvio)).catch(() => {});
   }, []);
 
   const [cargandoPago, setCargandoPago] = useState(false);
@@ -434,8 +464,12 @@ export default function CheckoutPage() {
       if (telefono.replace(SOLO_DIGITOS, '').length < 10) return 'Revisa tu número, parece incompleto.';
       return '';
     }
+    if (field === 'departamento') {
+      if (!String(value || '').trim()) return 'Selecciona el departamento.';
+      return '';
+    }
     if (field === 'ciudad') {
-      if (!String(value || '').trim()) return 'Indicanos en que ciudad recibes el pedido.';
+      if (!String(value || '').trim()) return 'Selecciona la ciudad de entrega.';
       return '';
     }
     if (field === 'dirección') {
@@ -473,9 +507,20 @@ export default function CheckoutPage() {
     setErrors((prev) => ({ ...prev, [name]: validateField(name, value) }));
   };
 
+  const handleDepto = (e) => {
+    const nextDepto = e.target.value;
+    setForm(prev => ({ ...prev, departamento: nextDepto, ciudad: '' }));
+    setErrors(prev => ({
+      ...prev,
+      general: '',
+      departamento: touched.departamento ? validateField('departamento', nextDepto) : '',
+      ciudad: '',
+    }));
+  };
+
   const validar = () => {
     const nuevosErrores = {};
-    ['nombre', 'email', 'telefono', 'ciudad', 'dirección', 'barrio', 'horario'].forEach((field) => {
+    ['nombre', 'email', 'telefono', 'departamento', 'ciudad', 'dirección', 'barrio', 'horario'].forEach((field) => {
       const fieldError = validateField(field, form[field]);
       if (fieldError) nuevosErrores[field] = fieldError;
     });
@@ -499,6 +544,7 @@ export default function CheckoutPage() {
         nombre: true,
         email: true,
         telefono: true,
+        departamento: true,
         ciudad: true,
         dirección: true,
         barrio: true,
@@ -554,7 +600,7 @@ export default function CheckoutPage() {
       const resPedido = await fetch('/api/pedido', {
         method: 'POST',
         headers: getJsonHeaders(),
-        body: JSON.stringify({ form, cartItems, cartTotal, idempotencyKey, funnelSessionId }),
+        body: JSON.stringify({ form, cartItems, cartTotal, shippingCost, idempotencyKey, funnelSessionId }),
       });
       const dataPedido = await resPedido.json();
       if (!resPedido.ok || !dataPedido.ok || !dataPedido.draftOrderId) {
@@ -579,6 +625,7 @@ export default function CheckoutPage() {
           form,
           cartItems,
           cartTotal,
+          shippingCost,
           draftOrderId: draftOrderIdCreado,
           funnelSessionId,
           idempotencyKey: `${idempotencyKey}-payment`,
@@ -615,7 +662,7 @@ export default function CheckoutPage() {
           precio:   item.producto.precio,
           imagen:   item.producto.imagen1,
         })),
-        total:  dataPref.descuento_aplicado ? Math.round(cartTotal * 0.9) : cartTotal,
+        total:  (dataPref.descuento_aplicado ? Math.round(cartTotal * 0.9) : cartTotal) + shippingCost,
         email:  form.email,
         nombre: form.nombre,
       }));
@@ -736,8 +783,32 @@ export default function CheckoutPage() {
                 <CAMPO label="Teléfono" name="telefono" value={form.telefono} onChange={handleChange} onBlur={handleBlur} placeholder="3XX XXX XXXX" type="tel" error={errors.telefono} />
               </div>
 
-              <div className={errors.ciudad ? 'error-field' : ''}>
-                <CAMPO label="Ciudad" name="ciudad" value={form.ciudad} onChange={handleChange} onBlur={handleBlur} placeholder="Ej: Medellín" error={errors.ciudad} />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className={errors.departamento ? 'error-field' : ''}>
+                  <SELECTOR
+                    label="Departamento"
+                    name="departamento"
+                    value={form.departamento}
+                    onChange={handleDepto}
+                    onBlur={(e) => { setTouched(p => ({ ...p, departamento: true })); setErrors(p => ({ ...p, departamento: validateField('departamento', e.target.value) })); }}
+                    options={DEPARTAMENTOS}
+                    placeholder="Selecciona el departamento"
+                    error={errors.departamento}
+                  />
+                </div>
+                <div className={errors.ciudad ? 'error-field' : ''}>
+                  <SELECTOR
+                    label="Ciudad"
+                    name="ciudad"
+                    value={form.ciudad}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    options={form.departamento ? (CIUDADES_POR_DEPARTAMENTO[form.departamento] || []) : []}
+                    placeholder={form.departamento ? 'Selecciona la ciudad' : 'Primero elige departamento'}
+                    disabled={!form.departamento}
+                    error={errors.ciudad}
+                  />
+                </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -853,12 +924,12 @@ export default function CheckoutPage() {
                 )}
                 <div className="flex justify-between items-center">
                   <span className="text-[10px] tracking-[0.15em] text-stone-500 uppercase">Envío</span>
-                  <span className="text-[11px] text-stone-500 uppercase tracking-[0.1em]">A coordinar</span>
+                  <span className="text-[13px] text-stone-900">${shippingCost.toLocaleString('es-CO')}</span>
                 </div>
                 <div className="flex justify-between items-center border-t border-stone-100 pt-4 mt-1">
                   <span className="text-[11px] font-bold tracking-[0.2em] text-stone-900 uppercase">Total</span>
                   <span className="text-[16px] font-bold text-stone-900">
-                    ${(tieneDescuento ? Math.round(cartTotal * 0.9) : cartTotal).toLocaleString('es-CO')}
+                    ${((tieneDescuento ? Math.round(cartTotal * 0.9) : cartTotal) + shippingCost).toLocaleString('es-CO')}
                   </span>
                 </div>
               </div>
