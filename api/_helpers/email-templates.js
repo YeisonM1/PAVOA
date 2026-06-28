@@ -274,7 +274,7 @@ const renderStepsCard = (title, steps) =>
     `,
   });
 
-const renderOrderItemsCard = (lineItems = []) =>
+const renderOrderItemsCard = (lineItems = [], { total } = {}) =>
   renderCard({
     content: `
       ${renderSectionHeading("Detalle del pedido")}
@@ -339,6 +339,18 @@ const renderOrderItemsCard = (lineItems = []) =>
           })
           .join("")}
       </table>
+      ${total != null ? `
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-top:1px solid ${EMAIL_COLOR_BORDER};margin-top:4px;">
+          <tr>
+            <td style="padding:14px 0 0;font-size:10px;letter-spacing:0.18em;text-transform:uppercase;color:${EMAIL_COLOR_MUTED_SOFT};vertical-align:top;font-family:${EMAIL_FONT_UI};">
+              Total pagado
+            </td>
+            <td style="padding:14px 0 0;font-size:18px;font-weight:600;color:${EMAIL_COLOR_BLACK};text-align:right;vertical-align:top;font-family:${EMAIL_FONT_TITLE};">
+              $${escapeHtml(String(total))}
+            </td>
+          </tr>
+        </table>
+      ` : ''}
     `,
   });
 
@@ -546,7 +558,7 @@ export const emailConfirmacion = ({
         rowsCentered: false,
       }) +
       `<div style="height:18px;line-height:18px;">&nbsp;</div>` +
-      renderOrderItemsCard(lineItems) +
+      renderOrderItemsCard(lineItems, { total }) +
       (direccionCard ? `<div style="height:18px;line-height:18px;">&nbsp;</div>${direccionCard}` : "") +
       `<div style="height:18px;line-height:18px;">&nbsp;</div>` +
       renderStepsCard("Qué sigue", [
