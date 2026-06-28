@@ -174,7 +174,7 @@ const renderTextBlock = (html) => `
 const normalizeSupportCopy = (value) => {
   const text = String(value || "");
   if (/responde|responder/i.test(text)) {
-    return `Si necesitas ayuda, escribenos a ${SUPPORT_EMAIL}.`;
+    return `Si necesitas ayuda, escríbenos a ${SUPPORT_EMAIL}.`;
   }
   return text;
 };
@@ -349,7 +349,7 @@ const renderLayout = ({
   body,
   primaryCta,
   afterHero = "",
-  footerNote = `Si necesitas ayuda, escribenos a ${SUPPORT_EMAIL}.`,
+  footerNote = `Si necesitas ayuda, escríbenos a ${SUPPORT_EMAIL}.`,
 }) => `
 <!DOCTYPE html>
 <html lang="es">
@@ -606,7 +606,7 @@ export const emailDespacho = ({
         `,
       }),
     footerNote:
-      `Te recomendamos guardar este correo hasta que recibas tu pedido. Si necesitas ayuda, escribenos a ${SUPPORT_EMAIL}.`,
+      `Te recomendamos guardar este correo hasta que recibas tu pedido. Si necesitas ayuda, escríbenos a ${SUPPORT_EMAIL}.`,
   });
 
 export const emailEntregado = ({ nombreCliente, orderName }) =>
@@ -665,14 +665,14 @@ export const emailPedidoCancelado = ({
 }) => {
   const reasonLabel = String(cancelReason || '').trim();
   const refundCopyByStatus = {
-    refunded: 'El reembolso ya quedo registrado. El tiempo final para verlo reflejado puede depender del medio de pago o de la entidad bancaria.',
-    partially_refunded: `Este pedido tiene un reembolso parcial registrado. Si necesitas claridad sobre el valor, escribenos a ${SUPPORT_EMAIL} y te ayudamos.`,
-    paid: 'Como este pedido tenia pago aprobado, revisaremos el movimiento correspondiente y te compartiremos cualquier actualizacion necesaria.',
-    pending: 'Este pedido no figura como pagado completamente. Por eso no deberia requerir un reembolso final.',
+    refunded: 'El reembolso ya quedó registrado. El tiempo final para verlo reflejado puede depender del medio de pago o de la entidad bancaria.',
+    partially_refunded: `Este pedido tiene un reembolso parcial registrado. Si necesitas claridad sobre el valor, escríbenos a ${SUPPORT_EMAIL} y te ayudamos.`,
+    paid: 'Como este pedido tenía pago aprobado, revisaremos el movimiento correspondiente y te compartiremos cualquier actualización necesaria.',
+    pending: 'Este pedido no figura como pagado completamente. Por eso no debería requerir un reembolso final.',
     voided: 'El pago fue anulado correctamente antes de completarse.',
   };
   const refundCopy = refundCopyByStatus[String(refundStatus || '').trim().toLowerCase()]
-    || 'Si aplica algun movimiento de dinero, te acompanaremos con la informacion correspondiente.';
+    || 'Si aplica algún movimiento de dinero, te acompañaremos con la información correspondiente.';
 
   const rows = [
     {
@@ -699,7 +699,7 @@ export const emailPedidoCancelado = ({
 
   return renderLayout({
     preheader: `Tu pedido ${orderName} fue cancelado`,
-    eyebrow: 'Actualizacion de pedido',
+    eyebrow: 'Actualización de pedido',
     title: 'Pedido cancelado',
     body: `Hola ${escapeHtml(formatCustomerName(nombreCliente))}, tu pedido <strong style="color:${EMAIL_COLOR_BLACK};">${escapeHtml(orderName)}</strong> fue cancelado correctamente. Te dejamos el resumen para que tengas claridad sobre el estado de la compra.`,
     primaryCta: {
@@ -708,8 +708,8 @@ export const emailPedidoCancelado = ({
     },
     afterHero:
       renderHeroStatusCard({
-        title: 'Cancelacion registrada',
-        body: 'Este es el estado actualizado del pedido y de la gestion asociada al pago.',
+        title: 'Cancelación registrada',
+        body: 'Este es el estado actualizado del pedido y de la gestión asociada al pago.',
         badge: 'Pedido cancelado',
         rows,
       }) +
@@ -724,13 +724,13 @@ export const emailPedidoCancelado = ({
         `,
       }) +
       `<div style="height:18px;line-height:18px;">&nbsp;</div>` +
-      renderStepsCard('Que sigue', [
-        `Si tienes dudas sobre la cancelacion, escribenos a ${SUPPORT_EMAIL} o contactanos desde la tienda.`,
-        'Si el pedido tenia pago aprobado, te compartiremos cualquier actualizacion necesaria sobre el movimiento.',
+      renderStepsCard('Qué sigue', [
+        `Si tienes dudas sobre la cancelación, escríbenos a ${SUPPORT_EMAIL} o contáctanos desde la tienda.`,
+        'Si el pedido tenía pago aprobado, te compartiremos cualquier actualización necesaria sobre el movimiento.',
         'Puedes volver a la tienda cuando quieras para realizar una nueva compra.',
       ]),
     footerNote:
-      `Este correo confirma la cancelacion del pedido. Si necesitas ayuda, escribenos a ${SUPPORT_EMAIL}.`,
+      `Este correo confirma la cancelación del pedido. Si necesitas ayuda, escríbenos a ${SUPPORT_EMAIL}.`,
   });
 };
 
@@ -808,7 +808,7 @@ export const emailContactoCliente = ({ nombre, asunto }) =>
         `,
       }),
     footerNote:
-      `Si necesitas agregar algo mas a tu consulta, escribenos a ${SUPPORT_EMAIL}.`,
+      `Si necesitas agregar algo más a tu consulta, escríbenos a ${SUPPORT_EMAIL}.`,
   });
 
 export const emailContactoInterno = ({ nombre, contacto, asunto, mensaje }) =>
