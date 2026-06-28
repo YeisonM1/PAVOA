@@ -615,7 +615,7 @@ export default function CheckoutPage() {
           precio:   item.producto.precio,
           imagen:   item.producto.imagen1,
         })),
-        total:  cartTotal,
+        total:  dataPref.descuento_aplicado ? Math.round(cartTotal * 0.9) : cartTotal,
         email:  form.email,
         nombre: form.nombre,
       }));
@@ -843,10 +843,10 @@ export default function CheckoutPage() {
                 </div>
                 {tieneDescuento && (
                   <div className="flex justify-between items-center">
-                    <span className="text-[10px] tracking-[0.15em] uppercase flex items-center gap-1.5" style={{ color: '#DFCDB4' }}>
+                    <span className="text-[10px] tracking-[0.15em] text-stone-900 uppercase flex items-center gap-1.5">
                       <span>✦</span> Descuento bienvenida −10%
                     </span>
-                    <span className="text-[13px]" style={{ color: '#DFCDB4' }}>
+                    <span className="text-[13px] text-stone-900">
                       −${Math.round(cartTotal * 0.1).toLocaleString('es-CO')}
                     </span>
                   </div>

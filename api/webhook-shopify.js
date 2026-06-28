@@ -412,13 +412,15 @@ export default async function handler(req, res) {
     return res.status(200).send('OK');
   }
 
-  // ── Entregado: tag "entregado" en la orden ─────────────
+  // ── Entregado: tag "entregado" o shipment_status delivered ─
   if (topic === 'orders/updated') {
-    const order          = req.body;
-    const shopifyOrderId = String(order.id || '');
-    const tags           = (order.tags || '').toLowerCase().split(',').map(t => t.trim());
+    const order               = req.body;
+    const shopifyOrderId      = String(order.id || '');
+    const tags                = (order.tags || '').toLowerCase().split(',').map(t => t.trim());
+    const fulfillments        = order.fulfillments || [];
+    const hasDeliveredShipment = fulfillments.some(f => String(f.shipment_status || '').toLowerCase() === 'delivered');
 
-    if (shopifyOrderId && tags.includes('entregado')) {
+    if (shopifyOrderId && (tags.includes('entregado') || hasDeliveredShipment)) {
       const { data: pedido } = await supabase
         .from('pedidos')
         .select('email, shopify_order_name, nombre, fulfillment_status')
@@ -461,7 +463,7 @@ export default async function handler(req, res) {
     const order             = req.body;
     const shopifyOrderId    = String(order.id || '');
     const tags              = (order.tags || '').toLowerCase().split(',').map(t => t.trim());
-    const esEntregado       = tags.includes('entregado');
+    const esEntregado       = tags.includes('entregado') || (order.fulfillments || []).some(f => String(f.shipment_status || '').toLowerCase() === 'delivered');
     const fulfillmentStatus = order.fulfillment_status || 'unfulfilled';
     const fulfillment       = (order.fulfillments || []).find(f => f.status !== 'cancelled') || null;
     const trackingNumber    = fulfillment?.tracking_number || null;
