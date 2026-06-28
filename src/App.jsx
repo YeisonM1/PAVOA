@@ -22,6 +22,7 @@ const VerifyPage = lazy(() => import('./pages/VerifyPage'));
 const ForgotPasswordPage = lazy(() => import('./pages/ForgotPasswordPage'));
 const ResetPasswordPage      = lazy(() => import('./pages/ResetPasswordPage'));
 const OrdenConfirmadaPage    = lazy(() => import('./pages/OrdenConfirmadaPage'));
+const OrdenContraentregaPage = lazy(() => import('./pages/OrdenContraentregaPage'));
 const WishlistPage           = lazy(() => import('./pages/WishlistPage'));
 const NosotrosPage           = lazy(() => import('./pages/NosotrosPage'));
 const EnviosEntregasPage     = lazy(() => import('./pages/EnviosEntregasPage'));
@@ -147,7 +148,8 @@ function AppShell() {
               <Route path="/verify" element={<VerifyPage />} />
               <Route path="/forgot-password" element={<ForgotPasswordPage />} />
               <Route path="/reset-password"   element={<ResetPasswordPage />} />
-              <Route path="/orden-confirmada" element={<OrdenConfirmadaPage />} />
+              <Route path="/orden-confirmada"    element={<OrdenConfirmadaPage />} />
+              <Route path="/orden-contraentrega" element={<OrdenContraentregaPage />} />
               <Route path="/wishlist"         element={<WishlistPage />} />
               <Route path="/nosotros"         element={<NosotrosPage />} />
               <Route path="/envios-y-entregas" element={<EnviosEntregasPage />} />

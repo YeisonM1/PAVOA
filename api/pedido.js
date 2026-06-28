@@ -109,7 +109,7 @@ const cachedDraftOrderStillExists = async (draftOrderId) => {
   return false;
 };
 
-const crearDraftOrder = async (token, { form, trustedItems, orderOwnerEmail, checkoutEmail, shippingCost }) => {
+const crearDraftOrder = async (token, { form, trustedItems, orderOwnerEmail, checkoutEmail, shippingCost, esCod = false }) => {
   const lineItems = trustedItems.map((item) => ({
     variant_id: item.variantId,
     quantity: item.quantity,
@@ -161,7 +161,7 @@ const crearDraftOrder = async (token, { form, trustedItems, orderOwnerEmail, che
         custom: true,
       } : undefined,
       note: nota,
-      tags: 'pavoa-web,mercadopago',
+      tags: esCod ? 'pavoa-web,contraentrega' : 'pavoa-web,mercadopago',
       send_receipt: false,
       note_attributes: [
         { name: 'customer_email', value: checkoutEmail || '' },
@@ -215,8 +215,9 @@ export default async function handler(req, res) {
   }
 
   const tokenPayload = verifyToken(req);
-  const { form, cartItems, cartTotal, shippingCost, idempotencyKey, funnelSessionId } = req.body;
+  const { form, cartItems, cartTotal, shippingCost, paymentMethod, idempotencyKey, funnelSessionId } = req.body;
   const validShippingCost = Math.max(0, Number(shippingCost) || 0);
+  const esCod = String(paymentMethod || '').toLowerCase() === 'cod';
   const orderOwnerEmail = normalizeEmail(tokenPayload?.email || form?.email);
   const checkoutEmail = normalizeEmail(form?.email);
   const authUserId = String(tokenPayload?.userId || tokenPayload?.id || '').trim() || null;
@@ -257,7 +258,7 @@ export default async function handler(req, res) {
     for (const preferredToken of ['app', 'admin']) {
       try {
         const token = await getShopifyToken(preferredToken);
-        draftOrder = await crearDraftOrder(token, { form, trustedItems, orderOwnerEmail, checkoutEmail, shippingCost: validShippingCost });
+        draftOrder = await crearDraftOrder(token, { form, trustedItems, orderOwnerEmail, checkoutEmail, shippingCost: validShippingCost, esCod });
         if (preferredToken === 'admin') {
           console.warn('[PAVOA] Draft Order creado usando fallback con SHOPIFY_ADMIN_TOKEN.');
         }

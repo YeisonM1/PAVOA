@@ -253,12 +253,13 @@ export default function CheckoutPage() {
   }, []);
 
   const [cargandoPago, setCargandoPago] = useState(false);
+  const [cargandoCod, setCargandoCod] = useState(false);
   const [errors, setErrors]           = useState({});
   const [tieneDescuento, setTieneDescuento] = useState(false);
   const [diagnosticLoading, setDiagnosticLoading] = useState(false);
   const [diagnosticResult, setDiagnosticResult] = useState(null);
   const funnelSessionId = getFunnelSessionId();
-  const checkoutStep = cargandoPago ? 2 : 1;
+  const checkoutStep = (cargandoPago || cargandoCod) ? 2 : 1;
   const statusFromMP = (searchParams.get('status') || '').toLowerCase();
   const statusDetailFromMP = (searchParams.get('status_detail') || '').toLowerCase();
   const paymentIdFromMP = (searchParams.get('payment_id') || '').trim();
@@ -745,6 +746,94 @@ export default function CheckoutPage() {
     }
   };
 
+  const handlePagarContraentrega = async () => {
+    const nuevosErrores = validar();
+    if (Object.keys(nuevosErrores).length > 0) {
+      setTouched((prev) => ({
+        ...prev,
+        nombre: true, email: true, telefono: true,
+        departamento: true, ciudad: true, dirección: true, barrio: true, horario: true,
+      }));
+      setErrors(nuevosErrores);
+      const primerError = document.querySelector('.error-field');
+      if (primerError) primerError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return;
+    }
+
+    setCargandoCod(true);
+    let draftOrderIdCreado = '';
+
+    try {
+      const erroresStock = await verificarStock(cartItems);
+      if (erroresStock.length > 0) {
+        setErrors({ general: erroresStock.join(' ') });
+        setCargandoCod(false);
+        return;
+      }
+
+      const cartHash = currentCartHash;
+      const minuteBucket = Math.floor(Date.now() / 60000);
+      const idempotencyKey = `${form.email || 'anon'}-${cartHash}-${minuteBucket}-cod`;
+
+      // Crear draft order en Shopify con tag contraentrega
+      const resPedido = await fetch('/api/pedido', {
+        method: 'POST',
+        headers: getJsonHeaders(),
+        body: JSON.stringify({ form, cartItems, cartTotal, shippingCost, paymentMethod: 'cod', idempotencyKey, funnelSessionId }),
+      });
+      const dataPedido = await resPedido.json();
+      if (!resPedido.ok || !dataPedido.ok || !dataPedido.draftOrderId) {
+        setErrors({ general: dataPedido?.error || 'No se pudo registrar el pedido.' });
+        setCargandoCod(false);
+        return;
+      }
+      draftOrderIdCreado = dataPedido.draftOrderId;
+
+      // Completar como contraentrega
+      const resCod = await fetch('/api/procesar-pago', {
+        method: 'POST',
+        headers: getJsonHeaders(),
+        body: JSON.stringify({
+          type: 'contraentrega',
+          draftOrderId: draftOrderIdCreado,
+          form,
+          cartItems,
+          cartTotal,
+          shippingCost,
+          funnelSessionId,
+        }),
+      });
+      const dataCod = await resCod.json();
+      if (!resCod.ok || !dataCod.ok) {
+        setErrors({ general: dataCod?.error || 'No se pudo confirmar el pedido.' });
+        setCargandoCod(false);
+        return;
+      }
+
+      sessionStorage.setItem('pavoa-pending-order-cod', JSON.stringify({
+        items: cartItems.map(item => ({
+          nombre:   item.producto.nombre,
+          talla:    item.talla,
+          color:    item.producto.colorSeleccionado || '',
+          cantidad: item.cantidad,
+          precio:   item.producto.precio,
+          imagen:   item.producto.imagen1,
+        })),
+        total:     cartTotal + shippingCost,
+        email:     form.email,
+        nombre:    form.nombre,
+        orderName: dataCod.orderName || '',
+      }));
+
+      window.location.href = '/orden-contraentrega';
+    } catch (err) {
+      console.error('[PAVOA] Error en pago contraentrega:', err);
+      if (draftOrderIdCreado) await limpiarDraftPendiente(draftOrderIdCreado);
+      setErrors({ general: 'Error inesperado. Intenta de nuevo.' });
+      setCargandoCod(false);
+    }
+  };
+
   const ejecutarDiagnosticoPago = async () => {
     setDiagnosticResult(null);
     setDiagnosticLoading(true);
@@ -888,12 +977,27 @@ export default function CheckoutPage() {
               </div>
             </div>
 
-            {/* BOTÓN DE PAGO */}
-            <button onClick={handlePagarOnline} disabled={cargandoPago} className={`mt-12 w-full h-14 text-[10px] font-bold tracking-[0.25em] uppercase transition-all duration-300 flex items-center justify-center gap-3 border border-stone-900 ${cargandoPago ? 'bg-stone-100 text-stone-400 border-stone-200 cursor-not-allowed' : 'bg-stone-900 text-white hover:bg-stone-800'}`}>
-              {cargandoPago
-                ? <><span className="w-3.5 h-3.5 border-2 border-stone-300 border-t-stone-500 rounded-full animate-spin" />Redirigiendo a MercadoPago...</>
-                : 'Pagar en línea ahora'}
-            </button>
+            {/* BOTONES DE PAGO */}
+            <div className="mt-12 flex flex-col gap-3">
+              <button
+                onClick={handlePagarOnline}
+                disabled={cargandoPago || cargandoCod}
+                className={`w-full h-14 text-[10px] font-bold tracking-[0.25em] uppercase transition-all duration-300 flex items-center justify-center gap-3 border border-stone-900 ${(cargandoPago || cargandoCod) ? 'bg-stone-100 text-stone-400 border-stone-200 cursor-not-allowed' : 'bg-stone-900 text-white hover:bg-stone-800'}`}
+              >
+                {cargandoPago
+                  ? <><span className="w-3.5 h-3.5 border-2 border-stone-300 border-t-stone-500 rounded-full animate-spin" />Redirigiendo a MercadoPago...</>
+                  : 'Pagar en línea ahora'}
+              </button>
+              <button
+                onClick={handlePagarContraentrega}
+                disabled={cargandoPago || cargandoCod}
+                className={`w-full h-14 text-[10px] font-bold tracking-[0.25em] uppercase transition-all duration-300 flex items-center justify-center gap-3 border ${(cargandoPago || cargandoCod) ? 'border-stone-200 text-stone-300 cursor-not-allowed' : 'border-stone-900 text-stone-900 hover:bg-stone-50'}`}
+              >
+                {cargandoCod
+                  ? <><span className="w-3.5 h-3.5 border-2 border-stone-300 border-t-stone-600 rounded-full animate-spin" />Registrando pedido...</>
+                  : 'Pago contra entrega'}
+              </button>
+            </div>
 
             {errors.general && (
               <p className="text-[10px] text-red-500 tracking-[0.08em] text-center mt-4">{errors.general}</p>

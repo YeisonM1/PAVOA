@@ -505,7 +505,10 @@ export const emailConfirmacion = ({
   totalOriginal,
   descuentoAplicado,
   direccion,
+  tipoPago = 'mercadopago',
 }) => {
+  const esCod = tipoPago === 'contraentrega';
+
   const summaryRows = [
     {
       label: "Pedido",
@@ -513,10 +516,10 @@ export const emailConfirmacion = ({
     },
     {
       label: "Medio de pago",
-      value: "Mercado Pago",
+      value: esCod ? "Pago contra entrega" : "Mercado Pago",
     },
     {
-      label: "Total pagado",
+      label: esCod ? "Total a pagar" : "Total pagado",
       value: `<span style="font-size:20px;font-weight:600;font-family:${EMAIL_FONT_TITLE};">$${escapeHtml(total)}</span>`,
     },
   ];
@@ -544,15 +547,16 @@ export const emailConfirmacion = ({
     : "";
 
   return renderLayout({
-    preheader: `Pedido ${orderName} confirmado`,
+    preheader: esCod ? `Pedido ${orderName} registrado` : `Pedido ${orderName} confirmado`,
     eyebrow: "Confirmación de pedido",
-    title: "Tu compra quedó lista",
-    body:
-      "Tu pago fue aprobado y ya dejamos registrado tu pedido. Ahora nos encargamos de prepararlo y mantenerte al tanto.",
+    title: esCod ? "Tu pedido está registrado" : "Tu compra quedó lista",
+    body: esCod
+      ? "Ya quedó registrado tu pedido. Nos encargamos de prepararlo y al momento de la entrega realizas el pago al mensajero."
+      : "Tu pago fue aprobado y ya dejamos registrado tu pedido. Ahora nos encargamos de prepararlo y mantenerte al tanto.",
     afterHero:
       renderHeroStatusCard({
-        title: "Tu pedido está confirmado",
-        badge: "Pago aprobado",
+        title: esCod ? "Pedido confirmado" : "Tu pedido está confirmado",
+        badge: esCod ? "Pago al recibir" : "Pago aprobado",
         rows: summaryRows,
         centered: true,
         rowsCentered: false,
@@ -561,7 +565,12 @@ export const emailConfirmacion = ({
       renderOrderItemsCard(lineItems, { total }) +
       (direccionCard ? `<div style="height:18px;line-height:18px;">&nbsp;</div>${direccionCard}` : "") +
       `<div style="height:18px;line-height:18px;">&nbsp;</div>` +
-      renderStepsCard("Qué sigue", [
+      renderStepsCard("Qué sigue", esCod ? [
+        "Confirmamos el pedido y alistamos las prendas.",
+        "Cuando se despache, te compartiremos la guía de rastreo.",
+        "Al momento de la entrega, realizas el pago al mensajero.",
+        `Si necesitas ayuda, puedes escribirnos al correo ${SUPPORT_EMAIL}.`,
+      ] : [
         "Confirmamos el pedido y alistamos las prendas.",
         "Cuando se despache, te compartiremos la guía.",
         `Si necesitas ayuda antes, puedes escribirnos al correo ${SUPPORT_EMAIL}.`,

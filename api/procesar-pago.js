@@ -1,6 +1,6 @@
 import mercadopago from 'mercadopago';
 import { getShopifyToken, eliminarDraftOrder } from './_helpers/shopify-token.js';
-import { processMercadoPagoPayment } from './_helpers/mercadopago-order.js';
+import { processMercadoPagoPayment, enviarEmailConfirmacion } from './_helpers/mercadopago-order.js';
 import { validateCartWithShopify } from './_helpers/cart-validation.js';
 import { verifyToken } from './_helpers/auth.js';
 import { trackFunnelEvent } from './_helpers/funnel.js';
@@ -669,6 +669,167 @@ export default async function handler(req, res) {
         error?.message || error,
       );
       return res.status(500).json({ error: error?.message || 'No se pudo resumir el pago.' });
+    }
+  }
+
+  if (req.body?.type === 'contraentrega') {
+    const tokenPayload = verifyToken(req);
+    const { draftOrderId, form, cartItems, cartTotal, shippingCost, funnelSessionId } = req.body;
+    const orderOwnerEmail = normalizeEmail(tokenPayload?.email || form?.email);
+
+    if (!draftOrderId || !form?.nombre || !orderOwnerEmail) {
+      return res.status(400).json({ error: 'Datos incompletos para registrar el pedido contra entrega.' });
+    }
+
+    try {
+      const shopifyToken = await getShopifyToken();
+      const base = `https://${SHOPIFY_DOMAIN}/admin/api/2026-04`;
+
+      // Get draft order metadata
+      const draftRes = await fetch(`${base}/draft_orders/${draftOrderId}.json`, {
+        headers: { 'X-Shopify-Access-Token': shopifyToken },
+      });
+      const { draft_order: draft } = await draftRes.json();
+      const emailCliente = draft?.note_attributes?.find(a => a.name === 'customer_email')?.value
+        || normalizeEmail(form?.email);
+      let cartItemsFromDraft = null;
+      try {
+        const raw = draft?.note_attributes?.find(a => a.name === 'cart_items')?.value;
+        if (raw) cartItemsFromDraft = JSON.parse(raw);
+      } catch {}
+
+      // Complete draft order — payment still pending until collected on delivery
+      const completeRes = await fetch(
+        `${base}/draft_orders/${draftOrderId}/complete.json?payment_pending=true&send_receipt=false`,
+        { method: 'PUT', headers: { 'Content-Type': 'application/json', 'X-Shopify-Access-Token': shopifyToken } }
+      );
+      if (!completeRes.ok) {
+        const errText = await completeRes.text();
+        throw new Error(`Shopify ${completeRes.status}: ${errText}`);
+      }
+      const completeData = await completeRes.json();
+      const completedDraft = completeData?.draft_order || null;
+      const shopifyOrderId = completedDraft?.order_id || null;
+
+      // Fetch the full real order
+      let shopifyOrder = null;
+      if (shopifyOrderId) {
+        try {
+          const orderRes = await fetch(`${base}/orders/${shopifyOrderId}.json`, {
+            headers: { 'X-Shopify-Access-Token': shopifyToken },
+          });
+          const orderJson = await orderRes.json();
+          shopifyOrder = orderJson?.order || null;
+        } catch {}
+      }
+
+      const orderName = shopifyOrder?.name || completedDraft?.name || `COD-${draftOrderId}`;
+      const addr = shopifyOrder?.shipping_address || null;
+      const nombre = addr
+        ? `${addr.first_name || ''} ${addr.last_name || ''}`.trim()
+        : (form?.nombre || '');
+      const totalConEnvio = (Number(cartTotal) || 0) + Math.max(0, Number(shippingCost) || 0);
+
+      const itemsFinales = shopifyOrder?.line_items
+        ? shopifyOrder.line_items.map((i, idx) => {
+            const cart = cartItemsFromDraft?.[idx] || null;
+            return {
+              nombre: i.title,
+              cantidad: i.quantity,
+              precio: i.price,
+              product_id: i.product_id || null,
+              variant_id: i.variant_id || null,
+              variant_title: i.variant_title || null,
+              talla: cart?.talla || i.variant_title || null,
+              color: cart?.color || null,
+              imagen: cart?.imagen || null,
+              detalles: cart?.detalles || '',
+            };
+          })
+        : (Array.isArray(cartItems) ? cartItems : []).map(item => ({
+            nombre: item?.producto?.nombre || '',
+            cantidad: Number(item?.cantidad || 0),
+            precio: Number(item?.producto?.precioNumerico || 0),
+            talla: item?.talla || null,
+            color: item?.producto?.colorSeleccionado || null,
+            imagen: item?.producto?.imagen1 || null,
+            detalles: '',
+          }));
+
+      // Persist to Supabase
+      const codRef = `cod-${shopifyOrderId || draftOrderId}`;
+      const { error: sbError } = await supabase.from('pedidos').insert({
+        email: orderOwnerEmail.toLowerCase(),
+        payment_id: codRef,
+        shopify_order_name: orderName,
+        shopify_order_id: String(shopifyOrderId || ''),
+        total: totalConEnvio,
+        total_original: totalConEnvio,
+        descuento_aplicado: false,
+        status: 'contraentrega',
+        fulfillment_status: 'unfulfilled',
+        nombre,
+        telefono: addr?.phone || form?.telefono || '',
+        ciudad: addr?.city || form?.ciudad || '',
+        direccion: addr
+          ? [addr.address1, addr.address2].filter(Boolean).join(', ')
+          : (form?.dirección || ''),
+        items: itemsFinales,
+      });
+      if (sbError) {
+        console.error('Error guardando pedido COD en Supabase:', sbError.message);
+      }
+
+      // Send confirmation email
+      try {
+        const orderParaEmail = shopifyOrder || {
+          email: emailCliente,
+          name: orderName,
+          total_price: totalConEnvio,
+          line_items: itemsFinales.map(i => ({
+            title: i.nombre,
+            quantity: i.cantidad,
+            price: i.precio,
+            variant_title: i.talla || null,
+            imagen: i.imagen || null,
+            detalles: i.detalles || '',
+          })),
+          shipping_address: addr,
+          customer: { first_name: nombre.split(' ')[0] || 'Cliente' },
+        };
+        await enviarEmailConfirmacion(
+          { ...orderParaEmail, email: emailCliente },
+          null,
+          totalConEnvio,
+          false,
+          'contraentrega',
+        );
+      } catch (emailErr) {
+        console.error('Email COD no enviado:', emailErr.message);
+      }
+
+      await trackFunnelEvent({
+        eventType: 'cod_order_created',
+        source: 'backend',
+        sessionId: String(funnelSessionId || '').trim() || null,
+        userEmail: orderOwnerEmail,
+        orderId: draftOrderId,
+        amount: totalConEnvio,
+        meta: { shopify_order_name: orderName, shopify_order_id: String(shopifyOrderId || '') },
+      }).catch(() => {});
+
+      return res.status(200).json({
+        ok: true,
+        orderName,
+        shopify_order_id: String(shopifyOrderId || ''),
+        nombre,
+        email: emailCliente,
+        total: totalConEnvio,
+      });
+    } catch (err) {
+      console.error('Error procesando pedido contra entrega:', err.message);
+      try { await eliminarDraftOrder(draftOrderId); } catch {}
+      return res.status(500).json({ error: err.message || 'No se pudo registrar el pedido contra entrega.' });
     }
   }
 

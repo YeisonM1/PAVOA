@@ -104,7 +104,7 @@ const completarDraftOrder = async (draftOrderId) => {
   };
 };
 
-const enviarEmailConfirmacion = async (order, paymentId, totalReal, descuentoAplicado = false) => {
+export const enviarEmailConfirmacion = async (order, paymentId, totalReal, descuentoAplicado = false, tipoPago = 'mercadopago') => {
   const email = order.email;
   if (!email) return;
 
@@ -131,6 +131,7 @@ const enviarEmailConfirmacion = async (order, paymentId, totalReal, descuentoApl
       totalOriginal,
       descuentoAplicado,
       direccion,
+      tipoPago,
     }),
   });
 };
