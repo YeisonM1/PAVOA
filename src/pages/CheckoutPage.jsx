@@ -133,28 +133,78 @@ const CAMPO = ({ label, name, value, onChange, onBlur, placeholder, type = 'text
   </div>
 );
 
-const SELECTOR = ({ label, name, value, onChange, onBlur, options, placeholder, disabled = false, required = true, error = '' }) => (
-  <div className="flex flex-col gap-2">
-    <label className="text-[10px] font-bold tracking-[0.2em] text-stone-900 uppercase">
-      {label} {required && <span className="text-stone-400">*</span>}
-    </label>
-    <select
-      name={name}
-      value={value}
-      onChange={onChange}
-      onBlur={onBlur}
-      disabled={disabled}
-      required={required}
-      className={`w-full border-b outline-none py-3 text-[13px] tracking-[0.05em] transition-colors bg-transparent appearance-none cursor-pointer ${
-        disabled ? 'text-stone-300 cursor-not-allowed' : value ? 'text-stone-900' : 'text-stone-300'
-      } ${error ? 'border-red-300 focus:border-red-500' : 'border-stone-200 focus:border-stone-900'}`}
-    >
-      <option value="">{placeholder}</option>
-      {options.map(opt => <option key={opt} value={opt} className="text-stone-900">{opt}</option>)}
-    </select>
-    {error && <p className="text-[10px] text-red-400 tracking-[0.08em]">{error}</p>}
-  </div>
-);
+const SELECTOR = ({ label, name, value, onChange, onBlur, options, placeholder, disabled = false, required = true, error = '' }) => {
+  const [isOpen, setIsOpen] = React.useState(false);
+  const containerRef = React.useRef(null);
+
+  React.useEffect(() => {
+    const handleOutside = (e) => {
+      if (containerRef.current && !containerRef.current.contains(e.target)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleOutside);
+    return () => document.removeEventListener('mousedown', handleOutside);
+  }, []);
+
+  const handleSelect = (opt) => {
+    onChange({ target: { name, value: opt } });
+    if (onBlur) onBlur({ target: { name, value: opt } });
+    setIsOpen(false);
+  };
+
+  return (
+    <div className="flex flex-col gap-2" ref={containerRef}>
+      <label className="text-[10px] font-bold tracking-[0.2em] text-stone-900 uppercase">
+        {label} {required && <span className="text-stone-400">*</span>}
+      </label>
+      <div className="relative">
+        <button
+          type="button"
+          disabled={disabled}
+          onClick={() => !disabled && setIsOpen(o => !o)}
+          onBlur={() => onBlur && onBlur({ target: { name, value } })}
+          className={`w-full border-b py-3 text-left text-[13px] tracking-[0.05em] transition-colors bg-transparent flex items-center justify-between gap-2 outline-none ${
+            disabled
+              ? 'text-stone-300 border-stone-100 cursor-not-allowed'
+              : value
+              ? 'text-stone-900 cursor-pointer'
+              : 'text-stone-300 cursor-pointer'
+          } ${error ? 'border-red-300' : 'border-stone-200 focus:border-stone-900'}`}
+        >
+          <span className="truncate">{value || placeholder}</span>
+          <svg
+            className={`w-3.5 h-3.5 flex-shrink-0 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''} ${disabled ? 'text-stone-200' : 'text-stone-400'}`}
+            viewBox="0 0 20 20" fill="none"
+          >
+            <path d="M5 7.5 10 12.5 15 7.5" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </button>
+
+        {isOpen && !disabled && (
+          <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-white border border-stone-100 shadow-md max-h-48 overflow-y-auto">
+            {options.map(opt => (
+              <button
+                key={opt}
+                type="button"
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => handleSelect(opt)}
+                className={`w-full text-left px-4 py-2.5 text-[12px] tracking-[0.05em] transition-colors ${
+                  opt === value
+                    ? 'bg-stone-900 text-white font-semibold'
+                    : 'text-stone-700 hover:bg-stone-50'
+                }`}
+              >
+                {opt}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+      {error && <p className="text-[10px] text-red-400 tracking-[0.08em]">{error}</p>}
+    </div>
+  );
+};
 
 export default function CheckoutPage() {
   const { cartItems, cartTotal, cartCount } = useContext(CartContext);
