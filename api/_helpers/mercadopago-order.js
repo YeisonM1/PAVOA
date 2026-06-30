@@ -57,7 +57,12 @@ const completarDraftOrder = async (draftOrderId) => {
   const resDraft = await fetch(`${base}/draft_orders/${draftOrderId}.json`, {
     headers: { 'X-Shopify-Access-Token': token },
   });
+  if (!resDraft.ok) {
+    const err = await resDraft.text();
+    throw new Error(`Shopify ${resDraft.status}: no se pudo leer draft ${draftOrderId}: ${err}`);
+  }
   const { draft_order: draft } = await resDraft.json();
+
   const emailCliente = draft?.note_attributes?.find((a) => a.name === 'customer_email')?.value || null;
   const payerEmail = draft?.note_attributes?.find((a) => a.name === 'payer_email')?.value || null;
   const accountEmail = draft?.note_attributes?.find((a) => a.name === 'account_email')?.value || null;
@@ -67,37 +72,65 @@ const completarDraftOrder = async (draftOrderId) => {
     const raw = draft?.note_attributes?.find((a) => a.name === 'cart_items')?.value;
     if (raw) cartItems = JSON.parse(raw);
   } catch {}
-
   const draftLineItemImages = (draft?.line_items || []).map((li) => li?.image?.src || null);
 
-  const res = await fetch(
-    `${base}/draft_orders/${draftOrderId}/complete.json?payment_pending=false&send_receipt=false`,
-    {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json', 'X-Shopify-Access-Token': token },
-    }
-  );
+  // Pre-apply percentage discount to item prices so the order total matches what the customer paid.
+  // draft_orders/complete ignores send_receipt; POST /orders.json + send_receipt:false is the only
+  // reliable way to suppress Shopify's native confirmation email.
+  const discountPct =
+    draft.applied_discount?.value_type === 'percentage'
+      ? Number(draft.applied_discount.value || 0) / 100
+      : 0;
+
+  const lineItems = (draft.line_items || []).map((li) => ({
+    variant_id: li.variant_id,
+    title: li.title,
+    quantity: li.quantity,
+    price: discountPct > 0
+      ? (Number(li.price) * (1 - discountPct)).toFixed(2)
+      : li.price,
+  }));
+
+  const shippingLines = draft.shipping_line
+    ? [{
+        title: draft.shipping_line.title || 'Envío',
+        price: draft.shipping_line.price || '0',
+        code: draft.shipping_line.code || 'SHIPPING',
+      }]
+    : [];
+
+  const orderBody = {
+    order: {
+      email: draft.email || emailCliente,
+      send_receipt: false,
+      send_fulfillment_receipt: false,
+      line_items: lineItems,
+      shipping_lines: shippingLines,
+      note: draft.note,
+      note_attributes: draft.note_attributes,
+      tags: draft.tags,
+      financial_status: 'pending',
+      ...(draft.shipping_address ? { shipping_address: draft.shipping_address } : {}),
+      ...(draft.billing_address ? { billing_address: draft.billing_address } : {}),
+      ...(draft.customer?.id ? { customer: { id: draft.customer.id } } : {}),
+    },
+  };
+
+  const res = await fetch(`${base}/orders.json`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-Shopify-Access-Token': token },
+    body: JSON.stringify(orderBody),
+  });
   if (!res.ok) {
     const err = await res.text();
     throw new Error(`Shopify ${res.status}: ${err}`);
   }
 
-  const data = await res.json();
-  const completedDraft = data?.draft_order || data?.order || null;
-  const shopifyOrderId = completedDraft?.order_id || data?.order?.id || null;
-  let shopifyOrder = null;
-
-  if (shopifyOrderId) {
-    try {
-      shopifyOrder = await fetchOrderById(token, shopifyOrderId);
-    } catch (error) {
-      console.error(`No se pudo hidratar la orden final ${shopifyOrderId}: ${error.message}`);
-    }
-  }
+  const { order } = await res.json();
 
   return {
-    ...data,
-    _shopifyOrder: shopifyOrder,
+    order,
+    _shopifyOrder: order,
     _emailCliente: emailCliente,
     _payerEmail: payerEmail,
     _accountEmail: accountEmail,
