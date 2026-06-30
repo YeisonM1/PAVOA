@@ -68,6 +68,8 @@ const completarDraftOrder = async (draftOrderId) => {
     if (raw) cartItems = JSON.parse(raw);
   } catch {}
 
+  const draftLineItemImages = (draft?.line_items || []).map((li) => li?.image?.src || null);
+
   const res = await fetch(
     `${base}/draft_orders/${draftOrderId}/complete.json?payment_pending=false&send_receipt=false`,
     {
@@ -101,22 +103,25 @@ const completarDraftOrder = async (draftOrderId) => {
     _accountEmail: accountEmail,
     _customerName: customerName,
     _cartItems: cartItems,
+    _draftLineItemImages: draftLineItemImages,
   };
 };
 
-export const enviarEmailConfirmacion = async (order, paymentId, totalReal, descuentoAplicado = false, tipoPago = 'mercadopago') => {
+export const enviarEmailConfirmacion = async (order, paymentId, totalReal, descuentoAplicado = false, tipoPago = 'mercadopago', shippingCost = 0) => {
   const email = order.email;
   if (!email) return;
 
   const firstName = order.shipping_address?.first_name || order.customer?.first_name || 'Cliente';
   const orderName = order.name || `#${order.order_number}`;
-  const total = Number(totalReal || order.total_price).toLocaleString('es-CO');
+  const totalNum = Number(totalReal || order.total_price);
+  const total = totalNum.toLocaleString('es-CO');
   const totalOriginal = descuentoAplicado
-    ? Math.round(Number(totalReal || order.total_price) / 0.9).toLocaleString('es-CO')
+    ? Math.round(totalNum / 0.9).toLocaleString('es-CO')
     : null;
   const direccion = order.shipping_address
     ? `${order.shipping_address.address1}, ${order.shipping_address.address2 || ''} - ${order.shipping_address.city}`
     : '';
+  const envio = Number(shippingCost) > 0 ? Number(shippingCost).toLocaleString('es-CO') : null;
 
   await sendTransactionalEmail({
     from: 'PAVOA <onboarding@resend.dev>',
@@ -132,6 +137,7 @@ export const enviarEmailConfirmacion = async (order, paymentId, totalReal, descu
       descuentoAplicado,
       direccion,
       tipoPago,
+      envio,
     }),
   });
 };
@@ -212,6 +218,7 @@ const processMercadoPagoPaymentInternal = async (paymentId) => {
     let emailCliente = emailMP;
     let accountEmail = accountEmailRef || emailMP;
     let cartItemsFromDraft = null;
+    let draftLineItemImages = [];
     let shouldPersistOrder = true;
     try {
       const shopifyResponse = await completarDraftOrder(draftOrderId);
@@ -219,6 +226,7 @@ const processMercadoPagoPaymentInternal = async (paymentId) => {
       emailCliente = shopifyResponse._emailCliente || shopifyResponse._payerEmail || emailMP;
       accountEmail = shopifyResponse._accountEmail || accountEmailRef || emailCliente;
       cartItemsFromDraft = shopifyResponse._cartItems || null;
+      draftLineItemImages = shopifyResponse._draftLineItemImages || [];
       if (shopifyResponse._customerName) primerNombre = shopifyResponse._customerName.trim().split(/\s+/)[0] || primerNombre;
       await eliminarDraftOrder(draftOrderId);
     } catch (shopifyErr) {
@@ -246,7 +254,7 @@ const processMercadoPagoPaymentInternal = async (paymentId) => {
             sku: i.sku || null,
             talla: cart?.talla || i.variant_title || null,
             color: cart?.color || null,
-            imagen: cart?.imagen || i.image_url || null,
+            imagen: cart?.imagen || draftLineItemImages[idx] || i.image_url || null,
             detalles: cart?.detalles || '',
           };
         })
@@ -327,7 +335,12 @@ const processMercadoPagoPaymentInternal = async (paymentId) => {
               shipping_address: null,
               customer: { first_name: primerNombre },
             };
-        await enviarEmailConfirmacion(orderParaEmail, pagoInfo.id, totalPagado, esDescuento);
+        const orderShippingCost = Number(
+          order?.total_shipping_price_set?.shop_money?.amount ||
+          order?.shipping_lines?.[0]?.price ||
+          0
+        );
+        await enviarEmailConfirmacion(orderParaEmail, pagoInfo.id, totalPagado, esDescuento, 'mercadopago', orderShippingCost);
       } catch (emailErr) {
         console.error('Email no enviado:', emailErr.message);
       }

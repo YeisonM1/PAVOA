@@ -46,7 +46,7 @@ export default function OrdenConfirmadaPage() {
   const [verifiedPaymentStatus, setVerifiedPaymentStatus] = useState('');
   const [verifyingPayment, setVerifyingPayment] = useState(Boolean(paymentIdParam));
   const orderData = resolvedOrderData || savedOrder || state;
-  const { items = [], total, email, nombre, firstName: explicitFirstName } = orderData || {};
+  const { items = [], total, subtotal, shippingCost: orderShippingCost, descuentoAplicado, email, nombre, firstName: explicitFirstName } = orderData || {};
   const effectiveStatus = verifiedPaymentStatus || statusParam;
   const isApproved = effectiveStatus === 'approved';
   const isPending = effectiveStatus === 'pending' || effectiveStatus === 'in_process';
@@ -242,13 +242,27 @@ export default function OrdenConfirmadaPage() {
             </div>
 
             {total && (
-              <div className="flex justify-between items-center pt-5">
-                <span className="text-[10px] font-bold tracking-[0.2em] text-stone-900 uppercase">
-                  {isApproved ? 'Total pagado' : 'Total del intento'}
-                </span>
-                <span className="text-[18px] font-bold text-stone-900">
-                  ${Number(total).toLocaleString('es-CO')}
-                </span>
+              <div className="pt-4 flex flex-col gap-2">
+                {subtotal != null && Number(orderShippingCost) > 0 && (
+                  <>
+                    <div className="flex justify-between items-center">
+                      <span className="text-[10px] tracking-[0.15em] text-stone-500 uppercase">Subtotal</span>
+                      <span className="text-[12px] text-stone-700">${Number(subtotal).toLocaleString('es-CO')}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-[10px] tracking-[0.15em] text-stone-500 uppercase">Envío</span>
+                      <span className="text-[12px] text-stone-700">${Number(orderShippingCost).toLocaleString('es-CO')}</span>
+                    </div>
+                  </>
+                )}
+                <div className="flex justify-between items-center border-t border-stone-100 pt-3 mt-1">
+                  <span className="text-[10px] font-bold tracking-[0.2em] text-stone-900 uppercase">
+                    {isApproved ? 'Total pagado' : 'Total del intento'}
+                  </span>
+                  <span className="text-[18px] font-bold text-stone-900">
+                    ${Number(total).toLocaleString('es-CO')}
+                  </span>
+                </div>
               </div>
             )}
           </div>

@@ -704,6 +704,7 @@ export default function CheckoutPage() {
       }
 
       // Paso 4 - Guardar datos del pedido y sesión de checkout en sessionStorage
+      const _subtotal = dataPref.descuento_aplicado ? Math.round(cartTotal * 0.9) : cartTotal;
       sessionStorage.setItem('pavoa-pending-order', JSON.stringify({
         items: cartItems.map(item => ({
           nombre:   item.producto.nombre,
@@ -713,9 +714,12 @@ export default function CheckoutPage() {
           precio:   item.producto.precio,
           imagen:   item.producto.imagen1,
         })),
-        total:  (dataPref.descuento_aplicado ? Math.round(cartTotal * 0.9) : cartTotal) + shippingCost,
-        email:  form.email,
-        nombre: form.nombre,
+        subtotal:          _subtotal,
+        shippingCost,
+        total:             _subtotal + shippingCost,
+        descuentoAplicado: dataPref.descuento_aplicado || false,
+        email:             form.email,
+        nombre:            form.nombre,
       }));
       writeCheckoutSession({
         initPoint:    dataPref.init_point,

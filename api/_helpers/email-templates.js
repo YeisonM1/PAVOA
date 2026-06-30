@@ -506,6 +506,7 @@ export const emailConfirmacion = ({
   descuentoAplicado,
   direccion,
   tipoPago = 'mercadopago',
+  envio = null,
 }) => {
   const esCod = tipoPago === 'contraentrega';
 
@@ -532,6 +533,13 @@ export const emailConfirmacion = ({
     summaryRows.splice(2, 0, {
       label: "Subtotal",
       value: `<span style="text-decoration:line-through;color:${EMAIL_COLOR_MUTED_SOFT};">$${escapeHtml(totalOriginal)}</span>`,
+    });
+  }
+
+  if (envio) {
+    summaryRows.splice(summaryRows.length - 1, 0, {
+      label: "Envío",
+      value: `$${escapeHtml(envio)}`,
     });
   }
 
