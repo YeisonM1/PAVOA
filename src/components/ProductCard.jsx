@@ -76,16 +76,16 @@ function ProductCard({ producto }) {
       <div className="relative overflow-hidden bg-stone-100" style={{ aspectRatio: '3/4' }}>
 
         {productBadge && (
-          <span className="absolute top-4 left-4 z-30 text-[8px] font-bold text-white bg-stone-900 px-3 py-1.5 uppercase tracking-[0.15em]">
+          <span className="absolute top-3 left-3 z-30 text-[7px] md:text-[8px] font-bold text-white bg-stone-900 px-2 py-1 md:px-3 md:py-1.5 uppercase tracking-[0.12em] md:tracking-[0.15em]">
             {productBadge}
           </span>
         )}
         {totalStock === 0 ? (
-          <span className="absolute top-4 right-4 z-30 text-[8px] font-bold text-white bg-stone-500 px-3 py-1.5 uppercase tracking-[0.15em]">
+          <span className="absolute top-3 right-3 z-30 text-[7px] md:text-[8px] font-bold text-white bg-stone-500 px-2 py-1 md:px-3 md:py-1.5 uppercase tracking-[0.12em] md:tracking-[0.15em]">
             Agotado
           </span>
         ) : pocasUnidades ? (
-          <span className="absolute top-4 right-4 z-30 text-[8px] font-bold text-white bg-amber-700 px-3 py-1.5 uppercase tracking-[0.15em]">
+          <span className="absolute top-3 right-3 z-30 text-[7px] md:text-[8px] font-bold text-white bg-amber-700 px-2 py-1 md:px-3 md:py-1.5 uppercase tracking-[0.12em] md:tracking-[0.15em]">
             Últimas {totalStock}
           </span>
         ) : null}
@@ -189,7 +189,7 @@ function ProductCard({ producto }) {
 
         <div className="mx-auto flex min-h-[98px] w-full max-w-[260px] flex-col items-center justify-between text-center">
           <div className="flex min-h-[38px] w-full items-start justify-center">
-            <h3 className="w-full max-w-[220px] text-[11px] font-bold uppercase tracking-[0.15em] text-stone-900 leading-[1.55]">
+            <h3 className="w-full max-w-[220px] pr-9 md:pr-0 text-[11px] font-bold uppercase tracking-[0.15em] text-stone-900 leading-[1.55]">
               {producto.nombre}
             </h3>
           </div>

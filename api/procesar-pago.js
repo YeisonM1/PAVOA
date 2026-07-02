@@ -605,6 +605,28 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Falta paymentId' });
     }
 
+    // Si el webhook de MP ya procesó el pago e insertó el pedido, devolver sin
+    // volver a llamar a processMercadoPagoPayment para evitar email duplicado.
+    try {
+      const { data: pedidoExistente } = await supabase
+        .from('pedidos')
+        .select('payment_id, shopify_order_name, status')
+        .eq('payment_id', paymentId)
+        .maybeSingle();
+
+      if (pedidoExistente) {
+        console.log(`mp-finalizar: pedido ya procesado para payment ${paymentId}`);
+        return res.status(200).json({
+          ok: true,
+          status: 'approved',
+          alreadyProcessed: true,
+          shopifyOrderName: pedidoExistente.shopify_order_name || null,
+        });
+      }
+    } catch (dbErr) {
+      console.warn('mp-finalizar: error verificando pedido en Supabase:', dbErr.message);
+    }
+
     try {
       const result = await processMercadoPagoPayment(paymentId);
       return res.status(result.ok ? 200 : 409).json(result);

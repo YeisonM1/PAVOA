@@ -15,7 +15,8 @@ const isDraftAlreadyProcessingError = (message = '') =>
   /another staff member is processing this draft order/i.test(String(message));
 
 const isDuplicatePaymentError = (message = '') =>
-  /duplicate key value violates unique constraint "pedidos_payment_id_key"/i.test(String(message));
+  /duplicate key value violates unique constraint/i.test(String(message)) ||
+  /23505/.test(String(message));
 
 const getExistingOrderByPaymentId = async (paymentId) => {
   const { data, error } = await supabase
