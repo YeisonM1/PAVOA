@@ -599,43 +599,24 @@ export const emailDespacho = ({
 }) =>
   renderLayout({
     preheader: `Tu pedido ${orderName} ya va en camino`,
-    eyebrow: subtitulo || "Actualización de envío",
-    title: "Tu pedido ya va en camino",
+    eyebrow: subtitulo || "Tu pedido está en camino",
+    title: `Hola, ${formatCustomerName(nombreCliente)}`,
     body: cuerpo,
     afterHero:
-      renderHeroStatusCard({
-        title: "Tu envío fue despachado",
-        body: "Aquí lo importante es ver claramente la guía, la transportadora y el acceso al rastreo.",
-        badge: "En tránsito",
-        rows: [
-          {
-            label: "Pedido",
-            value: escapeHtml(orderName),
-          },
-          {
-            label: "Transportadora",
-            value: escapeHtml(trackingCompany || "Pendiente"),
-          },
-          {
-            label: "Guía",
-            value: `<span style="font-size:18px;font-weight:600;font-family:${EMAIL_FONT_TITLE};">${escapeHtml(trackingNumber || "Pendiente")}</span>`,
-          },
-        ],
-      }) +
-      `<div style="height:18px;line-height:18px;">&nbsp;</div>` +
       renderCard({
+        background: EMAIL_COLOR_BG,
         content: `
-          ${renderSectionHeading("Seguimiento")}
-          ${renderTextBlock(
-            trackingUrl
-              ? "Consulta la guía directamente desde el enlace de seguimiento para ver las actualizaciones de la transportadora."
-              : "Cuando la transportadora habilite el rastreo, podrás consultarlo desde tu cuenta en PAVOA.",
-          )}
-          ${trackingUrl ? `<div style="height:18px;line-height:18px;">&nbsp;</div><div align="center">${renderButton(trackingUrl, "Rastrear pedido")}</div>` : ""}
+          <div align="center">
+            <p style="margin:0 0 6px;font-size:10px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:${EMAIL_COLOR_MUTED_SOFT};font-family:${EMAIL_FONT_UI};">Transportadora</p>
+            <p style="margin:0 0 20px;font-size:16px;font-weight:600;color:${EMAIL_COLOR_BLACK};font-family:${EMAIL_FONT_TITLE};">${escapeHtml(trackingCompany || "Pendiente")}</p>
+            <p style="margin:0 0 6px;font-size:10px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:${EMAIL_COLOR_MUTED_SOFT};font-family:${EMAIL_FONT_UI};">Número de guía</p>
+            <p style="margin:0 0 ${trackingUrl ? "22px" : "0"};font-size:22px;font-weight:600;color:${EMAIL_COLOR_BLACK};font-family:${EMAIL_FONT_TITLE};">${escapeHtml(trackingNumber || "Pendiente")}</p>
+            ${trackingUrl ? renderButton(trackingUrl, "Rastrear pedido") : ""}
+          </div>
         `,
       }),
     footerNote:
-      `Te recomendamos guardar este correo hasta que recibas tu pedido. Si necesitas ayuda, escríbenos a ${SUPPORT_EMAIL}.`,
+      `También puedes ver el estado de tu pedido en cualquier momento desde tu cuenta en PAVOA. Si necesitas ayuda, escríbenos a ${SUPPORT_EMAIL}.`,
   });
 
 export const emailEntregado = ({ nombreCliente, orderName }) =>

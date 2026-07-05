@@ -1,6 +1,6 @@
 import mercadopago from 'mercadopago';
 import { getShopifyToken, eliminarDraftOrder } from './_helpers/shopify-token.js';
-import { processMercadoPagoPayment, enviarEmailConfirmacion } from './_helpers/mercadopago-order.js';
+import { processMercadoPagoPayment, enviarEmailConfirmacion, completarDraftOrder } from './_helpers/mercadopago-order.js';
 import { validateCartWithShopify } from './_helpers/cart-validation.js';
 import { verifyToken } from './_helpers/auth.js';
 import { trackFunnelEvent } from './_helpers/funnel.js';
@@ -704,48 +704,17 @@ export default async function handler(req, res) {
     }
 
     try {
-      const shopifyToken = await getShopifyToken();
-      const base = `https://${SHOPIFY_DOMAIN}/admin/api/2026-04`;
+      // Create the real order via POST /orders.json with send_receipt:false — the
+      // draft_orders/complete endpoint does not reliably suppress Shopify's native
+      // order confirmation email, which caused a duplicate alongside PAVOA's email.
+      const shopifyResponse = await completarDraftOrder(draftOrderId);
+      const shopifyOrder = shopifyResponse._shopifyOrder || shopifyResponse.order || null;
+      const emailCliente = shopifyResponse._emailCliente || normalizeEmail(form?.email);
+      const cartItemsFromDraft = shopifyResponse._cartItems || null;
+      await eliminarDraftOrder(draftOrderId);
 
-      // Get draft order metadata
-      const draftRes = await fetch(`${base}/draft_orders/${draftOrderId}.json`, {
-        headers: { 'X-Shopify-Access-Token': shopifyToken },
-      });
-      const { draft_order: draft } = await draftRes.json();
-      const emailCliente = draft?.note_attributes?.find(a => a.name === 'customer_email')?.value
-        || normalizeEmail(form?.email);
-      let cartItemsFromDraft = null;
-      try {
-        const raw = draft?.note_attributes?.find(a => a.name === 'cart_items')?.value;
-        if (raw) cartItemsFromDraft = JSON.parse(raw);
-      } catch {}
-
-      // Complete draft order — payment still pending until collected on delivery
-      const completeRes = await fetch(
-        `${base}/draft_orders/${draftOrderId}/complete.json?payment_pending=true&send_receipt=false`,
-        { method: 'PUT', headers: { 'Content-Type': 'application/json', 'X-Shopify-Access-Token': shopifyToken } }
-      );
-      if (!completeRes.ok) {
-        const errText = await completeRes.text();
-        throw new Error(`Shopify ${completeRes.status}: ${errText}`);
-      }
-      const completeData = await completeRes.json();
-      const completedDraft = completeData?.draft_order || null;
-      const shopifyOrderId = completedDraft?.order_id || null;
-
-      // Fetch the full real order
-      let shopifyOrder = null;
-      if (shopifyOrderId) {
-        try {
-          const orderRes = await fetch(`${base}/orders/${shopifyOrderId}.json`, {
-            headers: { 'X-Shopify-Access-Token': shopifyToken },
-          });
-          const orderJson = await orderRes.json();
-          shopifyOrder = orderJson?.order || null;
-        } catch {}
-      }
-
-      const orderName = shopifyOrder?.name || completedDraft?.name || `COD-${draftOrderId}`;
+      const shopifyOrderId = shopifyOrder?.id || null;
+      const orderName = shopifyOrder?.name || `COD-${draftOrderId}`;
       const addr = shopifyOrder?.shipping_address || null;
       const nombre = addr
         ? `${addr.first_name || ''} ${addr.last_name || ''}`.trim()

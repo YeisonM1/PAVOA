@@ -51,7 +51,7 @@ const fetchOrderById = async (token, orderId) => {
   return data?.order || null;
 };
 
-const completarDraftOrder = async (draftOrderId) => {
+export const completarDraftOrder = async (draftOrderId) => {
   const token = await getShopifyToken();
   const base = `https://${SHOPIFY_DOMAIN}/admin/api/2026-04`;
 
