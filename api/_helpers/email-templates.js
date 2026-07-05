@@ -612,7 +612,16 @@ export const emailDespacho = ({
 
           <tr>
             <td align="center" style="padding:40px 40px 32px;border-bottom:1px solid #F2E4E1;">
-              <img src="${LOGO_URL}" alt="PAVOA" width="120" style="display:block;height:auto;max-height:48px;object-fit:contain;" />
+              <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 auto;">
+                <tr>
+                  <td style="vertical-align:middle;">
+                    <img src="${LOGO_URL}" alt="PAVOA" width="120" style="display:block;width:120px;height:auto;max-height:48px;object-fit:contain;" />
+                  </td>
+                  <td style="padding-left:12px;vertical-align:middle;">
+                    <img src="${MARK_URL}" alt="" width="26" style="display:block;width:26px;height:auto;" />
+                  </td>
+                </tr>
+              </table>
             </td>
           </tr>
 
