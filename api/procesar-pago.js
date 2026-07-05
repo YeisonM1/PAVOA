@@ -711,6 +711,7 @@ export default async function handler(req, res) {
       const shopifyOrder = shopifyResponse._shopifyOrder || shopifyResponse.order || null;
       const emailCliente = shopifyResponse._emailCliente || normalizeEmail(form?.email);
       const cartItemsFromDraft = shopifyResponse._cartItems || null;
+      const draftLineItemImages = shopifyResponse._draftLineItemImages || [];
       await eliminarDraftOrder(draftOrderId);
 
       const shopifyOrderId = shopifyOrder?.id || null;
@@ -733,7 +734,7 @@ export default async function handler(req, res) {
               variant_title: i.variant_title || null,
               talla: cart?.talla || i.variant_title || null,
               color: cart?.color || null,
-              imagen: cart?.imagen || null,
+              imagen: cart?.imagen || draftLineItemImages[idx] || i.image_url || null,
               detalles: cart?.detalles || '',
             };
           })
@@ -794,6 +795,7 @@ export default async function handler(req, res) {
           totalConEnvio,
           false,
           'contraentrega',
+          Math.max(0, Number(shippingCost) || 0),
         );
       } catch (emailErr) {
         console.error('Email COD no enviado:', emailErr.message);

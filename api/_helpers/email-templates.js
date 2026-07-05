@@ -362,6 +362,7 @@ const renderLayout = ({
   primaryCta,
   afterHero = "",
   footerNote = `Si necesitas ayuda, escríbenos a ${SUPPORT_EMAIL}.`,
+  framed = true,
 }) => `
 <!DOCTYPE html>
 <html lang="es">
@@ -435,10 +436,10 @@ const renderLayout = ({
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:${EMAIL_COLOR_BG};">
       <tr>
         <td align="center" class="email-outer-pad" style="padding:32px 16px;">
-          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:620px;background-color:rgba(246,241,234,0.88);border:2px solid ${EMAIL_COLOR_COFFEE};box-shadow:0 18px 44px rgba(111,78,55,0.18);">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:620px;background-color:rgba(246,241,234,0.88);${framed ? `border:2px solid ${EMAIL_COLOR_COFFEE};box-shadow:0 18px 44px rgba(111,78,55,0.18);` : ""}">
             <tr>
-              <td class="email-shell-pad" style="padding:12px;">
-                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid ${EMAIL_COLOR_COFFEE_SOFT};background:#fffdfa;">
+              <td class="email-shell-pad" style="padding:${framed ? "12px" : "0"};">
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="${framed ? `border:1px solid ${EMAIL_COLOR_COFFEE_SOFT};` : ""}background:#fffdfa;">
                   <tr>
                     <td align="center" class="email-hero" style="padding:44px 24px 28px;background:${EMAIL_COLOR_IVORY};border-bottom:1px solid ${EMAIL_COLOR_BORDER};">
                       <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 auto 24px;">
@@ -602,6 +603,7 @@ export const emailDespacho = ({
     eyebrow: subtitulo || "Tu pedido está en camino",
     title: `Hola, ${formatCustomerName(nombreCliente)}`,
     body: cuerpo,
+    framed: false,
     afterHero:
       renderCard({
         background: EMAIL_COLOR_BG,
@@ -611,7 +613,17 @@ export const emailDespacho = ({
             <p style="margin:0 0 20px;font-size:16px;font-weight:600;color:${EMAIL_COLOR_BLACK};font-family:${EMAIL_FONT_TITLE};">${escapeHtml(trackingCompany || "Pendiente")}</p>
             <p style="margin:0 0 6px;font-size:10px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:${EMAIL_COLOR_MUTED_SOFT};font-family:${EMAIL_FONT_UI};">Número de guía</p>
             <p style="margin:0 0 ${trackingUrl ? "22px" : "0"};font-size:22px;font-weight:600;color:${EMAIL_COLOR_BLACK};font-family:${EMAIL_FONT_TITLE};">${escapeHtml(trackingNumber || "Pendiente")}</p>
-            ${trackingUrl ? renderButton(trackingUrl, "Rastrear pedido") : ""}
+            ${trackingUrl
+              ? `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 auto;">
+                  <tr>
+                    <td align="center" bgcolor="${EMAIL_COLOR_BLACK}" style="border:1px solid ${EMAIL_COLOR_BLACK};">
+                      <a href="${trackingUrl}" style="display:inline-block;padding:14px 26px;color:${EMAIL_COLOR_IVORY};text-decoration:none;text-align:center;font-size:11px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;font-family:${EMAIL_FONT_UI};white-space:nowrap;">
+                        Rastrear pedido →
+                      </a>
+                    </td>
+                  </tr>
+                </table>`
+              : ""}
           </div>
         `,
       }),

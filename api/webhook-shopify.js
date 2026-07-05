@@ -210,6 +210,7 @@ const mapOrderLineItems = (order, pedido) => {
       quantity: item.cantidad || item.quantity || 1,
       price: item.precio || item.price || 0,
       variant_title: item.talla || item.variant_title || item.color || null,
+      imagen: item.imagen || item.image || item.image_url || item.imageUrl || null,
     }));
   }
 
@@ -218,6 +219,7 @@ const mapOrderLineItems = (order, pedido) => {
     quantity: item.quantity || 1,
     price: item.price || 0,
     variant_title: item.variant_title || null,
+    imagen: item.image_url || item.imagen || item?.image?.src || null,
   }));
 };
 
