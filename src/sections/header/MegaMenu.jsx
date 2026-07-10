@@ -28,8 +28,8 @@ export default function MegaMenu({ catalogoOpen, setCatalogoOpen, isScrolled, pa
   const [hoveredItem, setHoveredItem] = useState(null);
   const activeImage = hoveredItem ? (categoryImages[hoveredItem] || defaultImage) : defaultImage;
 
-  const HEADER_H_DEFAULT  = '80px';
-  const HEADER_H_SCROLLED = '64px';
+  const HEADER_H_DEFAULT  = '116px';
+  const HEADER_H_SCROLLED = '100px';
 
   const renderDesktopLink = (item, badge = null) => {
     const isHovered = hoveredItem === item;
