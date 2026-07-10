@@ -22,7 +22,7 @@ const categoryImages = {
 
 const defaultImage = 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=800&q=80';
 
-const sectionTitleStyle = { fontSize: '15px', fontWeight: 600, letterSpacing: '0.32em', color: '#5C3D2E', marginBottom: '24px', display: 'block', opacity: 1, visibility: 'visible' };
+// Removed sectionTitleStyle in favor of inline Tailwind classes
 
 export default function MegaMenu({ catalogoOpen, setCatalogoOpen, isScrolled, panelRef }) {
   const [hoveredItem, setHoveredItem] = useState(null);
@@ -105,7 +105,7 @@ export default function MegaMenu({ catalogoOpen, setCatalogoOpen, isScrolled, pa
 
           {/* MUJER */}
           <div style={{ paddingRight: 48 }}>
-            <p style={sectionTitleStyle}>MUJER</p>
+            <p className="text-[#5C3D2E] text-[15px] font-semibold tracking-[0.32em] mb-[24px] block visible opacity-100">MUJER</p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               <div>
                 <p style={{ fontSize: 7.5, fontWeight: 600, letterSpacing: '0.2em', color: 'var(--color-charcoal)', opacity: 0.5, marginBottom: 8 }}>SUPERIOR</p>
@@ -145,7 +145,7 @@ export default function MegaMenu({ catalogoOpen, setCatalogoOpen, isScrolled, pa
           {/* HOMBRE */}
           <div style={{ paddingLeft: 48, paddingRight: 48, display: 'flex', flexDirection: 'column', height: '100%' }}>
             <div>
-              <p style={sectionTitleStyle}>HOMBRE</p>
+              <p className="text-[#5C3D2E] text-[15px] font-semibold tracking-[0.32em] mb-[24px] block visible opacity-100">HOMBRE</p>
               <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 0 }}>
                 {renderDesktopLink('Pantalonetas')}
                 {renderDesktopLink('Camisetas')}
