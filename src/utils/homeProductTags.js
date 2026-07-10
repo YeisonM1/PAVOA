@@ -8,7 +8,13 @@ export const HOME_PRODUCT_TAG_LABELS = {
 
 export const HOME_PRODUCT_SLOT_COUNT = 2;
 
-export const normalizeProductTag = (value) => String(value || '').trim().toLowerCase();
+export const normalizeProductTag = (value) => {
+  let val = String(value || '').trim().toLowerCase();
+  if (val === 'más vendido' || val === 'mas vendido') return 'bestseller';
+  if (val === 'home-más vendido-1' || val === 'home-mas vendido-1') return 'home-bestseller-1';
+  if (val === 'home-más vendido-2' || val === 'home-mas vendido-2') return 'home-bestseller-2';
+  return val;
+};
 
 export const getNormalizedProductTags = (tags = []) => {
   const rawTags = Array.isArray(tags) ? tags : [];
