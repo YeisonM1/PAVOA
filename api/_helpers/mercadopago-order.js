@@ -51,7 +51,7 @@ const fetchOrderById = async (token, orderId) => {
   return data?.order || null;
 };
 
-export const completarDraftOrder = async (draftOrderId) => {
+export const completarDraftOrder = async (draftOrderId, { financialStatus = 'pending' } = {}) => {
   const token = await getShopifyToken();
   const base = `https://${SHOPIFY_DOMAIN}/admin/api/2026-04`;
 
@@ -110,7 +110,7 @@ export const completarDraftOrder = async (draftOrderId) => {
       note: draft.note,
       note_attributes: draft.note_attributes,
       tags: draft.tags,
-      financial_status: 'pending',
+      financial_status: financialStatus,
       ...(draft.shipping_address ? { shipping_address: draft.shipping_address } : {}),
       ...(draft.billing_address ? { billing_address: draft.billing_address } : {}),
       ...(draft.customer?.id ? { customer: { id: draft.customer.id } } : {}),
@@ -255,7 +255,7 @@ const processMercadoPagoPaymentInternal = async (paymentId) => {
     let draftLineItemImages = [];
     let shouldPersistOrder = true;
     try {
-      const shopifyResponse = await completarDraftOrder(draftOrderId);
+      const shopifyResponse = await completarDraftOrder(draftOrderId, { financialStatus: 'paid' });
       order = shopifyResponse._shopifyOrder || shopifyResponse.order || shopifyResponse.draft_order;
       emailCliente = shopifyResponse._emailCliente || shopifyResponse._payerEmail || emailMP;
       accountEmail = shopifyResponse._accountEmail || accountEmailRef || emailCliente;
