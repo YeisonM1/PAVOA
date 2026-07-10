@@ -16,6 +16,7 @@ const MP_EXPECTED_USER_ID = String(
   process.env.MP_EXPECTED_USER_ID || process.env.MP_SELLER_USER_ID || ''
 ).trim();
 const normalizeEmail = (value) => String(value || '').trim().toLowerCase();
+const formatCop = (value) => `$${Number(value || 0).toLocaleString('es-CO')}`;
 const PAYMENT_PREFERENCE_TTL = 15 * 60 * 1000;
 const _paymentPreferenceCache = new Map();
 const _paymentPreferenceInflight = new Map();
@@ -388,6 +389,8 @@ const createPaymentPreference = async ({
       if (usuario && !usuario.descuento_bienvenida_usado) {
         itemsMapped = itemsMapped.map((item) => ({
           ...item,
+          title: `${item.title} - Descuento bienvenida 10%`,
+          description: `Precio original ${formatCop(item.unit_price)} | Descuento bienvenida 10% -${formatCop(Math.round(item.unit_price * 0.1))} | Precio final ${formatCop(Math.round(item.unit_price * 0.9))}`,
           unit_price: Math.round(item.unit_price * 0.9),
         }));
         descuentoAplicado = true;
@@ -403,7 +406,8 @@ const createPaymentPreference = async ({
         ...itemsMapped,
         {
           id: 'envio',
-          title: 'Envío a domicilio',
+          title: 'Envio a domicilio',
+          description: `Cobro de envio ${formatCop(validShippingCost)}`,
           quantity: 1,
           unit_price: validShippingCost,
           currency_id: 'COP',
