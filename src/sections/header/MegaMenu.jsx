@@ -105,7 +105,7 @@ export default function MegaMenu({ catalogoOpen, setCatalogoOpen, isScrolled, pa
 
           {/* MUJER */}
           <div style={{ paddingRight: 48 }}>
-            <h2 className="text-[#5C3D2E] text-[15px] font-bold tracking-[0.32em] mb-6 block whitespace-nowrap">MUJER</h2>
+            <h2 className="text-stone-700 text-[15px] font-bold tracking-[0.32em] mb-6 block whitespace-nowrap">MUJER</h2>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               <div>
                 <p style={{ fontSize: 7.5, fontWeight: 600, letterSpacing: '0.2em', color: 'var(--color-charcoal)', opacity: 0.5, marginBottom: 8 }}>SUPERIOR</p>
@@ -145,7 +145,7 @@ export default function MegaMenu({ catalogoOpen, setCatalogoOpen, isScrolled, pa
           {/* HOMBRE */}
           <div style={{ paddingLeft: 48, paddingRight: 48, display: 'flex', flexDirection: 'column', height: '100%' }}>
             <div>
-              <h2 className="text-[#5C3D2E] text-[15px] font-bold tracking-[0.32em] mb-6 block whitespace-nowrap">HOMBRE</h2>
+              <h2 className="text-stone-700 text-[15px] font-bold tracking-[0.32em] mb-6 block whitespace-nowrap">HOMBRE</h2>
               <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 0 }}>
                 {renderDesktopLink('Pantalonetas')}
                 {renderDesktopLink('Camisetas')}
