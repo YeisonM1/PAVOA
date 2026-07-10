@@ -22,7 +22,7 @@ const categoryImages = {
 
 const defaultImage = 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=800&q=80';
 
-const sectionTitleStyle = { fontSize: 15, fontWeight: 700, letterSpacing: '0.32em', color: '#5C3D2E', marginBottom: 24 };
+const sectionTitleStyle = { fontSize: 15, fontWeight: 600, letterSpacing: '0.32em', color: '#5C3D2E', marginBottom: 24 };
 
 export default function MegaMenu({ catalogoOpen, setCatalogoOpen, isScrolled, panelRef }) {
   const [hoveredItem, setHoveredItem] = useState(null);
