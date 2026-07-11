@@ -1,4 +1,4 @@
-﻿const SHOPIFY_DOMAIN   = import.meta.env.VITE_SHOPIFY_DOMAIN;
+const SHOPIFY_DOMAIN   = import.meta.env.VITE_SHOPIFY_DOMAIN;
 const SHOPIFY_TOKEN    = import.meta.env.VITE_SHOPIFY_TOKEN;
 const SHOPIFY_ENDPOINT = `https://${SHOPIFY_DOMAIN}/api/2026-04/graphql.json`;
 const HOME_PRODUCT_TAB_KEYS = ['nuevo', 'bestseller', 'tendencia'];
@@ -38,6 +38,58 @@ export const SITE_SETTINGS_DEFAULTS = {
   instagramUrl: 'https://www.instagram.com/pavoacolombia/',
   facebookUrl: 'https://facebook.com/pavoa',
   whatsappNumber: import.meta.env.VITE_WHATSAPP_NUMBER || '',
+  megamenuConfig: {
+    images: {
+      'Camisetas':        'https://images.unsplash.com/photo-1523381210434-271e8be1f52b?w=800&q=80',
+      'Tops Deportivos':  'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=800&q=80',
+      'Sets':             'https://images.unsplash.com/photo-1506629082955-511b1aa562c8?w=800&q=80',
+      'Buzos':            'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=800&q=80',
+      'Chaquetas':        'https://images.unsplash.com/photo-1551232864-3f0890e580d9?w=800&q=80',
+      'Licras':           'https://images.unsplash.com/photo-1538805060514-97d9cc17730c?w=800&q=80',
+      'Shorts':           'https://images.unsplash.com/photo-1562157873-818bc0726f68?w=800&q=80',
+      'Faldas':           'https://images.unsplash.com/photo-1583496661160-fb5886a0aaaa?w=800&q=80',
+      'Vestidos':         'https://images.unsplash.com/photo-1496747611176-843222e1e57c?w=800&q=80',
+      'Sudaderas':        'https://images.unsplash.com/photo-1556821840-3a63f15732ce?w=800&q=80',
+      'Bikers':           'https://images.unsplash.com/photo-1571945153237-4929e783af4a?w=800&q=80',
+      'Accesorios':       'https://images.unsplash.com/photo-1611085583191-a3b181a88401?w=800&q=80',
+      'Pantalonetas':     'https://images.unsplash.com/photo-1591195853828-11db59a44f43?w=800&q=80',
+      'Joggers':          'https://images.unsplash.com/photo-1552902865-b72c031ac5ea?w=800&q=80',
+      'Bodies':           'https://images.unsplash.com/photo-1618354691373-d851c5c3a990?w=800&q=80',
+      'Enterizos':        'https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=800&q=80',
+    },
+    mujerSuperior: [
+      { label: 'Camisetas' },
+      { label: 'Tops Deportivos', badge: 'BEST SELLER' },
+      { label: 'Buzos' },
+      { label: 'Chaquetas' },
+      { label: 'Bodies', badge: 'NUEVO' },
+      { label: 'Enterizos', badge: 'NUEVO' }
+    ],
+    mujerInferior: [
+      { label: 'Licras' },
+      { label: 'Shorts' },
+      { label: 'Faldas' },
+      { label: 'Sudaderas' },
+      { label: 'Bikers' },
+      { label: 'Pantalonetas' }
+    ],
+    mujerOtros: [
+      { label: 'Sets', badge: 'NUEVO' },
+      { label: 'Vestidos' },
+      { label: 'Accesorios' }
+    ],
+    hombre: [
+      { label: 'Pantalonetas' },
+      { label: 'Camisetas' },
+      { label: 'Buzos' },
+      { label: 'Joggers', badge: 'BEST SELLER' }
+    ],
+    destacados: [
+      { label: 'VER TODO HOMBRE →', href: '/categoria/hombre' },
+      { label: 'GUÍA DE TALLAS', href: '#tallas' },
+      { label: 'COLECCIÓN ESSENTIAL', href: '/categoria/essential' }
+    ]
+  },
 };
 
 export const FILOSOFIA_SECTION_DEFAULTS = {
@@ -1009,6 +1061,7 @@ export const getInstagramPosts = () => {
         return {
           id:     node.id,
           image:  getImage('image'),
+          link:   get('link') || get('post_url') || '',
           orden:  Number(get('orden')) || 0,
         };
       });
@@ -1052,6 +1105,16 @@ export const getSiteSettings = () => {
 
       const get = (key) => node.fields.find((field) => field.key === key)?.value?.trim() || '';
 
+      let parsedMegamenu = SITE_SETTINGS_DEFAULTS.megamenuConfig;
+      const rawMegamenu = get('megamenu_config');
+      if (rawMegamenu) {
+        try {
+          parsedMegamenu = JSON.parse(rawMegamenu);
+        } catch (e) {
+          console.error('Error parsing megamenu_config:', e);
+        }
+      }
+
       return {
         contactEmail: normalizeContactEmail(get('contact_email') || SITE_SETTINGS_DEFAULTS.contactEmail),
         contactSchedule: get('contact_schedule') || SITE_SETTINGS_DEFAULTS.contactSchedule,
@@ -1060,6 +1123,7 @@ export const getSiteSettings = () => {
         instagramUrl: get('instagram_url') || SITE_SETTINGS_DEFAULTS.instagramUrl,
         facebookUrl: get('facebook_url') || SITE_SETTINGS_DEFAULTS.facebookUrl,
         whatsappNumber: get('whatsapp_number') || SITE_SETTINGS_DEFAULTS.whatsappNumber,
+        megamenuConfig: parsedMegamenu,
       };
     } catch (err) {
       console.error('Error getSiteSettings:', err);

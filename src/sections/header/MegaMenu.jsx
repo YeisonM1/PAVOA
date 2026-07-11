@@ -1,32 +1,13 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 
-const categoryImages = {
-  'Camisetas':        'https://images.unsplash.com/photo-1523381210434-271e8be1f52b?w=800&q=80',
-  'Tops Deportivos':  'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=800&q=80',
-  'Sets':             'https://images.unsplash.com/photo-1506629082955-511b1aa562c8?w=800&q=80',
-  'Buzos':            'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=800&q=80',
-  'Chaquetas':        'https://images.unsplash.com/photo-1551232864-3f0890e580d9?w=800&q=80',
-  'Licras':           'https://images.unsplash.com/photo-1538805060514-97d9cc17730c?w=800&q=80',
-  'Shorts':           'https://images.unsplash.com/photo-1562157873-818bc0726f68?w=800&q=80',
-  'Faldas':           'https://images.unsplash.com/photo-1583496661160-fb5886a0aaaa?w=800&q=80',
-  'Vestidos':         'https://images.unsplash.com/photo-1496747611176-843222e1e57c?w=800&q=80',
-  'Sudaderas':        'https://images.unsplash.com/photo-1556821840-3a63f15732ce?w=800&q=80',
-  'Bikers':           'https://images.unsplash.com/photo-1571945153237-4929e783af4a?w=800&q=80',
-  'Accesorios':       'https://images.unsplash.com/photo-1611085583191-a3b181a88401?w=800&q=80',
-  'Pantalonetas':     'https://images.unsplash.com/photo-1591195853828-11db59a44f43?w=800&q=80',
-  'Joggers':          'https://images.unsplash.com/photo-1552902865-b72c031ac5ea?w=800&q=80',
-  'Bodies':           'https://images.unsplash.com/photo-1618354691373-d851c5c3a990?w=800&q=80',
-  'Enterizos':        'https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=800&q=80',
-};
-
 const defaultImage = 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=800&q=80';
 
 // Removed sectionTitleStyle to use inline robust Tailwind classes
 
-export default function MegaMenu({ catalogoOpen, setCatalogoOpen, isScrolled, panelRef }) {
+export default function MegaMenu({ catalogoOpen, setCatalogoOpen, isScrolled, panelRef, megamenuConfig }) {
   const [hoveredItem, setHoveredItem] = useState(null);
-  const activeImage = hoveredItem ? (categoryImages[hoveredItem] || defaultImage) : defaultImage;
+  const activeImage = hoveredItem ? (megamenuConfig?.images?.[hoveredItem] || defaultImage) : defaultImage;
 
   const HEADER_H_DEFAULT  = '116px';
   const HEADER_H_SCROLLED = '100px';
@@ -107,36 +88,30 @@ export default function MegaMenu({ catalogoOpen, setCatalogoOpen, isScrolled, pa
           <div style={{ paddingRight: 48 }}>
             <h2 className="text-stone-700 text-[15px] font-bold tracking-[0.32em] mb-6 block whitespace-nowrap">MUJER</h2>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              <div>
-                <p style={{ fontSize: 7.5, fontWeight: 600, letterSpacing: '0.2em', color: 'var(--color-charcoal)', opacity: 0.5, marginBottom: 8 }}>SUPERIOR</p>
-                <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 0 }}>
-                  {renderDesktopLink('Camisetas')}
-                  {renderDesktopLink('Tops Deportivos', 'BEST SELLER')}
-                  {renderDesktopLink('Buzos')}
-                  {renderDesktopLink('Chaquetas')}
-                  {renderDesktopLink('Bodies', 'NUEVO')}
-                  {renderDesktopLink('Enterizos', 'NUEVO')}
-                </ul>
-              </div>
-              <div>
-                <p style={{ fontSize: 7.5, fontWeight: 600, letterSpacing: '0.2em', color: 'var(--color-charcoal)', opacity: 0.5, marginBottom: 8 }}>INFERIOR</p>
-                <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 0 }}>
-                  {renderDesktopLink('Licras')}
-                  {renderDesktopLink('Shorts')}
-                  {renderDesktopLink('Faldas')}
-                  {renderDesktopLink('Sudaderas')}
-                  {renderDesktopLink('Bikers')}
-                  {renderDesktopLink('Pantalonetas')}
-                </ul>
-              </div>
-              <div>
-                <p style={{ fontSize: 7.5, fontWeight: 600, letterSpacing: '0.2em', color: 'var(--color-charcoal)', opacity: 0.5, marginBottom: 8 }}>OTROS</p>
-                <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 0 }}>
-                  {renderDesktopLink('Sets', 'NUEVO')}
-                  {renderDesktopLink('Vestidos')}
-                  {renderDesktopLink('Accesorios')}
-                </ul>
-              </div>
+              {megamenuConfig?.mujerSuperior?.length > 0 && (
+                <div>
+                  <p style={{ fontSize: 7.5, fontWeight: 600, letterSpacing: '0.2em', color: 'var(--color-charcoal)', opacity: 0.5, marginBottom: 8 }}>SUPERIOR</p>
+                  <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 0 }}>
+                    {megamenuConfig.mujerSuperior.map(i => renderDesktopLink(i.label, i.badge))}
+                  </ul>
+                </div>
+              )}
+              {megamenuConfig?.mujerInferior?.length > 0 && (
+                <div>
+                  <p style={{ fontSize: 7.5, fontWeight: 600, letterSpacing: '0.2em', color: 'var(--color-charcoal)', opacity: 0.5, marginBottom: 8 }}>INFERIOR</p>
+                  <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 0 }}>
+                    {megamenuConfig.mujerInferior.map(i => renderDesktopLink(i.label, i.badge))}
+                  </ul>
+                </div>
+              )}
+              {megamenuConfig?.mujerOtros?.length > 0 && (
+                <div>
+                  <p style={{ fontSize: 7.5, fontWeight: 600, letterSpacing: '0.2em', color: 'var(--color-charcoal)', opacity: 0.5, marginBottom: 8 }}>OTROS</p>
+                  <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 0 }}>
+                    {megamenuConfig.mujerOtros.map(i => renderDesktopLink(i.label, i.badge))}
+                  </ul>
+                </div>
+              )}
             </div>
           </div>
 
@@ -147,20 +122,13 @@ export default function MegaMenu({ catalogoOpen, setCatalogoOpen, isScrolled, pa
             <div>
               <h2 className="text-stone-700 text-[15px] font-bold tracking-[0.32em] mb-6 block whitespace-nowrap">HOMBRE</h2>
               <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 0 }}>
-                {renderDesktopLink('Pantalonetas')}
-                {renderDesktopLink('Camisetas')}
-                {renderDesktopLink('Buzos')}
-                {renderDesktopLink('Joggers', 'BEST SELLER')}
+                {megamenuConfig?.hombre?.map(i => renderDesktopLink(i.label, i.badge))}
               </ul>
             </div>
             <div style={{ marginTop: 'auto', paddingTop: 32, borderTop: '1px solid var(--color-border)' }}>
               <p style={{ fontSize: 7.5, fontWeight: 600, letterSpacing: '0.2em', color: 'var(--color-charcoal)', opacity: 0.5, marginBottom: 12 }}>DESTACADOS</p>
               <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 10 }}>
-                {[
-                  { label: 'VER TODO HOMBRE →', href: '/categoria/hombre' },
-                  { label: 'GUÍA DE TALLAS',    href: '#tallas' },
-                  { label: 'COLECCIÓN ESSENTIAL', href: '/categoria/essential' }
-                ].map((link) => (
+                {(megamenuConfig?.destacados || []).map((link) => (
                   <li key={link.label}>
                     <Link
                       to={link.href}

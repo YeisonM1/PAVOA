@@ -152,9 +152,24 @@ export const enviarEmailConfirmacion = async (order, paymentId, totalReal, descu
   const totalOriginal = descuentoAplicado
     ? Math.round(totalNum / 0.9).toLocaleString('es-CO')
     : null;
-  const direccion = order.shipping_address
-    ? `${order.shipping_address.address1}, ${order.shipping_address.address2 || ''} - ${order.shipping_address.city}`
-    : '';
+  // Cambio #9: Dirección estructurada completa (objeto para el template)
+  const notaAtributos = order.note ? Object.fromEntries(
+    String(order.note).split(' | ').map(part => {
+      const colonIdx = part.indexOf(':');
+      if (colonIdx < 0) return [part.trim(), ''];
+      return [part.slice(0, colonIdx).trim().toLowerCase(), part.slice(colonIdx + 1).trim()];
+    })
+  ) : {};
+  const direccion = order.shipping_address ? {
+    'dirección': order.shipping_address.address1 || '',
+    barrio: order.shipping_address.address2 || notaAtributos['barrio'] || '',
+    ciudad: order.shipping_address.city || '',
+    departamento: order.shipping_address.province || '',
+    telefono: order.shipping_address.phone || '',
+    horario: notaAtributos['horario de entrega'] || '',
+    referencia: notaAtributos['punto de referencia'] || '',
+    observaciones: notaAtributos['observaciones'] || '',
+  } : '';
   const envio = Number(shippingCost) > 0 ? Number(shippingCost).toLocaleString('es-CO') : null;
 
   await sendTransactionalEmail({

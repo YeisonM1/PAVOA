@@ -792,6 +792,8 @@ export default async function handler(req, res) {
           })),
           shipping_address: addr,
           customer: { first_name: nombre.split(' ')[0] || 'Cliente' },
+          // Cambio #9: incluir la nota del draft para dirección estructurada
+          note: shopifyResponse?._shopifyOrder?.note || '',
         };
         await enviarEmailConfirmacion(
           { ...orderParaEmail, email: emailCliente },

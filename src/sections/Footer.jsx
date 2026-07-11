@@ -1,7 +1,7 @@
-﻿import { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import logo from '../assets/LOGO-PAVOA.svg';
-import { InstagramIcon, FacebookIcon } from '../components/Icons';
+import { InstagramIcon } from '../components/Icons';
 import { FOOTER_CONTENT_DEFAULTS, getFooterContent, suscribirNewsletter } from '../services/productService';
 import useSiteSettings from '../hooks/useSiteSettings';
 
@@ -114,7 +114,6 @@ export default function Footer() {
           </p>
           <div className="flex items-center gap-4">
             <a href={settings.instagramUrl} target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors" aria-label="Síguenos en Instagram"><InstagramIcon /></a>
-            <a href={settings.facebookUrl} target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors" aria-label="Síguenos en Facebook"><FacebookIcon /></a>
           </div>
         </div>
 

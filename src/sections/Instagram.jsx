@@ -47,7 +47,7 @@ export default function Instagram() {
         {posts.map((post) => (
           <a
             key={post.id}
-            href={settings.instagramUrl}
+            href={post.link || settings.instagramUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="group relative overflow-hidden"

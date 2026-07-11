@@ -120,6 +120,7 @@ const crearDraftOrder = async (token, { form, trustedItems, orderOwnerEmail, che
     `Horario de entrega: ${form.horario}`,
     form.referencia ? `Punto de referencia: ${form.referencia}` : '',
     `Barrio: ${form.barrio}`,
+    form.observaciones ? `Observaciones: ${form.observaciones}` : '',
   ].filter(Boolean).join(' | ');
 
   const [firstName, ...rest] = form.nombre.trim().split(' ');

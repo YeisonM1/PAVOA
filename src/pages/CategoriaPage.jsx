@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { parsePrice } from '../utils/price';
 import { useParams, Link } from 'react-router-dom';
 import FilterDrawer from '../sections/FilterDrawer';
@@ -19,11 +19,11 @@ const CATEGORY_GROUPS = {
     },
   },
   movimiento: {
-    categorias: ['licras', 'bikers', 'enterizos', 'pantalonetas'],
+    categorias: ['enterizos', 'licras', 'bikers', 'pantalonetas', 'shorts', 'faldas', 'sudaderas', 'joggers'],
     header: {
       titulo1: 'Movi',
       titulo2: 'miento',
-      desc: 'Licras, bikers, enterizos y pantalonetas para entrenar con libertad, soporte y presencia.',
+      desc: 'Enterizos, licras, bikers y todo el tren inferior para entrenar con libertad, soporte y presencia.',
       heroImage: 'https://images.unsplash.com/photo-1538805060514-97d9cc17730c?w=1600&q=80',
     },
   },

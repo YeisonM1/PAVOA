@@ -166,7 +166,7 @@ const renderCard = ({ content, background = "#ffffff", padding = "22px 24px" }) 
 `;
 
 const renderTextBlock = (html) => `
-  <p style="margin:0;font-size:14px;line-height:1.85;color:${EMAIL_COLOR_CHARCOAL};font-family:${EMAIL_FONT_BODY};">
+  <p style="margin:0;font-size:13px;line-height:1.8;color:${EMAIL_COLOR_CHARCOAL};font-family:${EMAIL_FONT_BODY};">
     ${html}
   </p>
 `;
@@ -197,11 +197,11 @@ const renderHeroStatusCard = ({
             <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
               <tr>
                 <td style="padding:0 0 14px;">
-                  <p class="email-section-title" style="margin:0${body ? " 0 6px" : ""};font-size:28px;line-height:1.1;color:${EMAIL_COLOR_BLACK};font-family:${EMAIL_FONT_TITLE};font-weight:500;">
+                  <p class="email-section-title" style="margin:0${body ? " 0 12px" : ""};font-size:20px;line-height:1.4;font-weight:300;letter-spacing:0.1em;text-transform:uppercase;color:${EMAIL_COLOR_BLACK};font-family:${EMAIL_FONT_TITLE};">
                     ${escapeHtml(title)}
                   </p>
                   ${body
-                    ? `<p style="margin:0;font-size:14px;line-height:1.8;color:${EMAIL_COLOR_CHARCOAL};font-family:${EMAIL_FONT_BODY};">
+                    ? `<p style="margin:0;font-size:13px;line-height:1.8;color:${EMAIL_COLOR_CHARCOAL};font-family:${EMAIL_FONT_BODY};">
                     ${body}
                   </p>`
                     : ""}
@@ -283,7 +283,6 @@ const renderOrderItemsCard = (lineItems = [], { total } = {}) =>
           .map((item, index) => {
             const variantLabel = formatVariantLabel(item.variant_title || item.talla);
             const itemImageUrl = getLineItemImageUrl(item);
-            const designDetails = getLineItemDesignDetails(item);
             return `
               <tr>
                 <td style="padding:${index === 0 ? "0 0 14px" : "14px 0"};${index !== lineItems.length - 1 ? `border-bottom:1px solid ${EMAIL_COLOR_BORDER};` : ""}">
@@ -310,23 +309,6 @@ const renderOrderItemsCard = (lineItems = [], { total } = {}) =>
                         <p style="margin:0;font-size:11px;line-height:1.75;color:${EMAIL_COLOR_MUTED};letter-spacing:0.12em;text-transform:uppercase;font-family:${EMAIL_FONT_UI};">
                           ${variantLabel ? `${escapeHtml(variantLabel)} · ` : ""}Cantidad ${escapeHtml(item.quantity)}
                         </p>
-                        ${designDetails.length > 0
-                          ? `<div style="margin-top:12px;">
-                          <p style="margin:0 0 6px;font-size:10px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:${EMAIL_COLOR_MUTED_SOFT};font-family:${EMAIL_FONT_UI};">
-                            Detalles del diseño
-                          </p>
-                          <ul style="margin:0;padding-left:18px;color:${EMAIL_COLOR_CHARCOAL};font-size:13px;line-height:1.8;font-family:${EMAIL_FONT_BODY};">
-                            ${designDetails
-                              .map(
-                                (detail) => `
-                              <li style="margin:0 0 4px;">
-                                ${escapeHtml(detail)}
-                              </li>`,
-                              )
-                              .join("")}
-                          </ul>
-                        </div>`
-                          : ""}
                       </td>
                       <td valign="top" align="right" style="white-space:nowrap;font-size:14px;line-height:1.4;color:${EMAIL_COLOR_BLACK};font-weight:700;font-family:${EMAIL_FONT_BODY};">
                         $${formatMoney(item.price || item.precio)}
@@ -339,18 +321,6 @@ const renderOrderItemsCard = (lineItems = [], { total } = {}) =>
           })
           .join("")}
       </table>
-      ${total != null ? `
-        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-top:1px solid ${EMAIL_COLOR_BORDER};margin-top:4px;">
-          <tr>
-            <td style="padding:14px 0 0;font-size:10px;letter-spacing:0.18em;text-transform:uppercase;color:${EMAIL_COLOR_MUTED_SOFT};vertical-align:top;font-family:${EMAIL_FONT_UI};">
-              Total pagado
-            </td>
-            <td style="padding:14px 0 0;font-size:18px;font-weight:600;color:${EMAIL_COLOR_BLACK};text-align:right;vertical-align:top;font-family:${EMAIL_FONT_TITLE};">
-              $${escapeHtml(String(total))}
-            </td>
-          </tr>
-        </table>
-      ` : ''}
     `,
   });
 
@@ -398,8 +368,8 @@ const renderLayout = ({
           letter-spacing: 0.28em !important;
         }
         .email-title {
-          font-size: 34px !important;
-          line-height: 1.06 !important;
+          font-size: 20px !important;
+          line-height: 1.4 !important;
         }
         .email-body {
           max-width: 100% !important;
@@ -451,14 +421,14 @@ const renderLayout = ({
                           </td>
                         </tr>
                       </table>
-                      <p class="email-eyebrow" style="margin:0 0 14px;font-size:10px;font-weight:700;letter-spacing:0.34em;text-transform:uppercase;color:${EMAIL_COLOR_MUTED_SOFT};font-family:${EMAIL_FONT_UI};">
+                      <p class="email-eyebrow" style="margin:0 0 12px;font-size:10px;font-weight:400;letter-spacing:0.3em;text-transform:uppercase;color:${EMAIL_COLOR_MUTED_SOFT};font-family:${EMAIL_FONT_UI};">
                         ${escapeHtml(eyebrow)}
                       </p>
-                      <h1 class="email-title" style="margin:0;font-size:42px;line-height:1.08;font-weight:500;color:${EMAIL_COLOR_BLACK};font-family:${EMAIL_FONT_TITLE};">
+                      <h1 class="email-title" style="margin:0 0 16px 0;font-size:22px;line-height:1.4;font-weight:300;letter-spacing:0.1em;text-transform:uppercase;color:${EMAIL_COLOR_BLACK};font-family:${EMAIL_FONT_TITLE};">
                         ${escapeHtml(title)}
                       </h1>
-                      <div style="width:44px;height:1px;background:${EMAIL_COLOR_GOLD};margin:24px auto 22px;"></div>
-                      <p class="email-body" style="margin:0 auto;max-width:420px;font-size:14px;line-height:1.85;color:${EMAIL_COLOR_CHARCOAL};font-family:${EMAIL_FONT_BODY};">
+                      <div style="width:32px;height:1px;background:${EMAIL_COLOR_GOLD};margin:0 auto 20px;"></div>
+                      <p class="email-body" style="margin:0 auto;max-width:420px;font-size:13px;line-height:1.8;color:${EMAIL_COLOR_CHARCOAL};font-family:${EMAIL_FONT_BODY};">
                         ${body}
                       </p>
                     </td>
@@ -521,7 +491,7 @@ export const emailConfirmacion = ({
     },
     {
       label: esCod ? "Total a pagar" : "Total pagado",
-      value: `<span style="font-size:20px;font-weight:600;font-family:${EMAIL_FONT_TITLE};">$${escapeHtml(total)}</span>`,
+      value: `<span style="font-size:20px;font-weight:600;font-family:${EMAIL_FONT_TITLE};">$${formatMoney(total)}</span>`,
     },
   ];
 
@@ -532,28 +502,45 @@ export const emailConfirmacion = ({
     });
     summaryRows.splice(2, 0, {
       label: "Subtotal",
-      value: `<span style="text-decoration:line-through;color:${EMAIL_COLOR_MUTED_SOFT};">$${escapeHtml(totalOriginal)}</span>`,
+      value: `<span style="text-decoration:line-through;color:${EMAIL_COLOR_MUTED_SOFT};">$${formatMoney(totalOriginal)}</span>`,
     });
   }
 
   if (envio) {
     summaryRows.splice(summaryRows.length - 1, 0, {
       label: "Envío",
-      value: `$${escapeHtml(envio)}`,
+      value: `$${formatMoney(envio)}`,
     });
   }
+
+  // Cambio #9: Dirección de entrega estructurada
+  const buildDireccionHtml = (dir) => {
+    if (!dir) return '';
+    if (typeof dir === 'string') return escapeHtml(dir);
+    const lines = [
+      dir.direccion || dir.dirección || '',
+      dir.barrio ? `Barrio: ${dir.barrio}` : '',
+      [dir.ciudad, dir.departamento].filter(Boolean).join(', '),
+      dir.telefono ? `Tel: ${dir.telefono}` : '',
+      dir.horario ? `Horario: ${dir.horario}` : '',
+      dir.referencia ? `Ref: ${dir.referencia}` : '',
+      dir.observaciones ? `Observaciones: ${dir.observaciones}` : '',
+    ].filter(Boolean);
+    return lines.map(escapeHtml).join('<br/>');
+  };
 
   const direccionCard = direccion
     ? renderCard({
         content: `
           ${renderSectionHeading("Dirección de entrega")}
           <div style="text-align:center;">
-            ${renderTextBlock(escapeHtml(direccion))}
+            ${renderTextBlock(buildDireccionHtml(direccion))}
           </div>
         `,
       })
     : "";
 
+  // Cambio #8: Pasar sin 'total' a renderOrderItemsCard para evitar duplicar el total pagado
   return renderLayout({
     preheader: esCod ? `Pedido ${orderName} registrado` : `Pedido ${orderName} confirmado`,
     eyebrow: "Confirmación de pedido",
@@ -570,7 +557,7 @@ export const emailConfirmacion = ({
         rowsCentered: false,
       }) +
       `<div style="height:18px;line-height:18px;">&nbsp;</div>` +
-      renderOrderItemsCard(lineItems, { total }) +
+      renderOrderItemsCard(lineItems) +
       (direccionCard ? `<div style="height:18px;line-height:18px;">&nbsp;</div>${direccionCard}` : "") +
       `<div style="height:18px;line-height:18px;">&nbsp;</div>` +
       renderStepsCard("Qué sigue", esCod ? [
@@ -588,6 +575,7 @@ export const emailConfirmacion = ({
   });
 };
 
+// Cambio #10: emailDespacho mantiene su diseño original pero añade el marco café premium
 export const emailDespacho = ({
   nombreCliente,
   orderName,
@@ -602,95 +590,111 @@ export const emailDespacho = ({
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="${EMAIL_FONT_LINK}" rel="stylesheet">
   <title>PAVOA</title>
+  <style>
+    @media only screen and (max-width: 640px) {
+      .email-outer-pad { padding: 18px 8px !important; }
+      .email-shell-pad { padding: 8px !important; }
+    }
+  </style>
 </head>
-<body style="margin:0;padding:0;background-color:#F2E4E1;font-family:Georgia,serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#F2E4E1;padding:40px 20px;">
+<body style="margin:0;padding:0;background-color:${EMAIL_COLOR_BG};font-family:${EMAIL_FONT_BODY};">
+  <div style="display:none;max-height:0;overflow:hidden;opacity:0;">
+    Tu pedido ${escapeHtml(orderName)} ha sido despachado
+  </div>
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:${EMAIL_COLOR_BG};">
     <tr>
-      <td align="center">
-        <table width="520" cellpadding="0" cellspacing="0" style="background-color:#ffffff;">
-
+      <td align="center" class="email-outer-pad" style="padding:32px 16px;">
+        <!-- Marco café externo igual que los demás correos -->
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:620px;background-color:rgba(246,241,234,0.88);border:2px solid ${EMAIL_COLOR_COFFEE};box-shadow:0 18px 44px rgba(111,78,55,0.18);">
           <tr>
-            <td align="center" style="padding:40px 40px 32px;border-bottom:1px solid #F2E4E1;">
-              <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 auto;">
+            <td class="email-shell-pad" style="padding:12px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid ${EMAIL_COLOR_COFFEE_SOFT};background:#ffffff;">
+
                 <tr>
-                  <td style="vertical-align:middle;">
-                    <img src="${LOGO_URL}" alt="PAVOA" width="120" style="display:block;width:120px;height:auto;max-height:48px;object-fit:contain;" />
-                  </td>
-                  <td style="padding-left:12px;vertical-align:middle;">
-                    <img src="${MARK_URL}" alt="" width="26" style="display:block;width:26px;height:auto;" />
+                  <td align="center" style="padding:40px 40px 32px;border-bottom:1px solid ${EMAIL_COLOR_BORDER};background:${EMAIL_COLOR_IVORY};">
+                    <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 auto;">
+                      <tr>
+                        <td style="vertical-align:middle;">
+                          <img src="${LOGO_URL}" alt="PAVOA" width="120" style="display:block;width:120px;height:auto;max-height:48px;object-fit:contain;" />
+                        </td>
+                        <td style="padding-left:12px;vertical-align:middle;">
+                          <img src="${MARK_URL}" alt="" width="26" style="display:block;width:26px;height:auto;" />
+                        </td>
+                      </tr>
+                    </table>
                   </td>
                 </tr>
+
+                <tr>
+                  <td style="padding:36px 40px 8px;background:#ffffff;">
+                    <p style="font-size:10px;letter-spacing:0.3em;color:${EMAIL_COLOR_MUTED_SOFT};text-transform:uppercase;margin:0 0 12px 0;font-family:${EMAIL_FONT_UI};">${escapeHtml(subtitulo || "Actualización de envío")}</p>
+                    <h1 style="font-size:22px;font-weight:300;color:${EMAIL_COLOR_BLACK};letter-spacing:0.1em;text-transform:uppercase;margin:0 0 16px 0;font-family:${EMAIL_FONT_TITLE};">
+                      Hola, ${escapeHtml(formatCustomerName(nombreCliente))}
+                    </h1>
+                    <p style="font-size:11px;letter-spacing:0.2em;color:${EMAIL_COLOR_MUTED_SOFT};text-transform:uppercase;margin:0 0 16px 0;font-family:${EMAIL_FONT_UI};">Pedido ${escapeHtml(orderName)}</p>
+                    <div style="width:32px;height:1px;background-color:${EMAIL_COLOR_GOLD};margin-bottom:20px;"></div>
+                    <p style="font-size:13px;color:${EMAIL_COLOR_CHARCOAL};line-height:1.8;margin:0;font-family:${EMAIL_FONT_BODY};">${cuerpo}</p>
+                  </td>
+                </tr>
+
+                <tr>
+                  <td style="padding:28px 40px 0;background:#ffffff;">
+                    <table width="100%" cellpadding="0" cellspacing="0" style="background-color:${EMAIL_COLOR_BG};padding:20px;">
+                      <tr>
+                        <td>
+                          <p style="font-size:10px;letter-spacing:0.2em;color:${EMAIL_COLOR_MUTED_SOFT};text-transform:uppercase;margin:0 0 6px 0;font-family:${EMAIL_FONT_UI};">Transportadora</p>
+                          <p style="font-size:15px;font-weight:600;color:${EMAIL_COLOR_BLACK};letter-spacing:0.05em;margin:0;font-family:${EMAIL_FONT_BODY};">${escapeHtml(trackingCompany || "Pendiente")}</p>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding-top:16px;">
+                          <p style="font-size:10px;letter-spacing:0.2em;color:${EMAIL_COLOR_MUTED_SOFT};text-transform:uppercase;margin:0 0 6px 0;font-family:${EMAIL_FONT_UI};">Número de guía</p>
+                          <p style="font-size:20px;font-weight:700;color:${EMAIL_COLOR_BLACK};letter-spacing:0.1em;margin:0;font-family:${EMAIL_FONT_BODY};">${escapeHtml(trackingNumber || "Pendiente")}</p>
+                        </td>
+                      </tr>
+                      ${trackingUrl ? `
+                      <tr>
+                        <td style="padding-top:20px;">
+                          <a href="${trackingUrl}" style="display:inline-block;background-color:${EMAIL_COLOR_BLACK};color:#ffffff;text-decoration:none;font-size:10px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;padding:12px 24px;font-family:${EMAIL_FONT_UI};">
+                            Rastrear pedido →
+                          </a>
+                        </td>
+                      </tr>` : ""}
+                    </table>
+                  </td>
+                </tr>
+
+                <tr>
+                  <td style="padding:28px 40px 0;background:#ffffff;">
+                    <div style="border-top:1px solid ${EMAIL_COLOR_BORDER};padding-top:24px;">
+                      <p style="font-size:13px;color:${EMAIL_COLOR_MUTED};line-height:1.8;margin:0;font-family:${EMAIL_FONT_BODY};">
+                        También puedes ver el estado de tu pedido en cualquier momento desde tu cuenta en PAVOA.
+                      </p>
+                    </div>
+                  </td>
+                </tr>
+
+                <tr>
+                  <td align="center" style="padding:32px 40px 40px;background:#ffffff;border-top:1px solid ${EMAIL_COLOR_BORDER};">
+                    <img src="${LOGO_URL}" alt="PAVOA" width="72" style="display:block;margin:0 auto 16px;height:auto;opacity:0.4;" />
+                    <p style="font-size:9px;letter-spacing:0.2em;color:${EMAIL_COLOR_MUTED};text-transform:uppercase;margin:0;font-family:${EMAIL_FONT_UI};">
+                      © 2026 PAVOA. Todos los derechos reservados.
+                    </p>
+                  </td>
+                </tr>
+
               </table>
             </td>
           </tr>
-
-          <tr>
-            <td style="padding:36px 40px 8px;">
-              <p style="font-size:10px;letter-spacing:0.3em;color:#9ca3af;text-transform:uppercase;margin:0 0 12px 0;">${escapeHtml(subtitulo || "Actualización de envío")}</p>
-              <h1 style="font-size:22px;font-weight:300;color:#0B0B0B;letter-spacing:0.1em;text-transform:uppercase;margin:0 0 16px 0;">
-                Hola, ${escapeHtml(formatCustomerName(nombreCliente))}
-              </h1>
-              <p style="font-size:11px;letter-spacing:0.2em;color:#9ca3af;text-transform:uppercase;margin:0 0 16px 0;">Pedido ${escapeHtml(orderName)}</p>
-              <div style="width:32px;height:1px;background-color:#DFCDB4;margin-bottom:20px;"></div>
-              <p style="font-size:13px;color:#6b7280;line-height:1.8;margin:0;">${cuerpo}</p>
-            </td>
-          </tr>
-
-          <tr>
-            <td style="padding:28px 40px 0;">
-              <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#F2E4E1;padding:20px;">
-                <tr>
-                  <td>
-                    <p style="font-size:10px;letter-spacing:0.2em;color:#9ca3af;text-transform:uppercase;margin:0 0 6px 0;">Transportadora</p>
-                    <p style="font-size:15px;font-weight:600;color:#0B0B0B;letter-spacing:0.05em;margin:0;">${escapeHtml(trackingCompany || "Pendiente")}</p>
-                  </td>
-                </tr>
-                <tr>
-                  <td style="padding-top:16px;">
-                    <p style="font-size:10px;letter-spacing:0.2em;color:#9ca3af;text-transform:uppercase;margin:0 0 6px 0;">Número de guía</p>
-                    <p style="font-size:20px;font-weight:700;color:#0B0B0B;letter-spacing:0.1em;margin:0;">${escapeHtml(trackingNumber || "Pendiente")}</p>
-                  </td>
-                </tr>
-                ${trackingUrl ? `
-                <tr>
-                  <td style="padding-top:20px;">
-                    <a href="${trackingUrl}" style="display:inline-block;background-color:#0B0B0B;color:#ffffff;text-decoration:none;font-size:10px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;padding:12px 24px;">
-                      Rastrear pedido →
-                    </a>
-                  </td>
-                </tr>` : ""}
-              </table>
-            </td>
-          </tr>
-
-          <tr>
-            <td style="padding:28px 40px 0;">
-              <div style="border-top:1px solid #F2E4E1;padding-top:24px;">
-                <p style="font-size:13px;color:#6b7280;line-height:1.8;margin:0;">
-                  También puedes ver el estado de tu pedido en cualquier momento desde tu cuenta en PAVOA.
-                </p>
-              </div>
-            </td>
-          </tr>
-
-          <tr>
-            <td align="center" style="padding:32px 40px 40px;">
-              <div style="border-top:1px solid #F2E4E1;padding-top:28px;">
-                <img src="${LOGO_URL}" alt="PAVOA" width="72" style="display:block;margin:0 auto 16px;height:auto;opacity:0.4;" />
-                <p style="font-size:9px;letter-spacing:0.2em;color:#d1d5db;text-transform:uppercase;margin:0;">
-                  © 2026 PAVOA. Todos los derechos reservados.
-                </p>
-              </div>
-            </td>
-          </tr>
-
         </table>
       </td>
     </tr>
   </table>
 </body>
 </html>`;
+
 
 export const emailEntregado = ({ nombreCliente, orderName }) =>
   renderLayout({
@@ -769,7 +773,7 @@ export const emailPedidoCancelado = ({
     total
       ? {
           label: 'Total',
-          value: `<span style="font-size:20px;font-weight:600;font-family:${EMAIL_FONT_TITLE};">$${escapeHtml(total)}</span>`,
+          value: `<span style="font-size:20px;font-weight:600;font-family:${EMAIL_FONT_TITLE};">$${formatMoney(total)}</span>`,
         }
       : null,
     reasonLabel

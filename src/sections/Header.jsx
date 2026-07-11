@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useRef, useContext } from 'react';
+import { useState, useEffect, useRef, useContext } from 'react';
 import {
   Menu,
   User,
@@ -19,7 +19,7 @@ import SearchOverlay from './SearchOverlay';
 import MegaMenu from './header/MegaMenu';
 import AyudaMenu from './header/AyudaMenu';
 import MobileMenu from './header/MobileMenu';
-import { InstagramIcon, FacebookIcon } from '../components/Icons';
+import { InstagramIcon } from '../components/Icons';
 import { estaAutenticado, getCliente, cerrarSesion } from '../services/authService';
 import useSiteSettings from '../hooks/useSiteSettings';
 
@@ -270,15 +270,6 @@ const Header = () => {
               >
                 <InstagramIcon />
               </a>
-                <a
-                  href={settings.facebookUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="hover:text-stone-900 transition-colors"
-                aria-label="Síguenos en Facebook"
-              >
-                <FacebookIcon />
-              </a>
             </div>
 
             <div className="w-[1px] h-4 bg-stone-200 hidden sm:block" />
@@ -407,13 +398,18 @@ const Header = () => {
         </div>
       </header>
 
-      <MegaMenu catalogoOpen={catalogoOpen} setCatalogoOpen={setCatalogoOpen} isScrolled={isScrolled} panelRef={panelRef} />
+      <MegaMenu
+        catalogoOpen={catalogoOpen}
+        setCatalogoOpen={setCatalogoOpen}
+        isScrolled={isScrolled}
+        panelRef={panelRef}
+        megamenuConfig={settings.megamenuConfig}
+      />
       <AyudaMenu ayudaOpen={ayudaOpen} setAyudaOpen={setAyudaOpen} isScrolled={isScrolled} panelRef={ayudaPanelRef} />
       <MobileMenu
         menuOpen={menuOpen}
         setMenuOpen={setMenuOpen}
         instagramUrl={settings.instagramUrl}
-        facebookUrl={settings.facebookUrl}
       />
 
       <CartDrawer cartOpen={cartOpen} setCartOpen={setCartOpen} />

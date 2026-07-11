@@ -1,4 +1,4 @@
-﻿import React, { useState, useContext, useEffect } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { CartContext } from '../App';
 import { trackBeginCheckout } from '../lib/analytics';
@@ -222,8 +222,10 @@ export default function CheckoutPage() {
     barrio: '',
     referencia: '',
     horario: '',
+    observaciones: '',
   });
   const [shippingCost, setShippingCost] = useState(18900);
+  const [baseShippingCost, setBaseShippingCost] = useState(18900);
   const [touched, setTouched] = useState({});
 
   useEffect(() => {
@@ -249,7 +251,11 @@ export default function CheckoutPage() {
   }, []);
 
   useEffect(() => {
-    getShippingConfig().then(cfg => setShippingCost(cfg.precioEnvio)).catch(() => {});
+    getShippingConfig().then(cfg => {
+      const precio = cfg.precioEnvio || 18900;
+      setBaseShippingCost(precio);
+      setShippingCost(precio);
+    }).catch(() => {});
   }, []);
 
   const [cargandoPago, setCargandoPago] = useState(false);
@@ -550,6 +556,18 @@ export default function CheckoutPage() {
       general: '',
       [name]: touched[name] ? validateField(name, nextValue) : '',
     }));
+  };
+
+  // Cambio #7: Detectar ciudad Bogotá y ajustar costo de envío
+  const handleCiudadChange = (e) => {
+    handleChange(e);
+    const ciudad = String(e.target.value || '').trim().toLowerCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    if (ciudad === 'bogota') {
+      setShippingCost(10000);
+    } else {
+      setShippingCost(baseShippingCost);
+    }
   };
 
   const handleBlur = (e) => {
@@ -944,7 +962,7 @@ export default function CheckoutPage() {
                     label="Ciudad"
                     name="ciudad"
                     value={form.ciudad}
-                    onChange={handleChange}
+                    onChange={handleCiudadChange}
                     onBlur={handleBlur}
                     options={form.departamento ? (CIUDADES_POR_DEPARTAMENTO[form.departamento] || []) : []}
                     placeholder={form.departamento ? 'Selecciona la ciudad' : 'Primero elige departamento'}
@@ -978,6 +996,22 @@ export default function CheckoutPage() {
                   ))}
                 </div>
                 {errors.horario && <p className="text-[10px] text-red-400 mt-2 tracking-[0.1em]">{errors.horario}</p>}
+              </div>
+
+              {/* Cambio #9: Campo de Observaciones */}
+              <div className="flex flex-col gap-2">
+                <label className="text-[10px] font-bold tracking-[0.2em] text-stone-900 uppercase">
+                  Observaciones de entrega
+                  <span className="text-stone-400 font-normal ml-2">(opcional)</span>
+                </label>
+                <textarea
+                  name="observaciones"
+                  value={form.observaciones}
+                  onChange={handleChange}
+                  placeholder="Ej: Dejar con el portero, llamar antes de llegar, no doblar en el paquete..."
+                  rows={3}
+                  className="w-full border-b border-stone-200 focus:border-stone-900 outline-none py-3 text-[13px] text-stone-900 placeholder-stone-300 tracking-[0.05em] transition-colors bg-transparent resize-none"
+                />
               </div>
             </div>
 

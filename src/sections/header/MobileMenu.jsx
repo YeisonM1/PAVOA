@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { InstagramIcon, FacebookIcon } from '../../components/Icons';
+import { InstagramIcon } from '../../components/Icons';
 
 const hombreItems = ['Pantalonetas', 'Camisetas', 'Buzos', 'Joggers'];
 
@@ -8,7 +8,6 @@ export default function MobileMenu({
   menuOpen,
   setMenuOpen,
   instagramUrl = 'https://www.instagram.com/pavoacolombia/',
-  facebookUrl = 'https://facebook.com/pavoa',
 }) {
   const [mobileCatalogoOpen, setMobileCatalogoOpen] = useState(false);
   const [mobileAyudaOpen, setMobileAyudaOpen] = useState(false);
@@ -46,7 +45,6 @@ export default function MobileMenu({
         </nav>
         <div className="flex items-center gap-5 mt-10" style={{ color: 'var(--color-charcoal)' }}>
           <a href={instagramUrl} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--color-charcoal)' }} aria-label="Síguenos en Instagram"><InstagramIcon /></a>
-          <a href={facebookUrl} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--color-charcoal)' }} aria-label="Síguenos en Facebook"><FacebookIcon /></a>
         </div>
       </div>
 
