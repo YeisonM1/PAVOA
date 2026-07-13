@@ -275,8 +275,34 @@ export default async function handler(req, res) {
     }
 
     const appUrl = String(process.env.VITE_APP_URL || 'https://www.pavoa.com.co').replace(/\/$/, '');
-    const mockOrderName = '#PAVOA-1042';
-    const mockFirstName = 'Yeison';
+    const mockOrderName = '#PAVOA-TEST-1001';
+    const mockFirstName = 'Laura';
+    const mockAddress = {
+      direccion: 'Calle 134 # 19-45 Apto 604',
+      barrio: 'Cedritos',
+      ciudad: 'Bogota',
+      departamento: 'Cundinamarca',
+      telefono: '300 456 7890',
+      horario: 'Despues de las 2:00 p.m.',
+      referencia: 'Torre 2, porteria principal',
+      observaciones: 'Por favor llamar antes de entregar.',
+    };
+    const mockItems = [
+      {
+        title: 'Set Completo Aura',
+        variant_title: 'Negro / M',
+        quantity: '1',
+        price: '189900',
+        imagen: `${appUrl}/pavoa-mark.png`,
+      },
+      {
+        title: 'Top Movimiento Essential',
+        variant_title: 'Blanco / S',
+        quantity: '1',
+        price: '124900',
+        imagen: `${appUrl}/pavoa-mark.png`,
+      },
+    ];
 
     const SUBJECTS = {
       confirmacion: '[Preview] Confirmación de pedido',
@@ -289,35 +315,31 @@ export default async function handler(req, res) {
       'contacto-interno': '[Preview] Notificación interna de contacto',
     };
 
+    Object.assign(SUBJECTS, {
+      confirmacion: `[PRUEBA] Pedido confirmado ${mockOrderName} - PAVOA`,
+      despacho: `[PRUEBA] Tu pedido ${mockOrderName} va en camino - PAVOA`,
+      entregado: `[PRUEBA] Tu pedido ${mockOrderName} fue entregado - PAVOA`,
+      cancelado: `[PRUEBA] Tu pedido ${mockOrderName} fue cancelado - PAVOA`,
+      verificacion: '[PRUEBA] Verifica tu cuenta en PAVOA',
+      'reset-password': '[PRUEBA] Restablece tu contrasena - PAVOA',
+      'contacto-cliente': '[PRUEBA] Recibimos tu mensaje - PAVOA',
+      'contacto-interno': '[PRUEBA] Nuevo mensaje desde PAVOA',
+    });
+
     const buildPreviewHtml = (type) => {
       switch (type) {
         case 'confirmacion':
           return emailConfirmacion({
             firstName: mockFirstName,
             orderName: mockOrderName,
-            paymentId: 'MP-123456789',
-            lineItems: [
-              {
-                title: 'Vestido Siena',
-                variant_title: 'Negro / S',
-                quantity: '1',
-                price: '189900',
-                imagen: `${appUrl}/pavoa-mark.png`,
-                detalles: 'Corte ergonómico; Pretina de soporte; Acabado premium',
-              },
-              {
-                title: 'Blusa Alma',
-                variant_title: 'Marfil / M',
-                quantity: '2',
-                price: '124900',
-                imagen: `${appUrl}/pavoa-mark.png`,
-                detalles: 'Tejido suave; Ajuste ligero',
-              },
-            ],
-            total: '439700',
-            totalOriginal: '499700',
+            paymentId: 'MP-TEST-984512367',
+            lineItems: mockItems,
+            total: '324800',
+            totalOriginal: '360900',
             descuentoAplicado: true,
-            direccion: 'Calle 10 # 43-25, Apto 302, Medellín, Antioquia',
+            direccion: mockAddress,
+            tipoPago: 'mercadopago',
+            envio: '10000',
           });
         case 'despacho':
           return emailDespacho({
@@ -326,8 +348,8 @@ export default async function handler(req, res) {
             subtitulo: 'Actualización de envío',
             cuerpo: 'Tu pedido ya salió de nuestras instalaciones y está en camino. Puedes rastrearlo con la guía a continuación.',
             trackingCompany: 'Coordinadora',
-            trackingNumber: 'CRD-9876543210',
-            trackingUrl: 'https://coordinadora.com/rastreo?guia=CRD-9876543210',
+            trackingNumber: 'CRD-TEST-987654',
+            trackingUrl: 'https://www.coordinadora.com/portafolio-de-servicios/servicios-en-linea/rastrear-guias/',
           });
         case 'entregado':
           return emailEntregado({ nombreCliente: mockFirstName, orderName: mockOrderName });
@@ -335,8 +357,8 @@ export default async function handler(req, res) {
           return emailPedidoCancelado({
             nombreCliente: mockFirstName,
             orderName: mockOrderName,
-            lineItems: [{ title: 'Vestido Siena', variant_title: 'Negro / S', quantity: '1', price: '189900' }],
-            total: '189900',
+            lineItems: mockItems,
+            total: '324800',
             cancelReason: 'Solicitud del cliente',
             refundStatus: 'refunded',
           });
@@ -351,13 +373,13 @@ export default async function handler(req, res) {
             resetLink: `${appUrl}/reset-password?token=PREVIEW_TOKEN_DEMO`,
           });
         case 'contacto-cliente':
-          return emailContactoCliente({ nombre: mockFirstName, asunto: 'Consulta sobre disponibilidad' });
+          return emailContactoCliente({ nombre: mockFirstName, asunto: 'Consulta sobre disponibilidad de set completo' });
         case 'contacto-interno':
           return emailContactoInterno({
-            nombre: 'Valentina Rios',
-            contacto: 'valentina@ejemplo.com',
-            asunto: 'Quiero saber si tienen talla S',
-            mensaje: 'Hola, me interesa el Vestido Siena en talla S color negro. Esta disponible para la proxima semana?',
+            nombre: 'Laura Martinez',
+            contacto: 'laura.martinez@example.com',
+            asunto: 'Consulta sobre Set Completo Aura',
+            mensaje: 'Hola, quisiera confirmar disponibilidad del Set Completo Aura en color negro talla M y saber si alcanza a llegar a Bogota esta semana.',
           });
         default:
           return null;
