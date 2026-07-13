@@ -27,6 +27,7 @@ export default function ProductPage() {
   const [loading, setLoading]                 = useState(true);
   const [tallaSeleccionada, setTallaSeleccionada] = useState(null);
   const [colorSeleccionado, setColorSeleccionado] = useState(null);
+  const [colorGaleria, setColorGaleria]           = useState(null);
   const [cantidad, setCantidad]               = useState(1);
   const [adding, setAdding]                   = useState(false);
   const [openAccordion, setOpenAccordion]     = useState('detalles');
@@ -77,11 +78,11 @@ export default function ProductPage() {
   // ── Derived data ──
   const imagenes = useMemo(() => {
     if (!producto) return [];
-    if (colorSeleccionado && producto.imagesByColor?.[colorSeleccionado]?.length > 0) {
-      return producto.imagesByColor[colorSeleccionado];
+    if (colorGaleria && producto.imagesByColor?.[colorGaleria]?.length > 0) {
+      return producto.imagesByColor[colorGaleria];
     }
     return [producto.imagen1, producto.imagen2, producto.imagen3, producto.imagen4, producto.imagen5].filter(Boolean);
-  }, [producto, colorSeleccionado]);
+  }, [producto, colorGaleria]);
 
   const variantes = useMemo(() => {
     if (!producto?.variantes) return [];
@@ -112,9 +113,14 @@ export default function ProductPage() {
     return variantes.find(v => v.color === colorSeleccionado && v.talla === tallaSeleccionada) || null;
   }, [variantes, colorSeleccionado, tallaSeleccionada]);
 
-  const precioTextoActual = varianteSeleccionada?.precio || producto?.precio || '';
+  const varianteParaPrecio = useMemo(() => {
+    if (!colorSeleccionado) return null;
+    return varianteSeleccionada || variantes.find(v => v.color === colorSeleccionado) || null;
+  }, [variantes, colorSeleccionado, varianteSeleccionada]);
+
+  const precioTextoActual = varianteParaPrecio?.precio || producto?.precio || '';
   const compareAtPrecioTextoActual =
-    varianteSeleccionada?.compareAtPrecio || producto?.compareAtPrecio || '';
+    varianteParaPrecio?.compareAtPrecio || producto?.compareAtPrecio || '';
 
   const esTallaUnica   = tallasDisponibles.length === 1 && tallasDisponibles[0]?.talla === 'ÚNICA';
   const tieneVariantes = variantes.length > 0;
@@ -122,7 +128,11 @@ export default function ProductPage() {
 
   // ── Effects ──
   useEffect(() => { if (esTallaUnica && colorSeleccionado) setTallaSeleccionada('ÚNICA'); }, [esTallaUnica, colorSeleccionado]);
-  useEffect(() => { setSelectedImage(0); setIsLightboxOpen(false); }, [id]);
+  useEffect(() => {
+    setSelectedImage(0);
+    setColorGaleria(null);
+    setIsLightboxOpen(false);
+  }, [id]);
 
   useEffect(() => {
     if (!producto || imagenes.length <= 1) return;
@@ -166,8 +176,21 @@ export default function ProductPage() {
 
   // ── Handlers ──
   const handleCantidadBloqueada = () => { setShowCantidadHint(true); setTimeout(() => setShowCantidadHint(false), 2500); };
+  const applyVariantColor = (color) => {
+    setColorSeleccionado(color);
+    setTallaSeleccionada((currentSize) => {
+      if (!color || !currentSize) return color ? currentSize : null;
+      const colorVariants = variantes.filter(v => v.color === color);
+      if (colorVariants.some(v => v.talla === currentSize)) return currentSize;
+      return colorVariants.find(v => (v.stock ?? 0) > 0)?.talla || colorVariants[0]?.talla || null;
+    });
+    setCantidad(1);
+    setAlertSent(false);
+    setAlertError('');
+  };
+
   const handleColorSelect = (color) => {
-    const nextColor = colorSeleccionado === color ? null : color;
+    const nextColor = colorSeleccionado === color && colorGaleria === color ? null : color;
     if (nextColor && producto) {
       trackFunnelEvent('select_color', {
         productId: producto.id,
@@ -176,18 +199,26 @@ export default function ProductPage() {
         amount: producto.precioNumerico || 0,
       });
     }
-    setColorSeleccionado(nextColor);
+    applyVariantColor(nextColor);
+    setColorGaleria(nextColor);
     setSelectedImage(0);
-    setTallaSeleccionada(null);
-    setCantidad(1);
-    setAlertSent(false);
-    setAlertError('');
   };
   const incrementar = () => { if (!puedeSeleccionarCantidad) { handleCantidadBloqueada(); return; } setCantidad(c => stockActual !== null ? Math.min(c + 1, stockActual) : c + 1); };
   const decrementar = () => { if (!puedeSeleccionarCantidad) return; setCantidad(c => Math.max(1, c - 1)); };
   const toggleAccordion = (s) => setOpenAccordion(openAccordion === s ? null : s);
 
   const handleSelectImage = (i) => {
+    const imageUrl = imagenes[i];
+    const imageColor = imageUrl && producto?.imagesByColor
+      ? Object.keys(producto.imagesByColor).find((color) =>
+          producto.imagesByColor[color].includes(imageUrl)
+        )
+      : null;
+
+    if (imageColor && imageColor !== colorSeleccionado) {
+      applyVariantColor(imageColor);
+    }
+
     if (i === selectedImage) return;
 
     setIsTransitioning(true);
@@ -209,7 +240,13 @@ export default function ProductPage() {
     const tallaFinal = esTallaUnica ? 'ÚNICA' : tallaSeleccionada;
     const varianteElegida = variantes.find(v => v.color === colorSeleccionado && v.talla === tallaFinal);
     addToCart({ ...producto, colorSeleccionado, selectedVariantId: varianteElegida?.variantId || null }, tallaFinal, cantidad);
-    setTimeout(() => { setAdding(false); setTallaSeleccionada(null); setColorSeleccionado(null); setCantidad(1); }, 1000);
+    setTimeout(() => {
+      setAdding(false);
+      setTallaSeleccionada(null);
+      setColorSeleccionado(null);
+      setColorGaleria(null);
+      setCantidad(1);
+    }, 1000);
   };
 
   const handleStockAlert = async () => {
@@ -319,7 +356,7 @@ export default function ProductPage() {
       )}
 
       <div className="flex flex-col md:flex-row max-w-[1600px] mx-auto pt-[115px] md:pt-[120px]">
-        <ProductGallery imagenes={imagenes} selectedImage={selectedImage} onSelectImage={handleSelectImage} onOpenLightbox={() => setIsLightboxOpen(true)} producto={producto} isTransitioning={isTransitioning} colorKey={colorSeleccionado} />
+        <ProductGallery imagenes={imagenes} selectedImage={selectedImage} onSelectImage={handleSelectImage} onOpenLightbox={() => setIsLightboxOpen(true)} producto={producto} isTransitioning={isTransitioning} colorKey={colorGaleria} />
 
         <div className="w-full md:w-2/5 px-6 py-8 md:px-10 md:py-6 xl:px-16 xl:py-16 relative">
           <div className="md:sticky md:top-[120px] xl:top-[160px]">
