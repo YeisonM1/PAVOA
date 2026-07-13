@@ -190,22 +190,6 @@ export default function ProductPage() {
   const handleSelectImage = (i) => {
     if (i === selectedImage) return;
 
-    // Detectar si la imagen pertenece a un color diferente al actual
-    if (producto?.imagesByColor) {
-      const imagenUrl = imagenes[i];
-      if (imagenUrl) {
-        const colorDeLaImagen = Object.keys(producto.imagesByColor).find((color) =>
-          producto.imagesByColor[color].includes(imagenUrl)
-        );
-        if (colorDeLaImagen && colorDeLaImagen !== colorSeleccionado) {
-          // Activar el color correspondiente a la imagen seleccionada
-          setColorSeleccionado(colorDeLaImagen);
-          setTallaSeleccionada(null);
-          setCantidad(1);
-        }
-      }
-    }
-
     setIsTransitioning(true);
     setTimeout(() => { setSelectedImage(i); setIsTransitioning(false); }, 300);
   };
