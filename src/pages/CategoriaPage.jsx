@@ -94,7 +94,8 @@ export default function CategoriaPage() {
         setDataHeader(infoCategoria || {
           titulo1: 'Cole', titulo2: 'cciones',
           desc: 'Descubre nuestra línea completa.',
-          heroImage: 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=1600&q=80'
+          heroImage: 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=1600&q=80',
+          mobileHeroImage: ''
         });
       } catch {
         if (!cancelled) setProductosDB([]);
@@ -191,20 +192,24 @@ export default function CategoriaPage() {
       />
 
       <section className="relative w-full h-[60vh] md:h-[70vh] flex items-end justify-center pb-16 md:pb-24 overflow-hidden">
-        <img
-          key={dataHeader.heroImage}
-          src={heroImage(dataHeader.heroImage)}
-          alt={dataHeader.titulo1 + dataHeader.titulo2}
-          width={1600}
-          height={900}
-          className="absolute inset-0 w-full h-full object-cover animate-fade-in"
-        />
+        <picture key={`${dataHeader.heroImage}-${dataHeader.mobileHeroImage || ''}`} className="absolute inset-0 w-full h-full">
+          {dataHeader.mobileHeroImage && (
+            <source media="(max-width: 767px)" srcSet={heroImage(dataHeader.mobileHeroImage)} />
+          )}
+          <img
+            src={heroImage(dataHeader.heroImage)}
+            alt={dataHeader.titulo1 + dataHeader.titulo2}
+            width={1600}
+            height={900}
+            className="absolute inset-0 w-full h-full object-cover animate-fade-in"
+          />
+        </picture>
         <div className="absolute inset-0 bg-black/40" />
         <div className="relative z-10 text-center px-6">
           <nav className="mb-4">
             <span className="text-[10px] tracking-[0.2em] text-white/70 uppercase">
               <Link to="/" className="hover:text-white transition-colors">Inicio</Link>
-              <span className="mx-2">/</span> Colecciones
+              <span className="mx-2">/</span> {dataHeader.titulo1}{dataHeader.titulo2}
             </span>
           </nav>
           <h1 className="text-3xl md:text-5xl font-light text-white tracking-[0.2em] uppercase mb-4">

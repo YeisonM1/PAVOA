@@ -1,6 +1,11 @@
 const SHOPIFY_DOMAIN   = import.meta.env.VITE_SHOPIFY_DOMAIN;
 const SHOPIFY_TOKEN    = import.meta.env.VITE_SHOPIFY_TOKEN;
 const SHOPIFY_ENDPOINT = `https://${SHOPIFY_DOMAIN}/api/2026-04/graphql.json`;
+const normalizeCatalogHeaderSlug = (value) => {
+  let decoded = String(value || '').trim();
+  try { decoded = decodeURIComponent(decoded); } catch { /* Keep the original value. */ }
+  return decoded.toLowerCase().replace(/[-_]+/g, ' ').replace(/\s+/g, ' ').trim();
+};
 const HOME_PRODUCT_TAB_KEYS = ['nuevo', 'bestseller', 'tendencia'];
 const HOME_PRODUCT_TAG_LABELS = {
   nuevo: 'NUEVO',
@@ -38,6 +43,7 @@ export const SITE_SETTINGS_DEFAULTS = {
   instagramUrl: 'https://www.instagram.com/pavoacolombia/',
   facebookUrl: 'https://facebook.com/pavoa',
   whatsappNumber: import.meta.env.VITE_WHATSAPP_NUMBER || '',
+  catalogHeaders: {},
   megamenuConfig: {
     images: {
       'Camisetas':        'https://images.unsplash.com/photo-1523381210434-271e8be1f52b?w=800&q=80',
@@ -772,12 +778,26 @@ export const getProductoById = (handle) => {
 
 // Trae info del banner de categoría desde Shopify
 export const getCategoriaById = (id) => {
-  const cacheKey = `categoria-${id}`;
+  const normalizedId = normalizeCatalogHeaderSlug(id) || 'default';
+  const cacheKey = `categoria-${normalizedId}`;
   const cached = getCached(cacheKey);
   if (cached) return cached;
 
   const promise = (async () => {
     try {
+      const settings = await getSiteSettings();
+      const configuredHeader = settings.catalogHeaders?.[normalizedId];
+      if (configuredHeader) {
+        return {
+          id: normalizedId,
+          titulo1: configuredHeader.title || '',
+          titulo2: '',
+          desc: configuredHeader.description || '',
+          heroImage: configuredHeader.imageUrl || '',
+          mobileHeroImage: configuredHeader.mobileImageUrl || '',
+        };
+      }
+
       const data = await shopifyFetch(`
         query($handle: String!) {
           collection(handle: $handle) {
@@ -786,20 +806,21 @@ export const getCategoriaById = (id) => {
             image { url }
           }
         }
-      `, { handle: id });
+      `, { handle: normalizedId.replace(/\s+/g, '-') });
 
       if (!data.collection) return null;
 
       const c = data.collection;
       return {
-        id,
+        id: normalizedId,
         titulo1: c.title,
         titulo2: '',
         desc:    c.description,
         heroImage: c.image?.url || '',
+        mobileHeroImage: '',
       };
     } catch (err) {
-      console.error(`Error getCategoriaById ${id}:`, err);
+      console.error(`Error getCategoriaById ${normalizedId}:`, err);
       return null;
     }
   })();
@@ -1115,6 +1136,21 @@ export const getSiteSettings = () => {
         }
       }
 
+      let parsedCatalogHeaders = SITE_SETTINGS_DEFAULTS.catalogHeaders;
+      const rawCatalogHeaders = get('catalog_headers');
+      if (rawCatalogHeaders) {
+        try {
+          const parsed = JSON.parse(rawCatalogHeaders);
+          if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+            parsedCatalogHeaders = Object.fromEntries(
+              Object.entries(parsed).map(([slug, header]) => [normalizeCatalogHeaderSlug(slug), header])
+            );
+          }
+        } catch (e) {
+          console.error('Error parsing catalog_headers:', e);
+        }
+      }
+
       return {
         contactEmail: normalizeContactEmail(get('contact_email') || SITE_SETTINGS_DEFAULTS.contactEmail),
         contactSchedule: get('contact_schedule') || SITE_SETTINGS_DEFAULTS.contactSchedule,
@@ -1123,6 +1159,7 @@ export const getSiteSettings = () => {
         instagramUrl: get('instagram_url') || SITE_SETTINGS_DEFAULTS.instagramUrl,
         facebookUrl: get('facebook_url') || SITE_SETTINGS_DEFAULTS.facebookUrl,
         whatsappNumber: get('whatsapp_number') || SITE_SETTINGS_DEFAULTS.whatsappNumber,
+        catalogHeaders: parsedCatalogHeaders,
         megamenuConfig: parsedMegamenu,
       };
     } catch (err) {
