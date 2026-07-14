@@ -1,0 +1,47 @@
+import assert from 'node:assert/strict';
+import test from 'node:test';
+
+import { emailConfirmacion, formatMoney } from './email-templates.js';
+import { resolveFinalOrderAmounts } from './order-amounts.js';
+
+test('formatMoney preserves raw and localized COP amounts', () => {
+  assert.equal(formatMoney(18900), '18.900');
+  assert.equal(formatMoney('18900.00'), '18.900');
+  assert.equal(formatMoney('18.900'), '18.900');
+  assert.equal(formatMoney('$40.000'), '40.000');
+});
+
+test('cash on delivery email shows consistent product, shipping and total values', () => {
+  const html = emailConfirmacion({
+    firstName: 'Laura',
+    orderName: '#1063',
+    lineItems: [{ title: 'BODY MIST', quantity: 1, price: '40000.00' }],
+    total: 58900,
+    descuentoAplicado: false,
+    tipoPago: 'contraentrega',
+    envio: 18900,
+  });
+
+  assert.match(html, /\$40\.000/);
+  assert.match(html, /\$18\.900/);
+  assert.match(html, /\$58\.900/);
+  assert.doesNotMatch(html, /\$18,9/);
+  assert.doesNotMatch(html, /\$58,9/);
+});
+
+test('cash on delivery trusts final Shopify amounts over a stale browser cart', () => {
+  const amounts = resolveFinalOrderAmounts({
+    shopifyOrder: {
+      total_price: '58900.00',
+      shipping_lines: [{ price: '18900.00' }],
+    },
+    cartTotal: 25000,
+    shippingCost: 18900,
+  });
+
+  assert.deepEqual(amounts, {
+    subtotal: 40000,
+    shippingCost: 18900,
+    total: 58900,
+  });
+});

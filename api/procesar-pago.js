@@ -5,6 +5,7 @@ import { validateCartWithShopify } from './_helpers/cart-validation.js';
 import { verifyToken } from './_helpers/auth.js';
 import { trackFunnelEvent } from './_helpers/funnel.js';
 import { supabase, getSupabaseMode } from './_helpers/supabase.js';
+import { resolveFinalOrderAmounts } from './_helpers/order-amounts.js';
 
 const client = new mercadopago.MercadoPagoConfig({
   accessToken: process.env.MP_ACCESS_TOKEN,
@@ -724,7 +725,11 @@ export default async function handler(req, res) {
       const nombre = addr
         ? `${addr.first_name || ''} ${addr.last_name || ''}`.trim()
         : (form?.nombre || '');
-      const totalConEnvio = (Number(cartTotal) || 0) + Math.max(0, Number(shippingCost) || 0);
+      const {
+        subtotal: finalSubtotal,
+        total: totalConEnvio,
+        shippingCost: finalShippingCost,
+      } = resolveFinalOrderAmounts({ shopifyOrder, cartTotal, shippingCost });
 
       const itemsFinales = shopifyOrder?.line_items
         ? shopifyOrder.line_items.map((i, idx) => {
@@ -801,7 +806,7 @@ export default async function handler(req, res) {
           totalConEnvio,
           false,
           'contraentrega',
-          Math.max(0, Number(shippingCost) || 0),
+          finalShippingCost,
         );
       } catch (emailErr) {
         console.error('Email COD no enviado:', emailErr.message);
@@ -823,6 +828,8 @@ export default async function handler(req, res) {
         shopify_order_id: String(shopifyOrderId || ''),
         nombre,
         email: emailCliente,
+        subtotal: finalSubtotal,
+        shippingCost: finalShippingCost,
         total: totalConEnvio,
       });
     } catch (err) {

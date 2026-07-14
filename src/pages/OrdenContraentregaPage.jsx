@@ -49,8 +49,10 @@ export default function OrdenContraentregaPage() {
     );
   }
 
-  const { items = [], total, email, nombre, orderName } = orderData;
+  const { items = [], subtotal, shippingCost, total, email, nombre, orderName } = orderData;
   const firstName = formatCustomerName(nombre?.split(' ')[0]);
+  const hasSubtotal = Number.isFinite(Number(subtotal));
+  const hasShippingCost = Number.isFinite(Number(shippingCost));
 
   return (
     <div className="min-h-screen bg-white pt-[88px] md:pt-[104px]">
@@ -120,12 +122,30 @@ export default function OrdenContraentregaPage() {
               ))}
             </div>
 
-            {total && (
-              <div className="flex justify-between items-center pt-5">
-                <span className="text-[10px] font-bold tracking-[0.2em] text-stone-900 uppercase">Total a pagar</span>
-                <span className="text-[18px] font-bold text-stone-900">
-                  ${Number(total).toLocaleString('es-CO')}
-                </span>
+            {total != null && (
+              <div className="flex flex-col gap-2 pt-5">
+                {hasSubtotal && (
+                  <div className="flex justify-between items-center">
+                    <span className="text-[10px] tracking-[0.15em] text-stone-500 uppercase">Subtotal</span>
+                    <span className="text-[12px] text-stone-700">
+                      ${Number(subtotal).toLocaleString('es-CO')}
+                    </span>
+                  </div>
+                )}
+                {hasShippingCost && (
+                  <div className="flex justify-between items-center">
+                    <span className="text-[10px] tracking-[0.15em] text-stone-500 uppercase">Envío</span>
+                    <span className="text-[12px] text-stone-700">
+                      ${Number(shippingCost).toLocaleString('es-CO')}
+                    </span>
+                  </div>
+                )}
+                <div className="flex justify-between items-center border-t border-stone-100 pt-3 mt-1">
+                  <span className="text-[10px] font-bold tracking-[0.2em] text-stone-900 uppercase">Total a pagar</span>
+                  <span className="text-[18px] font-bold text-stone-900">
+                    ${Number(total).toLocaleString('es-CO')}
+                  </span>
+                </div>
               </div>
             )}
           </div>

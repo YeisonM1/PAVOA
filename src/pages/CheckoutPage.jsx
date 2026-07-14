@@ -832,6 +832,16 @@ export default function CheckoutPage() {
         return;
       }
 
+      const finalShippingCost = Number.isFinite(Number(dataCod.shippingCost))
+        ? Number(dataCod.shippingCost)
+        : shippingCost;
+      const finalTotal = Number.isFinite(Number(dataCod.total))
+        ? Number(dataCod.total)
+        : cartTotal + finalShippingCost;
+      const finalSubtotal = Number.isFinite(Number(dataCod.subtotal))
+        ? Number(dataCod.subtotal)
+        : Math.max(0, finalTotal - finalShippingCost);
+
       sessionStorage.setItem('pavoa-pending-order-cod', JSON.stringify({
         items: cartItems.map(item => ({
           nombre:   item.producto.nombre,
@@ -841,7 +851,9 @@ export default function CheckoutPage() {
           precio:   item.producto.precio,
           imagen:   item.producto.imagen1,
         })),
-        total:     cartTotal + shippingCost,
+        subtotal:  finalSubtotal,
+        shippingCost: finalShippingCost,
+        total:     finalTotal,
         email:     form.email,
         nombre:    form.nombre,
         orderName: dataCod.orderName || '',

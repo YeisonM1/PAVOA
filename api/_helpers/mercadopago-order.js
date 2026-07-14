@@ -148,9 +148,9 @@ export const enviarEmailConfirmacion = async (order, paymentId, totalReal, descu
   const firstName = order.shipping_address?.first_name || order.customer?.first_name || 'Cliente';
   const orderName = order.name || `#${order.order_number}`;
   const totalNum = Number(totalReal || order.total_price);
-  const total = totalNum.toLocaleString('es-CO');
+  const total = Number.isFinite(totalNum) ? totalNum : 0;
   const totalOriginal = descuentoAplicado
-    ? Math.round(totalNum / 0.9).toLocaleString('es-CO')
+    ? Math.round(total / 0.9)
     : null;
   // Cambio #9: Dirección estructurada completa (objeto para el template)
   const notaAtributos = order.note ? Object.fromEntries(
@@ -170,7 +170,7 @@ export const enviarEmailConfirmacion = async (order, paymentId, totalReal, descu
     referencia: notaAtributos['punto de referencia'] || '',
     observaciones: notaAtributos['observaciones'] || '',
   } : '';
-  const envio = Number(shippingCost) > 0 ? Number(shippingCost).toLocaleString('es-CO') : null;
+  const envio = Number(shippingCost) > 0 ? Number(shippingCost) : null;
 
   await sendTransactionalEmail({
     from: 'PAVOA <onboarding@resend.dev>',

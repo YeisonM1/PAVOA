@@ -41,11 +41,30 @@ const formatCustomerName = (value, fallback = "Cliente") => {
     .join(" ");
 };
 
-const formatMoney = (value) => {
-  const numeric =
-    typeof value === "number"
-      ? value
-      : Number(String(value || "").replace(/[^\d.-]/g, ""));
+const parseMoney = (value) => {
+  if (typeof value === "number") return value;
+
+  const normalized = String(value || "")
+    .trim()
+    .replace(/[^\d,.-]/g, "");
+
+  if (!normalized) return 0;
+
+  // Accept both raw API decimals ("40000.00") and already localized COP
+  // amounts ("40.000") without turning thousands into decimal values.
+  if (/^-?\d{1,3}(?:[.,]\d{3})+$/.test(normalized)) {
+    return Number(normalized.replace(/[.,]/g, ""));
+  }
+
+  if (/^-?\d+[.,]\d{1,2}$/.test(normalized)) {
+    return Number(normalized.replace(",", "."));
+  }
+
+  return Number(normalized.replace(/[.,]/g, ""));
+};
+
+export const formatMoney = (value) => {
+  const numeric = parseMoney(value);
   return (Number.isFinite(numeric) ? numeric : 0).toLocaleString("es-CO");
 };
 
