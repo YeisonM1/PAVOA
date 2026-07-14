@@ -19,12 +19,14 @@ import SearchOverlay from './SearchOverlay';
 import MegaMenu from './header/MegaMenu';
 import AyudaMenu from './header/AyudaMenu';
 import MobileMenu from './header/MobileMenu';
-import { InstagramIcon } from '../components/Icons';
+import { InstagramIcon, WhatsAppIcon } from '../components/Icons';
 import { estaAutenticado, getCliente, cerrarSesion } from '../services/authService';
 import useSiteSettings from '../hooks/useSiteSettings';
+import { buildWhatsAppUrl } from '../utils/whatsapp';
 
 const Header = () => {
   const settings = useSiteSettings();
+  const whatsappUrl = buildWhatsAppUrl(settings.whatsappNumber);
   const { cartCount, isCartAnimating } = useContext(CartContext);
   const [cartOpen, setCartOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -270,6 +272,17 @@ const Header = () => {
               >
                 <InstagramIcon />
               </a>
+              {whatsappUrl && (
+                <a
+                  href={whatsappUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-stone-900 transition-colors"
+                  aria-label="Escríbenos por WhatsApp"
+                >
+                  <WhatsAppIcon />
+                </a>
+              )}
             </div>
 
             <div className="w-[1px] h-4 bg-stone-200 hidden sm:block" />
@@ -410,6 +423,7 @@ const Header = () => {
         menuOpen={menuOpen}
         setMenuOpen={setMenuOpen}
         instagramUrl={settings.instagramUrl}
+        whatsappNumber={settings.whatsappNumber}
       />
 
       <CartDrawer cartOpen={cartOpen} setCartOpen={setCartOpen} />

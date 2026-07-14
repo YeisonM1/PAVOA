@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import logo from '../assets/LOGO-PAVOA.svg';
-import { InstagramIcon } from '../components/Icons';
+import { InstagramIcon, WhatsAppIcon } from '../components/Icons';
 import { FOOTER_CONTENT_DEFAULTS, getFooterContent, suscribirNewsletter } from '../services/productService';
 import useSiteSettings from '../hooks/useSiteSettings';
+import { buildWhatsAppUrl } from '../utils/whatsapp';
 
 export default function Footer() {
   const settings = useSiteSettings();
+  const whatsappUrl = buildWhatsAppUrl(settings.whatsappNumber);
   const [content, setContent] = useState(FOOTER_CONTENT_DEFAULTS);
   const [email, setEmail] = useState('');
   const [subscribed, setSubscribed] = useState(false);
@@ -114,6 +116,9 @@ export default function Footer() {
           </p>
           <div className="flex items-center gap-4">
             <a href={settings.instagramUrl} target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors" aria-label="Síguenos en Instagram"><InstagramIcon /></a>
+            {whatsappUrl && (
+              <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors" aria-label="Escríbenos por WhatsApp"><WhatsAppIcon /></a>
+            )}
           </div>
         </div>
 
