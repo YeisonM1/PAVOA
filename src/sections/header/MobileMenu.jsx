@@ -74,6 +74,13 @@ export default function MobileMenu({
 
         {mobileTab === 'mujer' && (
           <div className="flex flex-col gap-6 animate-fade-in">
+            <Link
+              to="/categoria/mujer"
+              onClick={() => { setMenuOpen(false); window.scrollTo(0, 0); }}
+              className="block py-3 px-2 text-[12px] font-semibold tracking-[0.15em] text-stone-900 border-b border-stone-200"
+            >
+              VER TODO
+            </Link>
             <div>
               <p style={{ fontSize: 8.5, fontWeight: 600, letterSpacing: '0.28em', color: 'var(--color-gold)', marginBottom: 8, paddingLeft: 8 }}>SUPERIOR</p>
               <div className="flex flex-col gap-1">

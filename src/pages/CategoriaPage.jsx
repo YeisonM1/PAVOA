@@ -9,6 +9,20 @@ import SEO from '../components/SEO';
 import { heroImage } from '../utils/imageUrl';
 
 const CATEGORY_GROUPS = {
+  mujer: {
+    categorias: ['camisetas', 'tops deportivos', 'buzos', 'chaquetas', 'bodies', 'enterizos', 'licras', 'shorts', 'faldas', 'sudaderas', 'bikers', 'pantalonetas', 'sets', 'vestidos', 'accesorios'],
+    gender: 'mujer',
+    header: {
+      titulo1: 'Mu',
+      titulo2: 'jer',
+      desc: 'Descubre todas las prendas de nuestra línea para mujer.',
+      heroImage: 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=1600&q=80',
+    },
+  },
+  hombre: {
+    categorias: ['pantalonetas', 'camisetas', 'buzos', 'joggers'],
+    gender: 'hombre',
+  },
   superior: {
     categorias: ['tops deportivos', 'camisetas'],
     header: {
@@ -27,6 +41,22 @@ const CATEGORY_GROUPS = {
       heroImage: 'https://images.unsplash.com/photo-1538805060514-97d9cc17730c?w=1600&q=80',
     },
   },
+};
+
+const normalizeTag = (value) => String(value || '')
+  .normalize('NFD')
+  .replace(/[\u0300-\u036f]/g, '')
+  .toLowerCase()
+  .trim();
+
+const productMatchesGender = (product, gender) => {
+  const tags = new Set((Array.isArray(product.tags) ? product.tags : []).map(normalizeTag));
+  const isMale = tags.has('hombre') || tags.has('masculino');
+  const isFemale = tags.has('mujer') || tags.has('femenino');
+  const isUnisex = tags.has('unisex');
+
+  if (gender === 'hombre') return isMale || isUnisex;
+  return isFemale || isUnisex || !isMale;
 };
 
 const parseVariantes = (raw) => {
@@ -82,6 +112,7 @@ export default function CategoriaPage() {
               const categoria = p.categoria?.toLowerCase().trim() || '';
               return groupedCategory
                 ? groupedCategory.categorias.includes(categoria)
+                  && (!groupedCategory.gender || productMatchesGender(p, groupedCategory.gender))
                 : categoria === categoriaIdBusqueda;
             })
           : todosLosProductos;

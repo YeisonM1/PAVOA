@@ -87,6 +87,13 @@ export default function MegaMenu({ catalogoOpen, setCatalogoOpen, isScrolled, pa
           {/* MUJER */}
           <div style={{ paddingRight: 48 }}>
             <h2 className="text-stone-700 text-[15px] font-bold tracking-[0.32em] mb-6 block whitespace-nowrap">MUJER</h2>
+            <Link
+              to="/categoria/mujer"
+              onClick={() => { setCatalogoOpen(false); window.scrollTo(0, 0); }}
+              className="inline-block text-[10.5px] font-semibold tracking-[0.18em] text-stone-700 hover:text-black transition-colors mb-4"
+            >
+              VER TODO
+            </Link>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               {megamenuConfig?.mujerSuperior?.length > 0 && (
                 <div>
