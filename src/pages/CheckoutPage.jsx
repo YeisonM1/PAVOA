@@ -89,15 +89,16 @@ const clearCheckoutSession = () => {
   } catch {}
 };
 
-const limpiarDraftPendiente = async (draftOrderId) => {
+const limpiarDraftPendiente = async (draftOrderId, checkoutToken) => {
   const id = String(draftOrderId || '').trim();
-  if (!id) return false;
+  const accessToken = String(checkoutToken || '').trim();
+  if (!id || !accessToken) return false;
 
   try {
     const res = await fetch('/api/procesar-pago', {
       method: 'POST',
       headers: getJsonHeaders(),
-      body: JSON.stringify({ type: 'cancel-draft-order', draftOrderId: id }),
+      body: JSON.stringify({ type: 'cancel-draft-order', draftOrderId: id, checkoutToken: accessToken }),
     });
     const data = await res.json().catch(() => null);
     if (!res.ok || !data?.ok) {
@@ -366,6 +367,7 @@ export default function CheckoutPage() {
       const checkoutSession = readCheckoutSession();
       if (!checkoutSession) return;
       const storedDraftOrderId = String(checkoutSession?.draftOrderId || '').trim();
+      const storedCheckoutToken = String(checkoutSession?.checkoutToken || '').trim();
       const storedCartHash = String(checkoutSession?.cartHash || '').trim();
       const storedTs = Number(checkoutSession?.ts || 0);
       const isExpired = !storedTs || (Date.now() - storedTs > CHECKOUT_SESSION_MAX_AGE_MS);
@@ -381,7 +383,7 @@ export default function CheckoutPage() {
       }
 
       if (storedDraftOrderId) {
-        limpiarDraftPendiente(storedDraftOrderId);
+        limpiarDraftPendiente(storedDraftOrderId, storedCheckoutToken);
       }
 
       clearCheckoutSession();
@@ -456,8 +458,9 @@ export default function CheckoutPage() {
     try {
       const checkoutSession = readCheckoutSession();
       const draftOrderId = checkoutSession?.draftOrderId || '';
+      const checkoutToken = checkoutSession?.checkoutToken || '';
       if (draftOrderId) {
-        limpiarDraftPendiente(draftOrderId);
+        limpiarDraftPendiente(draftOrderId, checkoutToken);
       }
     } catch {}
 
@@ -599,6 +602,7 @@ export default function CheckoutPage() {
   // Pago en línea (Checkout Pro)
   const handlePagarOnline = async () => {
     let draftOrderIdCreado = '';
+    let checkoutTokenCreado = '';
     const nuevosErrores = validar();
     if (Object.keys(nuevosErrores).length > 0) {
       trackFunnelEvent('checkout_error', {
@@ -672,7 +676,7 @@ export default function CheckoutPage() {
         body: JSON.stringify({ form, cartItems, cartTotal, shippingCost, idempotencyKey, funnelSessionId }),
       });
       const dataPedido = await resPedido.json();
-      if (!resPedido.ok || !dataPedido.ok || !dataPedido.draftOrderId) {
+      if (!resPedido.ok || !dataPedido.ok || !dataPedido.draftOrderId || !dataPedido.checkoutToken) {
         trackFunnelEvent('checkout_error', {
           amount: cartTotal,
           meta: {
@@ -685,6 +689,9 @@ export default function CheckoutPage() {
         return;
       }
       draftOrderIdCreado = dataPedido.draftOrderId;
+      checkoutTokenCreado = dataPedido.checkoutToken;
+      const serverShippingCost = Number(dataPedido.shippingCost || 0);
+      setShippingCost(serverShippingCost);
 
       // Paso 3 - Crear preferencia en MercadoPago
       const resPref = await fetch('/api/procesar-pago', {
@@ -694,7 +701,7 @@ export default function CheckoutPage() {
           form,
           cartItems,
           cartTotal,
-          shippingCost,
+          checkoutToken: checkoutTokenCreado,
           draftOrderId: draftOrderIdCreado,
           funnelSessionId,
           idempotencyKey: `${idempotencyKey}-payment`,
@@ -702,7 +709,7 @@ export default function CheckoutPage() {
       });
       const dataPref = await resPref.json();
       if (!resPref.ok || !dataPref.init_point) {
-        await limpiarDraftPendiente(draftOrderIdCreado);
+        await limpiarDraftPendiente(draftOrderIdCreado, checkoutTokenCreado);
         trackFunnelEvent('checkout_error', {
           amount: cartTotal,
           orderId: draftOrderIdCreado,
@@ -733,15 +740,17 @@ export default function CheckoutPage() {
           imagen:   item.producto.imagen1,
         })),
         subtotal:          _subtotal,
-        shippingCost,
-        total:             _subtotal + shippingCost,
+        shippingCost:      serverShippingCost,
+        total:             _subtotal + serverShippingCost,
         descuentoAplicado: dataPref.descuento_aplicado || false,
         email:             form.email,
         nombre:            form.nombre,
+        checkoutToken:     checkoutTokenCreado,
       }));
       writeCheckoutSession({
         initPoint:    dataPref.init_point,
         draftOrderId: draftOrderIdCreado,
+        checkoutToken: checkoutTokenCreado,
         cartHash,
         ts:           Date.now(),
       });
@@ -752,7 +761,7 @@ export default function CheckoutPage() {
 
     } catch (err) {
       if (draftOrderIdCreado) {
-        await limpiarDraftPendiente(draftOrderIdCreado);
+        await limpiarDraftPendiente(draftOrderIdCreado, checkoutTokenCreado);
       }
       console.error('[PAVOA] Error al iniciar pago:', err);
       trackFunnelEvent('checkout_error', {
@@ -784,6 +793,7 @@ export default function CheckoutPage() {
 
     setCargandoCod(true);
     let draftOrderIdCreado = '';
+    let checkoutTokenCreado = '';
 
     try {
       const erroresStock = await verificarStock(cartItems);
@@ -804,12 +814,13 @@ export default function CheckoutPage() {
         body: JSON.stringify({ form, cartItems, cartTotal, shippingCost, paymentMethod: 'cod', idempotencyKey, funnelSessionId }),
       });
       const dataPedido = await resPedido.json();
-      if (!resPedido.ok || !dataPedido.ok || !dataPedido.draftOrderId) {
+      if (!resPedido.ok || !dataPedido.ok || !dataPedido.draftOrderId || !dataPedido.checkoutToken) {
         setErrors({ general: dataPedido?.error || 'No se pudo registrar el pedido.' });
         setCargandoCod(false);
         return;
       }
       draftOrderIdCreado = dataPedido.draftOrderId;
+      checkoutTokenCreado = dataPedido.checkoutToken;
 
       // Completar como contraentrega
       const resCod = await fetch('/api/procesar-pago', {
@@ -818,6 +829,7 @@ export default function CheckoutPage() {
         body: JSON.stringify({
           type: 'contraentrega',
           draftOrderId: draftOrderIdCreado,
+          checkoutToken: checkoutTokenCreado,
           form,
           cartItems,
           cartTotal,
@@ -862,7 +874,7 @@ export default function CheckoutPage() {
       window.location.href = '/orden-contraentrega';
     } catch (err) {
       console.error('[PAVOA] Error en pago contraentrega:', err);
-      if (draftOrderIdCreado) await limpiarDraftPendiente(draftOrderIdCreado);
+      if (draftOrderIdCreado) await limpiarDraftPendiente(draftOrderIdCreado, checkoutTokenCreado);
       setErrors({ general: 'Error inesperado. Intenta de nuevo.' });
       setCargandoCod(false);
     }

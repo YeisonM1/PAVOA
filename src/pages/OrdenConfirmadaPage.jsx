@@ -52,6 +52,7 @@ export default function OrdenConfirmadaPage() {
   const [verifiedPaymentStatus, setVerifiedPaymentStatus] = useState('');
   const [verifyingPayment, setVerifyingPayment] = useState(Boolean(paymentIdParam));
   const orderData = resolvedOrderData || savedOrder || state;
+  const checkoutToken = String(orderData?.checkoutToken || '');
   const { items = [], total, subtotal, shippingCost: orderShippingCost, descuentoAplicado, email, nombre, firstName: explicitFirstName } = orderData || {};
   const totalAmount = toOptionalAmount(total);
   const savedSubtotalAmount = toOptionalAmount(subtotal);
@@ -92,7 +93,7 @@ export default function OrdenConfirmadaPage() {
     fetch('/api/procesar-pago', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ type: 'mp-finalizar', paymentId: paymentIdParam }),
+      body: JSON.stringify({ type: 'mp-finalizar', paymentId: paymentIdParam, checkoutToken }),
     })
       .then((res) => res.json().catch(() => null))
       .then((data) => {
@@ -116,7 +117,7 @@ export default function OrdenConfirmadaPage() {
     return () => {
       cancelled = true;
     };
-  }, [paymentIdParam, statusParam]);
+  }, [paymentIdParam, statusParam, checkoutToken]);
 
   useEffect(() => {
     const hasUsefulOrderData =
@@ -134,7 +135,7 @@ export default function OrdenConfirmadaPage() {
     fetch('/api/procesar-pago', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ type: 'mp-summary', paymentId: paymentIdParam }),
+      body: JSON.stringify({ type: 'mp-summary', paymentId: paymentIdParam, checkoutToken }),
     })
       .then((res) => res.json().catch(() => null))
       .then((data) => {
@@ -142,7 +143,7 @@ export default function OrdenConfirmadaPage() {
         setResolvedOrderData((prev) => ({ ...(prev || {}), ...data.summary }));
       })
       .catch(() => {});
-  }, [paymentIdParam, orderData, isUnconfirmed]);
+  }, [paymentIdParam, orderData, isUnconfirmed, checkoutToken]);
 
   useEffect(() => {
     if (isApproved && paymentId && items.length > 0) {

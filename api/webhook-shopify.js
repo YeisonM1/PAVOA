@@ -6,6 +6,13 @@ import { supabase, getSupabaseMode } from './_helpers/supabase.js';
 
 const SHOPIFY_DOMAIN = process.env.VITE_SHOPIFY_DOMAIN;
 const SHOPIFY_SECRET = process.env.SHOPIFY_WEBHOOK_SECRET;
+const MAX_WEBHOOK_BYTES = 1024 * 1024;
+
+export const config = {
+  api: {
+    bodyParser: false,
+  },
+};
 
 // Deduplicación en memoria: evita emails dobles cuando Shopify dispara
 // orders/fulfilled + orders/updated para la misma acción de fulfillment.
@@ -55,20 +62,32 @@ const normalizarTransportadora = (rawCompany, rawUrl) => {
   };
 };
 
-const validarFirma = (rawBody, hmacHeader) => {
-  if (!SHOPIFY_SECRET || !hmacHeader) return true;
+export const validarFirma = (rawBody, hmacHeader) => {
+  if (!SHOPIFY_SECRET || !hmacHeader) return false;
   const hmac = crypto
     .createHmac('sha256', SHOPIFY_SECRET)
-    .update(rawBody, 'utf8')
-    .digest('base64');
+    .update(rawBody)
+    .digest();
   try {
     return crypto.timingSafeEqual(
-      Buffer.from(hmac, 'utf8'),
-      Buffer.from(hmacHeader, 'utf8')
+      hmac,
+      Buffer.from(hmacHeader, 'base64')
     );
   } catch {
     return false;
   }
+};
+
+const readRawBody = async (req) => {
+  const chunks = [];
+  let total = 0;
+  for await (const chunk of req) {
+    const buffer = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
+    total += buffer.length;
+    if (total > MAX_WEBHOOK_BYTES) throw new Error('Webhook demasiado grande');
+    chunks.push(buffer);
+  }
+  return Buffer.concat(chunks);
 };
 
 const restockRefund = async (refund) => {
@@ -399,10 +418,28 @@ export default async function handler(req, res) {
 
   const topic      = req.headers['x-shopify-topic']        || '';
   const hmacHeader = req.headers['x-shopify-hmac-sha256']  || '';
-  const rawBody    = JSON.stringify(req.body);
+  if (!SHOPIFY_SECRET) {
+    console.error('Webhook Shopify rechazado: SHOPIFY_WEBHOOK_SECRET no configurado');
+    return res.status(503).send('Webhook not configured');
+  }
 
-  // Firma: Vercel re-parsea el body y rompe el HMAC — procesamos siempre
-  validarFirma(rawBody, hmacHeader);
+  let rawBody;
+  try {
+    rawBody = await readRawBody(req);
+  } catch (error) {
+    return res.status(413).send(error.message);
+  }
+
+  if (!validarFirma(rawBody, hmacHeader)) {
+    console.warn(`Webhook Shopify rechazado por firma invalida: ${topic || 'sin topic'}`);
+    return res.status(401).send('Invalid signature');
+  }
+
+  try {
+    req.body = JSON.parse(rawBody.toString('utf8'));
+  } catch {
+    return res.status(400).send('Invalid JSON');
+  }
 
   if (topic === 'orders/cancelled') {
     await handleOrderCancelled(req.body);

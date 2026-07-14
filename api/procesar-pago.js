@@ -2,7 +2,7 @@ import mercadopago from 'mercadopago';
 import { getShopifyToken, eliminarDraftOrder } from './_helpers/shopify-token.js';
 import { processMercadoPagoPayment, enviarEmailConfirmacion, completarDraftOrder } from './_helpers/mercadopago-order.js';
 import { validateCartWithShopify } from './_helpers/cart-validation.js';
-import { verifyToken } from './_helpers/auth.js';
+import { verifyCheckoutToken, verifyToken } from './_helpers/auth.js';
 import { trackFunnelEvent } from './_helpers/funnel.js';
 import { supabase, getSupabaseMode } from './_helpers/supabase.js';
 import {
@@ -21,6 +21,21 @@ const MP_EXPECTED_USER_ID = String(
   process.env.MP_EXPECTED_USER_ID || process.env.MP_SELLER_USER_ID || ''
 ).trim();
 const normalizeEmail = (value) => String(value || '').trim().toLowerCase();
+
+const getCheckoutAccess = ({ checkoutToken, draftOrderId, email }) => {
+  const payload = verifyCheckoutToken(checkoutToken, { draftOrderId });
+  if (!payload) return null;
+  if (email && normalizeEmail(payload.email) !== normalizeEmail(email)) return null;
+  return payload;
+};
+
+const getPaymentAccessContext = async ({ paymentId, checkoutToken }) => {
+  const paymentClient = new mercadopago.Payment(client);
+  const payment = await paymentClient.get({ id: paymentId });
+  const draftOrderId = String(payment?.external_reference || '').split('|')[0].trim();
+  const access = getCheckoutAccess({ checkoutToken, draftOrderId });
+  return access ? { payment, draftOrderId, access } : null;
+};
 const formatCop = (value) => `$${Number(value || 0).toLocaleString('es-CO')}`;
 const PAYMENT_PREFERENCE_TTL = 15 * 60 * 1000;
 const _paymentPreferenceCache = new Map();
@@ -28,6 +43,7 @@ const _paymentPreferenceInflight = new Map();
 
 const requiredEnvError = () => {
   if (!process.env.MP_ACCESS_TOKEN) return 'Falta MP_ACCESS_TOKEN en variables de entorno de Vercel.';
+  if (!process.env.JWT_SECRET) return 'Falta JWT_SECRET en variables de entorno de Vercel.';
   if (!process.env.VITE_SUPABASE_URL) return 'Falta VITE_SUPABASE_URL en variables de entorno de Vercel.';
   if (!process.env.VITE_SUPABASE_ANON_KEY) return 'Falta VITE_SUPABASE_ANON_KEY en variables de entorno de Vercel.';
   if (!SHOPIFY_DOMAIN) return 'Falta VITE_SHOPIFY_DOMAIN en variables de entorno de Vercel.';
@@ -156,10 +172,10 @@ const setCachedPaymentPreference = (key, payload) => {
 
 const markPreferenceAsReused = (payload) => ({
   ...payload,
-  debug: {
+  ...(payload?.debug ? { debug: {
     ...(payload?.debug || {}),
     reused_preference: true,
-  },
+  } } : {}),
 });
 
 const buildPreferenceResponsePayload = ({
@@ -173,7 +189,7 @@ const buildPreferenceResponsePayload = ({
   ok: true,
   init_point: checkoutUrl,
   descuento_aplicado: descuentoAplicado,
-  debug: {
+  ...(process.env.NODE_ENV !== 'production' ? { debug: {
     preference_id: preference.id,
     collector_id: preference.collector_id,
     live_mode: preference.live_mode,
@@ -186,7 +202,7 @@ const buildPreferenceResponsePayload = ({
     token_user_id_hint: getTokenUserIdHint(),
     payment_preference_key: paymentPreferenceKey || null,
     reused_preference: false,
-  },
+  } } : {}),
 });
 
 const buildMpDiagnosticSummary = ({ userInfo, preferenceInfo }) => {
@@ -302,7 +318,6 @@ const createPaymentPreference = async ({
   draftOrderId,
   funnelSessionId,
   orderOwnerEmail,
-  payerEmail,
   authUserId,
   paymentPreferenceKey,
 }) => {
@@ -552,6 +567,9 @@ export default async function handler(req, res) {
   }
 
   if (req.body?.type === 'mp-diagnostico') {
+    if (process.env.NODE_ENV === 'production') {
+      return res.status(404).json({ error: 'No disponible.' });
+    }
     const preferenceId = String(req.body?.preferenceId || '').trim();
     const userInfo = await mpFetchJson('https://api.mercadopago.com/users/me');
     const preferenceInfo = preferenceId
@@ -600,8 +618,9 @@ export default async function handler(req, res) {
 
   if (req.body?.type === 'cancel-draft-order') {
     const draftOrderId = String(req.body?.draftOrderId || '').trim();
-    if (!draftOrderId) {
-      return res.status(400).json({ error: 'Falta draftOrderId' });
+    const checkoutToken = String(req.body?.checkoutToken || '').trim();
+    if (!draftOrderId || !getCheckoutAccess({ checkoutToken, draftOrderId })) {
+      return res.status(403).json({ error: 'No autorizado para cancelar este pedido.' });
     }
 
     await eliminarDraftOrder(draftOrderId);
@@ -610,8 +629,16 @@ export default async function handler(req, res) {
 
   if (req.body?.type === 'mp-finalizar') {
     const paymentId = String(req.body?.paymentId || '').trim();
+    const checkoutToken = String(req.body?.checkoutToken || '').trim();
     if (!paymentId) {
       return res.status(400).json({ error: 'Falta paymentId' });
+    }
+
+    try {
+      const accessContext = await getPaymentAccessContext({ paymentId, checkoutToken });
+      if (!accessContext) return res.status(403).json({ error: 'No autorizado para consultar este pago.' });
+    } catch {
+      return res.status(404).json({ error: 'Pago no encontrado.' });
     }
 
     // Si el webhook de MP ya procesó el pago e insertó el pedido, devolver sin
@@ -647,11 +674,15 @@ export default async function handler(req, res) {
 
   if (req.body?.type === 'mp-summary') {
     const paymentId = String(req.body?.paymentId || '').trim();
+    const checkoutToken = String(req.body?.checkoutToken || '').trim();
     if (!paymentId) {
       return res.status(400).json({ error: 'Falta paymentId' });
     }
 
     try {
+      const accessContext = await getPaymentAccessContext({ paymentId, checkoutToken });
+      if (!accessContext) return res.status(403).json({ error: 'No autorizado para consultar este pago.' });
+      const payment = accessContext.payment;
       const { data: pedido } = await supabase
         .from('pedidos')
         .select('nombre,email,total,items,descuento_aplicado')
@@ -674,8 +705,6 @@ export default async function handler(req, res) {
         });
       }
 
-      const paymentClient = new mercadopago.Payment(client);
-      const payment = await paymentClient.get({ id: paymentId });
       const paymentItems = payment?.additional_info?.items || [];
       const amounts = resolveLineItemAmounts({
         items: paymentItems,
@@ -712,12 +741,17 @@ export default async function handler(req, res) {
 
   if (req.body?.type === 'contraentrega') {
     const tokenPayload = verifyToken(req);
-    const { draftOrderId, form, cartItems, cartTotal, shippingCost, funnelSessionId } = req.body;
+    const { draftOrderId, checkoutToken, form, cartItems, cartTotal, funnelSessionId } = req.body;
     const orderOwnerEmail = normalizeEmail(tokenPayload?.email || form?.email);
 
     if (!draftOrderId || !form?.nombre || !orderOwnerEmail) {
       return res.status(400).json({ error: 'Datos incompletos para registrar el pedido contra entrega.' });
     }
+    const checkoutAccess = getCheckoutAccess({ checkoutToken, draftOrderId, email: orderOwnerEmail });
+    if (!checkoutAccess) {
+      return res.status(403).json({ error: 'No autorizado para completar este pedido.' });
+    }
+    const shippingCost = Number(checkoutAccess.shippingCost || 0);
 
     try {
       // Create the real order via POST /orders.json with send_receipt:false — the
@@ -851,7 +885,7 @@ export default async function handler(req, res) {
   }
 
   const tokenPayload = verifyToken(req);
-  const { form, cartItems, cartTotal, shippingCost, draftOrderId, funnelSessionId, idempotencyKey } = req.body;
+  const { form, cartItems, cartTotal, checkoutToken, draftOrderId, funnelSessionId, idempotencyKey } = req.body;
   const orderOwnerEmail = normalizeEmail(tokenPayload?.email || form?.email);
   const payerEmail = normalizeEmail(form?.email);
   const authUserId = String(tokenPayload?.userId || tokenPayload?.id || '').trim() || null;
@@ -865,6 +899,11 @@ export default async function handler(req, res) {
   if (!payerEmail) {
     return res.status(400).json({ error: 'Correo de pago invalido.' });
   }
+  const checkoutAccess = getCheckoutAccess({ checkoutToken, draftOrderId, email: orderOwnerEmail });
+  if (!checkoutAccess) {
+    return res.status(403).json({ error: 'No autorizado para iniciar el pago de este pedido.' });
+  }
+  const shippingCost = Number(checkoutAccess.shippingCost || 0);
 
   const paymentPreferenceKey = buildPaymentPreferenceKey({
     idempotencyKey,
@@ -897,7 +936,6 @@ export default async function handler(req, res) {
     draftOrderId,
     funnelSessionId,
     orderOwnerEmail,
-    payerEmail,
     authUserId,
     paymentPreferenceKey,
   });

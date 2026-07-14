@@ -32,7 +32,7 @@ const extractNotification = (req) => {
 
 const validarFirmaWebhook = (req) => {
   const secret = process.env.MP_WEBHOOK_SECRET;
-  if (!secret) return true;
+  if (!secret) return false;
 
   const xSignature = req.headers['x-signature'] || '';
   const xRequestId = req.headers['x-request-id'] || '';
@@ -59,9 +59,13 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).send('Method not allowed');
 
   const notification = extractNotification(req);
-  if (notification.source === 'webhook' && !validarFirmaWebhook(req)) {
+  if (!process.env.MP_WEBHOOK_SECRET) {
+    console.error('Webhook MP rechazado: MP_WEBHOOK_SECRET no configurado');
+    return res.status(503).send('Webhook not configured');
+  }
+  if (!validarFirmaWebhook(req)) {
     console.warn('Webhook MP: firma invalida, request descartado');
-    return res.status(200).send('OK');
+    return res.status(401).send('Invalid signature');
   }
 
   if (notification.type !== 'payment' || !notification.dataId) {

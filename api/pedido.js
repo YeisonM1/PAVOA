@@ -1,9 +1,11 @@
 import { getShopifyToken } from './_helpers/shopify-token.js';
 import { CartValidationError, validateCartWithShopify } from './_helpers/cart-validation.js';
-import { verifyToken } from './_helpers/auth.js';
+import { signCheckoutToken, verifyToken } from './_helpers/auth.js';
 import { trackFunnelEvent } from './_helpers/funnel.js';
 
 const SHOPIFY_DOMAIN = process.env.VITE_SHOPIFY_DOMAIN;
+const DEFAULT_NATIONAL_SHIPPING = 18900;
+const BOGOTA_SHIPPING = 10000;
 
 const normalizeEmail = (value) => String(value || '').trim().toLowerCase();
 
@@ -15,6 +17,7 @@ const requiredEnvError = () => {
   if (!process.env.SHOPIFY_ADMIN_TOKEN && !process.env.SHOPIFY_CLIENT_SECRET) {
     return 'Falta SHOPIFY_ADMIN_TOKEN o SHOPIFY_CLIENT_SECRET en variables de entorno de Vercel.';
   }
+  if (!process.env.JWT_SECRET) return 'Falta JWT_SECRET en variables de entorno de Vercel.';
   return null;
 };
 
@@ -107,6 +110,42 @@ const cachedDraftOrderStillExists = async (draftOrderId) => {
   }
 
   return false;
+};
+
+const normalizeCity = (value) => String(value || '')
+  .trim()
+  .toLowerCase()
+  .normalize('NFD')
+  .replace(/[\u0300-\u036f]/g, '');
+
+export const isBogotaDestination = ({ city, department } = {}) => {
+  const normalizedDepartment = normalizeCity(department).replace(/[^a-z]/g, '');
+  return normalizeCity(city) === 'bogota'
+    && ['bogotadc', 'distritocapital'].includes(normalizedDepartment);
+};
+
+const getServerShippingCost = async (token, { city, department }) => {
+  if (isBogotaDestination({ city, department })) return BOGOTA_SHIPPING;
+
+  try {
+    const response = await fetch(`https://${SHOPIFY_DOMAIN}/admin/api/2026-04/graphql.json`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Shopify-Access-Token': token,
+      },
+      body: JSON.stringify({
+        query: `query ShippingPrice { shop { metafield(namespace: "pavoa_envios", key: "precio_envio") { value } } }`,
+      }),
+    });
+    const payload = await response.json().catch(() => ({}));
+    const configured = Number(payload?.data?.shop?.metafield?.value);
+    if (response.ok && Number.isFinite(configured) && configured > 0) return configured;
+  } catch (error) {
+    console.warn('[PAVOA] No se pudo consultar el envio configurado:', error.message);
+  }
+
+  return DEFAULT_NATIONAL_SHIPPING;
 };
 
 const crearDraftOrder = async (token, { form, trustedItems, orderOwnerEmail, checkoutEmail, shippingCost, esCod = false }) => {
@@ -216,8 +255,7 @@ export default async function handler(req, res) {
   }
 
   const tokenPayload = verifyToken(req);
-  const { form, cartItems, cartTotal, shippingCost, paymentMethod, idempotencyKey, funnelSessionId } = req.body;
-  const validShippingCost = Math.max(0, Number(shippingCost) || 0);
+  const { form, cartItems, cartTotal, paymentMethod, idempotencyKey, funnelSessionId } = req.body;
   const esCod = String(paymentMethod || '').toLowerCase() === 'cod';
   const orderOwnerEmail = normalizeEmail(tokenPayload?.email || form?.email);
   const checkoutEmail = normalizeEmail(form?.email);
@@ -245,8 +283,19 @@ export default async function handler(req, res) {
         console.warn(`Draft Order cacheado ya no existe. Se invalida cache para ${idempotencyKey}.`);
         _pedidoCache.delete(idempotencyKey);
       } else {
-      console.log(`Draft Order reutilizado (idempotency): ${cached.name}`);
-      return res.status(200).json({ ok: true, draftOrderId: cached.draftOrderId, name: cached.name });
+        const checkoutToken = signCheckoutToken({
+          draftOrderId: cached.draftOrderId,
+          email: orderOwnerEmail,
+          shippingCost: cached.shippingCost,
+        });
+        console.log(`Draft Order reutilizado (idempotency): ${cached.name}`);
+        return res.status(200).json({
+          ok: true,
+          draftOrderId: cached.draftOrderId,
+          name: cached.name,
+          shippingCost: cached.shippingCost,
+          checkoutToken,
+        });
       }
     }
   }
@@ -254,12 +303,17 @@ export default async function handler(req, res) {
   try {
     const { trustedItems } = await validateCartWithShopify(cartItems);
     let draftOrder = null;
+    let serverShippingCost = DEFAULT_NATIONAL_SHIPPING;
     let lastError = null;
 
     for (const preferredToken of ['app', 'admin']) {
       try {
         const token = await getShopifyToken(preferredToken);
-        draftOrder = await crearDraftOrder(token, { form, trustedItems, orderOwnerEmail, checkoutEmail, shippingCost: validShippingCost, esCod });
+        serverShippingCost = await getServerShippingCost(token, {
+          city: form?.ciudad,
+          department: form?.departamento,
+        });
+        draftOrder = await crearDraftOrder(token, { form, trustedItems, orderOwnerEmail, checkoutEmail, shippingCost: serverShippingCost, esCod });
         if (preferredToken === 'admin') {
           console.warn('[PAVOA] Draft Order creado usando fallback con SHOPIFY_ADMIN_TOKEN.');
         }
@@ -275,8 +329,19 @@ export default async function handler(req, res) {
     }
 
     if (idempotencyKey) {
-      _pedidoCache.set(idempotencyKey, { draftOrderId: draftOrder.id, name: draftOrder.name, ts: Date.now() });
+      _pedidoCache.set(idempotencyKey, {
+        draftOrderId: draftOrder.id,
+        name: draftOrder.name,
+        shippingCost: serverShippingCost,
+        ts: Date.now(),
+      });
     }
+
+    const checkoutToken = signCheckoutToken({
+      draftOrderId: draftOrder.id,
+      email: orderOwnerEmail,
+      shippingCost: serverShippingCost,
+    });
 
     const singleItem = getSingleCartItem(cartItems);
     await trackFunnelEvent({
@@ -302,7 +367,13 @@ export default async function handler(req, res) {
     });
 
     console.log(`Draft Order creado: ${draftOrder.name} - ${draftOrder.id}`);
-    return res.status(200).json({ ok: true, draftOrderId: draftOrder.id, name: draftOrder.name });
+    return res.status(200).json({
+      ok: true,
+      draftOrderId: draftOrder.id,
+      name: draftOrder.name,
+      shippingCost: serverShippingCost,
+      checkoutToken,
+    });
   } catch (err) {
     await trackFunnelEvent({
       eventType: 'draft_order_failed',

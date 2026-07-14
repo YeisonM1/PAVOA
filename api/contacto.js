@@ -18,8 +18,35 @@ const supabaseKey =
   process.env.VITE_SUPABASE_ANON_KEY;
 
 const supabase = createClient(supabaseUrl, supabaseKey);
+const _contactAttempts = new Map();
+const CONTACT_LIMIT = 5;
+const CONTACT_WINDOW = 15 * 60 * 1000;
 
 const isValidEmail = (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value || '').trim());
+
+const isContactRateLimited = (req) => {
+  const ip = String(req.headers['x-forwarded-for'] || '').split(',')[0].trim()
+    || req.socket?.remoteAddress
+    || 'unknown';
+  const now = Date.now();
+  const entry = _contactAttempts.get(ip) || { count: 0, resetAt: now + CONTACT_WINDOW };
+  if (now > entry.resetAt) {
+    _contactAttempts.set(ip, { count: 1, resetAt: now + CONTACT_WINDOW });
+    return false;
+  }
+  if (entry.count >= CONTACT_LIMIT) return true;
+  _contactAttempts.set(ip, { ...entry, count: entry.count + 1 });
+  return false;
+};
+
+const validatePreviewAccess = (req) => {
+  const secret = String(process.env.PREVIEW_EMAIL_SECRET || '');
+  if (!secret) return { ok: false, status: 503, error: 'Correos de prueba no configurados.' };
+  if (req.headers['x-preview-secret'] !== secret) {
+    return { ok: false, status: 401, error: 'No autorizado.' };
+  }
+  return { ok: true };
+};
 
 const normalizeOptional = (value) => {
   const normalized = String(value || '').trim();
@@ -227,10 +254,8 @@ export default async function handler(req, res) {
   }
 
   if (req.body?.type === 'order-confirmation') {
-    const secret = process.env.PREVIEW_EMAIL_SECRET;
-    if (secret && req.headers['x-preview-secret'] !== secret) {
-      return res.status(401).json({ error: 'No autorizado.' });
-    }
+    const access = validatePreviewAccess(req);
+    if (!access.ok) return res.status(access.status).json({ error: access.error });
 
     const { dest, firstName, orderName, paymentId, lineItems, total, totalOriginal, descuentoAplicado, direccion } = req.body;
 
@@ -262,10 +287,8 @@ export default async function handler(req, res) {
   }
 
   if (req.body?.type === 'preview-email') {
-    const secret = process.env.PREVIEW_EMAIL_SECRET;
-    if (secret && req.headers['x-preview-secret'] !== secret) {
-      return res.status(401).json({ error: 'No autorizado.' });
-    }
+    const access = validatePreviewAccess(req);
+    if (!access.ok) return res.status(access.status).json({ error: access.error });
 
     const emailType = String(req.body?.emailType || '').trim();
     const dest = String(req.body?.dest || '').trim().toLowerCase();
@@ -514,6 +537,10 @@ export default async function handler(req, res) {
 
   const { nombre, contacto, asunto, mensaje } = req.body;
 
+  if (isContactRateLimited(req)) {
+    return res.status(429).json({ error: 'Demasiados mensajes. Intenta nuevamente en 15 minutos.' });
+  }
+
   if (!nombre?.trim() || !contacto?.trim() || !asunto?.trim() || !mensaje?.trim()) {
     return res.status(400).json({ error: 'Todos los campos son requeridos' });
   }
@@ -522,6 +549,9 @@ export default async function handler(req, res) {
   const cleanContacto = String(contacto || '').trim();
   const cleanAsunto = String(asunto || '').trim();
   const cleanMensaje = String(mensaje || '').trim();
+  if (cleanNombre.length > 100 || cleanContacto.length > 254 || cleanAsunto.length > 160 || cleanMensaje.length > 5000) {
+    return res.status(400).json({ error: 'Uno de los campos supera la longitud permitida.' });
+  }
   const contactoEmail = isValidEmail(contacto) ? contacto.trim().toLowerCase() : null;
 
   try {
