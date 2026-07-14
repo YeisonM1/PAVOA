@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import { emailConfirmacion, formatMoney } from './email-templates.js';
-import { resolveFinalOrderAmounts } from './order-amounts.js';
+import { resolveFinalOrderAmounts, resolveLineItemAmounts } from './order-amounts.js';
 
 test('formatMoney preserves raw and localized COP amounts', () => {
   assert.equal(formatMoney(18900), '18.900');
@@ -25,8 +25,41 @@ test('cash on delivery email shows consistent product, shipping and total values
   assert.match(html, /\$40\.000/);
   assert.match(html, /\$18\.900/);
   assert.match(html, /\$58\.900/);
+  assert.match(html, /Subtotal/);
+  assert.match(html, /Envío/);
   assert.doesNotMatch(html, /\$18,9/);
   assert.doesNotMatch(html, /\$58,9/);
+});
+
+test('online payments separate the shipping line from the product subtotal', () => {
+  const amounts = resolveLineItemAmounts({
+    items: [
+      { id: 'variant-1', unit_price: 40000, quantity: 1 },
+      { id: 'envio', title: 'Envio a domicilio', unit_price: 18900, quantity: 1 },
+    ],
+    total: 58900,
+  });
+
+  assert.deepEqual(amounts, {
+    subtotal: 40000,
+    shippingCost: 18900,
+    total: 58900,
+  });
+
+  const html = emailConfirmacion({
+    firstName: 'Laura',
+    orderName: '#1064',
+    lineItems: [{ title: 'BODY MIST', quantity: 1, price: 40000 }],
+    subtotal: amounts.subtotal,
+    envio: amounts.shippingCost,
+    total: amounts.total,
+    tipoPago: 'mercadopago',
+  });
+
+  assert.match(html, /Mercado Pago/);
+  assert.match(html, /Subtotal/);
+  assert.match(html, /Envío/);
+  assert.match(html, /Total pagado/);
 });
 
 test('cash on delivery trusts final Shopify amounts over a stale browser cart', () => {

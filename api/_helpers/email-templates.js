@@ -490,6 +490,7 @@ export const emailConfirmacion = ({
   orderName,
   paymentId,
   lineItems,
+  subtotal = null,
   total,
   totalOriginal,
   descuentoAplicado,
@@ -498,6 +499,10 @@ export const emailConfirmacion = ({
   envio = null,
 }) => {
   const esCod = tipoPago === 'contraentrega';
+  const shippingAmount = envio === null || envio === undefined ? null : parseMoney(envio);
+  const subtotalAmount = subtotal === null || subtotal === undefined
+    ? Math.max(0, parseMoney(total) - (shippingAmount || 0))
+    : parseMoney(subtotal);
 
   const summaryRows = [
     {
@@ -509,28 +514,31 @@ export const emailConfirmacion = ({
       value: esCod ? "Pago contra entrega" : "Mercado Pago",
     },
     {
-      label: esCod ? "Total a pagar" : "Total pagado",
-      value: `<span style="font-size:20px;font-weight:600;font-family:${EMAIL_FONT_TITLE};">$${formatMoney(total)}</span>`,
+      label: "Subtotal",
+      value: descuentoAplicado
+        ? `<span style="text-decoration:line-through;color:${EMAIL_COLOR_MUTED_SOFT};">$${formatMoney(totalOriginal)}</span>`
+        : `$${formatMoney(subtotalAmount)}`,
     },
   ];
 
   if (descuentoAplicado) {
-    summaryRows.splice(2, 0, {
+    summaryRows.push({
       label: "Descuento",
       value: `<span style="color:${EMAIL_COLOR_CHARCOAL};">Bienvenida aplicado</span>`,
     });
-    summaryRows.splice(2, 0, {
-      label: "Subtotal",
-      value: `<span style="text-decoration:line-through;color:${EMAIL_COLOR_MUTED_SOFT};">$${formatMoney(totalOriginal)}</span>`,
+  }
+
+  if (shippingAmount !== null) {
+    summaryRows.push({
+      label: "Envío",
+      value: shippingAmount > 0 ? `$${formatMoney(shippingAmount)}` : "Gratis",
     });
   }
 
-  if (envio) {
-    summaryRows.splice(summaryRows.length - 1, 0, {
-      label: "Envío",
-      value: `$${formatMoney(envio)}`,
-    });
-  }
+  summaryRows.push({
+    label: esCod ? "Total a pagar" : "Total pagado",
+    value: `<span style="font-size:20px;font-weight:600;font-family:${EMAIL_FONT_TITLE};">$${formatMoney(total)}</span>`,
+  });
 
   // Cambio #9: Dirección de entrega estructurada
   const buildDireccionHtml = (dir) => {

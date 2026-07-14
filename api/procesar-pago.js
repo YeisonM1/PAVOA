@@ -5,7 +5,11 @@ import { validateCartWithShopify } from './_helpers/cart-validation.js';
 import { verifyToken } from './_helpers/auth.js';
 import { trackFunnelEvent } from './_helpers/funnel.js';
 import { supabase, getSupabaseMode } from './_helpers/supabase.js';
-import { resolveFinalOrderAmounts } from './_helpers/order-amounts.js';
+import {
+  isShippingLineItem,
+  resolveFinalOrderAmounts,
+  resolveLineItemAmounts,
+} from './_helpers/order-amounts.js';
 
 const client = new mercadopago.MercadoPagoConfig({
   accessToken: process.env.MP_ACCESS_TOKEN,
@@ -650,19 +654,21 @@ export default async function handler(req, res) {
     try {
       const { data: pedido } = await supabase
         .from('pedidos')
-        .select('nombre,email,total,items')
+        .select('nombre,email,total,items,descuento_aplicado')
         .eq('payment_id', paymentId)
         .maybeSingle();
 
       if (pedido) {
         const firstName = String(pedido.nombre || '').trim().split(/\s+/).filter(Boolean)[0] || null;
+        const amounts = resolveLineItemAmounts({ items: pedido.items, total: pedido.total });
         return res.status(200).json({
           ok: true,
           summary: {
             firstName,
             nombre: pedido.nombre || null,
             email: pedido.email || null,
-            total: pedido.total || null,
+            ...amounts,
+            descuentoAplicado: Boolean(pedido.descuento_aplicado),
             items: Array.isArray(pedido.items) ? pedido.items : [],
           },
         });
@@ -670,6 +676,11 @@ export default async function handler(req, res) {
 
       const paymentClient = new mercadopago.Payment(client);
       const payment = await paymentClient.get({ id: paymentId });
+      const paymentItems = payment?.additional_info?.items || [];
+      const amounts = resolveLineItemAmounts({
+        items: paymentItems,
+        total: payment?.transaction_amount,
+      });
 
       return res.status(200).json({
         ok: true,
@@ -677,8 +688,8 @@ export default async function handler(req, res) {
           firstName: payment?.payer?.first_name || null,
           nombre: payment?.payer?.first_name || null,
           email: payment?.payer?.email || null,
-          total: payment?.transaction_amount || null,
-          items: (payment?.additional_info?.items || []).map((item) => ({
+          ...amounts,
+          items: paymentItems.filter((item) => !isShippingLineItem(item)).map((item) => ({
             nombre: item.title,
             cantidad: Number(item.quantity || 0),
             precio: item.unit_price

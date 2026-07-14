@@ -19,6 +19,12 @@ const formatCustomerName = (value, fallback = 'Cliente') => {
     .join(' ');
 };
 
+const toOptionalAmount = (value) => {
+  if (value === null || value === undefined || value === '') return null;
+  const numeric = Number(value);
+  return Number.isFinite(numeric) ? numeric : null;
+};
+
 export default function OrdenConfirmadaPage() {
   const { state } = useLocation();
   const [searchParams] = useSearchParams();
@@ -47,6 +53,23 @@ export default function OrdenConfirmadaPage() {
   const [verifyingPayment, setVerifyingPayment] = useState(Boolean(paymentIdParam));
   const orderData = resolvedOrderData || savedOrder || state;
   const { items = [], total, subtotal, shippingCost: orderShippingCost, descuentoAplicado, email, nombre, firstName: explicitFirstName } = orderData || {};
+  const totalAmount = toOptionalAmount(total);
+  const savedSubtotalAmount = toOptionalAmount(subtotal);
+  const savedShippingAmount = toOptionalAmount(orderShippingCost);
+  const shippingAmount = savedShippingAmount
+    ?? (totalAmount !== null && savedSubtotalAmount !== null
+      ? Math.max(0, totalAmount - savedSubtotalAmount)
+      : null);
+  const subtotalAmount = savedSubtotalAmount
+    ?? (totalAmount !== null && shippingAmount !== null
+      ? Math.max(0, totalAmount - shippingAmount)
+      : null);
+  const originalSubtotalAmount = descuentoAplicado && subtotalAmount !== null
+    ? Math.round(subtotalAmount / 0.9)
+    : subtotalAmount;
+  const discountAmount = originalSubtotalAmount !== null && subtotalAmount !== null
+    ? Math.max(0, originalSubtotalAmount - subtotalAmount)
+    : 0;
   const effectiveStatus = verifiedPaymentStatus || statusParam;
   const isApproved = effectiveStatus === 'approved';
   const isPending = effectiveStatus === 'pending' || effectiveStatus === 'in_process';
@@ -101,8 +124,12 @@ export default function OrdenConfirmadaPage() {
       Boolean(orderData?.firstName) ||
       Boolean(orderData?.email) ||
       (Array.isArray(orderData?.items) && orderData.items.length > 0);
+    const hasCompleteBreakdown =
+      toOptionalAmount(orderData?.total) !== null &&
+      (toOptionalAmount(orderData?.subtotal) !== null ||
+        toOptionalAmount(orderData?.shippingCost) !== null);
 
-    if (!paymentIdParam || hasUsefulOrderData || isUnconfirmed) return;
+    if (!paymentIdParam || (hasUsefulOrderData && hasCompleteBreakdown) || isUnconfirmed) return;
 
     fetch('/api/procesar-pago', {
       method: 'POST',
@@ -241,26 +268,34 @@ export default function OrdenConfirmadaPage() {
               ))}
             </div>
 
-            {total && (
+            {totalAmount !== null && (
               <div className="pt-4 flex flex-col gap-2">
-                {subtotal != null && Number(orderShippingCost) > 0 && (
-                  <>
-                    <div className="flex justify-between items-center">
-                      <span className="text-[10px] tracking-[0.15em] text-stone-500 uppercase">Subtotal</span>
-                      <span className="text-[12px] text-stone-700">${Number(subtotal).toLocaleString('es-CO')}</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-[10px] tracking-[0.15em] text-stone-500 uppercase">Envío</span>
-                      <span className="text-[12px] text-stone-700">${Number(orderShippingCost).toLocaleString('es-CO')}</span>
-                    </div>
-                  </>
+                {subtotalAmount !== null && (
+                  <div className="flex justify-between items-center">
+                    <span className="text-[10px] tracking-[0.15em] text-stone-500 uppercase">Subtotal</span>
+                    <span className="text-[12px] text-stone-700">${originalSubtotalAmount.toLocaleString('es-CO')}</span>
+                  </div>
+                )}
+                {discountAmount > 0 && (
+                  <div className="flex justify-between items-center">
+                    <span className="text-[10px] tracking-[0.15em] text-stone-500 uppercase">Descuento bienvenida</span>
+                    <span className="text-[12px] text-stone-700">-${discountAmount.toLocaleString('es-CO')}</span>
+                  </div>
+                )}
+                {shippingAmount !== null && (
+                  <div className="flex justify-between items-center">
+                    <span className="text-[10px] tracking-[0.15em] text-stone-500 uppercase">Envío</span>
+                    <span className="text-[12px] text-stone-700">
+                      {shippingAmount > 0 ? `$${shippingAmount.toLocaleString('es-CO')}` : 'Gratis'}
+                    </span>
+                  </div>
                 )}
                 <div className="flex justify-between items-center border-t border-stone-100 pt-3 mt-1">
                   <span className="text-[10px] font-bold tracking-[0.2em] text-stone-900 uppercase">
                     {isApproved ? 'Total pagado' : 'Total del intento'}
                   </span>
                   <span className="text-[18px] font-bold text-stone-900">
-                    ${Number(total).toLocaleString('es-CO')}
+                    ${totalAmount.toLocaleString('es-CO')}
                   </span>
                 </div>
               </div>

@@ -4,6 +4,11 @@ import { emailConfirmacion } from './email-templates.js';
 import { sendTransactionalEmail } from './mail.js';
 import { trackFunnelEvent } from './funnel.js';
 import { supabase, getSupabaseMode } from './supabase.js';
+import {
+  isShippingLineItem,
+  resolveFinalOrderAmounts,
+  resolveLineItemAmounts,
+} from './order-amounts.js';
 
 const client = new mercadopago.MercadoPagoConfig({ accessToken: process.env.MP_ACCESS_TOKEN });
 const SHOPIFY_DOMAIN = process.env.VITE_SHOPIFY_DOMAIN;
@@ -148,9 +153,24 @@ export const enviarEmailConfirmacion = async (order, paymentId, totalReal, descu
   const firstName = order.shipping_address?.first_name || order.customer?.first_name || 'Cliente';
   const orderName = order.name || `#${order.order_number}`;
   const totalNum = Number(totalReal || order.total_price);
-  const total = Number.isFinite(totalNum) ? totalNum : 0;
+  const requestedShippingCost = Math.max(0, Number(shippingCost) || 0);
+  const fallbackTotal = Number.isFinite(totalNum) ? totalNum : 0;
+  const inferredAmounts = resolveLineItemAmounts({
+    items: order.line_items,
+    total: fallbackTotal,
+    shippingCost: requestedShippingCost > 0 ? requestedShippingCost : undefined,
+  });
+  const {
+    subtotal,
+    shippingCost: envio,
+    total,
+  } = resolveFinalOrderAmounts({
+    shopifyOrder: order,
+    cartTotal: inferredAmounts.subtotal,
+    shippingCost: inferredAmounts.shippingCost,
+  });
   const totalOriginal = descuentoAplicado
-    ? Math.round(total / 0.9)
+    ? Math.round(subtotal / 0.9)
     : null;
   // Cambio #9: Dirección estructurada completa (objeto para el template)
   const notaAtributos = order.note ? Object.fromEntries(
@@ -170,8 +190,6 @@ export const enviarEmailConfirmacion = async (order, paymentId, totalReal, descu
     referencia: notaAtributos['punto de referencia'] || '',
     observaciones: notaAtributos['observaciones'] || '',
   } : '';
-  const envio = Number(shippingCost) > 0 ? Number(shippingCost) : null;
-
   await sendTransactionalEmail({
     from: 'PAVOA <onboarding@resend.dev>',
     to: email,
@@ -180,7 +198,8 @@ export const enviarEmailConfirmacion = async (order, paymentId, totalReal, descu
       firstName,
       orderName,
       paymentId,
-      lineItems: order.line_items,
+      lineItems: (order.line_items || []).filter((item) => !isShippingLineItem(item)),
+      subtotal,
       total,
       totalOriginal,
       descuentoAplicado,
