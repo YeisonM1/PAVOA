@@ -167,7 +167,7 @@ export default function MegaMenu({ catalogoOpen, setCatalogoOpen, isScrolled, pa
           >
             <div style={{
               position: 'absolute', inset: 0, backgroundImage: `url(${activeImage})`,
-              backgroundSize: 'cover', backgroundPosition: 'center top',
+              backgroundSize: 'cover', backgroundPosition: 'center center',
               transition: 'opacity 0.4s ease', opacity: 0.88,
             }} />
             <div style={{

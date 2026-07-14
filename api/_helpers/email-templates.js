@@ -728,7 +728,7 @@ export const emailEntregado = ({ nombreCliente, orderName }) =>
     preheader: `Tu pedido ${orderName} fue entregado`,
     eyebrow: "Pedido entregado",
     title: "Tu pedido ya llegó",
-    body: `Tu pedido <strong style="color:${EMAIL_COLOR_BLACK};">${escapeHtml(orderName)}</strong> fue entregado correctamente. Esperamos que disfrutes mucho tu compra.`,
+    body: `Tu pedido <strong style="color:${EMAIL_COLOR_BLACK};">${escapeHtml(orderName)}</strong> fue entregado correctamente. Gracias por confiar en PAVOA.`,
     afterHero:
       renderCard({
         background: "linear-gradient(180deg, rgba(246,241,234,0.92), rgba(255,253,250,0.96))",
@@ -742,7 +742,7 @@ export const emailEntregado = ({ nombreCliente, orderName }) =>
               </tr>
             </table>
             <p class="email-section-title" style="margin:0 0 12px;font-size:30px;line-height:1.15;color:${EMAIL_COLOR_BLACK};font-family:${EMAIL_FONT_TITLE};font-weight:500;">
-              Esperamos que lo disfrutes mucho
+              Gracias por confiar en PAVOA
             </p>
             <p style="margin:0 auto;max-width:380px;font-size:14px;line-height:1.85;color:${EMAIL_COLOR_CHARCOAL};font-family:${EMAIL_FONT_BODY};">
               Si necesitas apoyo con tu compra, cambios o cualquier detalle posterior, seguimos disponibles para ayudarte.

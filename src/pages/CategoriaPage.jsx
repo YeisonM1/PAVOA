@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { parsePrice } from '../utils/price';
 import { useParams, Link } from 'react-router-dom';
 import FilterDrawer from '../sections/FilterDrawer';
@@ -42,6 +43,8 @@ const CATEGORY_GROUPS = {
     },
   },
 };
+
+const PRODUCTS_PER_PAGE = 9;
 
 const normalizeTag = (value) => String(value || '')
   .normalize('NFD')
@@ -93,7 +96,8 @@ export default function CategoriaPage() {
 
   const [tallasFiltro, setTallasFiltro]   = useState([]);
   const [coloresFiltro, setColoresFiltro] = useState([]);
-  const [visibles, setVisibles]           = useState(12);
+  const [currentPage, setCurrentPage]     = useState(1);
+  const productsSectionRef = useRef(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -191,7 +195,22 @@ export default function CategoriaPage() {
 
   const hayFiltrosActivos = tallasFiltro.length > 0 || coloresFiltro.length > 0;
 
-  useEffect(() => { setVisibles(12); }, [productosFiltrados]);
+  const totalPages = Math.ceil(productosFiltrados.length / PRODUCTS_PER_PAGE);
+  const productosPaginados = useMemo(() => {
+    const start = (currentPage - 1) * PRODUCTS_PER_PAGE;
+    return productosFiltrados.slice(start, start + PRODUCTS_PER_PAGE);
+  }, [currentPage, productosFiltrados]);
+
+  useEffect(() => { setCurrentPage(1); }, [productosFiltrados]);
+
+  const goToPage = (page) => {
+    if (page < 1 || page > totalPages || page === currentPage) return;
+    setCurrentPage(page);
+    window.requestAnimationFrame(() => {
+      const top = productsSectionRef.current?.getBoundingClientRect().top ?? 0;
+      window.scrollTo({ top: window.scrollY + top - 110, behavior: 'smooth' });
+    });
+  };
 
   if (loading) {
     return (
@@ -307,7 +326,7 @@ export default function CategoriaPage() {
         </div>
       </div>
 
-      <section className="w-full py-12 px-6 md:px-12 lg:px-16">
+      <section ref={productsSectionRef} className="w-full py-12 px-6 md:px-12 lg:px-16">
         <div className="max-w-[1400px] mx-auto flex flex-col lg:flex-row gap-8 lg:gap-12 relative">
           <FilterDrawer
             isFilterOpen={isFilterOpen}
@@ -325,19 +344,49 @@ export default function CategoriaPage() {
             {productosFiltrados.length > 0 ? (
               <>
                 <div className="grid grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-12 md:gap-x-8 md:gap-y-16">
-                  {productosFiltrados.slice(0, visibles).map(p => (
+                  {productosPaginados.map(p => (
                     <ProductCard key={p.id} producto={p} />
                   ))}
                 </div>
-                {visibles < productosFiltrados.length && (
-                  <div className="mt-20 flex justify-center">
+                {totalPages > 1 && (
+                  <nav className="mt-16 flex flex-wrap items-center justify-center gap-2" aria-label="Paginacion del catalogo">
                     <button
-                      onClick={() => setVisibles(v => v + 12)}
-                      className="text-[11px] font-bold text-stone-900 tracking-[0.2em] uppercase border-b border-stone-900 pb-1 hover:text-stone-500 hover:border-stone-500 transition-colors"
+                      type="button"
+                      onClick={() => goToPage(currentPage - 1)}
+                      disabled={currentPage === 1}
+                      className="grid size-10 shrink-0 place-items-center border border-stone-300 text-stone-800 transition-colors hover:border-stone-900 disabled:cursor-not-allowed disabled:opacity-30"
+                      aria-label="Pagina anterior"
+                      title="Pagina anterior"
                     >
-                      Cargar más piezas
+                      <ChevronLeft size={16} strokeWidth={1.5} />
                     </button>
-                  </div>
+                    {Array.from({ length: totalPages }, (_, index) => index + 1).map(page => (
+                      <button
+                        key={page}
+                        type="button"
+                        onClick={() => goToPage(page)}
+                        aria-current={page === currentPage ? 'page' : undefined}
+                        aria-label={`Ir a la pagina ${page}`}
+                        className={`size-10 shrink-0 border text-[11px] font-semibold transition-colors ${
+                          page === currentPage
+                            ? 'border-stone-900 bg-stone-900 text-white'
+                            : 'border-stone-300 bg-white text-stone-800 hover:border-stone-900'
+                        }`}
+                      >
+                        {page}
+                      </button>
+                    ))}
+                    <button
+                      type="button"
+                      onClick={() => goToPage(currentPage + 1)}
+                      disabled={currentPage === totalPages}
+                      className="grid size-10 shrink-0 place-items-center border border-stone-300 text-stone-800 transition-colors hover:border-stone-900 disabled:cursor-not-allowed disabled:opacity-30"
+                      aria-label="Pagina siguiente"
+                      title="Pagina siguiente"
+                    >
+                      <ChevronRight size={16} strokeWidth={1.5} />
+                    </button>
+                  </nav>
                 )}
               </>
             ) : (

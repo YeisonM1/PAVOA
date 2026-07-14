@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { emailConfirmacion, formatMoney } from './email-templates.js';
+import { emailConfirmacion, emailEntregado, formatMoney } from './email-templates.js';
 import { resolveFinalOrderAmounts, resolveLineItemAmounts } from './order-amounts.js';
 
 test('formatMoney preserves raw and localized COP amounts', () => {
@@ -60,6 +60,13 @@ test('online payments separate the shipping line from the product subtotal', () 
   assert.match(html, /Subtotal/);
   assert.match(html, /Envío/);
   assert.match(html, /Total pagado/);
+});
+
+test('delivered email thanks the customer with the current PAVOA message', () => {
+  const html = emailEntregado({ nombreCliente: 'Laura', orderName: '#1065' });
+
+  assert.match(html, /Gracias por confiar en PAVOA/);
+  assert.doesNotMatch(html, /Esperamos que lo disfrutes mucho/);
 });
 
 test('cash on delivery trusts final Shopify amounts over a stale browser cart', () => {
