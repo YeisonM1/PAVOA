@@ -5,6 +5,7 @@ import SEO from '../components/SEO';
 import { thumbImage } from '../utils/imageUrl';
 import { trackPurchase } from '../lib/analytics';
 import { getCliente } from '../services/authService';
+import { getVerifiedPaymentState } from '../utils/paymentStatus';
 
 const formatCustomerName = (value, fallback = 'Cliente') => {
   const normalized = String(value || '').trim().replace(/\s+/g, ' ');
@@ -33,19 +34,14 @@ export default function OrdenConfirmadaPage() {
 
   const cartClearedRef = useRef(false);
   const paymentIdParam = searchParams.get('payment_id');
-  const statusParam = (searchParams.get('status') || '').toLowerCase();
-
-  const savedOrder = (() => {
+  const [savedOrder] = useState(() => {
     if (!paymentIdParam) return null;
     try {
       const raw = sessionStorage.getItem('pavoa-pending-order');
-      if (raw) {
-        sessionStorage.removeItem('pavoa-pending-order');
-        return JSON.parse(raw);
-      }
+      if (raw) return JSON.parse(raw);
     } catch {}
     return null;
-  })();
+  });
 
   const paymentId = paymentIdParam || state?.paymentId;
   const [resolvedOrderData, setResolvedOrderData] = useState(savedOrder || state || null);
@@ -71,21 +67,25 @@ export default function OrdenConfirmadaPage() {
   const discountAmount = originalSubtotalAmount !== null && subtotalAmount !== null
     ? Math.max(0, originalSubtotalAmount - subtotalAmount)
     : 0;
-  const effectiveStatus = verifiedPaymentStatus || statusParam;
-  const isApproved = effectiveStatus === 'approved';
-  const isPending = effectiveStatus === 'pending' || effectiveStatus === 'in_process';
-  const isRejected = ['failure', 'rejected', 'cancelled', 'cancelled_process', 'null'].includes(effectiveStatus);
+  const { isApproved, isPending, isRejected } = getVerifiedPaymentState({
+    verifiedStatus: verifiedPaymentStatus,
+    isVerifying: verifyingPayment,
+  });
   const isUnconfirmed = Boolean(paymentId) && !verifyingPayment && !isApproved && !isPending && !isRejected;
 
   useEffect(() => {
     if (paymentIdParam && isApproved && !cartClearedRef.current) {
       cartClearedRef.current = true;
+      try {
+        sessionStorage.removeItem('pavoa-pending-order');
+        sessionStorage.removeItem('pavoa-checkout-session');
+      } catch {}
       clearCart();
     }
   }, [paymentIdParam, isApproved, clearCart]);
 
   useEffect(() => {
-    if (!paymentIdParam || statusParam === 'failure' || statusParam === 'rejected') return;
+    if (!paymentIdParam) return;
 
     let cancelled = false;
     setVerifyingPayment(true);
@@ -117,7 +117,7 @@ export default function OrdenConfirmadaPage() {
     return () => {
       cancelled = true;
     };
-  }, [paymentIdParam, statusParam, checkoutToken]);
+  }, [paymentIdParam, checkoutToken]);
 
   useEffect(() => {
     const hasUsefulOrderData =
@@ -198,7 +198,11 @@ export default function OrdenConfirmadaPage() {
 
   return (
     <div className="min-h-screen bg-white pt-[88px] md:pt-[104px]">
-      <SEO title={isApproved ? 'Pedido confirmado' : 'Pago no confirmado'} url="/orden-confirmada" noIndex />
+      <SEO
+        title={isApproved ? 'Pedido confirmado' : (verifyingPayment || isPending ? 'Verificando pago' : 'Pago no confirmado')}
+        url="/orden-confirmada"
+        noIndex
+      />
 
       <div className="max-w-[640px] mx-auto px-6 md:px-12 py-16 md:py-24">
         <div className="flex justify-center mb-10">
