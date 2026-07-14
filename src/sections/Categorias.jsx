@@ -131,7 +131,7 @@ export default function Categorias() {
           </h2>
         </div>
         <Link
-          to="/categoria"
+          to="/categoria/mujer"
           onClick={() => window.scrollTo(0, 0)}
           style={{ letterSpacing: '0.15em' }}
           className="text-[10px] font-bold text-stone-500 hover:text-stone-900 transition-colors uppercase flex items-center gap-2 group"
