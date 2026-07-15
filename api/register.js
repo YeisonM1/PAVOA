@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 import { emailVerificacion } from './_helpers/email-templates.js';
 import { sendTransactionalEmail } from './_helpers/mail.js';
+import { consumeRateLimit, getClientIp } from './_helpers/durable-security.js';
 
 const supabase = createClient(
   process.env.VITE_SUPABASE_URL,
@@ -11,33 +12,22 @@ const supabase = createClient(
 
 const APP_URL = process.env.VITE_APP_URL || 'https://pavoa.com.co';
 
-const _registerAttempts = new Map();
 const REG_LIMIT = 5;
 const REG_WINDOW = 15 * 60 * 1000;
-
-function isRateLimited(ip) {
-  const now = Date.now();
-  const entry = _registerAttempts.get(ip) || { count: 0, resetAt: now + REG_WINDOW };
-  if (now > entry.resetAt) {
-    _registerAttempts.set(ip, { count: 1, resetAt: now + REG_WINDOW });
-    return false;
-  }
-  if (entry.count >= REG_LIMIT) return true;
-  _registerAttempts.set(ip, { ...entry, count: entry.count + 1 });
-  return false;
-}
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const ip =
-    (req.headers['x-forwarded-for'] || '').split(',')[0].trim() ||
-    req.socket?.remoteAddress ||
-    'unknown';
-
-  if (isRateLimited(ip)) {
+  const rateLimit = await consumeRateLimit({
+    scope: 'register',
+    identifier: getClientIp(req),
+    limit: REG_LIMIT,
+    windowMs: REG_WINDOW,
+  });
+  if (!rateLimit.allowed) {
+    res.setHeader('Retry-After', String(rateLimit.retryAfter));
     return res
       .status(429)
       .json({ error: 'Demasiados intentos. Espera 15 minutos e intenta de nuevo.' });

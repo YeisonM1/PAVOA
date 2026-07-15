@@ -11,6 +11,7 @@ import {
   emailContactoCliente,
   emailContactoInterno,
 } from './_helpers/email-templates.js';
+import { consumeRateLimit, getClientIp } from './_helpers/durable-security.js';
 
 const supabaseUrl = process.env.VITE_SUPABASE_URL;
 const supabaseKey =
@@ -18,26 +19,10 @@ const supabaseKey =
   process.env.VITE_SUPABASE_ANON_KEY;
 
 const supabase = createClient(supabaseUrl, supabaseKey);
-const _contactAttempts = new Map();
 const CONTACT_LIMIT = 5;
 const CONTACT_WINDOW = 15 * 60 * 1000;
 
 const isValidEmail = (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value || '').trim());
-
-const isContactRateLimited = (req) => {
-  const ip = String(req.headers['x-forwarded-for'] || '').split(',')[0].trim()
-    || req.socket?.remoteAddress
-    || 'unknown';
-  const now = Date.now();
-  const entry = _contactAttempts.get(ip) || { count: 0, resetAt: now + CONTACT_WINDOW };
-  if (now > entry.resetAt) {
-    _contactAttempts.set(ip, { count: 1, resetAt: now + CONTACT_WINDOW });
-    return false;
-  }
-  if (entry.count >= CONTACT_LIMIT) return true;
-  _contactAttempts.set(ip, { ...entry, count: entry.count + 1 });
-  return false;
-};
 
 const validatePreviewAccess = (req) => {
   const secret = String(process.env.PREVIEW_EMAIL_SECRET || '');
@@ -537,7 +522,14 @@ export default async function handler(req, res) {
 
   const { nombre, contacto, asunto, mensaje } = req.body;
 
-  if (isContactRateLimited(req)) {
+  const rateLimit = await consumeRateLimit({
+    scope: 'contact',
+    identifier: getClientIp(req),
+    limit: CONTACT_LIMIT,
+    windowMs: CONTACT_WINDOW,
+  });
+  if (!rateLimit.allowed) {
+    res.setHeader('Retry-After', String(rateLimit.retryAfter));
     return res.status(429).json({ error: 'Demasiados mensajes. Intenta nuevamente en 15 minutos.' });
   }
 

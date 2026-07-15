@@ -2,6 +2,7 @@ import { createClient } from '@supabase/supabase-js';
 import crypto from 'crypto';
 import { emailResetPassword } from './_helpers/email-templates.js';
 import { sendTransactionalEmail } from './_helpers/mail.js';
+import { consumeRateLimit, getClientIp } from './_helpers/durable-security.js';
 
 const supabase = createClient(
   process.env.VITE_SUPABASE_URL,
@@ -10,31 +11,20 @@ const supabase = createClient(
 
 const APP_URL = process.env.VITE_APP_URL || 'https://pavoa.com.co';
 
-const _forgotAttempts = new Map();
 const FORGOT_LIMIT = 3;
 const FORGOT_WINDOW = 15 * 60 * 1000;
-
-function isRateLimited(ip) {
-  const now = Date.now();
-  const entry = _forgotAttempts.get(ip) || { count: 0, resetAt: now + FORGOT_WINDOW };
-  if (now > entry.resetAt) {
-    _forgotAttempts.set(ip, { count: 1, resetAt: now + FORGOT_WINDOW });
-    return false;
-  }
-  if (entry.count >= FORGOT_LIMIT) return true;
-  _forgotAttempts.set(ip, { ...entry, count: entry.count + 1 });
-  return false;
-}
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  const ip =
-    (req.headers['x-forwarded-for'] || '').split(',')[0].trim() ||
-    req.socket?.remoteAddress ||
-    'unknown';
-
-  if (isRateLimited(ip)) {
+  const rateLimit = await consumeRateLimit({
+    scope: 'forgot-password',
+    identifier: getClientIp(req),
+    limit: FORGOT_LIMIT,
+    windowMs: FORGOT_WINDOW,
+  });
+  if (!rateLimit.allowed) {
+    res.setHeader('Retry-After', String(rateLimit.retryAfter));
     return res
       .status(429)
       .json({ error: 'Demasiados intentos. Espera 15 minutos e intenta de nuevo.' });
