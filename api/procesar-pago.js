@@ -1,7 +1,6 @@
 import mercadopago from 'mercadopago';
 import { getShopifyToken, eliminarDraftOrder } from './_helpers/shopify-token.js';
 import { processMercadoPagoPayment, enviarEmailConfirmacion, completarDraftOrder } from './_helpers/mercadopago-order.js';
-import { validateCartWithShopify } from './_helpers/cart-validation.js';
 import { verifyCheckoutToken, verifyToken } from './_helpers/auth.js';
 import { trackFunnelEvent } from './_helpers/funnel.js';
 import { supabase, getSupabaseMode } from './_helpers/supabase.js';
@@ -140,6 +139,42 @@ const getSingleCartItem = (cartItems = []) => {
     color: item?.producto?.colorSeleccionado || null,
     size: item?.talla || null,
   };
+};
+
+// El draft order ya fue creado por /api/pedido con precios y stock validados
+// contra Shopify segundos antes; leerlo evita repetir una llamada por variante.
+const fetchDraftOrderForPayment = async (draftOrderId) => {
+  const token = await getShopifyToken();
+  const res = await fetch(
+    `https://${SHOPIFY_DOMAIN}/admin/api/2026-04/draft_orders/${draftOrderId}.json`,
+    { headers: { 'X-Shopify-Access-Token': token } }
+  );
+
+  if (res.status === 404) return null;
+
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(`Shopify ${res.status}: no se pudo leer el draft ${draftOrderId}`);
+  }
+
+  return data.draft_order || null;
+};
+
+const buildTrustedItemsFromDraft = (draft) => {
+  let cartMeta = null;
+  try {
+    const raw = draft?.note_attributes?.find((a) => a.name === 'cart_items')?.value;
+    if (raw) cartMeta = JSON.parse(raw);
+  } catch {}
+
+  return (draft?.line_items || []).map((li, idx) => ({
+    variantId: li.variant_id,
+    title: li.title,
+    quantity: Number(li.quantity || 0),
+    unitPrice: Math.round(Number(li.price || 0)),
+    talla: cartMeta?.[idx]?.talla || '',
+    color: cartMeta?.[idx]?.color || '',
+  }));
 };
 
 const buildPaymentPreferenceKey = ({ idempotencyKey, draftOrderId, orderOwnerEmail }) => {
@@ -324,7 +359,22 @@ const createPaymentPreference = async ({
   const singleItem = getSingleCartItem(cartItems);
 
   try {
-    const sellerCheck = await validateExpectedSeller();
+    const [sellerCheck, draft, usuarioDescuento] = await Promise.all([
+      validateExpectedSeller(),
+      fetchDraftOrderForPayment(draftOrderId),
+      supabase
+        .from('usuarios')
+        .select('descuento_bienvenida_usado')
+        .eq('email', orderOwnerEmail)
+        .eq('email_verified', true)
+        .single()
+        .then(({ data }) => data)
+        .catch((descErr) => {
+          console.warn('No se pudo verificar descuento:', descErr?.message);
+          return null;
+        }),
+    ]);
+
     if (!sellerCheck.ok) {
       await trackFunnelEvent({
         eventType: 'payment_preference_failed',
@@ -357,7 +407,31 @@ const createPaymentPreference = async ({
 
     const preferenceClient = new mercadopago.Preference(client);
 
-    const { trustedItems, total } = await validateCartWithShopify(cartItems);
+    if (!draft) {
+      await trackFunnelEvent({
+        eventType: 'payment_preference_failed',
+        source: 'backend',
+        sessionId: String(funnelSessionId || '').trim() || null,
+        userId: authUserId,
+        userEmail: orderOwnerEmail,
+        orderId: draftOrderId,
+        amount: cartTotal || null,
+        meta: {
+          stage: 'draft_missing',
+          payment_preference_key: paymentPreferenceKey || null,
+          line_items: buildCartSummary(cartItems),
+        },
+      });
+      return {
+        statusCode: 409,
+        payload: {
+          error: 'Tu sesion de pago expiro. Vuelve a intentar el pago desde el checkout.',
+        },
+      };
+    }
+
+    const trustedItems = buildTrustedItemsFromDraft(draft);
+    const total = trustedItems.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
     if (Math.abs(Number(cartTotal) - total) > 1) {
       await eliminarDraftOrder(draftOrderId);
       await trackFunnelEvent({
@@ -398,26 +472,15 @@ const createPaymentPreference = async ({
     }));
 
     let descuentoAplicado = false;
-    try {
-      const { data: usuario } = await supabase
-        .from('usuarios')
-        .select('descuento_bienvenida_usado')
-        .eq('email', orderOwnerEmail)
-        .eq('email_verified', true)
-        .single();
-
-      if (usuario && !usuario.descuento_bienvenida_usado) {
-        itemsMapped = itemsMapped.map((item) => ({
-          ...item,
-          title: `${item.title} - Descuento bienvenida 10%`,
-          description: `Precio original ${formatCop(item.unit_price)} | Descuento bienvenida 10% -${formatCop(Math.round(item.unit_price * 0.1))} | Precio final ${formatCop(Math.round(item.unit_price * 0.9))}`,
-          unit_price: Math.round(item.unit_price * 0.9),
-        }));
-        descuentoAplicado = true;
-        console.log(`Descuento bienvenida 10% aplicado a: ${orderOwnerEmail}`);
-      }
-    } catch (descErr) {
-      console.warn('No se pudo verificar descuento:', descErr.message);
+    if (usuarioDescuento && !usuarioDescuento.descuento_bienvenida_usado) {
+      itemsMapped = itemsMapped.map((item) => ({
+        ...item,
+        title: `${item.title} - Descuento bienvenida 10%`,
+        description: `Precio original ${formatCop(item.unit_price)} | Descuento bienvenida 10% -${formatCop(Math.round(item.unit_price * 0.1))} | Precio final ${formatCop(Math.round(item.unit_price * 0.9))}`,
+        unit_price: Math.round(item.unit_price * 0.9),
+      }));
+      descuentoAplicado = true;
+      console.log(`Descuento bienvenida 10% aplicado a: ${orderOwnerEmail}`);
     }
 
     const validShippingCost = Math.max(0, Number(shippingCost) || 0);

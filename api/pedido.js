@@ -336,18 +336,25 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { trustedItems } = await validateCartWithShopify(cartItems);
+    const shippingPromise = (async () => {
+      const token = await getShopifyToken('app');
+      return getServerShippingCost(token, {
+        city: form?.ciudad,
+        department: form?.departamento,
+      });
+    })().catch(() => DEFAULT_NATIONAL_SHIPPING);
+
+    const [{ trustedItems }, serverShippingCost] = await Promise.all([
+      validateCartWithShopify(cartItems),
+      shippingPromise,
+    ]);
+
     let draftOrder = null;
-    let serverShippingCost = DEFAULT_NATIONAL_SHIPPING;
     let lastError = null;
 
     for (const preferredToken of ['app', 'admin']) {
       try {
         const token = await getShopifyToken(preferredToken);
-        serverShippingCost = await getServerShippingCost(token, {
-          city: form?.ciudad,
-          department: form?.departamento,
-        });
         draftOrder = await crearDraftOrder(token, { form, trustedItems, orderOwnerEmail, checkoutEmail, shippingCost: serverShippingCost, esCod });
         if (preferredToken === 'admin') {
           console.warn('[PAVOA] Draft Order creado usando fallback con SHOPIFY_ADMIN_TOKEN.');
@@ -437,9 +444,11 @@ export default async function handler(req, res) {
       },
     }).catch(() => {});
     console.error('Error creando draft order:', err.message);
-    return res.status(err instanceof CartValidationError ? 400 : 500).json({
-      error: 'Error al crear el pedido en Shopify',
-      detail: parseShopifyError(err.message),
+    if (err instanceof CartValidationError) {
+      return res.status(400).json({ error: err.message });
+    }
+    return res.status(500).json({
+      error: 'No pudimos registrar tu pedido. Intenta de nuevo en unos minutos.',
     });
   }
 }

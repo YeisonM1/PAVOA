@@ -5,7 +5,7 @@ import { trackBeginCheckout } from '../lib/analytics';
 import { getFunnelSessionId, trackFunnelEvent } from '../lib/funnel';
 import SEO from '../components/SEO';
 import { thumbImage } from '../utils/imageUrl';
-import { verificarStock, getShippingConfig } from '../services/productService';
+import { getShippingConfig } from '../services/productService';
 import { CIUDADES_POR_DEPARTAMENTO, DEPARTAMENTOS } from '../utils/ciudades';
 import { estaAutenticado, getCliente, getToken } from '../services/authService';
 
@@ -640,21 +640,8 @@ export default function CheckoutPage() {
     setCargandoPago(true);
 
     try {
-      // Paso 1 - Verificar stock
-      const erroresStock = await verificarStock(cartItems);
-      if (erroresStock.length > 0) {
-        trackFunnelEvent('checkout_error', {
-          amount: cartTotal,
-          meta: {
-            stage: 'stock_validation',
-            messages: erroresStock,
-          },
-        });
-        setErrors({ general: erroresStock.join(' ') });
-        setCargandoPago(false);
-        return;
-      }
-
+      // El stock y los precios se validan en el backend (/api/pedido) con datos
+      // frescos de Shopify; no se repite la verificacion aqui para no sumar latencia.
       trackFunnelEvent('payment_click', {
         productId: getSingleCheckoutItem(cartItems)?.productId || null,
         productName: getSingleCheckoutItem(cartItems)?.productName || null,
@@ -796,13 +783,6 @@ export default function CheckoutPage() {
     let checkoutTokenCreado = '';
 
     try {
-      const erroresStock = await verificarStock(cartItems);
-      if (erroresStock.length > 0) {
-        setErrors({ general: erroresStock.join(' ') });
-        setCargandoCod(false);
-        return;
-      }
-
       const cartHash = currentCartHash;
       const minuteBucket = Math.floor(Date.now() / 60000);
       const idempotencyKey = `${form.email || 'anon'}-${cartHash}-${minuteBucket}-cod`;

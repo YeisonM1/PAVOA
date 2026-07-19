@@ -53,9 +53,8 @@ export const validateCartWithShopify = async (cartItems = []) => {
 
   const buildTrustedItemsFromShopify = async (preferredToken) => {
     const token = await getShopifyToken(preferredToken);
-    const trustedItems = [];
 
-    for (const item of cartItems) {
+    return Promise.all(cartItems.map(async (item) => {
       const quantity = Number(item?.cantidad || 0);
       if (!Number.isInteger(quantity) || quantity <= 0) {
         throw new CartValidationError('Cantidad invalida en el carrito');
@@ -79,7 +78,7 @@ export const validateCartWithShopify = async (cartItems = []) => {
         );
       }
 
-      trustedItems.push({
+      return {
         variantId: variant.numericId,
         storefrontVariantId: selectedVariantId,
         title,
@@ -89,10 +88,8 @@ export const validateCartWithShopify = async (cartItems = []) => {
         color: item?.producto?.colorSeleccionado || '',
         image: item?.producto?.imagen1 || '',
         details: item?.producto?.detalles || '',
-      });
-    }
-
-    return trustedItems;
+      };
+    }));
   };
 
   let trustedItems;
