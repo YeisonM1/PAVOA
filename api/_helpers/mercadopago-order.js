@@ -5,6 +5,13 @@ import { sendTransactionalEmail } from './mail.js';
 import { trackFunnelEvent } from './funnel.js';
 import { supabase, getSupabaseMode } from './supabase.js';
 import {
+  claimIdempotency,
+  clearIdempotency,
+  completeIdempotency,
+  failIdempotency,
+  waitForIdempotency,
+} from './durable-security.js';
+import {
   isShippingLineItem,
   resolveFinalOrderAmounts,
   resolveLineItemAmounts,
@@ -13,6 +20,8 @@ import {
 const client = new mercadopago.MercadoPagoConfig({ accessToken: process.env.MP_ACCESS_TOKEN });
 const SHOPIFY_DOMAIN = process.env.VITE_SHOPIFY_DOMAIN;
 const _paymentInflight = new Map();
+const MP_PAYMENT_SCOPE = 'mp-payment';
+const MP_PAYMENT_TTL = 30 * 60 * 1000;
 
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -36,24 +45,6 @@ const getExistingOrderByPaymentId = async (paymentId) => {
   }
 
   return data || null;
-};
-
-const fetchOrderById = async (token, orderId) => {
-  const normalizedId = String(orderId || '').trim();
-  if (!normalizedId) return null;
-
-  const base = `https://${SHOPIFY_DOMAIN}/admin/api/2026-04`;
-  const response = await fetch(`${base}/orders/${normalizedId}.json`, {
-    headers: { 'X-Shopify-Access-Token': token },
-  });
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`No se pudo leer la orden ${normalizedId} en Shopify: ${errorText}`);
-  }
-
-  const data = await response.json();
-  return data?.order || null;
 };
 
 export const completarDraftOrder = async (draftOrderId, { financialStatus = 'pending' } = {}) => {
@@ -209,11 +200,6 @@ export const enviarEmailConfirmacion = async (order, paymentId, totalReal, descu
     }),
   });
 };
-
-const toMoneyLabel = (value) =>
-  value === null || value === undefined || value === ''
-    ? ''
-    : `$${Number(value).toLocaleString('es-CO')}`;
 
 const toLineItemSummary = (items = []) =>
   (Array.isArray(items) ? items : []).map((item) => ({
@@ -521,13 +507,70 @@ const processMercadoPagoPaymentInternal = async (paymentId) => {
   };
 };
 
+// Un resultado es terminal cuando ya no tiene sentido reprocesar el pago:
+// rechazado/cancelado, o aprobado con la orden ya creada. Un "approved" sin
+// orden en Shopify o un "pending" deben poder reintentarse con el proximo
+// webhook, asi que en esos casos se libera el lock en vez de completarlo.
+const isTerminalPaymentResult = (result) =>
+  Boolean(result?.ok) && (
+    result.status === 'rejected'
+    || result.status === 'cancelled'
+    || (result.status === 'approved' && (result.shopifyCompleted || result.alreadyProcessed))
+  );
+
+const runWithPaymentClaim = async (key, claim) => {
+  try {
+    const result = await processMercadoPagoPaymentInternal(key);
+    if (isTerminalPaymentResult(result)) {
+      await completeIdempotency({
+        scope: MP_PAYMENT_SCOPE,
+        key,
+        claimToken: claim.claimToken,
+        response: result,
+        ttlMs: MP_PAYMENT_TTL,
+      });
+    } else {
+      await failIdempotency({ scope: MP_PAYMENT_SCOPE, key, claimToken: claim.claimToken });
+    }
+    return result;
+  } catch (error) {
+    await failIdempotency({ scope: MP_PAYMENT_SCOPE, key, claimToken: claim.claimToken });
+    throw error;
+  }
+};
+
+const processWithDurableLock = async (key) => {
+  const claim = await claimIdempotency({ scope: MP_PAYMENT_SCOPE, key, ttlMs: MP_PAYMENT_TTL });
+  if (!claim) return processMercadoPagoPaymentInternal(key);
+  if (claim.claimed) return runWithPaymentClaim(key, claim);
+
+  const record = claim.state === 'processing'
+    ? await waitForIdempotency({ scope: MP_PAYMENT_SCOPE, key, timeoutMs: 8000 })
+    : claim;
+
+  if (record?.state === 'completed' && record.response) {
+    console.info(`Pago ${key} ya procesado en otra instancia; devolviendo resultado registrado.`);
+    return record.response;
+  }
+
+  if (record?.state !== 'processing') {
+    await clearIdempotency({ scope: MP_PAYMENT_SCOPE, key });
+    const retryClaim = await claimIdempotency({ scope: MP_PAYMENT_SCOPE, key, ttlMs: MP_PAYMENT_TTL });
+    if (retryClaim?.claimed) return runWithPaymentClaim(key, retryClaim);
+    if (retryClaim?.state === 'completed' && retryClaim.response) return retryClaim.response;
+  }
+
+  console.info(`Pago ${key} en proceso en otra instancia; se responde estado pendiente.`);
+  return { ok: true, status: 'pending', code: 'processing_elsewhere', paymentId: key };
+};
+
 export const processMercadoPagoPayment = async (paymentId) => {
   const key = String(paymentId);
   if (_paymentInflight.has(key)) {
     return _paymentInflight.get(key);
   }
 
-  const promise = processMercadoPagoPaymentInternal(key)
+  const promise = processWithDurableLock(key)
     .finally(() => {
       _paymentInflight.delete(key);
     });
