@@ -22,59 +22,6 @@ const isReadProductsScopeError = (message = '') =>
 const isInvalidShopifyTokenError = (message = '') =>
   /invalid api key or access token|unrecognized login|wrong password/i.test(String(message));
 
-const parseCartUnitPrice = (item) => {
-  const direct = Number(item?.producto?.precioNumerico);
-  if (Number.isFinite(direct) && direct > 0) return Math.round(direct);
-
-  const raw = String(item?.producto?.precio || '').trim();
-  const digits = raw.replace(/[^\d]/g, '');
-  const parsed = Number(digits);
-  if (Number.isFinite(parsed) && parsed > 0) return parsed;
-
-  return 0;
-};
-
-const buildFallbackFromCart = (cartItems = []) => {
-  const trustedItems = [];
-
-  for (const item of cartItems) {
-    const quantity = Number(item?.cantidad || 0);
-    if (!Number.isInteger(quantity) || quantity <= 0) {
-      throw new CartValidationError('Cantidad invalida en el carrito');
-    }
-
-    const selectedVariantId = item?.producto?.selectedVariantId;
-    if (!selectedVariantId) {
-      throw new CartValidationError(`Selecciona nuevamente talla/color para "${item?.producto?.nombre || 'un producto'}"`);
-    }
-
-    const numericId = variantNumericId(selectedVariantId);
-    if (!numericId) {
-      throw new CartValidationError('Variante invalida en el carrito');
-    }
-
-    const unitPrice = parseCartUnitPrice(item);
-    if (!unitPrice) {
-      throw new CartValidationError(`No se pudo validar el precio de "${item?.producto?.nombre || 'un producto'}"`);
-    }
-
-    trustedItems.push({
-      variantId: numericId,
-      storefrontVariantId: selectedVariantId,
-      title: item?.producto?.nombre || `Variante ${numericId}`,
-      quantity,
-      unitPrice,
-      talla: item?.talla || '',
-      color: item?.producto?.colorSeleccionado || '',
-      image: item?.producto?.imagen1 || '',
-      details: item?.producto?.detalles || '',
-    });
-  }
-
-  const total = trustedItems.reduce((sum, current) => sum + current.unitPrice * current.quantity, 0);
-  return { trustedItems, total };
-};
-
 const fetchVariant = async (token, variantId) => {
   const numericId = variantNumericId(variantId);
   if (!numericId) throw new CartValidationError('Variante invalida en el carrito');
@@ -104,85 +51,63 @@ export const validateCartWithShopify = async (cartItems = []) => {
 
   const hasLegacyAdminToken = Boolean(String(process.env.SHOPIFY_ADMIN_TOKEN || '').trim());
 
+  const buildTrustedItemsFromShopify = async (preferredToken) => {
+    const token = await getShopifyToken(preferredToken);
+    const trustedItems = [];
+
+    for (const item of cartItems) {
+      const quantity = Number(item?.cantidad || 0);
+      if (!Number.isInteger(quantity) || quantity <= 0) {
+        throw new CartValidationError('Cantidad invalida en el carrito');
+      }
+
+      const selectedVariantId = item?.producto?.selectedVariantId;
+      if (!selectedVariantId) {
+        throw new CartValidationError(`Selecciona nuevamente talla/color para "${item?.producto?.nombre || 'un producto'}"`);
+      }
+
+      const variant = await fetchVariant(token, selectedVariantId);
+      const stock = Number(variant.inventory_quantity ?? 0);
+      const title = item?.producto?.nombre || variant.title || `Variante ${variant.numericId}`;
+      const unitPrice = normalizeMoney(variant.price);
+
+      if (stock < quantity) {
+        throw new CartValidationError(
+          stock <= 0
+            ? `"${title}" ya no tiene stock disponible.`
+            : `"${title}" solo tiene ${stock} unidad${stock === 1 ? '' : 'es'} disponible${stock === 1 ? '' : 's'}.`
+        );
+      }
+
+      trustedItems.push({
+        variantId: variant.numericId,
+        storefrontVariantId: selectedVariantId,
+        title,
+        quantity,
+        unitPrice,
+        talla: item?.talla || '',
+        color: item?.producto?.colorSeleccionado || '',
+        image: item?.producto?.imagen1 || '',
+        details: item?.producto?.detalles || '',
+      });
+    }
+
+    return trustedItems;
+  };
+
+  let trustedItems;
   try {
-    const buildTrustedItemsFromShopify = async (preferredToken) => {
-      const token = await getShopifyToken(preferredToken);
-      const trustedItems = [];
-
-      for (const item of cartItems) {
-        const quantity = Number(item?.cantidad || 0);
-        if (!Number.isInteger(quantity) || quantity <= 0) {
-          throw new CartValidationError('Cantidad invalida en el carrito');
-        }
-
-        const selectedVariantId = item?.producto?.selectedVariantId;
-        if (!selectedVariantId) {
-          throw new CartValidationError(`Selecciona nuevamente talla/color para "${item?.producto?.nombre || 'un producto'}"`);
-        }
-
-        const variant = await fetchVariant(token, selectedVariantId);
-        const stock = Number(variant.inventory_quantity ?? 0);
-        const title = item?.producto?.nombre || variant.title || `Variante ${variant.numericId}`;
-        const unitPrice = normalizeMoney(variant.price);
-
-        if (stock < quantity) {
-          throw new CartValidationError(
-            stock <= 0
-              ? `"${title}" ya no tiene stock disponible.`
-              : `"${title}" solo tiene ${stock} unidad${stock === 1 ? '' : 'es'} disponible${stock === 1 ? '' : 's'}.`
-          );
-        }
-
-        trustedItems.push({
-          variantId: variant.numericId,
-          storefrontVariantId: selectedVariantId,
-          title,
-          quantity,
-          unitPrice,
-          talla: item?.talla || '',
-          color: item?.producto?.colorSeleccionado || '',
-          image: item?.producto?.imagen1 || '',
-          details: item?.producto?.detalles || '',
-        });
-      }
-
-      return trustedItems;
-    };
-
-    let trustedItems;
-    try {
-      trustedItems = await buildTrustedItemsFromShopify('app');
-    } catch (appError) {
-      if (!hasLegacyAdminToken) {
-        throw appError;
-      }
-
-      if (!isInvalidShopifyTokenError(appError?.message) && !isReadProductsScopeError(appError?.message)) {
-        throw appError;
-      }
-
-      console.warn('[PAVOA] No se pudo validar variantes con el token del app; reintentando con SHOPIFY_ADMIN_TOKEN legado.');
-
-      try {
-        trustedItems = await buildTrustedItemsFromShopify('admin');
-      } catch (adminError) {
-        if (!isInvalidShopifyTokenError(adminError?.message) && !isReadProductsScopeError(adminError?.message)) {
-          throw adminError;
-        }
-
-        console.warn('[PAVOA] Tampoco se pudo validar variantes con el token legado; usando validacion fallback desde carrito.');
-        return buildFallbackFromCart(cartItems);
-      }
+    trustedItems = await buildTrustedItemsFromShopify('app');
+  } catch (appError) {
+    const isTokenIssue = isInvalidShopifyTokenError(appError?.message) || isReadProductsScopeError(appError?.message);
+    if (!hasLegacyAdminToken || !isTokenIssue) {
+      throw appError;
     }
 
-    const total = trustedItems.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
-    return { trustedItems, total };
-  } catch (error) {
-    if (!isReadProductsScopeError(error?.message)) {
-      throw error;
-    }
-
-    console.warn('[PAVOA] read_products no aprobado; usando validacion fallback desde carrito.');
-    return buildFallbackFromCart(cartItems);
+    console.warn('[PAVOA] No se pudo validar variantes con el token del app; reintentando con SHOPIFY_ADMIN_TOKEN legado.');
+    trustedItems = await buildTrustedItemsFromShopify('admin');
   }
+
+  const total = trustedItems.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
+  return { trustedItems, total };
 };
