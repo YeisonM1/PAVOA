@@ -1,12 +1,7 @@
-import { createClient } from '@supabase/supabase-js';
 import bcrypt from 'bcryptjs';
 import { signToken } from './_helpers/auth.js';
+import { supabase } from './_helpers/supabase.js';
 import { consumeRateLimit, getClientIp } from './_helpers/durable-security.js';
-
-const supabase = createClient(
-  process.env.VITE_SUPABASE_URL,
-  process.env.VITE_SUPABASE_ANON_KEY
-);
 
 const RATE_LIMIT  = 10;
 const RATE_WINDOW = 15 * 60 * 1000; // 15 minutos

@@ -1,14 +1,9 @@
-import { createClient } from '@supabase/supabase-js';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 import { emailVerificacion } from './_helpers/email-templates.js';
 import { sendTransactionalEmail } from './_helpers/mail.js';
+import { supabase } from './_helpers/supabase.js';
 import { consumeRateLimit, getClientIp } from './_helpers/durable-security.js';
-
-const supabase = createClient(
-  process.env.VITE_SUPABASE_URL,
-  process.env.VITE_SUPABASE_ANON_KEY,
-);
 
 const APP_URL = process.env.VITE_APP_URL || 'https://pavoa.com.co';
 

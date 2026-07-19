@@ -1,11 +1,6 @@
-import { createClient } from '@supabase/supabase-js';
 import { createHash } from 'crypto';
 import { verifyToken } from './_helpers/auth.js';
-
-const supabase = createClient(
-  process.env.VITE_SUPABASE_URL,
-  process.env.VITE_SUPABASE_ANON_KEY
-);
+import { supabase } from './_helpers/supabase.js';
 
 const GUEST_WINDOW_HOURS = 24;
 

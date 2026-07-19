@@ -1,4 +1,3 @@
-import { createClient } from '@supabase/supabase-js';
 import { sendTransactionalEmail } from './_helpers/mail.js';
 import { trackFunnelEvent } from './_helpers/funnel.js';
 import {
@@ -11,14 +10,9 @@ import {
   emailContactoCliente,
   emailContactoInterno,
 } from './_helpers/email-templates.js';
+import { supabase } from './_helpers/supabase.js';
 import { consumeRateLimit, getClientIp } from './_helpers/durable-security.js';
 
-const supabaseUrl = process.env.VITE_SUPABASE_URL;
-const supabaseKey =
-  process.env.SUPABASE_SERVICE_ROLE_KEY ||
-  process.env.VITE_SUPABASE_ANON_KEY;
-
-const supabase = createClient(supabaseUrl, supabaseKey);
 const CONTACT_LIMIT = 5;
 const CONTACT_WINDOW = 15 * 60 * 1000;
 

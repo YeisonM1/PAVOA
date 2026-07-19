@@ -1,9 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
-
-const supabase = createClient(
-  process.env.VITE_SUPABASE_URL,
-  process.env.VITE_SUPABASE_ANON_KEY
-);
+import { supabase } from './_helpers/supabase.js';
 
 const APP_URL = process.env.VITE_APP_URL || 'https://pavoa.com.co';
 
