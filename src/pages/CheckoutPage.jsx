@@ -1045,7 +1045,7 @@ export default function CheckoutPage() {
               <p className="text-[10px] text-red-500 tracking-[0.08em] text-center mt-4">{errors.general}</p>
             )}
 
-            {(errors.general || statusFromMP === 'failure' || statusFromMP === 'rejected') && (
+            {import.meta.env.DEV && (errors.general || statusFromMP === 'failure' || statusFromMP === 'rejected') && (
               <div className="mt-4 border border-stone-200 bg-stone-50 p-4">
                 <button
                   type="button"
