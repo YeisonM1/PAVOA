@@ -9,6 +9,13 @@ import {
   resolveFinalOrderAmounts,
   resolveLineItemAmounts,
 } from './_helpers/order-amounts.js';
+import {
+  claimIdempotency,
+  clearIdempotency,
+  completeIdempotency,
+  failIdempotency,
+  waitForIdempotency,
+} from './_helpers/durable-security.js';
 
 const client = new mercadopago.MercadoPagoConfig({
   accessToken: process.env.MP_ACCESS_TOKEN,
@@ -39,6 +46,12 @@ const formatCop = (value) => `$${Number(value || 0).toLocaleString('es-CO')}`;
 const PAYMENT_PREFERENCE_TTL = 15 * 60 * 1000;
 const _paymentPreferenceCache = new Map();
 const _paymentPreferenceInflight = new Map();
+
+// Lock de idempotencia para el flujo contra entrega: completarDraftOrder crea la
+// orden via POST /orders.json (no via draft_orders/complete), asi que Shopify no
+// bloquea por si solo dos requests concurrentes para el mismo draft.
+const COD_ORDER_SCOPE = 'cod-order';
+const COD_ORDER_TTL = 30 * 60 * 1000;
 
 const requiredEnvError = () => {
   if (!process.env.MP_ACCESS_TOKEN) return 'Falta MP_ACCESS_TOKEN en variables de entorno de Vercel.';
@@ -816,6 +829,39 @@ export default async function handler(req, res) {
     }
     const shippingCost = Number(checkoutAccess.shippingCost || 0);
 
+    let codClaim = await claimIdempotency({
+      scope: COD_ORDER_SCOPE,
+      key: draftOrderId,
+      ttlMs: COD_ORDER_TTL,
+    });
+
+    if (!codClaim?.claimed) {
+      const record = codClaim?.state === 'processing'
+        ? await waitForIdempotency({ scope: COD_ORDER_SCOPE, key: draftOrderId })
+        : codClaim;
+
+      if (record?.state === 'completed' && record.response) {
+        return res.status(200).json(record.response);
+      }
+
+      if (record?.state !== 'processing') {
+        await clearIdempotency({ scope: COD_ORDER_SCOPE, key: draftOrderId });
+        codClaim = await claimIdempotency({
+          scope: COD_ORDER_SCOPE,
+          key: draftOrderId,
+          ttlMs: COD_ORDER_TTL,
+        });
+      }
+
+      if (!codClaim?.claimed) {
+        res.setHeader('Retry-After', '2');
+        return res.status(409).json({
+          error: 'Tu pedido ya se esta procesando. Espera un momento antes de intentar nuevamente.',
+          retryable: true,
+        });
+      }
+    }
+
     try {
       // Create the real order via POST /orders.json with send_receipt:false — the
       // draft_orders/complete endpoint does not reliably suppress Shopify's native
@@ -930,7 +976,7 @@ export default async function handler(req, res) {
         meta: { shopify_order_name: orderName, shopify_order_id: String(shopifyOrderId || '') },
       }).catch(() => {});
 
-      return res.status(200).json({
+      const responsePayload = {
         ok: true,
         orderName,
         shopify_order_id: String(shopifyOrderId || ''),
@@ -939,8 +985,23 @@ export default async function handler(req, res) {
         subtotal: finalSubtotal,
         shippingCost: finalShippingCost,
         total: totalConEnvio,
-      });
+      };
+
+      if (codClaim?.claimed) {
+        await completeIdempotency({
+          scope: COD_ORDER_SCOPE,
+          key: draftOrderId,
+          claimToken: codClaim.claimToken,
+          response: responsePayload,
+          ttlMs: COD_ORDER_TTL,
+        });
+      }
+
+      return res.status(200).json(responsePayload);
     } catch (err) {
+      if (codClaim?.claimed) {
+        await failIdempotency({ scope: COD_ORDER_SCOPE, key: draftOrderId, claimToken: codClaim.claimToken });
+      }
       console.error('Error procesando pedido contra entrega:', err.message);
       try { await eliminarDraftOrder(draftOrderId); } catch {}
       return res.status(500).json({ error: err.message || 'No se pudo registrar el pedido contra entrega.' });
