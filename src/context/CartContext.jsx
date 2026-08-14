@@ -1,6 +1,7 @@
-import { useState, createContext, useMemo, useCallback } from 'react';
+import { useState, createContext, useEffect, useMemo, useCallback } from 'react';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { parsePrice } from '../utils/price';
+import { repairCartItems } from '../utils/cart';
 import { trackAddToCart } from '../lib/analytics';
 import { trackFunnelEvent } from '../lib/funnel';
 
@@ -26,6 +27,14 @@ export function CartProvider({ children }) {
   const [isCartAnimating, setIsCartAnimating] = useState(false);
   const [showToast, setShowToast]             = useState(null);
   const [toastKey, setToastKey]               = useState(0);
+
+  // Las bolsas guardadas antes de armar el item desde la variante traen el
+  // precio mínimo del producto y la imagen del primer color; sin reparar
+  // seguirían siendo rechazadas en el checkout. El item guarda sus variantes
+  // y el variantId elegido, así que se corrige sin consultar al servidor.
+  useEffect(() => {
+    setCartItems((prev) => repairCartItems(prev).items);
+  }, [setCartItems]);
 
   const addToCart = useCallback((producto, talla, cantidad = 1) => {
     setCartItems((prev) => {

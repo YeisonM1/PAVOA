@@ -5,6 +5,7 @@ import { CartContext } from '../App';
 import { useWishlist } from '../context/WishlistContext';
 import { getProductoById } from '../services/productService';
 import { heroImage } from '../utils/imageUrl';
+import { buildCartItem } from '../utils/cart';
 
 const HeartIcon = ({ filled }) => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill={filled ? '#0B0B0B' : 'none'} stroke="#0B0B0B" strokeWidth="1.5">
@@ -91,7 +92,7 @@ export default function QuickViewModal({ productoId, onClose }) {
     setAdding(true);
     const tallaFinal = esTallaUnica ? 'ÚNICA' : tallaSeleccionada;
     const varianteElegida = variantes.find(v => v.color === colorSeleccionado && v.talla === tallaFinal);
-    addToCart({ ...producto, colorSeleccionado, selectedVariantId: varianteElegida?.variantId || null }, tallaFinal, 1);
+    addToCart(buildCartItem(producto, varianteElegida, colorSeleccionado), tallaFinal, 1);
     setTimeout(() => { setAdding(false); onClose(); }, 900);
   };
 

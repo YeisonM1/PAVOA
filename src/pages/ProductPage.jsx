@@ -5,6 +5,7 @@ import CrossSelling from '../sections/CrossSelling';
 import { getProductoById } from '../services/productService';
 import SEO from '../components/SEO';
 import { heroImage } from '../utils/imageUrl';
+import { buildCartItem } from '../utils/cart';
 import { trackViewItem } from '../lib/analytics';
 import { trackFunnelEvent } from '../lib/funnel';
 import GuiaTallasModal from '../components/GuiaTallasModal';
@@ -239,7 +240,7 @@ export default function ProductPage() {
     setAdding(true);
     const tallaFinal = esTallaUnica ? 'ÚNICA' : tallaSeleccionada;
     const varianteElegida = variantes.find(v => v.color === colorSeleccionado && v.talla === tallaFinal);
-    addToCart({ ...producto, colorSeleccionado, selectedVariantId: varianteElegida?.variantId || null }, tallaFinal, cantidad);
+    addToCart(buildCartItem(producto, varianteElegida, colorSeleccionado), tallaFinal, cantidad);
     setTimeout(() => {
       setAdding(false);
       setTallaSeleccionada(null);

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { productImage } from '../utils/imageUrl';
+import { buildCartItem } from '../utils/cart';
 import { useWishlist } from '../context/WishlistContext';
 import { useCart } from '../hooks/useCart';
 import { getProductoById } from '../services/productService';
@@ -46,11 +47,7 @@ function ProductCard({ producto }) {
   const addVariantToCart = (talla) => {
     const varianteElegida = variantes.find(v => v.talla === talla && (v.stock ?? 0) > 0)
       || variantes.find(v => v.talla === talla);
-    addToCart({
-      ...producto,
-      colorSeleccionado: varianteElegida?.color || '',
-      selectedVariantId: varianteElegida?.variantId || null,
-    }, talla, 1);
+    addToCart(buildCartItem(producto, varianteElegida, varianteElegida?.color || ''), talla, 1);
   };
   // ────────────────────────────────────────────────────────
 
