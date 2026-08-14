@@ -144,12 +144,39 @@ const insertStockAlert = async ({
   return supabase.from('stock_alerts').insert(payload);
 };
 
+/**
+ * Solo el formulario de contacto limitaba intentos; las demás ramas de este
+ * endpoint respondían antes de llegar a esa comprobación. Sin límite se podían
+ * inscribir correos ajenos al newsletter, inflar las tablas de embudo y alertas,
+ * y adivinar el secreto de los correos de prueba sin freno.
+ *
+ * Devuelve true si la petición puede continuar; si no, ya respondió con 429.
+ */
+const dentroDelLimite = async (req, res, { scope, limit, windowMs = 15 * 60 * 1000 }) => {
+  const rateLimit = await consumeRateLimit({
+    scope,
+    identifier: getClientIp(req),
+    limit,
+    windowMs,
+  });
+
+  if (rateLimit.allowed) return true;
+
+  res.setHeader('Retry-After', String(rateLimit.retryAfter));
+  res.status(429).json({ error: 'Demasiadas solicitudes. Intenta nuevamente en unos minutos.' });
+  return false;
+};
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Metodo no permitido' });
   }
 
   if (req.body?.type === 'funnel-event') {
+    // Límite alto a propósito: son eventos de navegación real y varios clientes
+    // pueden compartir IP. Corta una inundación, no a un comprador activo.
+    if (!(await dentroDelLimite(req, res, { scope: 'funnel-event', limit: 300 }))) return;
+
     const {
       eventKey,
       eventType,
@@ -201,6 +228,8 @@ export default async function handler(req, res) {
   }
 
   if (req.body?.type === 'newsletter-subscribe') {
+    if (!(await dentroDelLimite(req, res, { scope: 'newsletter-subscribe', limit: 5 }))) return;
+
     const normalizedEmail = String(req.body?.email || '').trim().toLowerCase();
     const normalizedSource = normalizeOptional(req.body?.source) || 'storefront_footer';
 
@@ -233,6 +262,10 @@ export default async function handler(req, res) {
   }
 
   if (req.body?.type === 'order-confirmation') {
+    // Antes de validar el secreto, para que adivinarlo tenga costo. Comparten
+    // scope con preview-email: alternar ramas no debe duplicar los intentos.
+    if (!(await dentroDelLimite(req, res, { scope: 'preview-secret', limit: 10 }))) return;
+
     const access = validatePreviewAccess(req);
     if (!access.ok) return res.status(access.status).json({ error: access.error });
 
@@ -266,6 +299,8 @@ export default async function handler(req, res) {
   }
 
   if (req.body?.type === 'preview-email') {
+    if (!(await dentroDelLimite(req, res, { scope: 'preview-secret', limit: 10 }))) return;
+
     const access = validatePreviewAccess(req);
     if (!access.ok) return res.status(access.status).json({ error: access.error });
 
@@ -410,6 +445,8 @@ export default async function handler(req, res) {
   }
 
   if (req.body?.type === 'stock-alert') {
+    if (!(await dentroDelLimite(req, res, { scope: 'stock-alert', limit: 10 }))) return;
+
     const { email, productId, productNombre, talla, color, variantId } = req.body;
     if (!email || !productId) return res.status(400).json({ error: 'email y productId son requeridos.' });
     if (!isValidEmail(email)) return res.status(400).json({ error: 'Email invalido.' });

@@ -1,8 +1,28 @@
 import bcrypt from 'bcryptjs';
 import { supabase } from './_helpers/supabase.js';
+import { consumeRateLimit, getClientIp } from './_helpers/durable-security.js';
+
+// Alineado con register.js: cambiar la contraseña no puede ser la vía para
+// dejarla más débil de lo que se exige al crear la cuenta.
+const MIN_PASSWORD_LENGTH = 8;
+const RESET_LIMIT = 5;
+const RESET_WINDOW = 15 * 60 * 1000;
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+
+  // Login, registro y forgot-password ya limitaban intentos; este endpoint no,
+  // y es el que efectivamente cambia la contraseña.
+  const rateLimit = await consumeRateLimit({
+    scope: 'reset-password',
+    identifier: getClientIp(req),
+    limit: RESET_LIMIT,
+    windowMs: RESET_WINDOW,
+  });
+  if (!rateLimit.allowed) {
+    res.setHeader('Retry-After', String(rateLimit.retryAfter));
+    return res.status(429).json({ error: 'Demasiados intentos. Espera 15 minutos e intenta de nuevo.' });
+  }
 
   const { email, token, newPassword } = req.body;
 
@@ -10,8 +30,8 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Datos incompletos.' });
   }
 
-  if (newPassword.length < 5) {
-    return res.status(400).json({ error: 'La contraseña debe tener al menos 5 caracteres.' });
+  if (newPassword.length < MIN_PASSWORD_LENGTH) {
+    return res.status(400).json({ error: `La contraseña debe tener al menos ${MIN_PASSWORD_LENGTH} caracteres.` });
   }
 
   try {

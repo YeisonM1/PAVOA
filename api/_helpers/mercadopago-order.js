@@ -25,6 +25,49 @@ const MP_PAYMENT_TTL = 30 * 60 * 1000;
 
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
+// Margen en pesos para no rechazar por redondeo: completarDraftOrder reparte el
+// descuento porcentual sobre cada línea con toFixed(2), así que el total puede
+// diferir en unos centavos del que cobró Mercado Pago.
+const TOLERANCIA_PAGO_COP = 100;
+
+/**
+ * Solo se rechaza el pago de menos. Un pago de más no perjudica al negocio y
+ * bloquear una orden ya cobrada por una diferencia de redondeo sería peor que
+ * el riesgo que se busca evitar.
+ */
+export const esPagoInsuficiente = (pagado, esperado, tolerancia = TOLERANCIA_PAGO_COP) => {
+  const montoPagado = Number(pagado);
+  const montoEsperado = Number(esperado);
+  // Solo se compara cuando ambos montos se conocen. Que Mercado Pago no reporte
+  // el importe de un pago ya aprobado es una anomalía suya, y perder una orden
+  // real por eso sería peor que el riesgo que esta función cubre.
+  if (!Number.isFinite(montoPagado) || montoPagado <= 0) return false;
+  if (!Number.isFinite(montoEsperado) || montoEsperado <= 0) return false;
+  return montoPagado < montoEsperado - Math.abs(Number(tolerancia) || 0);
+};
+
+/**
+ * El total que el cliente debía, leído del draft antes de crear la orden. Si no
+ * se puede leer se devuelve null y la validación se omite: completarDraftOrder
+ * va a fallar igual un momento después, así que no hace falta bloquear aquí.
+ */
+const getDraftOrderTotal = async (draftOrderId) => {
+  try {
+    const token = await getShopifyToken();
+    const res = await fetch(
+      `https://${SHOPIFY_DOMAIN}/admin/api/2026-04/draft_orders/${draftOrderId}.json`,
+      { headers: { 'X-Shopify-Access-Token': token } },
+    );
+    if (!res.ok) return null;
+    const { draft_order: draft } = await res.json();
+    const total = Number(draft?.total_price);
+    return Number.isFinite(total) ? total : null;
+  } catch (error) {
+    console.warn(`No se pudo leer el total del draft ${draftOrderId}:`, error.message);
+    return null;
+  }
+};
+
 const isDraftAlreadyProcessingError = (message = '') =>
   /another staff member is processing this draft order/i.test(String(message));
 
@@ -267,6 +310,26 @@ const processMercadoPagoPaymentInternal = async (paymentId) => {
     const esDescuento = descuentoRef === '1';
     const totalPagado = pagoInfo.transaction_amount || totalMP;
     const totalOriginalV = esDescuento ? Math.round(totalPagado / 0.9) : totalPagado;
+
+    // El monto cobrado no se comparaba con el que se debía: la orden se marcaba
+    // pagada por lo que dijera el draft, sin importar cuánto entró. Hoy la
+    // preferencia se arma en el servidor y deberían coincidir, pero nada lo
+    // obligaba. Se verifica antes de crear la orden, no después.
+    const totalEsperado = await getDraftOrderTotal(draftOrderId);
+    if (esPagoInsuficiente(totalPagado, totalEsperado)) {
+      console.error(
+        `Pago insuficiente, orden no creada | payment: ${pagoInfo.id} | draft: ${draftOrderId} | pagado: ${totalPagado} | esperado: ${totalEsperado}`,
+      );
+      return {
+        ok: true,
+        status: 'underpaid',
+        code: 'underpaid',
+        paymentId: String(pagoInfo.id),
+        draftOrderId,
+        paid: totalPagado,
+        expected: totalEsperado,
+      };
+    }
 
     let order = null;
     let emailCliente = emailMP;
@@ -515,6 +578,9 @@ const isTerminalPaymentResult = (result) =>
   Boolean(result?.ok) && (
     result.status === 'rejected'
     || result.status === 'cancelled'
+    // Un pago insuficiente no se arregla reintentando: sin esto el lock se
+    // liberaría y cada webhook volvería a intentar crear la misma orden.
+    || result.status === 'underpaid'
     || (result.status === 'approved' && (result.shopifyCompleted || result.alreadyProcessed))
   );
 

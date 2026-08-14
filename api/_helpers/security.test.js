@@ -12,6 +12,7 @@ const { signCheckoutToken, signToken, verifyCheckoutToken, verifyToken } = await
 const { validarFirma } = await import('../webhook-shopify.js');
 const { isBogotaDestination } = await import('../pedido.js');
 const { extractNotification, validarFirmaWebhook } = await import('../webhook-mercadopago.js');
+const { esPagoInsuficiente } = await import('./mercadopago-order.js');
 
 const bearer = (token) => ({ headers: { authorization: `Bearer ${token}` } });
 
@@ -100,6 +101,29 @@ test('Mercado Pago signature covers the same data.id that gets processed', () =>
 
   assert.equal(validarFirmaWebhook(legitimo, ''), false);
   assert.equal(validarFirmaWebhook({ headers: {}, body: {}, query: {} }, '111'), false);
+});
+
+test('an order is refused only when the payment falls short', () => {
+  // Pagó lo que debía, o de más: la orden se crea.
+  assert.equal(esPagoInsuficiente(120000, 120000), false);
+  assert.equal(esPagoInsuficiente(130000, 120000), false);
+
+  // Diferencia de redondeo del descuento porcentual: no debe tumbar la orden.
+  assert.equal(esPagoInsuficiente(119999, 120000), false);
+  assert.equal(esPagoInsuficiente(119900, 120000), false);
+
+  // Pagó de menos de verdad.
+  assert.equal(esPagoInsuficiente(25000, 120000), true);
+  assert.equal(esPagoInsuficiente(119899, 120000), true);
+});
+
+test('the amount check stays out of the way when there is nothing to compare', () => {
+  // Sin total del draft (Shopify no respondió) la orden sigue su curso:
+  // completarDraftOrder falla igual un momento después.
+  assert.equal(esPagoInsuficiente(1000, null), false);
+  assert.equal(esPagoInsuficiente(1000, undefined), false);
+  assert.equal(esPagoInsuficiente(1000, 0), false);
+  assert.equal(esPagoInsuficiente(null, 120000), false);
 });
 
 test('Bogota shipping only applies to Bogota D.C. destinations', () => {
