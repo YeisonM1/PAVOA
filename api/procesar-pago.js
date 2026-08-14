@@ -829,39 +829,56 @@ export default async function handler(req, res) {
     }
     const shippingCost = Number(checkoutAccess.shippingCost || 0);
 
-    let codClaim = await claimIdempotency({
-      scope: COD_ORDER_SCOPE,
-      key: draftOrderId,
-      ttlMs: COD_ORDER_TTL,
-    });
-
-    if (!codClaim?.claimed) {
-      const record = codClaim?.state === 'processing'
-        ? await waitForIdempotency({ scope: COD_ORDER_SCOPE, key: draftOrderId })
-        : codClaim;
-
-      if (record?.state === 'completed' && record.response) {
-        return res.status(200).json(record.response);
-      }
-
-      if (record?.state !== 'processing') {
-        await clearIdempotency({ scope: COD_ORDER_SCOPE, key: draftOrderId });
-        codClaim = await claimIdempotency({
-          scope: COD_ORDER_SCOPE,
-          key: draftOrderId,
-          ttlMs: COD_ORDER_TTL,
-        });
-      }
+    let codClaim;
+    try {
+      codClaim = await claimIdempotency({
+        scope: COD_ORDER_SCOPE,
+        key: draftOrderId,
+        ttlMs: COD_ORDER_TTL,
+        requireDurable: true,
+      });
 
       if (!codClaim?.claimed) {
-        res.setHeader('Retry-After', '2');
-        return res.status(409).json({
-          error: 'Tu pedido ya se esta procesando. Espera un momento antes de intentar nuevamente.',
-          retryable: true,
-        });
+        const record = codClaim?.state === 'processing'
+          ? await waitForIdempotency({ scope: COD_ORDER_SCOPE, key: draftOrderId })
+          : codClaim;
+
+        if (record?.state === 'completed' && record.response) {
+          return res.status(200).json(record.response);
+        }
+
+        if (record?.state !== 'processing') {
+          await clearIdempotency({ scope: COD_ORDER_SCOPE, key: draftOrderId });
+          codClaim = await claimIdempotency({
+            scope: COD_ORDER_SCOPE,
+            key: draftOrderId,
+            ttlMs: COD_ORDER_TTL,
+            requireDurable: true,
+          });
+        }
+
+        if (!codClaim?.claimed) {
+          res.setHeader('Retry-After', '2');
+          return res.status(409).json({
+            error: 'Tu pedido ya se esta procesando. Espera un momento antes de intentar nuevamente.',
+            retryable: true,
+          });
+        }
       }
+    } catch (error) {
+      // Sin candado durable no se puede garantizar una sola orden por draft, y
+      // completarDraftOrder crea la orden via POST /orders.json. Es preferible
+      // pedir reintento que arriesgar un pedido duplicado en Shopify.
+      if (error?.code !== 'durable_lock_unavailable') throw error;
+      console.error(`Contraentrega rechazada sin candado durable | draft: ${draftOrderId}`);
+      res.setHeader('Retry-After', '10');
+      return res.status(503).json({
+        error: 'No podemos confirmar tu pedido en este momento. Intenta de nuevo en unos segundos.',
+        retryable: true,
+      });
     }
 
+    let ordenCreada = null;
     try {
       // Create the real order via POST /orders.json with send_receipt:false — the
       // draft_orders/complete endpoint does not reliably suppress Shopify's native
@@ -871,10 +888,14 @@ export default async function handler(req, res) {
       const emailCliente = shopifyResponse._emailCliente || normalizeEmail(form?.email);
       const cartItemsFromDraft = shopifyResponse._cartItems || null;
       const draftLineItemImages = shopifyResponse._draftLineItemImages || [];
-      await eliminarDraftOrder(draftOrderId);
 
       const shopifyOrderId = shopifyOrder?.id || null;
       const orderName = shopifyOrder?.name || `COD-${draftOrderId}`;
+
+      // Marca minima en cuanto la orden existe, antes de armar el detalle: si
+      // algo falla mientras se arma, el catch ya sabe que no debe reintentarse.
+      ordenCreada = { ok: true, orderName, shopify_order_id: String(shopifyOrderId || '') };
+
       const addr = shopifyOrder?.shipping_address || null;
       const nombre = addr
         ? `${addr.first_name || ''} ${addr.last_name || ''}`.trim()
@@ -910,6 +931,19 @@ export default async function handler(req, res) {
             imagen: item?.producto?.imagen1 || null,
             detalles: '',
           }));
+
+      // Desde aqui la orden ya existe en Shopify. Lo que sigue es registro,
+      // correo y limpieza: nada de eso justifica crear una segunda orden.
+      ordenCreada = {
+        ok: true,
+        orderName,
+        shopify_order_id: String(shopifyOrderId || ''),
+        nombre,
+        email: emailCliente,
+        subtotal: finalSubtotal,
+        shippingCost: finalShippingCost,
+        total: totalConEnvio,
+      };
 
       // Persist to Supabase
       const codRef = `cod-${shopifyOrderId || draftOrderId}`;
@@ -976,33 +1010,48 @@ export default async function handler(req, res) {
         meta: { shopify_order_name: orderName, shopify_order_id: String(shopifyOrderId || '') },
       }).catch(() => {});
 
-      const responsePayload = {
-        ok: true,
-        orderName,
-        shopify_order_id: String(shopifyOrderId || ''),
-        nombre,
-        email: emailCliente,
-        subtotal: finalSubtotal,
-        shippingCost: finalShippingCost,
-        total: totalConEnvio,
-      };
-
       if (codClaim?.claimed) {
         await completeIdempotency({
           scope: COD_ORDER_SCOPE,
           key: draftOrderId,
           claimToken: codClaim.claimToken,
-          response: responsePayload,
+          response: ordenCreada,
           ttlMs: COD_ORDER_TTL,
         });
       }
 
-      return res.status(200).json(responsePayload);
+      // El draft ya cumplio su proposito. Se limpia al final y aislado: que
+      // Shopify falle borrandolo no puede tumbar una orden que ya existe.
+      try {
+        await eliminarDraftOrder(draftOrderId);
+      } catch (cleanupErr) {
+        console.error(`Draft ${draftOrderId} quedo sin eliminar:`, cleanupErr.message);
+      }
+
+      return res.status(200).json(ordenCreada);
     } catch (err) {
+      console.error('Error procesando pedido contra entrega:', err.message);
+
+      // Soltar el candado con la orden ya creada permitia que un reintento
+      // creara una segunda en Shopify. Se cierra como completada y se devuelve
+      // la que existe; lo que fallo fue registro, no la compra del cliente.
+      if (ordenCreada) {
+        if (codClaim?.claimed) {
+          await completeIdempotency({
+            scope: COD_ORDER_SCOPE,
+            key: draftOrderId,
+            claimToken: codClaim.claimToken,
+            response: ordenCreada,
+            ttlMs: COD_ORDER_TTL,
+          }).catch(() => {});
+        }
+        try { await eliminarDraftOrder(draftOrderId); } catch {}
+        return res.status(200).json(ordenCreada);
+      }
+
       if (codClaim?.claimed) {
         await failIdempotency({ scope: COD_ORDER_SCOPE, key: draftOrderId, claimToken: codClaim.claimToken });
       }
-      console.error('Error procesando pedido contra entrega:', err.message);
       try { await eliminarDraftOrder(draftOrderId); } catch {}
       return res.status(500).json({ error: err.message || 'No se pudo registrar el pedido contra entrega.' });
     }

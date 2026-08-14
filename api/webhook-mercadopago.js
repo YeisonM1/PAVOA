@@ -6,7 +6,7 @@ const getQueryValue = (value) => {
   return value || '';
 };
 
-const extractNotification = (req) => {
+export const extractNotification = (req) => {
   const bodyType = String(req.body?.type || '').trim();
   const bodyDataId = String(req.body?.data?.id || '').trim();
   const queryType = String(
@@ -30,9 +30,16 @@ const extractNotification = (req) => {
   return { source: 'unknown', type: bodyType || queryType, dataId: bodyDataId || queryDataId };
 };
 
-const validarFirmaWebhook = (req) => {
+/**
+ * La firma debe cubrir exactamente el `data.id` que se va a procesar. Antes se
+ * derivaba aquí con una precedencia propia (body sobre query) distinta a la de
+ * `extractNotification`, así que body y query podían discrepar y terminábamos
+ * validando un pago y procesando otro.
+ */
+export const validarFirmaWebhook = (req, dataId) => {
   const secret = process.env.MP_WEBHOOK_SECRET;
   if (!secret) return false;
+  if (!dataId) return false;
 
   const xSignature = req.headers['x-signature'] || '';
   const xRequestId = req.headers['x-request-id'] || '';
@@ -40,12 +47,6 @@ const validarFirmaWebhook = (req) => {
   const v1 = xSignature.match(/v1=([^,]+)/)?.[1];
   if (!ts || !v1) return false;
 
-  const dataId =
-    req.body?.data?.id ??
-    req.query?.['data.id'] ??
-    req.query?.id ??
-    req.query?.['data[id]'] ??
-    '';
   const plantilla = `id:${dataId};request-id:${xRequestId};ts:${ts};`;
   const hmac = crypto.createHmac('sha256', secret).update(plantilla).digest('hex');
   try {
@@ -63,7 +64,7 @@ export default async function handler(req, res) {
     console.error('Webhook MP rechazado: MP_WEBHOOK_SECRET no configurado');
     return res.status(503).send('Webhook not configured');
   }
-  if (!validarFirmaWebhook(req)) {
+  if (!validarFirmaWebhook(req, notification.dataId)) {
     console.warn('Webhook MP: firma invalida, request descartado');
     return res.status(401).send('Invalid signature');
   }
@@ -78,7 +79,11 @@ export default async function handler(req, res) {
       `Webhook MP procesado | source: ${notification.source} | payment: ${notification.dataId} | status: ${result.status || 'unknown'} | draft: ${result.draftOrderId || 'n/a'}`
     );
   } catch (error) {
+    // Responder 200 aquí daba la notificación por entregada y Mercado Pago no
+    // reintentaba: un pago cobrado podía quedarse sin orden en Shopify si
+    // Supabase estaba caído. Con 5xx, Mercado Pago reintenta.
     console.error('Error en webhook Mercado Pago:', error.message);
+    return res.status(500).send('Processing failed');
   }
 
   return res.status(200).send('OK');

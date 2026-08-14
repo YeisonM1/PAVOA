@@ -540,7 +540,12 @@ const runWithPaymentClaim = async (key, claim) => {
 };
 
 const processWithDurableLock = async (key) => {
-  const claim = await claimIdempotency({ scope: MP_PAYMENT_SCOPE, key, ttlMs: MP_PAYMENT_TTL });
+  const claim = await claimIdempotency({
+    scope: MP_PAYMENT_SCOPE,
+    key,
+    ttlMs: MP_PAYMENT_TTL,
+    requireDurable: true,
+  });
   if (!claim) return processMercadoPagoPaymentInternal(key);
   if (claim.claimed) return runWithPaymentClaim(key, claim);
 
@@ -555,7 +560,12 @@ const processWithDurableLock = async (key) => {
 
   if (record?.state !== 'processing') {
     await clearIdempotency({ scope: MP_PAYMENT_SCOPE, key });
-    const retryClaim = await claimIdempotency({ scope: MP_PAYMENT_SCOPE, key, ttlMs: MP_PAYMENT_TTL });
+    const retryClaim = await claimIdempotency({
+      scope: MP_PAYMENT_SCOPE,
+      key,
+      ttlMs: MP_PAYMENT_TTL,
+      requireDurable: true,
+    });
     if (retryClaim?.claimed) return runWithPaymentClaim(key, retryClaim);
     if (retryClaim?.state === 'completed' && retryClaim.response) return retryClaim.response;
   }

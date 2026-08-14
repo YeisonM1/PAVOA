@@ -26,6 +26,20 @@ const canUseDurableStorage = (forceMemory = false) => (
   !forceMemory && Boolean(supabase) && getSupabaseMode() === 'service_role'
 );
 
+/**
+ * El respaldo en memoria es por instancia de Vercel, así que no coordina nada
+ * entre requests concurrentes. Para candados donde un duplicado significa una
+ * orden real duplicada en Shopify, degradar a memoria es peor que fallar: quien
+ * llama debe reintentar cuando Supabase vuelva.
+ */
+export class DurableLockUnavailableError extends Error {
+  constructor(scope) {
+    super(`Almacenamiento durable no disponible para el candado "${scope}"`);
+    this.name = 'DurableLockUnavailableError';
+    this.code = 'durable_lock_unavailable';
+  }
+}
+
 const pruneMemory = (map, now = Date.now()) => {
   for (const [key, entry] of map.entries()) {
     if (Number(entry?.expiresAt || 0) <= now) map.delete(key);
@@ -112,6 +126,7 @@ export const claimIdempotency = async ({
   key,
   ttlMs,
   forceMemory = false,
+  requireDurable = false,
   now = Date.now(),
 }) => {
   if (!key) return null;
@@ -138,7 +153,10 @@ export const claimIdempotency = async ({
       };
     }
 
+    if (requireDurable) throw new DurableLockUnavailableError(scope);
     warnFallback('idempotencia durable', error);
+  } else if (requireDurable) {
+    throw new DurableLockUnavailableError(scope);
   }
 
   return claimMemoryIdempotency({
