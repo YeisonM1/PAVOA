@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { buildCartItem, repairCartItems, resolveVariantImage } from './cart.js';
+import { buildCartItem, pickVarianteParaTalla, repairCartItems, resolveVariantImage } from './cart.js';
 
 // Caso real: Body Mist, con la variante más barata en $25.000 y la Rosado L
 // en $30.000. El objeto producto trae el mínimo del catálogo y la foto negra.
@@ -47,6 +47,37 @@ test('the cart image follows the chosen color through either source', () => {
 test('a variant without price falls back to the product instead of saving zero', () => {
   const item = buildCartItem(bodyMist, { color: 'ROSADO', talla: 'L', variantId: 'gid://variant/2' }, 'ROSADO');
   assert.equal(item.precioNumerico, 25000);
+});
+
+// En la tarjeta del grid el cliente elige color tocando un círculo y luego la
+// talla. La foto seguía el color, pero la variante agregada no.
+const enGrid = [
+  { color: 'NEGRO', hex: '#000000', talla: 'S', variantId: 'n-s', stock: 5, precioNumerico: 25000 },
+  { color: 'NEGRO', hex: '#000000', talla: 'L', variantId: 'n-l', stock: 5, precioNumerico: 25000 },
+  { color: 'ROSADO', hex: '#f4c2c2', talla: 'L', variantId: 'r-l', stock: 3, precioNumerico: 30000 },
+];
+
+test('picking a size on a grid card respects the color being previewed', () => {
+  assert.equal(pickVarianteParaTalla(enGrid, 'L', '#f4c2c2').variantId, 'r-l');
+  assert.equal(pickVarianteParaTalla(enGrid, 'L', '#000000').variantId, 'n-l');
+});
+
+test('without a color chosen the card keeps its previous behaviour', () => {
+  assert.equal(pickVarianteParaTalla(enGrid, 'L', null).variantId, 'n-l');
+});
+
+test('a size missing from the chosen color falls back instead of adding nothing', () => {
+  // Rosado no tiene S: se agrega la negra antes que dejar al cliente sin nada.
+  assert.equal(pickVarianteParaTalla(enGrid, 'S', '#f4c2c2').variantId, 'n-s');
+  assert.equal(pickVarianteParaTalla(enGrid, 'XXL', '#000000'), null);
+});
+
+test('within the chosen color an in-stock variant wins', () => {
+  const conAgotada = [
+    { color: 'ROSADO', hex: '#f4c2c2', talla: 'L', variantId: 'r-l-agotada', stock: 0 },
+    { color: 'ROSADO', hex: '#f4c2c2', talla: 'L', variantId: 'r-l-disponible', stock: 2 },
+  ];
+  assert.equal(pickVarianteParaTalla(conAgotada, 'L', '#f4c2c2').variantId, 'r-l-disponible');
 });
 
 test('carts saved before the fix are repaired from their own variant data', () => {

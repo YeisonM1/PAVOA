@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { productImage } from '../utils/imageUrl';
-import { buildCartItem } from '../utils/cart';
+import { buildCartItem, pickVarianteParaTalla } from '../utils/cart';
 import { useWishlist } from '../context/WishlistContext';
 import { useCart } from '../hooks/useCart';
 import { getProductoById } from '../services/productService';
@@ -45,8 +45,7 @@ function ProductCard({ producto }) {
   const mostrarColores = coloresUnicos.length >= 1;
   const imagenActiva = colorActivo?.imageUrl || productImage(producto.imagen1);
   const addVariantToCart = (talla) => {
-    const varianteElegida = variantes.find(v => v.talla === talla && (v.stock ?? 0) > 0)
-      || variantes.find(v => v.talla === talla);
+    const varianteElegida = pickVarianteParaTalla(variantes, talla, colorActivo?.hex || null);
     addToCart(buildCartItem(producto, varianteElegida, varianteElegida?.color || ''), talla, 1);
   };
   // ────────────────────────────────────────────────────────

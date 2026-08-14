@@ -46,6 +46,28 @@ export const resolveVariantImage = (producto, variante, color) => {
   return variante?.variantImage || porColor || producto?.imagen1 || '';
 };
 
+/**
+ * En los listados la tarjeta muestra la foto del color activo, pero al tocar
+ * una talla la variante se buscaba solo por talla: podía agregarse un color
+ * distinto al que el cliente tenía en pantalla. Se prefiere el color activo y,
+ * si ese color no tiene esa talla, se cae a cualquier variante que sí la tenga
+ * en vez de dejar al cliente sin poder agregar.
+ */
+export const pickVarianteParaTalla = (variantes, talla, hexColorActivo = null) => {
+  const lista = Array.isArray(variantes) ? variantes : [];
+  const porTalla = (candidatas) =>
+    candidatas.find((v) => v.talla === talla && (v.stock ?? 0) > 0)
+    || candidatas.find((v) => v.talla === talla)
+    || null;
+
+  if (hexColorActivo) {
+    const delColorActivo = porTalla(lista.filter((v) => v.hex === hexColorActivo));
+    if (delColorActivo) return delColorActivo;
+  }
+
+  return porTalla(lista);
+};
+
 export const buildCartItem = (producto, variante, color) => {
   const colorFinal = color ?? variante?.color ?? producto?.colorSeleccionado ?? '';
   const precioVariante = Number(variante?.precioNumerico);
