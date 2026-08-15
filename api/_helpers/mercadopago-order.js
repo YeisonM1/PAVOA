@@ -285,7 +285,12 @@ const processMercadoPagoPaymentInternal = async (paymentId) => {
   if (pagoInfo.status === 'approved') {
     const existingOrder = await getExistingOrderByPaymentId(pagoInfo.id);
 
-    if (existingOrder) {
+    // Una fila sin `shopify_order_id` es la que dejó un intento donde Shopify
+    // falló: se persiste el pedido igual para no perder el registro. Darla por
+    // procesada aquí borraba el draft, y sin draft la orden ya no se puede
+    // crear nunca — quedaba cobrada, sin orden en Shopify y sin recuperación.
+    // Solo se cierra cuando hay referencia real; si no, se reintenta abajo.
+    if (existingOrder?.shopify_order_id) {
       await eliminarDraftOrder(draftOrderId);
       return {
         ok: true,
@@ -293,6 +298,7 @@ const processMercadoPagoPaymentInternal = async (paymentId) => {
         paymentId: String(pagoInfo.id),
         draftOrderId,
         alreadyProcessed: true,
+        shopifyCompleted: true,
         shopifyOrderName: existingOrder.shopify_order_name || null,
       };
     }
@@ -400,6 +406,34 @@ const processMercadoPagoPaymentInternal = async (paymentId) => {
           if (isDuplicatePaymentError(sbError.message)) {
             console.info(`Pedido ya persistido para payment ${pagoInfo.id}; omitiendo insercion duplicada.`);
             shouldPersistOrder = false;
+
+            // La fila del intento anterior quedó sin datos de Shopify porque
+            // entonces no había orden. Si este intento sí la creó, se completa:
+            // saltársela la dejaba para siempre en "Sin referencia Shopify" del
+            // panel aunque la orden ya existiera.
+            if (order) {
+              const filaPrevia = await getExistingOrderByPaymentId(pagoInfo.id);
+              if (filaPrevia && !filaPrevia.shopify_order_id) {
+                const { error: updErr } = await supabase
+                  .from('pedidos')
+                  .update({
+                    shopify_order_name: order.name || `MP-${pagoInfo.id}`,
+                    shopify_order_id: String(order.order_id || order.id || ''),
+                    nombre: addr ? `${addr.first_name || ''} ${addr.last_name || ''}`.trim() : primerNombre,
+                    telefono: addr?.phone || order?.phone || '',
+                    ciudad: addr?.city || '',
+                    direccion: addr ? [addr.address1, addr.address2].filter(Boolean).join(', ') : '',
+                    items: itemsFinales,
+                  })
+                  .eq('payment_id', String(pagoInfo.id));
+
+                if (updErr) {
+                  console.error(`No se pudo completar el pedido ${pagoInfo.id} con datos de Shopify:`, updErr.message);
+                } else {
+                  console.info(`Pedido ${pagoInfo.id} completado con la orden Shopify creada en este intento.`);
+                }
+              }
+            }
           } else {
             console.error(
               `Error guardando pedido en Supabase [mode=${getSupabaseMode()}]:`,
