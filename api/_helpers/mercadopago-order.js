@@ -25,6 +25,14 @@ const MP_PAYMENT_TTL = 30 * 60 * 1000;
 
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
+/**
+ * Estados desde los que el cliente todavía puede pagar con otra tarjeta sobre
+ * la misma preferencia. Mientras eso sea posible, el draft debe seguir vivo:
+ * es lo único que el pago aprobado tiene para convertirse en orden.
+ */
+export const permiteReintento = (status) =>
+  status === 'rejected' || status === 'cancelled';
+
 // Margen en pesos para no rechazar por redondeo: completarDraftOrder reparte el
 // descuento porcentual sobre cada línea con toFixed(2), así que el total puede
 // diferir en unos centavos del que cobró Mercado Pago.
@@ -559,8 +567,12 @@ const processMercadoPagoPaymentInternal = async (paymentId) => {
     };
   }
 
-  if (pagoInfo.status === 'rejected' || pagoInfo.status === 'cancelled') {
-    await eliminarDraftOrder(draftOrderId);
+  if (permiteReintento(pagoInfo.status)) {
+    // Antes se borraba el draft aquí. Un rechazo no cierra el checkout: el
+    // cliente sigue en Mercado Pago y puede reintentar con otra tarjeta sobre
+    // la misma preferencia. Sin draft, ese segundo pago —ya aprobado y
+    // cobrado— se quedaba sin nada que completar. El draft lo limpia el
+    // storefront cuando el cliente vuelve al checkout.
     await trackFunnelEvent({
       eventKey: `payment_rejected:${pagoInfo.id}`,
       eventType: 'payment_rejected',

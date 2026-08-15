@@ -43,6 +43,27 @@ const getPaymentAccessContext = async ({ paymentId, checkoutToken }) => {
   return access ? { payment, draftOrderId, access } : null;
 };
 const formatCop = (value) => `$${Number(value || 0).toLocaleString('es-CO')}`;
+
+export const DESCUENTO_BIENVENIDA = 0.1;
+
+/**
+ * Baja el descuento de bienvenida a los items que se le cobran al cliente en
+ * Mercado Pago. Se aisla aquí para poder fijar la aritmética con pruebas: es
+ * el único punto donde el precio que se cobra difiere del precio del catálogo.
+ */
+export const aplicarDescuentoBienvenida = (items = []) =>
+  (Array.isArray(items) ? items : []).map((item) => {
+    const precioOriginal = Number(item?.unit_price || 0);
+    const rebaja = Math.round(precioOriginal * DESCUENTO_BIENVENIDA);
+    const precioFinal = Math.round(precioOriginal * (1 - DESCUENTO_BIENVENIDA));
+
+    return {
+      ...item,
+      title: `${item.title} - Descuento bienvenida 10%`,
+      description: `Precio original ${formatCop(precioOriginal)} | Descuento bienvenida 10% -${formatCop(rebaja)} | Precio final ${formatCop(precioFinal)}`,
+      unit_price: precioFinal,
+    };
+  });
 const PAYMENT_PREFERENCE_TTL = 15 * 60 * 1000;
 const _paymentPreferenceCache = new Map();
 const _paymentPreferenceInflight = new Map();
@@ -156,6 +177,41 @@ const getSingleCartItem = (cartItems = []) => {
 
 // El draft order ya fue creado por /api/pedido con precios y stock validados
 // contra Shopify segundos antes; leerlo evita repetir una llamada por variante.
+/**
+ * Deja el descuento aplicado en el draft antes de cobrarlo. Devuelve false si
+ * Shopify no lo aceptó — incluido un status de error, que antes pasaba como
+ * éxito porque solo se miraba la excepción de red.
+ */
+const aplicarDescuentoEnDraft = async (draftOrderId) => {
+  try {
+    const shopifyToken = await getShopifyToken();
+    const res = await fetch(
+      `https://${SHOPIFY_DOMAIN}/admin/api/2026-04/draft_orders/${draftOrderId}.json`,
+      {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'X-Shopify-Access-Token': shopifyToken },
+        body: JSON.stringify({
+          draft_order: {
+            applied_discount: { title: 'Descuento Bienvenida 10%', value: '10.0', value_type: 'percentage' },
+          },
+        }),
+      }
+    );
+
+    if (!res.ok) {
+      const detalle = await res.text().catch(() => '');
+      console.error(`Shopify ${res.status} aplicando descuento al draft ${draftOrderId}: ${detalle}`);
+      return false;
+    }
+
+    console.log(`Descuento aplicado en Shopify draft order: ${draftOrderId}`);
+    return true;
+  } catch (shopifyErr) {
+    console.error('No se pudo aplicar descuento en Shopify:', shopifyErr.message);
+    return false;
+  }
+};
+
 const fetchDraftOrderForPayment = async (draftOrderId) => {
   const token = await getShopifyToken();
   const res = await fetch(
@@ -484,14 +540,23 @@ const createPaymentPreference = async ({
       currency_id: 'COP',
     }));
 
+    // El descuento se deja primero en el draft y solo entonces se le baja al
+    // cobro. Al revés, un fallo de Shopify dejaba al cliente pagando 10% menos
+    // de lo que decía el draft: la orden se creaba a precio lleno —perdiendo la
+    // diferencia— o, con la validación de monto, no se creaba en absoluto.
     let descuentoAplicado = false;
     if (usuarioDescuento && !usuarioDescuento.descuento_bienvenida_usado) {
-      itemsMapped = itemsMapped.map((item) => ({
-        ...item,
-        title: `${item.title} - Descuento bienvenida 10%`,
-        description: `Precio original ${formatCop(item.unit_price)} | Descuento bienvenida 10% -${formatCop(Math.round(item.unit_price * 0.1))} | Precio final ${formatCop(Math.round(item.unit_price * 0.9))}`,
-        unit_price: Math.round(item.unit_price * 0.9),
-      }));
+      if (!(await aplicarDescuentoEnDraft(draftOrderId))) {
+        return {
+          statusCode: 503,
+          payload: {
+            error: 'No pudimos aplicar tu descuento de bienvenida. Intenta de nuevo en unos segundos.',
+            retryable: true,
+          },
+        };
+      }
+
+      itemsMapped = aplicarDescuentoBienvenida(itemsMapped);
       descuentoAplicado = true;
       console.log(`Descuento bienvenida 10% aplicado a: ${orderOwnerEmail}`);
     }
@@ -509,27 +574,6 @@ const createPaymentPreference = async ({
           currency_id: 'COP',
         },
       ];
-    }
-
-    if (descuentoAplicado) {
-      try {
-        const shopifyToken = await getShopifyToken();
-        await fetch(
-          `https://${SHOPIFY_DOMAIN}/admin/api/2026-04/draft_orders/${draftOrderId}.json`,
-          {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json', 'X-Shopify-Access-Token': shopifyToken },
-            body: JSON.stringify({
-              draft_order: {
-                applied_discount: { title: 'Descuento Bienvenida 10%', value: '10.0', value_type: 'percentage' },
-              },
-            }),
-          }
-        );
-        console.log(`Descuento aplicado en Shopify draft order: ${draftOrderId}`);
-      } catch (shopifyErr) {
-        console.warn('No se pudo aplicar descuento en Shopify:', shopifyErr.message);
-      }
     }
 
     const externalRef = `${draftOrderId}|${orderOwnerEmail}|${descuentoAplicado ? '1' : '0'}`;
