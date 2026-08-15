@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import { sendTransactionalEmail } from './_helpers/mail.js';
 import { trackFunnelEvent } from './_helpers/funnel.js';
 import {
@@ -21,9 +22,21 @@ const isValidEmail = (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value |
 const validatePreviewAccess = (req) => {
   const secret = String(process.env.PREVIEW_EMAIL_SECRET || '');
   if (!secret) return { ok: false, status: 503, error: 'Correos de prueba no configurados.' };
-  if (req.headers['x-preview-secret'] !== secret) {
-    return { ok: false, status: 401, error: 'No autorizado.' };
+
+  // Los dos webhooks ya comparaban sus firmas con timingSafeEqual; este era el
+  // único secreto que se comparaba con !==. Buffer.from + longitudes distintas
+  // hacen que timingSafeEqual lance, de ahí el try.
+  const recibido = String(req.headers['x-preview-secret'] || '');
+  let coincide = false;
+  try {
+    const a = Buffer.from(recibido);
+    const b = Buffer.from(secret);
+    coincide = a.length === b.length && crypto.timingSafeEqual(a, b);
+  } catch {
+    coincide = false;
   }
+
+  if (!coincide) return { ok: false, status: 401, error: 'No autorizado.' };
   return { ok: true };
 };
 

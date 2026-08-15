@@ -167,7 +167,7 @@ export default function QuickViewModal({ productoId, onClose }) {
                     <p className="text-sm font-semibold text-stone-600 tracking-[0.1em]">{precioTextoActual}</p>
                   </div>
                 </div>
-                <button onClick={() => toggle(producto.id)} className="flex-shrink-0 mt-1 text-stone-300 hover:text-stone-900 transition-colors" aria-label="Guardar en favoritos">
+                <button onClick={() => toggle(producto.id)} className="flex-shrink-0 mt-1 text-stone-900 hover:opacity-60 transition" aria-label="Guardar en favoritos">
                   <HeartIcon filled={isWished(producto.id)} />
                 </button>
               </div>

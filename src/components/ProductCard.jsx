@@ -177,7 +177,7 @@ function ProductCard({ producto }) {
       <div className="relative w-full px-2 md:px-3 pt-1">
         <button
           onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggle(producto.id); }}
-          className="absolute -top-3 right-0 w-11 h-11 flex items-center justify-center text-stone-500 hover:text-stone-900 transition-colors"
+          className="absolute -top-3 right-0 w-11 h-11 flex items-center justify-center text-stone-900 hover:opacity-60 transition"
           aria-label={isWished(producto.id) ? 'Quitar de favoritos' : 'Guardar en favoritos'}
         >
           <HeartIcon filled={isWished(producto.id)} />

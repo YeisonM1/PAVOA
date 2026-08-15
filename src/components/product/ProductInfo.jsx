@@ -97,7 +97,7 @@ export default function ProductInfo({
         </div>
         <button
           onClick={() => toggle(producto.id)}
-          className="text-stone-300 hover:text-stone-900 transition-colors"
+          className="text-stone-900 hover:opacity-60 transition"
           aria-label={isWished(producto.id) ? 'Quitar de favoritos' : 'Guardar en favoritos'}
         >
           <svg width="20" height="20" viewBox="0 0 24 24" fill={isWished(producto.id) ? '#0B0B0B' : 'none'} stroke={isWished(producto.id) ? '#0B0B0B' : 'currentColor'} strokeWidth="1.5">

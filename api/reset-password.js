@@ -42,13 +42,15 @@ export default async function handler(req, res) {
       .eq('email', email.toLowerCase())
       .single();
 
-    if (error || !usuario) {
-      return res.status(400).json({ error: 'Solicitud inválida.' });
-    }
+    // Un mensaje distinto para "el correo no existe" y para "el token no
+    // coincide" revelaba qué correos tienen cuenta, que es justo lo que el
+    // login evita al responder siempre lo mismo. Aquí no cuesta nada: para
+    // quien llega con un enlace, ambos casos significan lo mismo.
+    const enlaceInvalido = () =>
+      res.status(400).json({ error: 'El enlace es inválido o ya se usó. Solicita uno nuevo.' });
 
-    if (usuario.reset_token !== token) {
-      return res.status(400).json({ error: 'El token es inválido o no coincide.' });
-    }
+    if (error || !usuario) return enlaceInvalido();
+    if (!usuario.reset_token || usuario.reset_token !== token) return enlaceInvalido();
 
     if (Date.now() > usuario.reset_expires) {
       return res.status(400).json({ error: 'El enlace ha expirado. Solicita uno nuevo.' });
