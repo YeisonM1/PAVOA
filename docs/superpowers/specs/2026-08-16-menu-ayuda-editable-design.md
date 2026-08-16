@@ -142,7 +142,7 @@ el JSON venga corrupto.
 
 | Caso | Comportamiento |
 | --- | --- |
-| Columna sin enlaces | La columna no se renderiza, igual que hace `MegaMenu` hoy con sus secciones vacías |
+| Columna sin enlaces | Se oculta el contenido, no la celda. La rejilla `1fr 1px 1fr 1px 0.85fr` cuenta sus hijos por posición: omitir el `<div>` de una columna haría que el separador dorado ocupe su lugar y el panel se descuadre |
 | Sin imagen | Queda el degradado y los textos, sin foto rota |
 | JSON corrupto o ausente | `normalizeAyudaMenu` devuelve los defaults; el menú nunca se rompe |
 | Enlace sin `label` o sin `to` | Se descarta al normalizar |
