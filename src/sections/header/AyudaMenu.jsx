@@ -1,19 +1,6 @@
 import { Link } from 'react-router-dom';
 import useSiteSettings from '../../hooks/useSiteSettings';
-
-const AYUDA_IMAGE = 'https://images.unsplash.com/photo-1469334031218-e382a71b716b?w=800&q=80';
-
-const LINKS_PEDIDOS = [
-  { label: 'Envíos y entregas',      to: '/envios-y-entregas' },
-  { label: 'Cambios y devoluciones', to: '/cambios-y-devoluciones' },
-  { label: 'Guía de tallas',         to: '/guia-de-tallas' },
-];
-
-const LINKS_ATENCION = [
-  { label: 'Preguntas frecuentes', to: '/preguntas-frecuentes' },
-  { label: 'Contacto',             to: '/contacto' },
-  { label: 'Nosotros',             to: '/nosotros' },
-];
+import { normalizeAyudaMenu } from '../../utils/ayudaMenu.js';
 
 const sectionTitleStyle = { fontSize: 15, fontWeight: 700, letterSpacing: '0.32em', color: '#5C3D2E', marginBottom: 24 };
 const eyebrowStyle      = { fontSize: 7.5, fontWeight: 600, letterSpacing: '0.2em', color: 'var(--color-charcoal)', opacity: 0.5, marginBottom: 16 };
@@ -43,8 +30,9 @@ const AyudaLink = ({ item, setAyudaOpen }) => (
   </li>
 );
 
-export default function AyudaMenu({ ayudaOpen, setAyudaOpen, isScrolled, panelRef }) {
+export default function AyudaMenu({ ayudaOpen, setAyudaOpen, isScrolled, panelRef, ayudaMenuConfig }) {
   const settings = useSiteSettings();
+  const menu = normalizeAyudaMenu(ayudaMenuConfig);
   const HEADER_H_DEFAULT  = '80px';
   const HEADER_H_SCROLLED = '64px';
 
@@ -78,41 +66,53 @@ export default function AyudaMenu({ ayudaOpen, setAyudaOpen, isScrolled, panelRe
       >
         <div style={{ maxWidth: 1280, margin: '0 auto', padding: '44px 64px', display: 'grid', gridTemplateColumns: '1fr 1px 1fr 1px 0.85fr', alignItems: 'start' }}>
 
+          {/* La celda se renderiza siempre: la rejilla coloca sus cinco hijos
+              por posición y omitir una columna correría el separador dorado. */}
           <div style={{ paddingRight: 48 }}>
-            <p style={sectionTitleStyle}>PEDIDOS</p>
-            <p style={eyebrowStyle}>LOGÍSTICA</p>
-            <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-              {LINKS_PEDIDOS.map(item => <AyudaLink key={item.to} item={item} setAyudaOpen={setAyudaOpen} />)}
-            </ul>
+            {menu.pedidos.enlaces.length > 0 && (
+              <>
+                <p style={sectionTitleStyle}>{menu.pedidos.titulo}</p>
+                <p style={eyebrowStyle}>{menu.pedidos.subtitulo}</p>
+                <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+                  {menu.pedidos.enlaces.map(item => <AyudaLink key={item.to} item={item} setAyudaOpen={setAyudaOpen} />)}
+                </ul>
+              </>
+            )}
           </div>
 
           <div style={{ background: 'var(--color-gold)', alignSelf: 'stretch' }} />
 
           <div style={{ paddingLeft: 48, paddingRight: 48 }}>
-            <p style={sectionTitleStyle}>ATENCIÓN</p>
-            <p style={eyebrowStyle}>INFORMACIÓN</p>
-            <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-              {LINKS_ATENCION.map(item => <AyudaLink key={item.to} item={item} setAyudaOpen={setAyudaOpen} />)}
-            </ul>
+            {menu.atencion.enlaces.length > 0 && (
+              <>
+                <p style={sectionTitleStyle}>{menu.atencion.titulo}</p>
+                <p style={eyebrowStyle}>{menu.atencion.subtitulo}</p>
+                <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+                  {menu.atencion.enlaces.map(item => <AyudaLink key={item.to} item={item} setAyudaOpen={setAyudaOpen} />)}
+                </ul>
+              </>
+            )}
           </div>
 
           <div style={{ background: 'var(--color-gold)', alignSelf: 'stretch' }} />
 
           <div style={{ paddingLeft: 48, position: 'relative', height: 320, overflow: 'hidden' }}>
-            <div style={{
-              position: 'absolute', inset: 0,
-              backgroundImage: `url(${AYUDA_IMAGE})`,
-              backgroundSize: 'cover', backgroundPosition: 'center',
-              opacity: 0.88,
-            }} />
+            {menu.soporte.imagen && (
+              <div style={{
+                position: 'absolute', inset: 0,
+                backgroundImage: `url(${menu.soporte.imagen})`,
+                backgroundSize: 'cover', backgroundPosition: 'center',
+                opacity: 0.88,
+              }} />
+            )}
             <div style={{
               position: 'absolute', inset: 0,
               background: 'linear-gradient(to top, rgba(242,228,225,0.92) 0%, rgba(242,228,225,0.2) 60%, transparent 100%)',
             }} />
             <div style={{ position: 'absolute', bottom: 28, left: 28, right: 16 }}>
-              <p style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.32em', color: 'var(--color-gold)', marginBottom: 8 }}>SOPORTE</p>
+              <p style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.32em', color: 'var(--color-gold)', marginBottom: 8 }}>{menu.soporte.eyebrow}</p>
               <p style={{ fontSize: 22, fontWeight: 300, letterSpacing: '0.18em', color: 'var(--color-black)', lineHeight: 1.25, textTransform: 'uppercase', marginBottom: 10 }}>
-                Siempre<br /><strong style={{ fontWeight: 600 }}>aquí para ti.</strong>
+                {menu.soporte.lineaFina}<br /><strong style={{ fontWeight: 600 }}>{menu.soporte.lineaFuerte}</strong>
               </p>
               <div style={{ height: 1, width: 40, background: 'var(--color-gold)', marginBottom: 16 }} />
               {settings.whatsappUrl && (

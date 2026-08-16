@@ -1,3 +1,5 @@
+import { AYUDA_MENU_DEFAULTS, normalizeAyudaMenu } from '../utils/ayudaMenu.js';
+
 const SHOPIFY_DOMAIN   = import.meta.env.VITE_SHOPIFY_DOMAIN;
 const SHOPIFY_TOKEN    = import.meta.env.VITE_SHOPIFY_TOKEN;
 const SHOPIFY_ENDPOINT = `https://${SHOPIFY_DOMAIN}/api/2026-04/graphql.json`;
@@ -44,6 +46,7 @@ export const SITE_SETTINGS_DEFAULTS = {
   facebookUrl: 'https://facebook.com/pavoa',
   whatsappNumber: import.meta.env.VITE_WHATSAPP_NUMBER || '',
   catalogHeaders: {},
+  ayudaMenuConfig: AYUDA_MENU_DEFAULTS,
   megamenuConfig: {
     images: {
       'Camisetas':        'https://images.unsplash.com/photo-1523381210434-271e8be1f52b?w=800&q=80',
@@ -1151,6 +1154,16 @@ export const getSiteSettings = () => {
         }
       }
 
+      let parsedAyudaMenu = SITE_SETTINGS_DEFAULTS.ayudaMenuConfig;
+      const rawAyudaMenu = get('ayuda_menu_config');
+      if (rawAyudaMenu) {
+        try {
+          parsedAyudaMenu = normalizeAyudaMenu(JSON.parse(rawAyudaMenu));
+        } catch (e) {
+          console.error('Error parsing ayuda_menu_config:', e);
+        }
+      }
+
       return {
         contactEmail: normalizeContactEmail(get('contact_email') || SITE_SETTINGS_DEFAULTS.contactEmail),
         contactSchedule: get('contact_schedule') || SITE_SETTINGS_DEFAULTS.contactSchedule,
@@ -1161,6 +1174,7 @@ export const getSiteSettings = () => {
         whatsappNumber: get('whatsapp_number') || SITE_SETTINGS_DEFAULTS.whatsappNumber,
         catalogHeaders: parsedCatalogHeaders,
         megamenuConfig: parsedMegamenu,
+        ayudaMenuConfig: parsedAyudaMenu,
       };
     } catch (err) {
       console.error('Error getSiteSettings:', err);

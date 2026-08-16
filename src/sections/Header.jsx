@@ -418,7 +418,7 @@ const Header = () => {
         panelRef={panelRef}
         megamenuConfig={settings.megamenuConfig}
       />
-      <AyudaMenu ayudaOpen={ayudaOpen} setAyudaOpen={setAyudaOpen} isScrolled={isScrolled} panelRef={ayudaPanelRef} />
+      <AyudaMenu ayudaOpen={ayudaOpen} setAyudaOpen={setAyudaOpen} isScrolled={isScrolled} panelRef={ayudaPanelRef} ayudaMenuConfig={settings.ayudaMenuConfig} />
       <MobileMenu
         menuOpen={menuOpen}
         setMenuOpen={setMenuOpen}
