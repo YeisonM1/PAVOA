@@ -51,8 +51,8 @@ export default function ResetPasswordPage() {
             Colección 2026
           </p>
           <h2 className="text-4xl font-light text-white leading-tight tracking-[0.1em] uppercase mb-6">
-            Elegancia natural.<br />
-            <strong className="font-bold">Presencia silenciosa.</strong>
+            Empieza con<br />
+            <strong className="font-bold">quién eres</strong>
           </h2>
           <div className="w-12 h-[1px]" style={{ backgroundColor: '#DFCDB4' }} />
         </div>
