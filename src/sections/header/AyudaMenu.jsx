@@ -113,7 +113,7 @@ export default function AyudaMenu({ ayudaOpen, setAyudaOpen, isScrolled, panelRe
               background: 'linear-gradient(to top, rgba(242,228,225,0.92) 0%, rgba(242,228,225,0.2) 60%, transparent 100%)',
             }} />
             <div style={{ position: 'absolute', bottom: 28, left: 28, right: 16 }}>
-              <p style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.32em', color: 'var(--color-gold)', marginBottom: 8 }}>{menu.soporte.eyebrow}</p>
+              <p style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.32em', color: 'var(--color-black)', marginBottom: 8 }}>{menu.soporte.eyebrow}</p>
               <p style={{ fontSize: 22, fontWeight: 300, letterSpacing: '0.18em', color: 'var(--color-black)', lineHeight: 1.25, textTransform: 'uppercase', marginBottom: 10 }}>
                 {menu.soporte.lineaFina}<br /><strong style={{ fontWeight: 600 }}>{menu.soporte.lineaFuerte}</strong>
               </p>
