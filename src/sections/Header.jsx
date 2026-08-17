@@ -154,8 +154,15 @@ const Header = () => {
           isScrolled ? 'border-white/10 py-1 md:py-2 shadow-lg' : 'border-transparent py-2 md:py-4'
         } backdrop-blur-md`}
         style={{
-          background: isScrolled ? 'rgba(242, 228, 225, 0.98)' : 'rgba(242, 228, 225, 0.92)',
-          transition: 'background 500ms, box-shadow 500ms, padding 500ms',
+          // Con un desplegable abierto el header se vuelve opaco para quedar
+          // del mismo color exacto que el panel, que tambien es opaco. Si se
+          // queda translucido cada uno tine su fondo con lo que tenga detras
+          // —el tope de la pagina uno, el hero el otro— y aparece un escalon
+          // de tono que parte la navegacion en dos.
+          background: (catalogoOpen || ayudaOpen)
+            ? 'var(--color-bg)'
+            : (isScrolled ? 'rgba(242, 228, 225, 0.98)' : 'rgba(242, 228, 225, 0.92)'),
+          transition: 'background 300ms, box-shadow 500ms, padding 500ms',
         }}
       >
         <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
