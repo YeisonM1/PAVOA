@@ -64,17 +64,14 @@ const Header = () => {
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
-  // `--sticky-top` marca el borde inferior del header para lo que se pega
-  // debajo (hoy la barra de filtros de CategoriaPage). Los desplegables ya no
-  // dependen de esto: se posicionan solos por ser hijos del header.
-  //
-  // Se redondea a pixel entero a proposito. getBoundingClientRect devuelve
-  // decimales, y dejar un elemento parado sobre medio pixel hace que su texto
-  // se re-dibuje en cada cuadro y parezca temblar.
+  // Los menús desplegables se abren pegados al borde inferior del header, y ese
+  // borde se mueve: el header flota bajo la barra de anuncios y encoge al hacer
+  // scroll. Antes se adivinaba con un número fijo y el header terminaba tapando
+  // los títulos de sección del menú de Ayuda. Se mide de verdad.
   useEffect(() => {
     const headerEl = document.querySelector('header');
     const medirHeader = () => {
-      const borde = headerEl ? Math.round(headerEl.getBoundingClientRect().bottom) : 116;
+      const borde = headerEl ? headerEl.getBoundingClientRect().bottom : 116;
       document.documentElement.style.setProperty('--sticky-top', `${borde}px`);
     };
 
@@ -450,19 +447,15 @@ const Header = () => {
             </button>
           </div>
         </div>
-
-        {/* Los desplegables viven dentro del header a proposito: asi el
-            navegador los pega a su borde inferior en el mismo calculo de
-            layout. Medirlo desde JS siempre llegaba un cuadro tarde y abria
-            una rendija al hacer scroll. */}
-        <MegaMenu
-          catalogoOpen={catalogoOpen}
-          setCatalogoOpen={setCatalogoOpen}
-          panelRef={panelRef}
-          megamenuConfig={settings.megamenuConfig}
-        />
-        <AyudaMenu ayudaOpen={ayudaOpen} setAyudaOpen={setAyudaOpen} panelRef={ayudaPanelRef} ayudaMenuConfig={settings.ayudaMenuConfig} />
       </header>
+
+      <MegaMenu
+        catalogoOpen={catalogoOpen}
+        setCatalogoOpen={setCatalogoOpen}
+        panelRef={panelRef}
+        megamenuConfig={settings.megamenuConfig}
+      />
+      <AyudaMenu ayudaOpen={ayudaOpen} setAyudaOpen={setAyudaOpen} panelRef={ayudaPanelRef} ayudaMenuConfig={settings.ayudaMenuConfig} />
       <MobileMenu
         menuOpen={menuOpen}
         setMenuOpen={setMenuOpen}
