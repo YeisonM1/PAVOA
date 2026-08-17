@@ -5,12 +5,13 @@ const defaultImage = 'https://images.unsplash.com/photo-1490481651871-ab68de25d4
 
 // Removed sectionTitleStyle to use inline robust Tailwind classes
 
-export default function MegaMenu({ catalogoOpen, setCatalogoOpen, isScrolled, panelRef, megamenuConfig }) {
+export default function MegaMenu({ catalogoOpen, setCatalogoOpen, panelRef, megamenuConfig }) {
   const [hoveredItem, setHoveredItem] = useState(null);
   const activeImage = hoveredItem ? (megamenuConfig?.images?.[hoveredItem] || defaultImage) : defaultImage;
 
-  const HEADER_H_DEFAULT  = '116px';
-  const HEADER_H_SCROLLED = '100px';
+  // Borde inferior real del header, medido en Header.jsx. El respaldo cubre el
+  // instante antes de la primera medición.
+  const TOP_PANEL = 'var(--sticky-top, 116px)';
 
   const renderDesktopLink = (item, badge = null) => {
     const isHovered = hoveredItem === item;
@@ -57,7 +58,7 @@ export default function MegaMenu({ catalogoOpen, setCatalogoOpen, isScrolled, pa
       {/* Overlay */}
       <div
         style={{
-          position: 'fixed', inset: 0, top: isScrolled ? HEADER_H_SCROLLED : HEADER_H_DEFAULT, zIndex: 48,
+          position: 'fixed', inset: 0, top: TOP_PANEL, zIndex: 48,
           backgroundColor: 'rgba(20, 15, 15, 0.4)', backdropFilter: 'blur(3px)',
           opacity: catalogoOpen ? 1 : 0, pointerEvents: catalogoOpen ? 'auto' : 'none',
           transition: 'opacity 0.4s ease, top 0.5s ease'
@@ -69,7 +70,7 @@ export default function MegaMenu({ catalogoOpen, setCatalogoOpen, isScrolled, pa
       <div
         ref={panelRef}
         style={{
-          position: 'fixed', left: 0, right: 0, top: isScrolled ? HEADER_H_SCROLLED : HEADER_H_DEFAULT, zIndex: 49,
+          position: 'fixed', left: 0, right: 0, top: TOP_PANEL, zIndex: 49,
           background: 'var(--color-bg)',
           borderTop: '1px solid var(--color-gold)', borderBottom: '1px solid var(--color-border)',
           overflow: 'hidden',
