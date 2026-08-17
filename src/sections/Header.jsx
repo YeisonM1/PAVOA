@@ -64,30 +64,39 @@ const Header = () => {
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
-  // El header es `fixed top-9`, así que su borde inferior son esos 36px más su
-  // propio alto — que cambia al encoger con el scroll y entre breakpoints. Los
-  // menús desplegables se abren contra ese borde, y antes lo adivinaban con un
-  // número fijo: el de Ayuda quedaba 53px arriba y el header le tapaba los
-  // títulos de sección. Se mide en vez de asumirlo.
+  // Los menús desplegables se abren pegados al borde inferior del header, y ese
+  // borde se mueve: el header flota bajo la barra de anuncios y encoge al hacer
+  // scroll. Antes se adivinaba con un número fijo y el header terminaba tapando
+  // los títulos de sección del menú de Ayuda. Se mide de verdad.
   useEffect(() => {
     const headerEl = document.querySelector('header');
     const medirHeader = () => {
-      const bordeInferior = (headerEl?.offsetHeight ?? 72) + 36;
-      document.documentElement.style.setProperty('--sticky-top', `${bordeInferior}px`);
+      const borde = headerEl ? headerEl.getBoundingClientRect().bottom : 116;
+      document.documentElement.style.setProperty('--sticky-top', `${borde}px`);
     };
 
     medirHeader();
 
-    if (!headerEl || typeof ResizeObserver === 'undefined') {
-      window.addEventListener('resize', medirHeader);
-      return () => window.removeEventListener('resize', medirHeader);
-    }
+    let pendiente = false;
+    const alMoverse = () => {
+      if (pendiente) return;
+      pendiente = true;
+      requestAnimationFrame(() => { medirHeader(); pendiente = false; });
+    };
 
-    // ResizeObserver también cubre la transición de 500ms del padding al
-    // hacer scroll, que un listener de resize no vería.
-    const observer = new ResizeObserver(medirHeader);
-    observer.observe(headerEl);
-    return () => observer.disconnect();
+    window.addEventListener('scroll', alMoverse, { passive: true });
+    window.addEventListener('resize', alMoverse);
+
+    // El header encoge con una transición de 500ms. Cuando el scroll ya se
+    // detuvo y la transición sigue corriendo, solo ResizeObserver la ve.
+    const observer = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(medirHeader) : null;
+    if (headerEl && observer) observer.observe(headerEl);
+
+    return () => {
+      window.removeEventListener('scroll', alMoverse);
+      window.removeEventListener('resize', alMoverse);
+      if (observer) observer.disconnect();
+    };
   }, []);
 
   useEffect(() => {

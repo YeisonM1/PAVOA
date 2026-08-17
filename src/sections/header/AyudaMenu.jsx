@@ -44,7 +44,7 @@ export default function AyudaMenu({ ayudaOpen, setAyudaOpen, panelRef, ayudaMenu
           position: 'fixed', inset: 0, top: TOP_PANEL, zIndex: 48,
           backgroundColor: 'rgba(20,15,15,0.4)', backdropFilter: 'blur(3px)',
           opacity: ayudaOpen ? 1 : 0, pointerEvents: ayudaOpen ? 'auto' : 'none',
-          transition: 'opacity 0.4s ease, top 0.5s ease',
+          transition: 'opacity 0.4s ease',
         }}
         onClick={() => setAyudaOpen(false)}
       />
@@ -54,12 +54,12 @@ export default function AyudaMenu({ ayudaOpen, setAyudaOpen, panelRef, ayudaMenu
         style={{
           position: 'fixed', left: 0, right: 0, top: TOP_PANEL, zIndex: 49,
           background: 'var(--color-bg)',
-          borderTop: '1px solid var(--color-gold)', borderBottom: '1px solid var(--color-border)',
+          borderBottom: '1px solid var(--color-border)',
           overflow: 'hidden',
           opacity: ayudaOpen ? 1 : 0,
           transform: ayudaOpen ? 'translateY(0)' : 'translateY(-12px)',
           visibility: ayudaOpen ? 'visible' : 'hidden',
-          transition: 'opacity 0.3s ease, transform 0.35s cubic-bezier(0.4,0,0.2,1), top 0.5s ease',
+          transition: 'opacity 0.3s ease, transform 0.35s cubic-bezier(0.4,0,0.2,1)',
           pointerEvents: ayudaOpen ? 'auto' : 'none',
           boxShadow: ayudaOpen ? '0 8px 40px rgba(11,11,11,0.08)' : 'none',
           willChange: 'opacity, transform',
