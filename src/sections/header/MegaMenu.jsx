@@ -11,9 +11,7 @@ export default function MegaMenu({ catalogoOpen, setCatalogoOpen, panelRef, mega
 
   // Borde inferior real del header, medido en Header.jsx. El respaldo cubre el
   // instante antes de la primera medición.
-  // El 1px de solape absorbe el redondeo sub-pixel: sin él, media unidad de
-  // diferencia abre una rendija por la que se ve la página.
-  const TOP_PANEL = 'calc(var(--sticky-top, 116px) - 1px)';
+  const TOP_PANEL = 'var(--sticky-top, 116px)';
 
   const renderDesktopLink = (item, badge = null) => {
     const isHovered = hoveredItem === item;

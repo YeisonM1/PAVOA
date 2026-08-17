@@ -92,15 +92,9 @@ const Header = () => {
     const observer = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(medirHeader) : null;
     if (headerEl && observer) observer.observe(headerEl);
 
-    // ResizeObserver agrupa los últimos cuadros sub-pixel de esa transición y
-    // deja la medida ~4px corta, que se ve como una rendija fija bajo el
-    // header. transitionend da la palabra final.
-    if (headerEl) headerEl.addEventListener('transitionend', medirHeader);
-
     return () => {
       window.removeEventListener('scroll', alMoverse);
       window.removeEventListener('resize', alMoverse);
-      if (headerEl) headerEl.removeEventListener('transitionend', medirHeader);
       if (observer) observer.disconnect();
     };
   }, []);
