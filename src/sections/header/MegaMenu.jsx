@@ -61,7 +61,7 @@ export default function MegaMenu({ catalogoOpen, setCatalogoOpen, panelRef, mega
           position: 'fixed', inset: 0, top: TOP_PANEL, zIndex: 48,
           backgroundColor: 'rgba(20, 15, 15, 0.4)', backdropFilter: 'blur(3px)',
           opacity: catalogoOpen ? 1 : 0, pointerEvents: catalogoOpen ? 'auto' : 'none',
-          transition: 'opacity 0.4s ease'
+          transition: 'opacity 0.4s ease, top 0.5s ease'
         }}
         onClick={() => setCatalogoOpen(false)}
       />
@@ -72,12 +72,12 @@ export default function MegaMenu({ catalogoOpen, setCatalogoOpen, panelRef, mega
         style={{
           position: 'fixed', left: 0, right: 0, top: TOP_PANEL, zIndex: 49,
           background: 'var(--color-bg)',
-          borderBottom: '1px solid var(--color-border)',
+          borderTop: '1px solid var(--color-gold)', borderBottom: '1px solid var(--color-border)',
           overflow: 'hidden',
           opacity: catalogoOpen ? 1 : 0,
           transform: catalogoOpen ? 'translateY(0)' : 'translateY(-12px)',
           visibility: catalogoOpen ? 'visible' : 'hidden',
-          transition: 'opacity 0.3s ease, transform 0.35s cubic-bezier(0.4,0,0.2,1)',
+          transition: 'opacity 0.3s ease, transform 0.35s cubic-bezier(0.4,0,0.2,1), top 0.5s ease',
           pointerEvents: catalogoOpen ? 'auto' : 'none',
           boxShadow: catalogoOpen ? '0 8px 40px rgba(11,11,11,0.08)' : 'none',
           willChange: 'opacity, transform',
