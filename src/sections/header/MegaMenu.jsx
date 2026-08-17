@@ -9,12 +9,6 @@ export default function MegaMenu({ catalogoOpen, setCatalogoOpen, panelRef, mega
   const [hoveredItem, setHoveredItem] = useState(null);
   const activeImage = hoveredItem ? (megamenuConfig?.images?.[hoveredItem] || defaultImage) : defaultImage;
 
-  // Borde inferior real del header, medido en Header.jsx. El respaldo cubre el
-  // instante antes de la primera medición.
-  // El 1px de solape absorbe el redondeo sub-pixel: sin él, media unidad de
-  // diferencia abre una rendija por la que se ve la página.
-  const TOP_PANEL = 'calc(var(--sticky-top, 116px) - 1px)';
-
   const renderDesktopLink = (item, badge = null) => {
     const isHovered = hoveredItem === item;
     const isDimmed  = hoveredItem && !isHovered && hoveredItem !== 'destacados';
@@ -60,7 +54,7 @@ export default function MegaMenu({ catalogoOpen, setCatalogoOpen, panelRef, mega
       {/* Overlay */}
       <div
         style={{
-          position: 'fixed', inset: 0, top: TOP_PANEL, zIndex: 48,
+          position: 'absolute', top: '100%', left: 0, right: 0, height: '100vh', zIndex: 48,
           backgroundColor: 'rgba(20, 15, 15, 0.4)', backdropFilter: 'blur(3px)',
           opacity: catalogoOpen ? 1 : 0, pointerEvents: catalogoOpen ? 'auto' : 'none',
           transition: 'opacity 0.4s ease'
@@ -72,7 +66,7 @@ export default function MegaMenu({ catalogoOpen, setCatalogoOpen, panelRef, mega
       <div
         ref={panelRef}
         style={{
-          position: 'fixed', left: 0, right: 0, top: TOP_PANEL, zIndex: 49,
+          position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 49,
           background: 'var(--color-bg)',
           borderBottom: '1px solid var(--color-border)',
           overflow: 'hidden',
