@@ -55,6 +55,9 @@ const Header = () => {
         window.requestAnimationFrame(() => {
           const currentY = window.scrollY;
           setIsScrolled(currentY > 20);
+          const headerEl = document.querySelector('header');
+          const headerH = (headerEl?.offsetHeight ?? 72) + 36;
+          document.documentElement.style.setProperty('--sticky-top', `${headerH}px`);
           ticking = false;
         });
         ticking = true;
@@ -62,32 +65,6 @@ const Header = () => {
     };
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
-  }, []);
-
-  // El header es `fixed top-9`, así que su borde inferior son esos 36px más su
-  // propio alto — que cambia al encoger con el scroll y entre breakpoints. Los
-  // menús desplegables se abren contra ese borde, y antes lo adivinaban con un
-  // número fijo: el de Ayuda quedaba 53px arriba y el header le tapaba los
-  // títulos de sección. Se mide en vez de asumirlo.
-  useEffect(() => {
-    const headerEl = document.querySelector('header');
-    const medirHeader = () => {
-      const bordeInferior = (headerEl?.offsetHeight ?? 72) + 36;
-      document.documentElement.style.setProperty('--sticky-top', `${bordeInferior}px`);
-    };
-
-    medirHeader();
-
-    if (!headerEl || typeof ResizeObserver === 'undefined') {
-      window.addEventListener('resize', medirHeader);
-      return () => window.removeEventListener('resize', medirHeader);
-    }
-
-    // ResizeObserver también cubre la transición de 500ms del padding al
-    // hacer scroll, que un listener de resize no vería.
-    const observer = new ResizeObserver(medirHeader);
-    observer.observe(headerEl);
-    return () => observer.disconnect();
   }, []);
 
   useEffect(() => {
@@ -437,10 +414,11 @@ const Header = () => {
       <MegaMenu
         catalogoOpen={catalogoOpen}
         setCatalogoOpen={setCatalogoOpen}
+        isScrolled={isScrolled}
         panelRef={panelRef}
         megamenuConfig={settings.megamenuConfig}
       />
-      <AyudaMenu ayudaOpen={ayudaOpen} setAyudaOpen={setAyudaOpen} panelRef={ayudaPanelRef} ayudaMenuConfig={settings.ayudaMenuConfig} />
+      <AyudaMenu ayudaOpen={ayudaOpen} setAyudaOpen={setAyudaOpen} isScrolled={isScrolled} panelRef={ayudaPanelRef} ayudaMenuConfig={settings.ayudaMenuConfig} />
       <MobileMenu
         menuOpen={menuOpen}
         setMenuOpen={setMenuOpen}
