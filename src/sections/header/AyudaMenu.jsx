@@ -35,7 +35,9 @@ export default function AyudaMenu({ ayudaOpen, setAyudaOpen, panelRef, ayudaMenu
   const menu = normalizeAyudaMenu(ayudaMenuConfig);
   // Borde inferior real del header, medido en Header.jsx. El respaldo cubre el
   // instante antes de la primera medición.
-  const TOP_PANEL = 'var(--sticky-top, 116px)';
+  // El 1px de solape absorbe el redondeo sub-pixel: sin él, media unidad de
+  // diferencia abre una rendija por la que se ve la página.
+  const TOP_PANEL = 'calc(var(--sticky-top, 116px) - 1px)';
 
   return (
     <>
