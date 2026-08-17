@@ -33,8 +33,11 @@ const AyudaLink = ({ item, setAyudaOpen }) => (
 export default function AyudaMenu({ ayudaOpen, setAyudaOpen, isScrolled, panelRef, ayudaMenuConfig }) {
   const settings = useSiteSettings();
   const menu = normalizeAyudaMenu(ayudaMenuConfig);
-  const HEADER_H_DEFAULT  = '80px';
-  const HEADER_H_SCROLLED = '64px';
+  // Mismo desplazamiento que el megamenu. El header flota 36px bajo la barra
+  // de anuncios, asi que su borde inferior no coincide con su propio alto:
+  // con los 80px de antes quedaba por encima y tapaba los titulos de seccion.
+  const HEADER_H_DEFAULT  = '116px';
+  const HEADER_H_SCROLLED = '100px';
 
   return (
     <>
