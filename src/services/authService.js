@@ -128,6 +128,9 @@ export const getPedidos = async () => {
       nombre:   item.nombre,
       cantidad: item.cantidad,
       precio:   item.precio,
+      talla:    item.talla || item.variant_title || null,
+      color:    item.color || null,
+      imagen:   item.imagen || null,
     })),
   }));
 };

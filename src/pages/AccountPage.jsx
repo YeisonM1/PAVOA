@@ -105,9 +105,22 @@ function OrdenDetalle({ pedido, imagenMap }) {
           </p>
           <div className="flex flex-col gap-4">
             {pedido.items.map((item, i) => {
-              const img = imagenMap[item.nombre];
+              // La foto de la variante ya viene guardada con el pedido. El mapa
+              // por nombre queda de respaldo para los pedidos anteriores a que
+              // se empezara a guardar, que si no quedarian sin imagen.
+              const img = item.imagen || imagenMap[item.nombre];
+              const cantidad = Number(item.cantidad) || 1;
+              const precioLista = Number(item.precio) || 0;
+              // El descuento se aplica al pedido completo; se reparte por
+              // unidad para que se lea lo que costo cada prenda de verdad.
+              const precioPagado = tieneDescuento ? Math.round(precioLista * 0.9) : precioLista;
+              const etiquetas = [
+                item.color && `Color · ${item.color}`,
+                item.talla && `Talla · ${item.talla}`,
+                `Cantidad · ${cantidad}`,
+              ].filter(Boolean);
               return (
-                <div key={i} className="flex gap-3 items-center">
+                <div key={i} className="flex gap-3 items-start">
                   <div className="w-14 flex-shrink-0 bg-stone-100" style={{ aspectRatio: '3/4' }}>
                     {img
                       ? <img src={img} alt={item.nombre} className="w-full h-full object-cover object-top" />
@@ -120,18 +133,33 @@ function OrdenDetalle({ pedido, imagenMap }) {
                     }
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-[11px] font-bold text-stone-900 tracking-[0.08em] uppercase leading-snug truncate">
+                    <p className="text-[11px] font-bold text-stone-900 tracking-[0.08em] uppercase leading-snug">
                       {item.nombre}
                     </p>
-                    <p className="text-[10px] text-stone-400 tracking-[0.08em] mt-0.5">
-                      Cantidad: {item.cantidad}
-                    </p>
-                    {item.precio && (
-                      <p className="text-[11px] text-stone-600 tracking-[0.05em] mt-0.5 font-medium">
-                        {formatPrecio(item.precio)} c/u
-                      </p>
-                    )}
+                    <div className="flex flex-wrap gap-1.5 mt-1.5">
+                      {etiquetas.map((etiqueta) => (
+                        <span
+                          key={etiqueta}
+                          className="text-[8.5px] font-semibold tracking-[0.1em] uppercase text-stone-600 border border-stone-200 bg-white px-1.5 py-0.5"
+                        >
+                          {etiqueta}
+                        </span>
+                      ))}
+                    </div>
                   </div>
+                  {precioLista > 0 && (
+                    <div className="flex-shrink-0 text-right pl-2">
+                      <p className="text-[10px] text-stone-400 tracking-[0.04em] whitespace-nowrap">
+                        {tieneDescuento && (
+                          <span className="line-through mr-1">{formatPrecio(precioLista)}</span>
+                        )}
+                        {formatPrecio(precioPagado)} c/u
+                      </p>
+                      <p className="text-[12px] font-bold text-stone-900 tracking-[0.03em] mt-0.5 whitespace-nowrap">
+                        {formatPrecio(precioPagado * cantidad)}
+                      </p>
+                    </div>
+                  )}
                 </div>
               );
             })}
@@ -152,7 +180,7 @@ function OrdenDetalle({ pedido, imagenMap }) {
           </div>
 
           {/* Dirección */}
-          {(pedido.dirección || pedido.ciudad) && (
+          {(pedido.direccion || pedido.ciudad) && (
             <div>
               <p style={{ letterSpacing: '0.25em' }} className="text-[9px] font-bold text-stone-400 uppercase mb-2">
                 Dirección de entrega
@@ -161,8 +189,8 @@ function OrdenDetalle({ pedido, imagenMap }) {
                 {pedido.nombreCliente && (
                   <p className="text-[12px] text-stone-900 tracking-[0.04em]">{pedido.nombreCliente}</p>
                 )}
-                {pedido.dirección && (
-                  <p className="text-[11px] text-stone-500 tracking-[0.04em]">{pedido.dirección}</p>
+                {pedido.direccion && (
+                  <p className="text-[11px] text-stone-500 tracking-[0.04em]">{pedido.direccion}</p>
                 )}
                 {pedido.ciudad && (
                   <p className="text-[11px] text-stone-500 tracking-[0.04em]">{pedido.ciudad}</p>
