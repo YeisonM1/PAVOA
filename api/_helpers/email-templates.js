@@ -728,7 +728,7 @@ export const emailEntregado = ({ nombreCliente, orderName }) =>
     preheader: `Tu pedido ${orderName} fue entregado`,
     eyebrow: "Pedido entregado",
     title: "Tu pedido ya llegó",
-    body: `Tu pedido <strong style="color:${EMAIL_COLOR_BLACK};">${escapeHtml(orderName)}</strong> fue entregado correctamente. Gracias por confiar en PAVOA.`,
+    body: `Hola, ${escapeHtml(formatCustomerName(nombreCliente))}. Tu pedido <strong style="color:${EMAIL_COLOR_BLACK};">${escapeHtml(orderName)}</strong> fue entregado correctamente. Gracias por confiar en PAVOA.`,
     afterHero:
       renderCard({
         background: "linear-gradient(180deg, rgba(246,241,234,0.92), rgba(255,253,250,0.96))",
