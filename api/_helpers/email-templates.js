@@ -655,35 +655,35 @@ export const emailDespacho = ({
                 </tr>
 
                 <tr>
-                  <td style="padding:36px 40px 8px;background:#ffffff;">
+                  <td style="padding:36px 40px 8px;background:#ffffff;text-align:center;">
                     <p style="font-size:10px;letter-spacing:0.3em;color:${EMAIL_COLOR_MUTED_SOFT};text-transform:uppercase;margin:0 0 12px 0;font-family:${EMAIL_FONT_UI};">${escapeHtml(subtitulo || "Actualización de envío")}</p>
                     <h1 style="font-size:22px;font-weight:300;color:${EMAIL_COLOR_BLACK};letter-spacing:0.1em;text-transform:uppercase;margin:0 0 16px 0;font-family:${EMAIL_FONT_TITLE};">
                       Hola, ${escapeHtml(formatCustomerName(nombreCliente))}
                     </h1>
                     <p style="font-size:11px;letter-spacing:0.2em;color:${EMAIL_COLOR_MUTED_SOFT};text-transform:uppercase;margin:0 0 16px 0;font-family:${EMAIL_FONT_UI};">Pedido ${escapeHtml(orderName)}</p>
-                    <div style="width:32px;height:1px;background-color:${EMAIL_COLOR_GOLD};margin-bottom:20px;"></div>
+                    <div style="width:32px;height:1px;background-color:${EMAIL_COLOR_GOLD};margin:0 auto 20px;"></div>
                     <p style="font-size:13px;color:${EMAIL_COLOR_CHARCOAL};line-height:1.8;margin:0;font-family:${EMAIL_FONT_BODY};">${cuerpo}</p>
                   </td>
                 </tr>
 
                 <tr>
-                  <td style="padding:28px 40px 0;background:#ffffff;">
+                  <td style="padding:28px 40px 0;background:#ffffff;text-align:center;">
                     <table width="100%" cellpadding="0" cellspacing="0" style="background-color:${EMAIL_COLOR_BG};padding:20px;">
                       <tr>
-                        <td>
+                        <td style="text-align:center;">
                           <p style="font-size:10px;letter-spacing:0.2em;color:${EMAIL_COLOR_MUTED_SOFT};text-transform:uppercase;margin:0 0 6px 0;font-family:${EMAIL_FONT_UI};">Transportadora</p>
                           <p style="font-size:15px;font-weight:600;color:${EMAIL_COLOR_BLACK};letter-spacing:0.05em;margin:0;font-family:${EMAIL_FONT_BODY};">${escapeHtml(trackingCompany || "Pendiente")}</p>
                         </td>
                       </tr>
                       <tr>
-                        <td style="padding-top:16px;">
+                        <td style="padding-top:16px;text-align:center;">
                           <p style="font-size:10px;letter-spacing:0.2em;color:${EMAIL_COLOR_MUTED_SOFT};text-transform:uppercase;margin:0 0 6px 0;font-family:${EMAIL_FONT_UI};">Número de guía</p>
                           <p style="font-size:20px;font-weight:700;color:${EMAIL_COLOR_BLACK};letter-spacing:0.1em;margin:0;font-family:${EMAIL_FONT_BODY};">${escapeHtml(trackingNumber || "Pendiente")}</p>
                         </td>
                       </tr>
                       ${trackingUrl ? `
                       <tr>
-                        <td style="padding-top:20px;">
+                        <td style="padding-top:20px;text-align:center;">
                           <a href="${trackingUrl}" style="display:inline-block;background-color:${EMAIL_COLOR_BLACK};color:#ffffff;text-decoration:none;font-size:10px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;padding:12px 24px;font-family:${EMAIL_FONT_UI};">
                             Rastrear pedido →
                           </a>
@@ -694,7 +694,7 @@ export const emailDespacho = ({
                 </tr>
 
                 <tr>
-                  <td style="padding:28px 40px 0;background:#ffffff;">
+                  <td style="padding:28px 40px 0;background:#ffffff;text-align:center;">
                     <div style="border-top:1px solid ${EMAIL_COLOR_BORDER};padding-top:24px;">
                       <p style="font-size:13px;color:${EMAIL_COLOR_MUTED};line-height:1.8;margin:0;font-family:${EMAIL_FONT_BODY};">
                         También puedes ver el estado de tu pedido en cualquier momento desde tu cuenta en PAVOA.
