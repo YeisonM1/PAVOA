@@ -20,13 +20,14 @@ export default function OrdenContraentregaPage() {
   const { clearCart } = useContext(CartContext);
   const cartClearedRef = useRef(false);
 
+  // No se borra al leer. StrictMode monta el componente dos veces y la segunda
+  // pasada se quedaba sin datos, mostrando "No hay informacion de pedido" sobre
+  // un pedido que si se habia creado. Conservarlo hace que recargar la pagina
+  // tambien funcione, como en cualquier confirmacion que uno quiera volver a ver.
   const [orderData] = useState(() => {
     try {
       const raw = sessionStorage.getItem('pavoa-pending-order-cod');
-      if (raw) {
-        sessionStorage.removeItem('pavoa-pending-order-cod');
-        return JSON.parse(raw);
-      }
+      if (raw) return JSON.parse(raw);
     } catch {}
     return null;
   });
