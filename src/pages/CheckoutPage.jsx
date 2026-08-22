@@ -68,6 +68,14 @@ const getJsonHeaders = () => {
   return headers;
 };
 
+// Bogota tiene envio diferenciado. Vive aqui, y no dentro del onChange del
+// select, para que una recarga llegue exactamente al mismo valor.
+const calcularEnvio = (ciudad, base) => {
+  const normalizada = String(ciudad || '').trim().toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  return normalizada === 'bogota' ? 10000 : base;
+};
+
 const readCheckoutSession = () => {
   try {
     const raw = sessionStorage.getItem(CHECKOUT_SESSION_KEY);
@@ -253,11 +261,16 @@ export default function CheckoutPage() {
 
   useEffect(() => {
     getShippingConfig().then(cfg => {
-      const precio = cfg.precioEnvio || 18900;
-      setBaseShippingCost(precio);
-      setShippingCost(precio);
+      setBaseShippingCost(cfg.precioEnvio || 18900);
     }).catch(() => {});
   }, []);
+
+  // Al recargar, el formulario se restaura desde sessionStorage sin pasar por
+  // el onChange del select, asi que el costo debe derivarse de la ciudad en
+  // vez de fijarse al vuelo. Antes decia "Bogota" y cobraba la tarifa base.
+  useEffect(() => {
+    setShippingCost(calcularEnvio(form.ciudad, baseShippingCost));
+  }, [form.ciudad, baseShippingCost]);
 
   const [cargandoPago, setCargandoPago] = useState(false);
   const [cargandoCod, setCargandoCod] = useState(false);
@@ -559,18 +572,6 @@ export default function CheckoutPage() {
       general: '',
       [name]: touched[name] ? validateField(name, nextValue) : '',
     }));
-  };
-
-  // Cambio #7: Detectar ciudad Bogotá y ajustar costo de envío
-  const handleCiudadChange = (e) => {
-    handleChange(e);
-    const ciudad = String(e.target.value || '').trim().toLowerCase()
-      .normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-    if (ciudad === 'bogota') {
-      setShippingCost(10000);
-    } else {
-      setShippingCost(baseShippingCost);
-    }
   };
 
   const handleBlur = (e) => {
@@ -966,7 +967,7 @@ export default function CheckoutPage() {
                     label="Ciudad"
                     name="ciudad"
                     value={form.ciudad}
-                    onChange={handleCiudadChange}
+                    onChange={handleChange}
                     onBlur={handleBlur}
                     options={form.departamento ? (CIUDADES_POR_DEPARTAMENTO[form.departamento] || []) : []}
                     placeholder={form.departamento ? 'Selecciona la ciudad' : 'Primero elige departamento'}
