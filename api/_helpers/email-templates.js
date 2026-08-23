@@ -728,7 +728,7 @@ export const emailEntregado = ({ nombreCliente, orderName }) =>
     preheader: `Tu pedido ${orderName} fue entregado`,
     eyebrow: "Pedido entregado",
     title: "Tu pedido ya llegó",
-    body: `Hola, ${escapeHtml(formatCustomerName(nombreCliente))}. Tu pedido <strong style="color:${EMAIL_COLOR_BLACK};">${escapeHtml(orderName)}</strong> fue entregado correctamente. Gracias por confiar en PAVOA.`,
+    body: `Hola, ${escapeHtml(formatCustomerName(nombreCliente))}. Tu pedido <strong style="color:${EMAIL_COLOR_BLACK};">${escapeHtml(orderName)}</strong> fue entregado correctamente.`,
     afterHero:
       renderCard({
         background: "linear-gradient(180deg, rgba(246,241,234,0.92), rgba(255,253,250,0.96))",
@@ -745,7 +745,7 @@ export const emailEntregado = ({ nombreCliente, orderName }) =>
               Gracias por confiar en PAVOA
             </p>
             <p style="margin:0 auto;max-width:380px;font-size:14px;line-height:1.85;color:${EMAIL_COLOR_CHARCOAL};font-family:${EMAIL_FONT_BODY};">
-              Si necesitas apoyo con tu compra, cambios o cualquier detalle posterior, seguimos disponibles para ayudarte.
+              Esperamos que la disfrutes tanto como nosotras disfrutamos prepararla.
             </p>
             <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:18px auto 0;">
               <tr>
@@ -758,13 +758,6 @@ export const emailEntregado = ({ nombreCliente, orderName }) =>
               </tr>
             </table>
           </div>
-        `,
-      }) +
-      `<div style="height:18px;line-height:18px;">&nbsp;</div>` +
-      renderCard({
-        content: `
-          ${renderSectionHeading("Seguimos aquí")}
-          ${renderTextBlock(`Si necesitas soporte con tu compra o quieres gestionar un cambio, puedes escribirnos a ${SUPPORT_EMAIL} y te guiaremos.`)}
         `,
       }),
   });
