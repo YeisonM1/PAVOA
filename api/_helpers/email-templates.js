@@ -307,7 +307,7 @@ const renderOrderItemsCard = (lineItems = [], { total } = {}) =>
                 <td style="padding:${index === 0 ? "0 0 14px" : "14px 0"};${index !== lineItems.length - 1 ? `border-bottom:1px solid ${EMAIL_COLOR_BORDER};` : ""}">
                   <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
                     <tr>
-                      <td valign="top" style="padding:0 14px 0 0;">
+                      <td valign="top" width="72" style="width:72px;padding:0 14px 0 0;">
                         ${itemImageUrl
                           ? `<img src="${escapeHtml(itemImageUrl)}" alt="${escapeHtml(item.title || "Prenda PAVOA")}" width="72" style="display:block;width:72px;height:96px;object-fit:cover;border:1px solid ${EMAIL_COLOR_BORDER};background:${EMAIL_COLOR_IVORY};">`
                           : `<table role="presentation" width="60" cellpadding="0" cellspacing="0" style="border:1px solid ${EMAIL_COLOR_BORDER};background:${EMAIL_COLOR_IVORY};">
@@ -321,7 +321,7 @@ const renderOrderItemsCard = (lineItems = [], { total } = {}) =>
                           </tr>
                         </table>`}
                       </td>
-                      <td valign="top" style="font-family:${EMAIL_FONT_BODY};">
+                      <td valign="top" style="text-align:left;font-family:${EMAIL_FONT_BODY};">
                         <p style="margin:0 0 6px;font-size:18px;line-height:1.25;color:${EMAIL_COLOR_BLACK};font-weight:600;font-family:${EMAIL_FONT_TITLE};">
                           ${escapeHtml(item.title)}
                         </p>
