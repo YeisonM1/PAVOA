@@ -767,10 +767,8 @@ export const emailPedidoCancelado = ({
   orderName,
   lineItems = [],
   total,
-  cancelReason,
   refundStatus,
 }) => {
-  const reasonLabel = String(cancelReason || '').trim();
   const refundCopyByStatus = {
     refunded: 'El reembolso ya quedó registrado. El tiempo final para verlo reflejado puede depender del medio de pago o de la entidad bancaria.',
     partially_refunded: `Este pedido tiene un reembolso parcial registrado. Si necesitas claridad sobre el valor, escríbenos a ${SUPPORT_EMAIL} y te ayudamos.`,
@@ -794,12 +792,6 @@ export const emailPedidoCancelado = ({
       ? {
           label: 'Total',
           value: `<span style="font-size:20px;font-weight:600;font-family:${EMAIL_FONT_TITLE};">$${formatMoney(total)}</span>`,
-        }
-      : null,
-    reasonLabel
-      ? {
-          label: 'Motivo',
-          value: escapeHtml(reasonLabel),
         }
       : null,
   ].filter(Boolean);
