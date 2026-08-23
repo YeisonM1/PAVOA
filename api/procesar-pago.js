@@ -1015,23 +1015,31 @@ export default async function handler(req, res) {
 
       // Send confirmation email
       try {
-        const orderParaEmail = shopifyOrder || {
-          email: emailCliente,
-          name: orderName,
-          total_price: totalConEnvio,
-          line_items: itemsFinales.map(i => ({
-            title: i.nombre,
-            quantity: i.cantidad,
-            price: i.precio,
-            variant_title: i.talla || null,
-            imagen: i.imagen || null,
-            detalles: i.detalles || '',
-          })),
-          shipping_address: addr,
-          customer: { first_name: nombre.split(' ')[0] || 'Cliente' },
-          // Cambio #9: incluir la nota del draft para dirección estructurada
-          note: shopifyResponse?._shopifyOrder?.note || '',
-        };
+        // Solo los items enriquecidos llevan la foto: la orden que devuelve
+        // Shopify no la incluye. Antes se usaba esa orden tal cual cuando
+        // existia —el caso normal— y el correo salia con el recuadro gris de
+        // "prenda" en vez del producto. El flujo de pago aprobado ya lo hacia
+        // asi; contraentrega se habia quedado atras.
+        const lineItemsConImagen = itemsFinales.map(i => ({
+          title: i.nombre,
+          quantity: i.cantidad,
+          price: i.precio,
+          variant_title: i.talla || null,
+          imagen: i.imagen || null,
+          detalles: i.detalles || '',
+        }));
+        const orderParaEmail = shopifyOrder
+          ? { ...shopifyOrder, line_items: lineItemsConImagen }
+          : {
+              email: emailCliente,
+              name: orderName,
+              total_price: totalConEnvio,
+              line_items: lineItemsConImagen,
+              shipping_address: addr,
+              customer: { first_name: nombre.split(' ')[0] || 'Cliente' },
+              // Cambio #9: incluir la nota del draft para dirección estructurada
+              note: shopifyResponse?._shopifyOrder?.note || '',
+            };
         await enviarEmailConfirmacion(
           { ...orderParaEmail, email: emailCliente },
           null,

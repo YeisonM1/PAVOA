@@ -249,6 +249,7 @@ const getCancelReasonLabel = (reason) => {
     fraud: 'Validación de seguridad',
     inventory: 'Disponibilidad de inventario',
     declined: 'Pago rechazado',
+    staff: 'Ajuste de la tienda',
     other: 'Otro motivo',
   };
   return labels[normalized] || normalized || '';
