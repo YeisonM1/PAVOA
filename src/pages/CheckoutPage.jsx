@@ -1005,9 +1005,11 @@ export default function CheckoutPage() {
 
               {/* Cambio #9: Campo de Observaciones */}
               <div className="flex flex-col gap-2">
-                <label className="text-[10px] font-bold tracking-[0.2em] text-stone-900 uppercase">
+                {/* Un punto mas grande que las demas etiquetas, a proposito:
+                    es el unico campo que la gente pasa de largo sin llenar. */}
+                <label className="text-[12px] font-bold tracking-[0.2em] text-stone-900 uppercase">
                   Observaciones de entrega
-                  <span className="text-stone-400 font-normal ml-2">(opcional)</span>
+                  <span className="text-stone-900 font-normal ml-2">(opcional)</span>
                 </label>
                 <textarea
                   name="observaciones"
