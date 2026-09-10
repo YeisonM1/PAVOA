@@ -1,4 +1,11 @@
 import { AYUDA_MENU_DEFAULTS, normalizeAyudaMenu } from '../utils/ayudaMenu.js';
+import {
+  DEFAULT_NATIONAL_SHIPPING,
+  SHIPPING_LEGACY_KEY,
+  SHIPPING_NAMESPACE,
+  SHIPPING_ZONES_KEY,
+  parseShippingConfig,
+} from '../../api/_helpers/envios.js';
 
 const SHOPIFY_DOMAIN   = import.meta.env.VITE_SHOPIFY_DOMAIN;
 const SHOPIFY_TOKEN    = import.meta.env.VITE_SHOPIFY_TOKEN;
@@ -1746,9 +1753,13 @@ export const verificarStock = async (cartItems) => {
   }
 };
 
-const SHIPPING_DEFAULT = 18900;
+const SHIPPING_DEFAULT = DEFAULT_NATIONAL_SHIPPING;
 
+// Devuelve la tabla de zonas por departamento que configura la tienda en
+// pavoa-control. `precioEnvio` se mantiene como la tarifa base para no
+// romper a quien solo necesite un numero.
 export const getShippingConfig = async () => {
+  const porDefecto = { precioEnvio: SHIPPING_DEFAULT, config: parseShippingConfig(null) };
   try {
     const res = await fetch(SHOPIFY_ENDPOINT, {
       method: 'POST',
@@ -1757,18 +1768,31 @@ export const getShippingConfig = async () => {
         'X-Shopify-Storefront-Access-Token': SHOPIFY_TOKEN,
       },
       body: JSON.stringify({
-        query: `{ shop { metafield(namespace: "pavoa_envios", key: "precio_envio") { value } } }`,
+        query: `{
+          shop {
+            zonas: metafield(namespace: "${SHIPPING_NAMESPACE}", key: "${SHIPPING_ZONES_KEY}") { value }
+            legado: metafield(namespace: "${SHIPPING_NAMESPACE}", key: "${SHIPPING_LEGACY_KEY}") { value }
+          }
+        }`,
       }),
     });
-    if (!res.ok) return { precioEnvio: SHIPPING_DEFAULT };
+    if (!res.ok) return porDefecto;
     const data = await res.json();
-    const rawValue = data?.data?.shop?.metafield?.value;
-    if (rawValue) {
-      const parsed = parseInt(rawValue, 10);
-      if (!isNaN(parsed) && parsed > 0) return { precioEnvio: parsed };
+
+    // La tabla de zonas manda; `precio_envio` es el respaldo de antes.
+    const rawZonas = data?.data?.shop?.zonas?.value;
+    if (rawZonas) {
+      const config = parseShippingConfig(rawZonas);
+      return { precioEnvio: config.base, config };
+    }
+
+    const rawLegado = data?.data?.shop?.legado?.value;
+    if (rawLegado) {
+      const config = parseShippingConfig(rawLegado);
+      return { precioEnvio: config.base, config };
     }
   } catch {}
-  return { precioEnvio: SHIPPING_DEFAULT };
+  return porDefecto;
 };
 
 

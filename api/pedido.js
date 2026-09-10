@@ -3,6 +3,13 @@ import { CartValidationError, validateCartWithShopify } from './_helpers/cart-va
 import { signCheckoutToken, verifyToken } from './_helpers/auth.js';
 import { trackFunnelEvent } from './_helpers/funnel.js';
 import {
+  DEFAULT_NATIONAL_SHIPPING,
+  SHIPPING_LEGACY_KEY,
+  SHIPPING_NAMESPACE,
+  SHIPPING_ZONES_KEY,
+  resolverEnvio,
+} from './_helpers/envios.js';
+import {
   claimIdempotency,
   clearIdempotency,
   completeIdempotency,
@@ -14,8 +21,6 @@ import {
 } from './_helpers/durable-security.js';
 
 const SHOPIFY_DOMAIN = process.env.VITE_SHOPIFY_DOMAIN;
-const DEFAULT_NATIONAL_SHIPPING = 18900;
-const BOGOTA_SHIPPING = 10000;
 
 const normalizeEmail = (value) => String(value || '').trim().toLowerCase();
 
@@ -127,15 +132,16 @@ const normalizeCity = (value) => String(value || '')
   .normalize('NFD')
   .replace(/[\u0300-\u036f]/g, '');
 
+// Ya no decide el precio: la tarifa sale de las zonas por departamento que
+// configura la tienda en pavoa-control. Se conserva porque esta exportada y
+// cubierta por security.test.js.
 export const isBogotaDestination = ({ city, department } = {}) => {
   const normalizedDepartment = normalizeCity(department).replace(/[^a-z]/g, '');
   return normalizeCity(city) === 'bogota'
     && ['bogotadc', 'distritocapital'].includes(normalizedDepartment);
 };
 
-const getServerShippingCost = async (token, { city, department }) => {
-  if (isBogotaDestination({ city, department })) return BOGOTA_SHIPPING;
-
+const getServerShippingCost = async (token, { department, city }) => {
   try {
     const response = await fetch(`https://${SHOPIFY_DOMAIN}/admin/api/2026-04/graphql.json`, {
       method: 'POST',
@@ -144,12 +150,24 @@ const getServerShippingCost = async (token, { city, department }) => {
         'X-Shopify-Access-Token': token,
       },
       body: JSON.stringify({
-        query: `query ShippingPrice { shop { metafield(namespace: "pavoa_envios", key: "precio_envio") { value } } }`,
+        query: `query ShippingPrice {
+          shop {
+            zonas: metafield(namespace: "${SHIPPING_NAMESPACE}", key: "${SHIPPING_ZONES_KEY}") { value }
+            legado: metafield(namespace: "${SHIPPING_NAMESPACE}", key: "${SHIPPING_LEGACY_KEY}") { value }
+          }
+        }`,
       }),
     });
     const payload = await response.json().catch(() => ({}));
-    const configured = Number(payload?.data?.shop?.metafield?.value);
-    if (response.ok && Number.isFinite(configured) && configured > 0) return configured;
+    if (response.ok) {
+      // La tabla de zonas manda; `precio_envio` queda como respaldo para las
+      // tiendas que todavia no han configurado zonas.
+      const zonas = payload?.data?.shop?.zonas?.value;
+      if (zonas) return resolverEnvio({ departamento: department, ciudad: city }, zonas);
+
+      const legado = Number(payload?.data?.shop?.legado?.value);
+      if (Number.isFinite(legado) && legado > 0) return legado;
+    }
   } catch (error) {
     console.warn('[PAVOA] No se pudo consultar el envio configurado:', error.message);
   }
@@ -339,8 +357,8 @@ export default async function handler(req, res) {
     const shippingPromise = (async () => {
       const token = await getShopifyToken('app');
       return getServerShippingCost(token, {
-        city: form?.ciudad,
         department: form?.departamento,
+        city: form?.ciudad,
       });
     })().catch(() => DEFAULT_NATIONAL_SHIPPING);
 

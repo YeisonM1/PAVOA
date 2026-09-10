@@ -7,6 +7,7 @@ import SEO from '../components/SEO';
 import { thumbImage } from '../utils/imageUrl';
 import { getShippingConfig } from '../services/productService';
 import { CIUDADES_POR_DEPARTAMENTO, DEPARTAMENTOS } from '../utils/ciudades';
+import { DEFAULT_NATIONAL_SHIPPING, resolverEnvio } from '../../api/_helpers/envios.js';
 import { estaAutenticado, getCliente, getToken } from '../services/authService';
 
 const HORARIOS = ['Mañana (8am - 12pm)', 'Tarde (12pm - 6pm)', 'Noche (6pm - 9pm)'];
@@ -66,14 +67,6 @@ const getJsonHeaders = () => {
   const token = getToken();
   if (token) headers.Authorization = `Bearer ${token}`;
   return headers;
-};
-
-// Bogota tiene envio diferenciado. Vive aqui, y no dentro del onChange del
-// select, para que una recarga llegue exactamente al mismo valor.
-const calcularEnvio = (ciudad, base) => {
-  const normalizada = String(ciudad || '').trim().toLowerCase()
-    .normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-  return normalizada === 'bogota' ? 10000 : base;
 };
 
 const readCheckoutSession = () => {
@@ -233,8 +226,8 @@ export default function CheckoutPage() {
     horario: '',
     observaciones: '',
   });
-  const [shippingCost, setShippingCost] = useState(18900);
-  const [baseShippingCost, setBaseShippingCost] = useState(18900);
+  const [shippingCost, setShippingCost] = useState(DEFAULT_NATIONAL_SHIPPING);
+  const [shippingConfig, setShippingConfig] = useState(null);
   const [touched, setTouched] = useState({});
 
   useEffect(() => {
@@ -261,16 +254,23 @@ export default function CheckoutPage() {
 
   useEffect(() => {
     getShippingConfig().then(cfg => {
-      setBaseShippingCost(cfg.precioEnvio || 18900);
+      setShippingConfig(cfg.config);
     }).catch(() => {});
   }, []);
 
   // Al recargar, el formulario se restaura desde sessionStorage sin pasar por
-  // el onChange del select, asi que el costo debe derivarse de la ciudad en
-  // vez de fijarse al vuelo. Antes decia "Bogota" y cobraba la tarifa base.
+  // el onChange de los selects, asi que el costo debe derivarse del destino
+  // en vez de fijarse al vuelo.
+  //
+  // Es el mismo resolverEnvio que usa api/pedido.js: el precio que se ve aca
+  // y el que cobra el servidor salen de la misma funcion y del mismo
+  // metafield, para que no vuelvan a separarse.
   useEffect(() => {
-    setShippingCost(calcularEnvio(form.ciudad, baseShippingCost));
-  }, [form.ciudad, baseShippingCost]);
+    setShippingCost(resolverEnvio(
+      { departamento: form.departamento, ciudad: form.ciudad },
+      shippingConfig,
+    ));
+  }, [form.departamento, form.ciudad, shippingConfig]);
 
   const [cargandoPago, setCargandoPago] = useState(false);
   const [cargandoCod, setCargandoCod] = useState(false);
