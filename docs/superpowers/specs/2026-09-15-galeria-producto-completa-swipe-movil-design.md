@@ -1,8 +1,7 @@
 # Galeria completa de producto y gesto de deslizamiento movil
 
 Fecha: 2026-09-15  
-Repo afectado: `PAVOA`. `pavoa-control` se usa para configurar las asignaciones,
-pero no requiere cambios de codigo para este alcance.
+Repos afectados: `PAVOA` y `pavoa-control`.
 
 ## Objetivo
 
@@ -78,10 +77,25 @@ algo que la galeria actual ya puede cubrir.
   con modelo.
 - Los colores que si tienen modelo conservan sus galerias actuales y no reciben
   la foto grupal.
-- La asignacion se administra con la funcionalidad existente de imagenes por
-  color en PAVOA Control; no se crea una pantalla nueva.
+- La asignacion se administra dentro del editor de producto existente en PAVOA
+  Control; no se crea una pantalla nueva.
 - El storefront debe leer la imagen vinculada a la variante para que una misma
   foto pueda funcionar como respaldo de mas de un color sin duplicar archivos.
+
+### PAVOA Control
+
+- La seccion actual de imagenes y sus galerias por color se conserva.
+- Se agrega un bloque compacto `Imagen compartida para colores sin modelo`.
+- El bloque permite elegir una imagen existente del producto y marcar uno o
+  varios colores mediante casillas.
+- La foto compartida se agrega como portada de los colores marcados, pero no
+  elimina sus otras imagenes.
+- Las fotos de modelo se siguen asignando, ordenando, desvinculando y marcando
+  como portada con el flujo actual.
+- Desmarcar un color retira de ese color la portada compartida sin afectar las
+  galerias de los demas colores.
+- La seleccion se persiste con las vinculaciones de imagen de las variantes que
+  Shopify ya soporta; no se agrega un metaobject ni una pantalla administrativa.
 
 ### Escritorio
 
@@ -136,12 +150,13 @@ algo que la galeria actual ya puede cubrir.
 - Comprobar que seleccionar y deseleccionar colores filtra y restaura la
   galeria correctamente.
 - `npm test`, lint focalizado y `npm run build` en `PAVOA`.
-- Verificacion operativa en la pantalla existente `Imagenes por color` de PAVOA
-  Control, sin modificar su codigo.
+- Validacion del bloque de imagen compartida y `npm run build` en
+  `pavoa-control`.
 
 ## Fuera de alcance
 
 - Redisenar la PDP o la galeria.
+- Redisenar el editor de productos de PAVOA Control.
 - Agregar flechas, puntos, contadores o controles visuales nuevos.
 - Analizar imagenes con IA para detectar si aparece una modelo.
 - Reordenar automaticamente las fotos de Shopify.
