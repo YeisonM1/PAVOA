@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { heroImage, productImage, thumbImage } from '../../utils/imageUrl';
 import { Maximize2, ShieldCheck, Truck, Undo2 } from 'lucide-react';
+import { getSwipeImageIndex } from '../../utils/productGallery.js';
 
 const TRUST_ITEMS = [
   { icon: Truck, text: 'Envíos a todo Colombia' },
@@ -40,6 +41,8 @@ export default function ProductGallery({
   const [phase, setPhase] = useState('idle');
   const prevColorKey = useRef(colorKey);
   const timers = useRef([]);
+  const touchStart = useRef(null);
+  const didSwipe = useRef(false);
 
   useEffect(() => {
     if (colorKey === prevColorKey.current) return;
@@ -104,10 +107,51 @@ export default function ProductGallery({
 
   const src = displayed[selectedImage] ?? displayed[0];
 
+  const handleTouchStart = (event) => {
+    const touch = event.touches[0];
+    touchStart.current = touch ? { x: touch.clientX, y: touch.clientY } : null;
+    didSwipe.current = false;
+  };
+
+  const handleTouchEnd = (event) => {
+    const start = touchStart.current;
+    const touch = event.changedTouches[0];
+    touchStart.current = null;
+    if (!start || !touch) return;
+
+    const nextIndex = getSwipeImageIndex({
+      startX: start.x,
+      startY: start.y,
+      endX: touch.clientX,
+      endY: touch.clientY,
+      currentIndex: selectedImage,
+      total: displayed.length,
+    });
+
+    if (nextIndex !== selectedImage) {
+      didSwipe.current = true;
+      onSelectImage(nextIndex);
+    }
+  };
+
+  const handleMobileImageClick = () => {
+    if (didSwipe.current) {
+      didSwipe.current = false;
+      return;
+    }
+    onOpenLightbox();
+  };
+
   return (
     <>
       <div className="md:hidden w-full flex flex-col px-5 pt-6">
-        <div className="w-full relative group cursor-zoom-in" onClick={onOpenLightbox}>
+        <div
+          className="w-full relative group cursor-zoom-in"
+          onClick={handleMobileImageClick}
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
+          style={{ touchAction: 'pan-y' }}
+        >
           <div className="w-full overflow-hidden rounded-sm bg-stone-50" style={{ aspectRatio: '3/4' }}>
             <img
               src={heroImage(src)}
@@ -126,7 +170,10 @@ export default function ProductGallery({
         </div>
 
         {displayed.length > 1 && (
-          <div className="flex gap-3 pt-4 pb-2">
+          <div
+            className="flex gap-3 pt-4 pb-2 overflow-x-auto overscroll-x-contain"
+            style={{ scrollbarWidth: 'none' }}
+          >
             {displayed.map((img, i) => (
               <button
                 key={i}
@@ -159,7 +206,16 @@ export default function ProductGallery({
       >
         <div className="flex gap-3">
           {displayed.length > 1 && (
-            <div className="flex flex-col gap-2 flex-shrink-0" style={{ width: 88 }}>
+            <div
+              className="flex flex-col gap-2 flex-shrink-0"
+              style={{
+                width: 88,
+                maxHeight: '78vh',
+                overflowY: 'auto',
+                overscrollBehavior: 'contain',
+                scrollbarWidth: 'thin',
+              }}
+            >
               {displayed.map((img, i) => (
                 <button
                   key={i}

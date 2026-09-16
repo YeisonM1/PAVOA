@@ -82,7 +82,9 @@ export default function ProductPage() {
     if (colorGaleria && producto.imagesByColor?.[colorGaleria]?.length > 0) {
       return producto.imagesByColor[colorGaleria];
     }
-    return [producto.imagen1, producto.imagen2, producto.imagen3, producto.imagen4, producto.imagen5].filter(Boolean);
+    if (producto.imagenes?.length > 0) return producto.imagenes;
+    return [producto.imagen1, producto.imagen2, producto.imagen3, producto.imagen4, producto.imagen5]
+      .filter(Boolean);
   }, [producto, colorGaleria]);
 
   const variantes = useMemo(() => {
@@ -209,17 +211,6 @@ export default function ProductPage() {
   const toggleAccordion = (s) => setOpenAccordion(openAccordion === s ? null : s);
 
   const handleSelectImage = (i) => {
-    const imageUrl = imagenes[i];
-    const imageColor = imageUrl && producto?.imagesByColor
-      ? Object.keys(producto.imagesByColor).find((color) =>
-          producto.imagesByColor[color].includes(imageUrl)
-        )
-      : null;
-
-    if (imageColor && imageColor !== colorSeleccionado) {
-      applyVariantColor(imageColor);
-    }
-
     if (i === selectedImage) return;
 
     setIsTransitioning(true);
