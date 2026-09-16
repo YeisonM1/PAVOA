@@ -1,4 +1,5 @@
 import { AYUDA_MENU_DEFAULTS, normalizeAyudaMenu } from '../utils/ayudaMenu.js';
+import { valorDeOpcion } from '../utils/productOptions.js';
 import { buildProductImageCollections } from '../utils/productImages.js';
 import {
   DEFAULT_NATIONAL_SHIPPING,
@@ -586,9 +587,9 @@ const mapProducto = (node) => {
     const compareAtPrecioNumerico =
       compareAtPrecioNumericoRaw > precioNumerico ? compareAtPrecioNumericoRaw : null;
     return {
-      color:        v.selectedOptions.find(o => o.name === 'Color')?.value || '',
+      color:        valorDeOpcion(v.selectedOptions, 'Color'),
       hex,
-      talla:        v.selectedOptions.find(o => o.name === 'Talla')?.value || 'ÚNICA',
+      talla:        valorDeOpcion(v.selectedOptions, 'Talla') || 'ÚNICA',
       stock:        v.quantityAvailable ?? 0,
       variantId:    v.id,
       variantImage: v.image?.url || null,
