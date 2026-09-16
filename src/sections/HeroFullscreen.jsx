@@ -1,5 +1,5 @@
 ﻿import { useState, useEffect, useRef } from 'react';
-import { heroImage, heroImageMobile } from '../utils/imageUrl';
+import { heroImage, heroSrcSetMobile } from '../utils/imageUrl';
 import { useCarousel } from '../hooks/useCarousel';
 import { getHeroSlides, getHeroSection, HERO_SECTION_DEFAULTS } from '../services/productService';
 
@@ -93,10 +93,22 @@ export default function HeroFullscreen() {
         >
           {slide.image && (
             <picture>
+              {/* A pantalla completa un solo ancho de 600 se veia suave en
+                  los celulares Retina, que es la primera imagen que recibe
+                  cualquier visitante. Se ofrecen varios y el navegador toma
+                  el que su pantalla necesita. */}
               {slide.imageMobile && (
-                <source media="(max-width: 767px)" srcSet={heroImageMobile(slide.imageMobile)} />
+                <source
+                  media="(max-width: 767px)"
+                  srcSet={heroSrcSetMobile(slide.imageMobile, [600, 900, 1200, 1400])}
+                  sizes="100vw"
+                />
               )}
-              <source media="(max-width: 767px)" srcSet={heroImageMobile(slide.image)} />
+              <source
+                media="(max-width: 767px)"
+                srcSet={heroSrcSetMobile(slide.image, [600, 900, 1200, 1400])}
+                sizes="100vw"
+              />
               <img
                 src={heroImage(slide.image)}
                 alt={slide.tag}

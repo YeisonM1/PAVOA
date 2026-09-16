@@ -27,10 +27,10 @@ export const heroImageAt = (url, width) => {
 // pesar de mas en pantallas sencillas o verse suave en las Retina; con varios,
 // cada equipo descarga el que necesita. Si la URL no es de un CDN que sepamos
 // redimensionar, se devuelve una sola entrada en vez de repetir la misma.
-export const heroSrcSetMobile = (url) => {
+export const heroSrcSetMobile = (url, anchos = [600, 900, 1200]) => {
   if (!url) return url;
   if (!isUnsplash(url) && !isShopify(url)) return url;
-  return [600, 900, 1200].map((w) => `${heroImageAt(url, w)} ${w}w`).join(', ');
+  return anchos.map((w) => `${heroImageAt(url, w)} ${w}w`).join(', ');
 };
 
 // Para el Hero fullscreen — desktop 1400px, móvil 600px
@@ -38,13 +38,6 @@ export const heroImage = (url) => {
   if (!url) return url;
   if (isUnsplash(url)) return `${base(url)}?w=1400&q=70&fm=webp&auto=format`;
   if (isShopify(url))  return `${base(url)}?width=1400&format=webp`;
-  return url;
-};
-
-export const heroImageMobile = (url) => {
-  if (!url) return url;
-  if (isUnsplash(url)) return `${base(url)}?w=600&q=70&fm=webp&auto=format`;
-  if (isShopify(url))  return `${base(url)}?width=600&format=webp`;
   return url;
 };
 
