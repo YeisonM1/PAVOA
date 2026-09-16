@@ -639,7 +639,7 @@ const PRODUCT_FIELDS = `
   id handle title description descriptionHtml productType tags
   priceRange { minVariantPrice { amount } }
   compareAtPriceRange { minVariantPrice { amount } }
-  images(first: 50) { edges { node { url altText } } }
+  images(first: 250) { edges { node { url altText } } }
   detallesField: metafield(namespace: "pavoa", key: "detalles") { value }
   cuidadosField: metafield(namespace: "pavoa", key: "cuidados") { value }
   variants(first: 20) {
