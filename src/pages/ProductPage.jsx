@@ -102,8 +102,19 @@ export default function ProductPage() {
 
   const tallasDisponibles = useMemo(() => {
     if (!colorSeleccionado) return [];
-    return variantes.filter(v => v.color === colorSeleccionado).map(v => ({ talla: v.talla, stock: v.stock ?? 0 }));
-  }, [variantes, colorSeleccionado]);
+    // Shopify devuelve las variantes en el orden en que se crearon, asi que una
+    // prenda con S, M y L podia listarse como M, L, S. El orden bueno es el que
+    // quedo definido en la opcion del producto.
+    const orden = producto?.ordenTallas || [];
+    const posicion = (talla) => {
+      const i = orden.indexOf(talla);
+      return i === -1 ? Number.MAX_SAFE_INTEGER : i;
+    };
+    return variantes
+      .filter(v => v.color === colorSeleccionado)
+      .map(v => ({ talla: v.talla, stock: v.stock ?? 0 }))
+      .sort((a, b) => posicion(a.talla) - posicion(b.talla));
+  }, [variantes, colorSeleccionado, producto?.ordenTallas]);
 
   const stockActual = useMemo(() => {
     if (!colorSeleccionado || !tallaSeleccionada) return null;

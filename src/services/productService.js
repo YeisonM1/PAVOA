@@ -1,5 +1,5 @@
 import { AYUDA_MENU_DEFAULTS, normalizeAyudaMenu } from '../utils/ayudaMenu.js';
-import { valorDeOpcion } from '../utils/productOptions.js';
+import { coincideNombreOpcion, valorDeOpcion } from '../utils/productOptions.js';
 import { buildProductImageCollections } from '../utils/productImages.js';
 import {
   DEFAULT_NATIONAL_SHIPPING,
@@ -626,6 +626,12 @@ const mapProducto = (node) => {
     imagen5:     imgs[4] || '',
     imagenes:    imgs,
     imagesByColor,
+    // Orden de tallas tal como quedo definido en Shopify. Sin esto la ficha
+    // las listaba en el orden en que se crearon las variantes, asi que una
+    // prenda con S, M y L podia mostrarse como M, L, S.
+    ordenTallas: (node.options || [])
+      .filter((o) => coincideNombreOpcion(o?.name, 'Talla'))
+      .flatMap((o) => (o.optionValues || []).map((v) => v?.name).filter(Boolean)),
     categoria:   node.productType?.toLowerCase() || '',
     tag:         globalHomeTag ? HOME_PRODUCT_TAG_LABELS[globalHomeTag] : '',
     tags:        normalizedTags,
@@ -641,6 +647,7 @@ const PRODUCT_FIELDS = `
   priceRange { minVariantPrice { amount } }
   compareAtPriceRange { minVariantPrice { amount } }
   images(first: 250) { edges { node { url altText } } }
+  options { name optionValues { name } }
   detallesField: metafield(namespace: "pavoa", key: "detalles") { value }
   cuidadosField: metafield(namespace: "pavoa", key: "cuidados") { value }
   variants(first: 20) {
