@@ -7,7 +7,7 @@ import ProductCard from '../components/ProductCard';
 import SkeletonCard from '../components/SkeletonCard';
 import { getProductos, getCategoriaById } from '../services/productService';
 import SEO from '../components/SEO';
-import { heroImage } from '../utils/imageUrl';
+import { heroImage, heroSrcSetMobile } from '../utils/imageUrl';
 
 const CATEGORY_GROUPS = {
   mujer: {
@@ -243,9 +243,15 @@ export default function CategoriaPage() {
 
       <section className="relative w-full h-[60vh] md:h-[70vh] flex items-end justify-center pb-16 md:pb-24 overflow-hidden">
         <picture key={`${dataHeader.heroImage}-${dataHeader.mobileHeroImage || ''}`} className="absolute inset-0 w-full h-full">
-          {dataHeader.mobileHeroImage && (
-            <source media="(max-width: 767px)" srcSet={heroImage(dataHeader.mobileHeroImage)} />
-          )}
+          {/* En celular la portada se ve a unos 390px de ancho, pero se
+              descargaba la de 1400 del escritorio. Con varios anchos, un
+              equipo sencillo toma el de 600 y uno Retina el de 1200, asi que
+              pesa menos sin verse peor. */}
+          <source
+            media="(max-width: 767px)"
+            srcSet={heroSrcSetMobile(dataHeader.mobileHeroImage || dataHeader.heroImage)}
+            sizes="100vw"
+          />
           <img
             src={heroImage(dataHeader.heroImage)}
             alt={dataHeader.titulo1 + dataHeader.titulo2}
