@@ -1,4 +1,5 @@
 import { AYUDA_MENU_DEFAULTS, normalizeAyudaMenu } from '../utils/ayudaMenu.js';
+import { buildProductImageCollections } from '../utils/productImages.js';
 import {
   DEFAULT_NATIONAL_SHIPPING,
   SHIPPING_LEGACY_KEY,
@@ -599,31 +600,7 @@ const mapProducto = (node) => {
   });
 
   const imgNodes = node.images.edges.map(e => e.node);
-  const imgs = imgNodes.map(n => n.url);
-  const colorNameSet = new Set(variantes.map(v => v.color).filter(Boolean));
-  const imagesByColor = {};
-  imgNodes.forEach(({ url, altText }) => {
-    if (altText && colorNameSet.has(altText)) {
-      if (!imagesByColor[altText]) imagesByColor[altText] = [];
-      imagesByColor[altText].push(url);
-    }
-  });
-  variantes.forEach((variant) => {
-    if (!variant.color || !variant.variantImage) return;
-    const current = imagesByColor[variant.color] || [];
-    if (current.length === 0) {
-      imagesByColor[variant.color] = [variant.variantImage];
-      return;
-    }
-    if (!current.includes(variant.variantImage)) {
-      imagesByColor[variant.color] = [variant.variantImage, ...current];
-      return;
-    }
-    imagesByColor[variant.color] = [
-      variant.variantImage,
-      ...current.filter((url) => url !== variant.variantImage),
-    ];
-  });
+  const { images: imgs, imagesByColor } = buildProductImageCollections(imgNodes, variantes);
   const precioNumerico = Number(node.priceRange.minVariantPrice.amount ?? 0);
   const compareAtPrecioNumericoRaw = Number(node.compareAtPriceRange?.minVariantPrice?.amount ?? 0);
   const compareAtPrecioNumerico =
@@ -646,6 +623,7 @@ const mapProducto = (node) => {
     imagen3:     imgs[2] || '',
     imagen4:     imgs[3] || '',
     imagen5:     imgs[4] || '',
+    imagenes:    imgs,
     imagesByColor,
     categoria:   node.productType?.toLowerCase() || '',
     tag:         globalHomeTag ? HOME_PRODUCT_TAG_LABELS[globalHomeTag] : '',
@@ -661,7 +639,7 @@ const PRODUCT_FIELDS = `
   id handle title description descriptionHtml productType tags
   priceRange { minVariantPrice { amount } }
   compareAtPriceRange { minVariantPrice { amount } }
-  images(first: 10) { edges { node { url altText } } }
+  images(first: 50) { edges { node { url altText } } }
   detallesField: metafield(namespace: "pavoa", key: "detalles") { value }
   cuidadosField: metafield(namespace: "pavoa", key: "cuidados") { value }
   variants(first: 20) {
@@ -672,6 +650,7 @@ const PRODUCT_FIELDS = `
         compareAtPrice { amount }
         selectedOptions { name value }
         metafield(namespace: "custom", key: "hex_color") { value }
+        image { url }
       }
     }
   }
