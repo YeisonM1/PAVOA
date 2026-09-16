@@ -1,4 +1,4 @@
-export const PRODUCT_EXCHANGE_COPY = 'Cambios dentro de los primeros 2 días';
+export const PRODUCT_EXCHANGE_COPY = 'Cambios dentro de los primeros 2 días luego de recibir tu compra';
 
 export const getThumbnailScrollLeft = ({
   scrollLeft,

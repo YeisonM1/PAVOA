@@ -62,5 +62,5 @@ test('keeps the active mobile thumbnail visible with the smallest scroll movemen
 });
 
 test('uses the approved two-day exchange message', () => {
-  assert.equal(PRODUCT_EXCHANGE_COPY, 'Cambios dentro de los primeros 2 días');
+  assert.equal(PRODUCT_EXCHANGE_COPY, 'Cambios dentro de los primeros 2 días luego de recibir tu compra');
 });
