@@ -1,11 +1,15 @@
 import { useEffect, useRef, useState } from 'react';
 import { heroImage, productImage, thumbImage } from '../../utils/imageUrl';
 import { Maximize2, ShieldCheck, Truck, Undo2 } from 'lucide-react';
-import { getSwipeImageIndex } from '../../utils/productGallery.js';
+import {
+  getSwipeImageIndex,
+  getThumbnailScrollLeft,
+  PRODUCT_EXCHANGE_COPY,
+} from '../../utils/productGallery.js';
 
 const TRUST_ITEMS = [
   { icon: Truck, text: 'Envíos a todo Colombia' },
-  { icon: Undo2, text: 'Cambios dentro de los primeros 5 días hábiles' },
+  { icon: Undo2, text: PRODUCT_EXCHANGE_COPY },
   { icon: ShieldCheck, text: 'Pago seguro' },
 ];
 
@@ -43,6 +47,8 @@ export default function ProductGallery({
   const timers = useRef([]);
   const touchStart = useRef(null);
   const didSwipe = useRef(false);
+  const mobileThumbsRef = useRef(null);
+  const mobileThumbRefs = useRef([]);
 
   useEffect(() => {
     if (colorKey === prevColorKey.current) return;
@@ -74,6 +80,28 @@ export default function ProductGallery({
   useEffect(() => {
     if (phase === 'idle') setDisplayed(imagenes);
   }, [imagenes]);
+
+  useEffect(() => {
+    if (phase !== 'idle') return;
+
+    const container = mobileThumbsRef.current;
+    const activeThumb = mobileThumbRefs.current[selectedImage];
+    if (!container || !activeThumb || container.clientWidth <= 0) return;
+
+    const containerRect = container.getBoundingClientRect();
+    const activeRect = activeThumb.getBoundingClientRect();
+    const left = getThumbnailScrollLeft({
+      scrollLeft: container.scrollLeft,
+      viewportWidth: container.clientWidth,
+      itemOffsetLeft: container.scrollLeft + activeRect.left - containerRect.left,
+      itemWidth: activeRect.width,
+      maxScrollLeft: Math.max(0, container.scrollWidth - container.clientWidth),
+    });
+
+    if (left !== null) {
+      container.scrollTo({ left, behavior: 'smooth' });
+    }
+  }, [displayed.length, phase, selectedImage]);
 
   const getThumbStyle = (i, isSelected) => {
     const baseOp = isSelected ? 1 : 0.35;
@@ -171,12 +199,16 @@ export default function ProductGallery({
 
         {displayed.length > 1 && (
           <div
+            ref={mobileThumbsRef}
             className="flex gap-3 pt-4 pb-2 overflow-x-auto overscroll-x-contain"
             style={{ scrollbarWidth: 'none' }}
           >
             {displayed.map((img, i) => (
               <button
                 key={i}
+                ref={(node) => {
+                  mobileThumbRefs.current[i] = node;
+                }}
                 onClick={() => onSelectImage(i)}
                 aria-label={`Ver imagen ${i + 1}`}
                 className={`flex-shrink-0 w-[72px] h-[90px] overflow-hidden rounded-sm ${
