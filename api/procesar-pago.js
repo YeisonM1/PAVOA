@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import mercadopago from 'mercadopago';
 import { getShopifyToken, eliminarDraftOrder } from './_helpers/shopify-token.js';
 import { processMercadoPagoPayment, enviarEmailConfirmacion, completarDraftOrder } from './_helpers/mercadopago-order.js';
@@ -745,6 +746,38 @@ export default async function handler(req, res) {
 
     await eliminarDraftOrder(draftOrderId);
     return res.status(200).json({ ok: true, draftOrderId });
+  }
+
+  // Reprocesa un pago a mano cuando el aviso de Mercado Pago no llego o no se
+  // pudo validar. Un pago que quedo en "pending" libera su candado, asi que
+  // volver a consultarlo cuando ya esta aprobado crea la orden por el camino
+  // normal: Shopify, Supabase y el correo de confirmacion. Sin esto, un aviso
+  // perdido obliga a rehacer el pedido a mano y el cobro queda sin pedido.
+  if (req.body?.type === 'mp-reprocesar') {
+    const secreto = String(process.env.PREVIEW_EMAIL_SECRET || '');
+    if (!secreto) return res.status(503).json({ error: 'No configurado.' });
+
+    const recibido = String(req.headers['x-preview-secret'] || '');
+    let coincide = false;
+    try {
+      const a = Buffer.from(recibido);
+      const b = Buffer.from(secreto);
+      coincide = a.length === b.length && crypto.timingSafeEqual(a, b);
+    } catch {
+      coincide = false;
+    }
+    if (!coincide) return res.status(401).json({ error: 'No autorizado.' });
+
+    const paymentId = String(req.body?.paymentId || '').trim();
+    if (!paymentId) return res.status(400).json({ error: 'Falta paymentId' });
+
+    try {
+      const result = await processMercadoPagoPayment(paymentId);
+      return res.status(result?.ok ? 200 : 409).json(result);
+    } catch (err) {
+      console.error('mp-reprocesar fallo para', paymentId, err.message);
+      return res.status(500).json({ error: err.message });
+    }
   }
 
   if (req.body?.type === 'mp-finalizar') {
