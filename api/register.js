@@ -1,4 +1,5 @@
 import bcrypt from 'bcryptjs';
+import { crearClienteShopify } from './_helpers/shopify-customer.js';
 import crypto from 'crypto';
 import { emailVerificacion } from './_helpers/email-templates.js';
 import { sendTransactionalEmail } from './_helpers/mail.js';
@@ -84,6 +85,14 @@ export default async function handler(req, res) {
       console.info('[PAVOA] Email de verificacion enviado:', emailResult?.id || 'sin-id');
     } catch (emailErr) {
       console.error('Email de verificacion no enviado:', emailErr.message);
+    }
+
+    // La tienda solo conocia a quien compraba. Con esto tambien ve a quien se
+    // registro, y como los pedidos se crean con el mismo correo, Shopify los
+    // enlaza solo y las compras recurrentes quedan a la vista.
+    const cliente = await crearClienteShopify({ email, firstName, lastName });
+    if (!cliente.ok) {
+      console.error('[PAVOA] Cliente Shopify no creado para', email, '-', cliente.motivo);
     }
 
     return res.status(200).json({ ok: true });

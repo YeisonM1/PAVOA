@@ -12,6 +12,7 @@ import {
   emailContactoInterno,
 } from './_helpers/email-templates.js';
 import { supabase } from './_helpers/supabase.js';
+import { crearClienteShopify } from './_helpers/shopify-customer.js';
 import { consumeRateLimit, getClientIp } from './_helpers/durable-security.js';
 
 const CONTACT_LIMIT = 5;
@@ -238,6 +239,49 @@ export default async function handler(req, res) {
       console.error('Error funnel event:', err.message);
       return res.status(500).json({ error: 'No se pudo registrar el evento.' });
     }
+  }
+
+  // Sube a Shopify las cuentas que ya existian antes de que el registro las
+  // creara alla. Va por tandas porque el plan de Vercel corta la funcion a los
+  // diez segundos; repetirla es seguro, ya que un correo repetido se reporta
+  // como existente y no duplica nada.
+  if (req.body?.type === 'sync-customers') {
+    const acceso = validatePreviewAccess(req);
+    if (!acceso.ok) return res.status(acceso.status).json({ error: acceso.error });
+
+    const limite = Math.min(Math.max(Number(req.body?.limit) || 20, 1), 50);
+    const desde = Math.max(Number(req.body?.offset) || 0, 0);
+
+    const { data: usuarios, error } = await supabase
+      .from('usuarios')
+      .select('email, first_name, last_name')
+      .order('created_at', { ascending: true })
+      .range(desde, desde + limite - 1);
+
+    if (error) {
+      return res.status(500).json({ error: 'No se pudieron leer las cuentas.', detalle: error.message });
+    }
+
+    const resumen = { creados: 0, yaEstaban: 0, fallidos: [] };
+
+    for (const usuario of usuarios || []) {
+      const r = await crearClienteShopify({
+        email: usuario.email,
+        firstName: usuario.first_name,
+        lastName: usuario.last_name,
+      });
+      if (!r.ok) resumen.fallidos.push({ email: usuario.email, motivo: r.motivo });
+      else if (r.yaExistia) resumen.yaEstaban += 1;
+      else resumen.creados += 1;
+    }
+
+    const procesados = (usuarios || []).length;
+    return res.status(200).json({
+      ok: true,
+      ...resumen,
+      procesados,
+      siguienteOffset: procesados === limite ? desde + limite : null,
+    });
   }
 
   if (req.body?.type === 'newsletter-subscribe') {
