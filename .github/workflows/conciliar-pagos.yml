@@ -2,9 +2,13 @@ name: Conciliar pagos
 
 # Un aviso de pago se puede perder —una caida de red, un despliegue a
 # destiempo— y entonces el dinero entra sin que exista la orden. El 1 de
-# octubre paso con una transferencia y nadie pudo notarlo: la clienta pago y
-# el pedido no existia en ningun lado. Esto revisa cada diez minutos si quedo
-# algun pago aprobado sin pedido y lo completa por el camino normal.
+# octubre de 2026 paso con una transferencia y nadie pudo notarlo: la clienta
+# pago y el pedido no existia en ningun lado.
+#
+# Esto le pregunta a Mercado Pago cada diez minutos cuales pagos aprobo y
+# completa los que no llegaron a ser pedido. Se le pregunta a Mercado Pago en
+# vez de revisar nuestros propios registros porque si el aviso nunca llega, el
+# numero del pago tampoco: asi la red no depende de haber recibido nada.
 #
 # Vive aqui y no en Vercel porque el plan Hobby solo permite una ejecucion
 # diaria, y un pedido no puede esperar hasta el dia siguiente.
@@ -18,7 +22,7 @@ jobs:
   conciliar:
     runs-on: ubuntu-latest
     steps:
-      - name: Revisar pagos pendientes
+      - name: Revisar pagos aprobados sin pedido
         run: |
           RESPUESTA=$(curl -sS -X POST "https://www.pavoa.com.co/api/procesar-pago" \
             -H "Content-Type: application/json" \
@@ -35,7 +39,17 @@ jobs:
             echo "::warning::Se rescato al menos un pedido cuyo aviso de pago no llego"
           fi
 
+          # La tanda se limita para no agotar los diez segundos de la funcion.
+          # Si quedo algo para la siguiente, conviene saberlo: varios pagos
+          # huerfanos a la vez no es una perdida aislada.
+          if echo "$RESPUESTA" | grep -q '"postergados":\["'; then
+            echo "::warning::Quedaron pagos sin revisar en esta tanda"
+          fi
+
+          # Una consulta que falla debe doler. Si se dejara pasar, un error de
+          # credenciales se veria igual que una tanda limpia y la red quedaria
+          # caida sin que nadie se enterara.
           echo "$RESPUESTA" | grep -q '"ok":true' || {
-            echo "::error::La conciliacion no respondio correctamente"
+            echo "::error::La conciliacion no pudo correr"
             exit 1
           }

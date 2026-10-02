@@ -8,7 +8,7 @@ test('el cliente se crea sin consentimiento de marketing', () => {
   // Registrarse no es aceptar publicidad. Marcarlos como suscritos convertiria
   // cualquier campana posterior en correo no solicitado. Se mira solo lo que
   // viaja a Shopify: el comentario del codigo nombra el campo a proposito.
-  const enviado = source.match(/variables: \{[\s\S]*?\n        \},/)?.[0];
+  const enviado = source.match(/variables: \{[\s\S]*?\n {8}\},/)?.[0];
 
   assert.ok(enviado, 'debe existir el bloque que se envia a Shopify');
   assert.doesNotMatch(enviado, /emailMarketingConsent/);

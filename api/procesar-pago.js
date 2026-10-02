@@ -2,6 +2,7 @@ import crypto from 'crypto';
 import mercadopago from 'mercadopago';
 import { getShopifyToken, eliminarDraftOrder } from './_helpers/shopify-token.js';
 import { processMercadoPagoPayment, enviarEmailConfirmacion, completarDraftOrder } from './_helpers/mercadopago-order.js';
+import { buscarPagosAprobados, conciliarPagosAprobados } from './_helpers/mp-reconcile.js';
 import { verifyCheckoutToken, verifyToken } from './_helpers/auth.js';
 import { trackFunnelEvent } from './_helpers/funnel.js';
 import { supabase, getSupabaseMode } from './_helpers/supabase.js';
@@ -748,16 +749,11 @@ export default async function handler(req, res) {
     return res.status(200).json({ ok: true, draftOrderId });
   }
 
-  // Reprocesa un pago a mano cuando el aviso de Mercado Pago no llego o no se
-  // pudo validar. Un pago que quedo en "pending" libera su candado, asi que
-  // volver a consultarlo cuando ya esta aprobado crea la orden por el camino
-  // normal: Shopify, Supabase y el correo de confirmacion. Sin esto, un aviso
-  // perdido obliga a rehacer el pedido a mano y el cobro queda sin pedido.
-  // Busca pagos que quedaron pendientes y nunca llegaron a pedido, y le
-  // vuelve a preguntar a Mercado Pago. Un aviso de pago se puede perder por
-  // una caida de red o un despliegue a destiempo, y entonces el dinero entra
-  // sin que exista la orden: paso el 1 de octubre con una transferencia y no
-  // hubo forma de notarlo. Esto no sustituye al aviso, lo respalda.
+  // Red de respaldo de los avisos de pago: le pregunta a Mercado Pago cuales
+  // pagos aprobo en la ultima semana y completa los que nunca llegaron a ser
+  // pedido. No parte de nuestros propios registros a proposito — si el aviso
+  // nunca llega, el numero del pago tampoco, y el cobro quedaria invisible.
+  // La logica vive en _helpers/mp-reconcile.js para poder fijarla con pruebas.
   if (req.body?.type === 'mp-conciliar') {
     const secreto = String(process.env.PREVIEW_EMAIL_SECRET || '');
     if (!secreto) return res.status(503).json({ error: 'No configurado.' });
@@ -773,54 +769,39 @@ export default async function handler(req, res) {
     }
     if (!coincide) return res.status(401).json({ error: 'No autorizado.' });
 
-    // Siete dias: pasado ese punto una transferencia sin completar ya expiro
-    // en Mercado Pago y no va a aprobarse nunca.
-    const desde = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+    // Siete dias: pasado ese punto una transferencia sin completar ya expiro en
+    // Mercado Pago y no va a aprobarse nunca.
+    const dias = Math.min(30, Math.max(1, Number(req.body?.dias) || 7));
 
-    const { data: pendientes, error: errEventos } = await supabase
-      .from('funnel_events')
-      .select('payment_id, created_at')
-      .eq('event_type', 'payment_pending')
-      .gte('created_at', desde)
-      .order('created_at', { ascending: false })
-      .limit(50);
+    const resultado = await conciliarPagosAprobados({
+      buscar: () => buscarPagosAprobados({ accessToken: process.env.MP_ACCESS_TOKEN, dias }),
+      pedidosExistentes: async (ids) => {
+        const { data, error } = await supabase
+          .from('pedidos')
+          .select('payment_id')
+          .in('payment_id', ids);
+        if (error) throw new Error(error.message);
+        return (data || []).map((p) => p.payment_id);
+      },
+      procesar: (paymentId) => processMercadoPagoPayment(paymentId),
+    });
 
-    if (errEventos) {
-      return res.status(500).json({ error: 'No se pudieron leer los pendientes.', detalle: errEventos.message });
+    if (!resultado.ok) {
+      console.error('[PAVOA] Conciliacion no pudo correr:', resultado.error);
+      return res.status(502).json(resultado);
     }
 
-    const ids = [...new Set((pendientes || []).map((e) => e.payment_id).filter(Boolean))];
-    if (ids.length === 0) return res.status(200).json({ ok: true, revisados: 0, rescatados: [] });
-
-    const { data: yaConPedido } = await supabase
-      .from('pedidos')
-      .select('payment_id')
-      .in('payment_id', ids);
-
-    const conPedido = new Set((yaConPedido || []).map((p) => p.payment_id));
-    // Tope por tanda: el plan de Vercel corta la funcion a los diez segundos.
-    const huerfanos = ids.filter((id) => !conPedido.has(id)).slice(0, 5);
-
-    const rescatados = [];
-    const sinCambio = [];
-
-    for (const paymentId of huerfanos) {
-      try {
-        const r = await processMercadoPagoPayment(paymentId);
-        if (r?.shopifyCompleted) rescatados.push({ paymentId, orden: r.shopifyOrderName || null });
-        else sinCambio.push({ paymentId, status: r?.status || 'desconocido' });
-      } catch (err) {
-        sinCambio.push({ paymentId, error: err.message });
-      }
+    if (resultado.rescatados.length > 0) {
+      console.warn('[PAVOA] Conciliacion rescato pedidos:', JSON.stringify(resultado.rescatados));
     }
 
-    if (rescatados.length > 0) {
-      console.warn('[PAVOA] Conciliacion rescato pedidos:', JSON.stringify(rescatados));
-    }
-
-    return res.status(200).json({ ok: true, revisados: huerfanos.length, rescatados, sinCambio });
+    return res.status(200).json(resultado);
   }
 
+  // Reprocesa un pago a mano cuando el aviso de Mercado Pago no llego o no se
+  // pudo validar. Un pago que quedo en "pending" libera su candado, asi que
+  // volver a consultarlo cuando ya esta aprobado crea la orden por el camino
+  // normal: Shopify, Supabase y el correo de confirmacion.
   if (req.body?.type === 'mp-reprocesar') {
     const secreto = String(process.env.PREVIEW_EMAIL_SECRET || '');
     if (!secreto) return res.status(503).json({ error: 'No configurado.' });
