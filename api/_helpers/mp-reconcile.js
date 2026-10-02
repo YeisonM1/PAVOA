@@ -24,6 +24,26 @@ const REFERENCIA_PAVOA = /^\d+\|[^|]+\|[01]$/;
 export const esReferenciaPavoa = (referencia) =>
   REFERENCIA_PAVOA.test(String(referencia || '').trim());
 
+/**
+ * Distingue un cobro hecho por fuera de la tienda de una referencia de la
+ * tienda que llego a medias. Los dos se descartan —sin las tres partes no hay
+ * nada que completar— pero no significan lo mismo: el primero es rutina y el
+ * segundo es una anomalia que alguien tiene que mirar a mano.
+ *
+ * Nunca se devuelve la referencia completa: lleva el correo del cliente.
+ */
+export const describirReferencia = (referencia) => {
+  const texto = String(referencia || '').trim();
+  if (!texto) return { clase: 'ausente', motivo: 'cobro sin referencia, hecho por fuera de la tienda' };
+  if (REFERENCIA_PAVOA.test(texto)) return { clase: 'completa', motivo: null };
+
+  const partes = texto.split('|').length;
+  return {
+    clase: 'incompleta',
+    motivo: `referencia incompleta (${partes} ${partes === 1 ? 'parte' : 'partes'})`,
+  };
+};
+
 // Mercado Pago documenta las fechas con desplazamiento explicito, no con "Z".
 const fechaParaMp = (fecha) => fecha.toISOString().replace('Z', '-00:00');
 
@@ -108,6 +128,7 @@ export const seleccionarHuerfanos = ({ pagos = [], idsConPedido = [], tope = 3 }
   const vistos = new Set();
   const candidatos = [];
   const descartados = [];
+  const anomalias = [];
 
   for (const pago of pagos) {
     const id = String(pago?.id || '').trim();
@@ -118,12 +139,21 @@ export const seleccionarHuerfanos = ({ pagos = [], idsConPedido = [], tope = 3 }
       descartados.push({ paymentId: id, motivo: `status ${pago?.status || 'desconocido'}` });
       continue;
     }
-    if (!esReferenciaPavoa(pago?.external_reference)) {
-      descartados.push({ paymentId: id, motivo: 'sin referencia de la tienda' });
-      continue;
-    }
+    // El pedido se mira antes que la referencia: un pago ya registrado esta
+    // bien sin importar como se vea su referencia, y avisar de el cada diez
+    // minutos seria ruido que acabaria tapando un aviso de verdad.
     if (conPedido.has(id)) {
       descartados.push({ paymentId: id, motivo: 'ya tiene pedido' });
+      continue;
+    }
+
+    const referencia = describirReferencia(pago?.external_reference);
+    if (referencia.clase !== 'completa') {
+      descartados.push({ paymentId: id, motivo: referencia.motivo });
+      // Una referencia a medias no se puede rescatar sola —falta el correo de
+      // la cuenta y el borrador ya no existe— pero sin pedido es dinero cobrado
+      // que no llego a ninguna parte, y eso no puede quedar callado.
+      if (referencia.clase === 'incompleta') anomalias.push({ paymentId: id, motivo: referencia.motivo });
       continue;
     }
 
@@ -137,6 +167,7 @@ export const seleccionarHuerfanos = ({ pagos = [], idsConPedido = [], tope = 3 }
     // Shopify. Se reportan para que no parezca que ya no quedaba nada.
     postergados: candidatos.slice(tope),
     descartados,
+    anomalias,
   };
 };
 
@@ -159,12 +190,17 @@ export const conciliarPagosAprobados = async ({
     };
   }
 
-  const candidatos = (busqueda.pagos || []).filter((p) => esReferenciaPavoa(p?.external_reference));
+  // Se pregunta por todos los aprobados, no solo por los de referencia
+  // completa: tambien hay que poder decir que un pago de referencia rara ya
+  // tiene su pedido, o se avisaria de el para siempre.
+  const idsAprobados = (busqueda.pagos || [])
+    .filter((p) => p?.status === 'approved' && p?.id)
+    .map((p) => String(p.id));
 
   let idsConPedido = [];
-  if (candidatos.length > 0) {
+  if (idsAprobados.length > 0) {
     try {
-      idsConPedido = await pedidosExistentes(candidatos.map((p) => String(p.id)));
+      idsConPedido = await pedidosExistentes(idsAprobados);
     } catch (err) {
       // Sin saber cuales ya tienen pedido, todos pareceria huerfanos. Volver a
       // procesarlos no haria dano —cada pago verifica su propio pedido antes de
@@ -174,7 +210,7 @@ export const conciliarPagosAprobados = async ({
     }
   }
 
-  const { huerfanos, postergados, descartados } = seleccionarHuerfanos({
+  const { huerfanos, postergados, descartados, anomalias } = seleccionarHuerfanos({
     pagos: busqueda.pagos || [],
     idsConPedido,
     tope,
@@ -203,5 +239,6 @@ export const conciliarPagosAprobados = async ({
     sinCambio,
     postergados,
     descartados,
+    anomalias,
   };
 };

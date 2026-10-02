@@ -4,6 +4,7 @@ import test from 'node:test';
 import {
   buscarPagosAprobados,
   conciliarPagosAprobados,
+  describirReferencia,
   esReferenciaPavoa,
   seleccionarHuerfanos,
 } from './mp-reconcile.js';
@@ -46,15 +47,81 @@ test('cada descarte dice por que, no solo que no quedo nada', () => {
   const { huerfanos, descartados } = seleccionarHuerfanos({
     pagos: [
       { id: '1', status: 'pending', external_reference: '10|ana@correo.com|0' },
-      { id: '2', status: 'approved', external_reference: 'cobro-a-mano' },
+      { id: '2', status: 'approved', external_reference: '' },
     ],
   });
 
   assert.deepEqual(huerfanos, []);
   assert.deepEqual(descartados, [
     { paymentId: '1', motivo: 'status pending' },
-    { paymentId: '2', motivo: 'sin referencia de la tienda' },
+    { paymentId: '2', motivo: 'cobro sin referencia, hecho por fuera de la tienda' },
   ]);
+});
+
+test('un cobro de fuera de la tienda no se confunde con una referencia a medias', () => {
+  // Los dos se descartan, pero el primero es rutina y el segundo es dinero
+  // cobrado que quizas no llego a ser pedido. Tratarlos igual fue lo que dejo
+  // el pago 178269392080 descartado en silencio.
+  assert.equal(describirReferencia('').clase, 'ausente');
+  assert.equal(describirReferencia(null).clase, 'ausente');
+  assert.equal(describirReferencia('1060511613068|ana@correo.com|0').clase, 'completa');
+  assert.equal(describirReferencia('2000018392202434').clase, 'incompleta');
+  assert.equal(describirReferencia('2000018392202434|ana@correo.com').clase, 'incompleta');
+});
+
+test('el motivo no delata el correo del cliente', () => {
+  const { motivo } = describirReferencia('2000018392202434|ana@correo.com');
+  assert.doesNotMatch(motivo, /ana@correo.com/);
+  assert.equal(motivo, 'referencia incompleta (2 partes)');
+});
+
+test('una referencia a medias sin pedido se avisa, no se traga', () => {
+  const { huerfanos, anomalias } = seleccionarHuerfanos({
+    pagos: [
+      { id: '178269392080', status: 'approved', external_reference: '2000018392202434' },
+      { id: '55', status: 'approved', external_reference: '' },
+    ],
+  });
+
+  assert.deepEqual(huerfanos, []);
+  assert.deepEqual(anomalias, [{ paymentId: '178269392080', motivo: 'referencia incompleta (1 parte)' }]);
+});
+
+test('una referencia a medias que ya tiene pedido no se avisa', () => {
+  // Avisar cada diez minutos de un pago que esta bien seria ruido, y el ruido
+  // acaba tapando el aviso que si importa.
+  const { anomalias, descartados } = seleccionarHuerfanos({
+    pagos: [{ id: '178269392080', status: 'approved', external_reference: '2000018392202434' }],
+    idsConPedido: ['178269392080'],
+  });
+
+  assert.deepEqual(anomalias, []);
+  assert.deepEqual(descartados, [{ paymentId: '178269392080', motivo: 'ya tiene pedido' }]);
+});
+
+test('se le pregunta a Supabase por todo pago aprobado, no solo por los de referencia limpia', async () => {
+  // Si solo se preguntara por los limpios, un pago de referencia rara que ya
+  // tiene pedido se reportaria como anomalia para siempre.
+  let consultados = [];
+  const resultado = await conciliarPagosAprobados({
+    buscar: async () => ({
+      ok: true,
+      rango: 'date_last_updated',
+      total: 2,
+      pagos: [
+        pagoAprobado('44'),
+        { id: '178269392080', status: 'approved', external_reference: '2000018392202434' },
+      ],
+    }),
+    pedidosExistentes: async (ids) => {
+      consultados = ids;
+      return ['44', '178269392080'];
+    },
+    procesar: async () => assert.fail('no habia nada que rescatar'),
+  });
+
+  assert.deepEqual(consultados.sort(), ['178269392080', '44']);
+  assert.deepEqual(resultado.anomalias, []);
 });
 
 test('lo que no cabe en la tanda queda anotado, no perdido', () => {

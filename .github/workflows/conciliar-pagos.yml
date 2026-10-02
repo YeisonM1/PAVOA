@@ -46,6 +46,15 @@ jobs:
             echo "::warning::Quedaron pagos sin revisar en esta tanda"
           fi
 
+          # Un pago aprobado con una referencia a medias no se puede rescatar
+          # solo, pero es dinero cobrado que quizas no llego a ser pedido: la
+          # tarea queda en rojo hasta que una persona lo resuelva. Un aviso en
+          # verde no le llega a nadie, y esto tiene que llegarle a alguien.
+          if echo "$RESPUESTA" | grep -q '"anomalias":[{'; then
+            echo "::error::Hay un pago aprobado con referencia incompleta y sin pedido. Revisalo a mano."
+            exit 1
+          fi
+
           # Una consulta que falla debe doler. Si se dejara pasar, un error de
           # credenciales se veria igual que una tanda limpia y la red quedaria
           # caida sin que nadie se enterara.
