@@ -1,0 +1,41 @@
+name: Conciliar pagos
+
+# Un aviso de pago se puede perder —una caida de red, un despliegue a
+# destiempo— y entonces el dinero entra sin que exista la orden. El 1 de
+# octubre paso con una transferencia y nadie pudo notarlo: la clienta pago y
+# el pedido no existia en ningun lado. Esto revisa cada diez minutos si quedo
+# algun pago aprobado sin pedido y lo completa por el camino normal.
+#
+# Vive aqui y no en Vercel porque el plan Hobby solo permite una ejecucion
+# diaria, y un pedido no puede esperar hasta el dia siguiente.
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+
+jobs:
+  conciliar:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Revisar pagos pendientes
+        run: |
+          RESPUESTA=$(curl -sS -X POST "https://www.pavoa.com.co/api/procesar-pago" \
+            -H "Content-Type: application/json" \
+            -H "x-preview-secret: ${{ secrets.PAVOA_MAINTENANCE_SECRET }}" \
+            -d '{"type":"mp-conciliar"}' \
+            --max-time 60)
+
+          echo "$RESPUESTA"
+
+          # Un pedido rescatado significa que un aviso se perdio. El trabajo no
+          # falla —el pedido ya quedo bien— pero deja el caso a la vista en el
+          # historial en vez de pasar en silencio.
+          if echo "$RESPUESTA" | grep -q '"rescatados":\[{'; then
+            echo "::warning::Se rescato al menos un pedido cuyo aviso de pago no llego"
+          fi
+
+          echo "$RESPUESTA" | grep -q '"ok":true' || {
+            echo "::error::La conciliacion no respondio correctamente"
+            exit 1
+          }
