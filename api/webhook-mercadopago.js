@@ -1,4 +1,5 @@
 import crypto from 'crypto';
+import { supabase } from './_helpers/supabase.js';
 import { processMercadoPagoPayment } from './_helpers/mercadopago-order.js';
 
 const getQueryValue = (value) => {
@@ -60,14 +61,36 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).send('Method not allowed');
 
   const notification = extractNotification(req);
+
+  // Deja constancia de cada aviso que Mercado Pago manda, pase o no la firma.
+  // Un rechazo por firma ocurre antes de tocar nada y solo quedaba en los
+  // registros de Vercel, que el plan borra en una hora: cuando un pago se
+  // aprobo y no entro, ya no habia forma de saber si el aviso llego siquiera.
+  // Nunca interrumpe el webhook — es una bitacora, no una dependencia.
+  const dejarConstancia = async (firmaValida, resultado) => {
+    try {
+      await supabase.from('mp_webhook_log').insert({
+        notification_type: notification.type || null,
+        data_id: notification.dataId || null,
+        source: notification.source || null,
+        signature_ok: firmaValida,
+        outcome: resultado,
+      });
+    } catch (err) {
+      console.error('No se pudo registrar el aviso de MP:', err.message);
+    }
+  };
   if (!process.env.MP_WEBHOOK_SECRET) {
     console.error('Webhook MP rechazado: MP_WEBHOOK_SECRET no configurado');
     return res.status(503).send('Webhook not configured');
   }
   if (!validarFirmaWebhook(req, notification.dataId)) {
+    await dejarConstancia(false, 'firma_invalida');
     console.warn('Webhook MP: firma invalida, request descartado');
     return res.status(401).send('Invalid signature');
   }
+
+  await dejarConstancia(true, 'recibido');
 
   if (notification.type !== 'payment' || !notification.dataId) {
     return res.status(200).send('OK');
