@@ -820,16 +820,20 @@ export default async function handler(req, res) {
     // El commit que cambio a POST /orders.json sin inventory_behaviour. Se puede
     // mover con "desde" si hace falta acotarlo al despliegue exacto.
     const desde = String(req.body?.desde || '2026-06-30T00:02:18-05:00');
+    // Cierre de la ventana: el commit que volvio a reclamar inventario. Lo que
+    // se vendio despues si descuenta y no entra en la cuenta.
+    const hasta = String(req.body?.hasta || '2026-10-02T20:46:32-05:00');
 
     try {
       const token = await getShopifyToken();
-      const traidas = await traerOrdenesDesde({ dominio: SHOPIFY_DOMAIN, token, desde });
+      const traidas = await traerOrdenesDesde({ dominio: SHOPIFY_DOMAIN, token, desde, hasta });
       if (!traidas.ok) return res.status(502).json({ error: traidas.error });
 
       const cuenta = acumularDescuadre(traidas.ordenes);
       return res.status(200).json({
         ok: true,
         desde,
+        hasta,
         ordenesRevisadas: cuenta.revisadas,
         ordenesCanceladas: cuenta.canceladas,
         ordenesAjenas: cuenta.ajenas,

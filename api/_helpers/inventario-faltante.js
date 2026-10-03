@@ -52,12 +52,18 @@ export const traerOrdenesDesde = async ({
   dominio,
   token,
   desde,
+  hasta,
   maxPaginas = 4,
   fetchImpl = fetch,
 }) => {
+  // La ventana se cierra por arriba, no solo por abajo. Desde que la orden
+  // reclama inventario, una venta nueva si descuenta: contarla como sobrante
+  // haria crecer el descuadre con cada compra y mandaria a restar prendas que
+  // ya estan bien.
   let url = `https://${dominio}/admin/api/2026-04/orders.json?${new URLSearchParams({
     status: 'any',
     created_at_min: desde,
+    ...(hasta ? { created_at_max: hasta } : {}),
     limit: String(LIMITE_POR_PAGINA),
     fields: CAMPOS,
   })}`;

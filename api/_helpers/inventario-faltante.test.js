@@ -143,3 +143,39 @@ test('la etiqueta se reconoce aunque venga con espacios o mayusculas', () => {
   // "pavoa-webhook" no es "pavoa-web": se compara la etiqueta entera.
   assert.equal(esOrdenDelStorefront({ tags: 'pavoa-webhook' }), false);
 });
+
+test('la ventana se cierra en el arreglo, no sigue abierta hacia el futuro', async () => {
+  // Desde que la orden reclama inventario, una venta nueva si descuenta.
+  // Contarla haria crecer el descuadre con cada compra —el pedido de prueba
+  // #1074 fue el primero que lo habria disparado— y mandaria a restar prendas
+  // que ya estan bien.
+  let urlUsada = '';
+  await traerOrdenesDesde({
+    dominio: 'tienda',
+    token: 'secreto',
+    desde: '2026-06-30T00:02:18-05:00',
+    hasta: '2026-10-02T20:46:32-05:00',
+    fetchImpl: async (url) => {
+      urlUsada = url;
+      return respuesta(200, { orders: [] });
+    },
+  });
+
+  assert.match(urlUsada, /created_at_max=2026-10-02/);
+  assert.match(urlUsada, /created_at_min=2026-06-30/);
+});
+
+test('sin cierre explicito no se inventa uno', async () => {
+  let urlUsada = '';
+  await traerOrdenesDesde({
+    dominio: 'tienda',
+    token: 'secreto',
+    desde: '2026-06-30T00:02:18-05:00',
+    fetchImpl: async (url) => {
+      urlUsada = url;
+      return respuesta(200, { orders: [] });
+    },
+  });
+
+  assert.doesNotMatch(urlUsada, /created_at_max/);
+});
