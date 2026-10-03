@@ -3,6 +3,7 @@ import mercadopago from 'mercadopago';
 import { getShopifyToken, eliminarDraftOrder } from './_helpers/shopify-token.js';
 import { processMercadoPagoPayment, enviarEmailConfirmacion, completarDraftOrder } from './_helpers/mercadopago-order.js';
 import { buscarPagosAprobados, conciliarPagosAprobados } from './_helpers/mp-reconcile.js';
+import { acumularDescuadre, traerOrdenesDesde } from './_helpers/inventario-faltante.js';
 import { verifyCheckoutToken, verifyToken } from './_helpers/auth.js';
 import { trackFunnelEvent } from './_helpers/funnel.js';
 import { supabase, getSupabaseMode } from './_helpers/supabase.js';
@@ -796,6 +797,50 @@ export default async function handler(req, res) {
     }
 
     return res.status(200).json(resultado);
+  }
+
+  // Cuenta cuanto inventario sobra en Shopify por no haberse descontado nunca.
+  // Vive aqui, con los otros trabajos de mantenimiento, porque comparte el mismo
+  // candado por secreto y el plan Hobby no deja abrir otra funcion en api/.
+  if (req.body?.type === 'stock-descuadre') {
+    const secreto = String(process.env.PREVIEW_EMAIL_SECRET || '');
+    if (!secreto) return res.status(503).json({ error: 'No configurado.' });
+
+    const recibido = String(req.headers['x-preview-secret'] || '');
+    let coincide = false;
+    try {
+      const a = Buffer.from(recibido);
+      const b = Buffer.from(secreto);
+      coincide = a.length === b.length && crypto.timingSafeEqual(a, b);
+    } catch {
+      coincide = false;
+    }
+    if (!coincide) return res.status(401).json({ error: 'No autorizado.' });
+
+    // El commit que cambio a POST /orders.json sin inventory_behaviour. Se puede
+    // mover con "desde" si hace falta acotarlo al despliegue exacto.
+    const desde = String(req.body?.desde || '2026-06-30T00:02:18-05:00');
+
+    try {
+      const token = await getShopifyToken();
+      const traidas = await traerOrdenesDesde({ dominio: SHOPIFY_DOMAIN, token, desde });
+      if (!traidas.ok) return res.status(502).json({ error: traidas.error });
+
+      const cuenta = acumularDescuadre(traidas.ordenes);
+      return res.status(200).json({
+        ok: true,
+        desde,
+        ordenesRevisadas: cuenta.revisadas,
+        ordenesCanceladas: cuenta.canceladas,
+        paginas: traidas.paginas,
+        cuentaIncompleta: traidas.truncado,
+        totalQueSobra: cuenta.totalQueSobra,
+        porVariante: cuenta.porVariante,
+      });
+    } catch (err) {
+      console.error('stock-descuadre fallo:', err.message);
+      return res.status(500).json({ error: err.message });
+    }
   }
 
   // Reprocesa un pago a mano cuando el aviso de Mercado Pago no llego o no se

@@ -1,0 +1,121 @@
+import assert from 'node:assert/strict';
+import test from 'node:test';
+
+import { acumularDescuadre, traerOrdenesDesde } from './inventario-faltante.js';
+
+const linea = (variantId, cantidad, extra = {}) => ({
+  variant_id: variantId,
+  quantity: cantidad,
+  title: 'TOP EVA',
+  variant_title: 'NEGRO / S',
+  sku: 'EVA-NEG-S',
+  ...extra,
+});
+
+const respuesta = (status, cuerpo, link = null) => ({
+  ok: status >= 200 && status < 300,
+  status,
+  headers: { get: (nombre) => (String(nombre).toLowerCase() === 'link' ? link : null) },
+  json: async () => cuerpo,
+  text: async () => JSON.stringify(cuerpo),
+});
+
+test('lo que sobra es lo vendido', () => {
+  const { totalQueSobra, porVariante } = acumularDescuadre([
+    { line_items: [linea(111, 2)] },
+    { line_items: [linea(111, 1), linea(222, 3, { variant_title: 'NEGRO / M' })] },
+  ]);
+
+  assert.equal(totalQueSobra, 6);
+  assert.equal(porVariante.find((f) => f.variantId === '111').sobran, 3);
+  assert.equal(porVariante.find((f) => f.variantId === '222').sobran, 3);
+});
+
+test('una devolucion no cambia lo que sobra, solo se informa', () => {
+  // La devolucion sube el numero de Shopify y tambien el real —la prenda vuelve
+  // al estante— asi que se cancelan. Si se restara, la cuenta quedaria corta.
+  const { totalQueSobra, porVariante } = acumularDescuadre([
+    {
+      line_items: [linea(111, 2)],
+      refunds: [{ refund_line_items: [{ quantity: 1, line_item: linea(111, 1) }] }],
+    },
+  ]);
+
+  assert.equal(totalQueSobra, 2);
+  assert.equal(porVariante[0].devueltas, 1);
+});
+
+test('una orden cancelada se cuenta aparte, no como sobrante', () => {
+  // Nunca se descontó ni se devolvió nada: no mueve la diferencia.
+  const { totalQueSobra, canceladas, porVariante } = acumularDescuadre([
+    { cancelled_at: '2026-08-01T10:00:00-05:00', line_items: [linea(111, 5)] },
+  ]);
+
+  assert.equal(totalQueSobra, 0);
+  assert.equal(canceladas, 1);
+  assert.equal(porVariante[0].enCanceladas, 5);
+});
+
+test('una linea sin variante no tiene unidades que descontar', () => {
+  const { totalQueSobra, porVariante } = acumularDescuadre([
+    { line_items: [{ title: 'Ajuste manual', quantity: 1, variant_id: null }] },
+  ]);
+
+  assert.equal(totalQueSobra, 0);
+  assert.deepEqual(porVariante, []);
+});
+
+test('las tallas salen ordenadas por lo que mas sobra', () => {
+  const { porVariante } = acumularDescuadre([
+    { line_items: [linea(1, 1, { variant_title: 'NEGRO / S' })] },
+    { line_items: [linea(2, 9, { variant_title: 'NEGRO / L' })] },
+    { line_items: [linea(3, 4, { variant_title: 'NEGRO / M' })] },
+  ]);
+
+  assert.deepEqual(porVariante.map((f) => f.sobran), [9, 4, 1]);
+});
+
+test('se sigue la paginacion de Shopify hasta el final', async () => {
+  const paginas = [
+    respuesta(200, { orders: [{ line_items: [linea(111, 1)] }] }, '<https://tienda/pagina2>; rel="next"'),
+    respuesta(200, { orders: [{ line_items: [linea(111, 1)] }] }),
+  ];
+
+  const r = await traerOrdenesDesde({
+    dominio: 'tienda',
+    token: 'secreto',
+    desde: '2026-06-30T00:02:18-05:00',
+    fetchImpl: async () => paginas.shift(),
+  });
+
+  assert.equal(r.ok, true);
+  assert.equal(r.ordenes.length, 2);
+  assert.equal(r.paginas, 2);
+  assert.equal(r.truncado, false);
+});
+
+test('una cuenta incompleta se declara incompleta', async () => {
+  // Agotar los diez segundos de Vercel y no devolver nada seria peor, pero un
+  // total parcial que se presente como total es lo unico inaceptable.
+  const r = await traerOrdenesDesde({
+    dominio: 'tienda',
+    token: 'secreto',
+    desde: '2026-06-30T00:02:18-05:00',
+    maxPaginas: 1,
+    fetchImpl: async () => respuesta(200, { orders: [] }, '<https://tienda/pagina2>; rel="next"'),
+  });
+
+  assert.equal(r.truncado, true);
+});
+
+test('un fallo de Shopify no se devuelve como una cuenta en cero', async () => {
+  const r = await traerOrdenesDesde({
+    dominio: 'tienda',
+    token: 'secreto',
+    desde: '2026-06-30T00:02:18-05:00',
+    fetchImpl: async () => respuesta(401, { errors: 'Invalid API key' }),
+  });
+
+  assert.equal(r.ok, false);
+  assert.match(r.error, /401/);
+});
