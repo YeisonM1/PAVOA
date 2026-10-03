@@ -356,7 +356,8 @@ export default async function handler(req, res) {
       if (traidos.truncado) return res.status(409).json({ error: 'Lista de clientes incompleta; no se borra nada.' });
 
       const { clientes: filas } = diagnosticarClientes({ clientes: traidos.clientes, registrados: registrados || [] });
-      const elegidos = elegirParaBorrar({ filas, confirmados });
+      const aceptarGastoIds = Array.isArray(req.body?.aceptarGastoIds) ? req.body.aceptarGastoIds : [];
+      const elegidos = elegirParaBorrar({ filas, confirmados, aceptarGastoIds });
 
       if (!confirmados) {
         return res.status(200).json({

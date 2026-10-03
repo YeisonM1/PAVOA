@@ -180,3 +180,23 @@ test('un cliente que Shopify se niega a borrar se reporta y se sigue', async () 
   assert.equal(r.fallidos.length, 1);
   assert.match(r.fallidos[0].motivo, /have orders/);
 });
+
+test('un cliente con gasto solo se borra si se nombra uno por uno', () => {
+  const filas = [fila({ id: '1', gastado: 212800 }), fila({ id: '2', gastado: 5000 })];
+
+  assert.deepEqual(elegirParaBorrar({ filas }), []);
+  assert.deepEqual(elegirParaBorrar({ filas, aceptarGastoIds: ['1'] }).map((f) => f.id), ['1']);
+});
+
+test('aceptar el gasto no salta las otras condiciones', () => {
+  // La excepcion es por el gasto y nada mas: un registrado o alguien con
+  // pedidos sigue protegido aunque su id venga en la lista.
+  const elegidos = elegirParaBorrar({
+    filas: [
+      fila({ id: '1', gastado: 100, pedidos: 2 }),
+      fila({ id: '2', gastado: 100, clase: 'registrado', verificado: true }),
+    ],
+    aceptarGastoIds: ['1', '2'],
+  });
+  assert.deepEqual(elegidos, []);
+});

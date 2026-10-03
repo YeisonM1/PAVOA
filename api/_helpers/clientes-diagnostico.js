@@ -185,13 +185,17 @@ const CLASES_BORRABLES = new Set(['huerfano-sin-correo', 'huerfano-con-correo'])
  * Con `confirmados` solo entra quien este en esa lista: la pasada real nunca
  * borra a nadie que no se haya visto antes en la pasada en seco.
  */
-export const elegirParaBorrar = ({ filas = [], confirmados = null } = {}) => {
+export const elegirParaBorrar = ({ filas = [], confirmados = null, aceptarGastoIds = [] } = {}) => {
   const permitidos = confirmados ? new Set(confirmados.map(String)) : null;
+  // Un cliente sin pedidos pero con gasto registrado tuvo pedidos que luego se
+  // borraron: hay plata a su nombre. Solo se acepta si una persona lo revisó y
+  // lo nombró aqui, uno por uno. Las demas condiciones no se relajan.
+  const gastoAceptado = new Set(aceptarGastoIds.map(String));
 
   return filas.filter((f) =>
     CLASES_BORRABLES.has(f.clase) &&
     f.pedidos === 0 &&
-    f.gastado === 0 &&
+    (f.gastado === 0 || gastoAceptado.has(String(f.id))) &&
     f.verificado === null &&
     (!permitidos || permitidos.has(String(f.id))),
   );
