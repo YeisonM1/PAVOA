@@ -1,10 +1,8 @@
 import crypto from 'crypto';
 import { emailDespacho, emailEntregado, emailPedidoCancelado } from './_helpers/email-templates.js';
-import { getShopifyToken } from './_helpers/shopify-token.js';
 import { sendTransactionalEmail } from './_helpers/mail.js';
 import { supabase, getSupabaseMode } from './_helpers/supabase.js';
 
-const SHOPIFY_DOMAIN = process.env.VITE_SHOPIFY_DOMAIN;
 const SHOPIFY_SECRET = process.env.SHOPIFY_WEBHOOK_SECRET;
 const MAX_WEBHOOK_BYTES = 1024 * 1024;
 
@@ -90,54 +88,6 @@ const readRawBody = async (req) => {
   return Buffer.concat(chunks);
 };
 
-const restockRefund = async (refund) => {
-  const itemsParaRestock = (refund.refund_line_items || []).filter(
-    rli => rli.quantity > 0
-  );
-
-  if (itemsParaRestock.length === 0) {
-    console.log(`ℹ️ Refund ${refund.id} — sin items con cantidad para restock`);
-    return;
-  }
-
-  const token = await getShopifyToken();
-
-  for (const rli of itemsParaRestock) {
-    const variantId       = rli.line_item?.variant_id;
-    const cantidad        = rli.quantity;
-    const inventoryItemId = rli.line_item?.inventory_item_id;
-    const locationId      = rli.location_id;
-
-    if (!cantidad) continue;
-    if (!inventoryItemId || !locationId) {
-      console.warn(`⚠️ Variante ${variantId} sin inventory_item_id o location_id en payload`);
-      continue;
-    }
-
-    const resAdj = await fetch(
-      `https://${SHOPIFY_DOMAIN}/admin/api/2026-04/inventory_levels/adjust.json`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type':           'application/json',
-          'X-Shopify-Access-Token': token,
-        },
-        body: JSON.stringify({
-          inventory_item_id:    inventoryItemId,
-          location_id:          locationId,
-          available_adjustment: cantidad,
-        }),
-      }
-    );
-
-    if (resAdj.ok) {
-      console.log(`✅ Restock: variante ${variantId} +${cantidad} unidades`);
-    } else {
-      const err = await resAdj.text();
-      console.error(`❌ Error restockeando variante ${variantId}: ${err}`);
-    }
-  }
-};
 
 const formatMoney = (value) => Number(value || 0).toLocaleString('es-CO');
 
@@ -606,7 +556,13 @@ export default async function handler(req, res) {
     return res.status(200).send('OK');
   }
 
-  // ── Refund: restock de inventario ────────────────────────
+  // ── Refund ───────────────────────────────────────────────
+  // Aqui no se toca el inventario. Hasta octubre de 2026 este aviso le sumaba
+  // a mano las unidades reembolsadas, pero Shopify ya las devuelve cuando la
+  // duena marca "Reabastecer" al reembolsar —las ordenes reclaman inventario al
+  // crearse— y las dos cosas juntas devolvian cada prenda dos veces. No se
+  // notaba porque el webhook apuntaba a una direccion muerta y nunca corrio.
+  // Shopify decide segun lo que ella elija; nosotros solo registramos.
   if (topic !== 'refunds/create') {
     return res.status(200).send('OK');
   }
@@ -615,12 +571,6 @@ export default async function handler(req, res) {
   const orderId = refund.order_id;
 
   console.log(`📩 Refund recibido | orden: ${orderId} | refund: ${refund.id}`);
-
-  try {
-    await restockRefund(refund);
-  } catch (err) {
-    console.error('❌ Error procesando restock:', err.message);
-  }
 
   try {
     await handleRefundCreated(refund);

@@ -56,3 +56,13 @@ test('el inventario se reclama por variante, que es donde Shopify lo cuenta', ()
   assert.ok(lineas, 'deben existir las lineas de la orden');
   assert.match(lineas, /variant_id: li\.variant_id/);
 });
+
+test('un reembolso no suma unidades a mano: eso lo hace Shopify', () => {
+  // Las ordenes reclaman inventario al crearse, asi que Shopify devuelve las
+  // unidades cuando se reembolsa con "Reabastecer". Sumarlas tambien aqui las
+  // devolvia dos veces. Ningun aviso de Shopify debe ajustar inventario.
+  const webhook = readFileSync(new URL('../webhook-shopify.js', import.meta.url), 'utf8');
+  assert.doesNotMatch(webhook, /inventory_levels\/adjust/);
+  assert.doesNotMatch(webhook, /available_adjustment/);
+  assert.doesNotMatch(webhook, /inventoryAdjustQuantities/);
+});
