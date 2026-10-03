@@ -13,7 +13,12 @@ import {
 } from './_helpers/email-templates.js';
 import { supabase } from './_helpers/supabase.js';
 import { crearClienteShopify } from './_helpers/shopify-customer.js';
-import { diagnosticarClientes, traerClientesShopify } from './_helpers/clientes-diagnostico.js';
+import {
+  borrarClientes,
+  diagnosticarClientes,
+  elegirParaBorrar,
+  traerClientesShopify,
+} from './_helpers/clientes-diagnostico.js';
 import { getShopifyToken } from './_helpers/shopify-token.js';
 import { consumeRateLimit, getClientIp } from './_helpers/durable-security.js';
 
@@ -318,6 +323,62 @@ export default async function handler(req, res) {
       });
     } catch (err) {
       console.error('clientes-diagnostico fallo:', err.message);
+      return res.status(500).json({ error: err.message });
+    }
+  }
+
+  // Limpia de Shopify los clientes que dejaron las pruebas. Sin "confirmarIds"
+  // es una pasada en seco: solo dice a quien borraria. Con ellos borra, de a
+  // tandas, unicamente a quien venga en esa lista y siga cumpliendo —en ese
+  // mismo momento— no estar registrado y no tener pedidos. Irreversible:
+  // Shopify no tiene papelera para clientes.
+  if (req.body?.type === 'clientes-limpiar') {
+    const acceso = validatePreviewAccess(req);
+    if (!acceso.ok) return res.status(acceso.status).json({ error: acceso.error });
+
+    const confirmados = Array.isArray(req.body?.confirmarIds) ? req.body.confirmarIds : null;
+    const limite = Math.min(Math.max(Number(req.body?.limite) || 20, 1), 30);
+
+    try {
+      const [{ data: registrados, error: errUsuarios }, token] = await Promise.all([
+        supabase.from('usuarios').select('email, email_verified'),
+        getShopifyToken(),
+      ]);
+      if (errUsuarios) {
+        return res.status(500).json({ error: 'No se pudieron leer las cuentas.', detalle: errUsuarios.message });
+      }
+
+      const dominio = process.env.SHOPIFY_DOMAIN || process.env.VITE_SHOPIFY_DOMAIN;
+      const traidos = await traerClientesShopify({ dominio, token, conEventos: false });
+      if (!traidos.ok) return res.status(502).json({ error: traidos.error });
+      // Con la lista incompleta no se puede saber quien esta registrado ni
+      // quien compro de verdad: mejor no borrar nada.
+      if (traidos.truncado) return res.status(409).json({ error: 'Lista de clientes incompleta; no se borra nada.' });
+
+      const { clientes: filas } = diagnosticarClientes({ clientes: traidos.clientes, registrados: registrados || [] });
+      const elegidos = elegirParaBorrar({ filas, confirmados });
+
+      if (!confirmados) {
+        return res.status(200).json({
+          ok: true,
+          enSeco: true,
+          seBorrarian: elegidos.length,
+          seQuedan: filas.length - elegidos.length,
+          ids: elegidos.map((f) => f.id),
+          detalle: elegidos.map((f) => ({ id: f.id, nombre: f.nombre, correo: f.correo, clase: f.clase, creado: f.creado })),
+        });
+      }
+
+      const tanda = elegidos.slice(0, limite).map((f) => f.id);
+      const resultado = await borrarClientes({ dominio, token, ids: tanda });
+      return res.status(200).json({
+        ok: true,
+        enSeco: false,
+        ...resultado,
+        quedanPorBorrar: elegidos.length - resultado.borrados.length,
+      });
+    } catch (err) {
+      console.error('clientes-limpiar fallo:', err.message);
       return res.status(500).json({ error: err.message });
     }
   }

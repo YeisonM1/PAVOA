@@ -121,3 +121,62 @@ test('se siguen las paginas hasta el final y se dice si quedo corta', async () =
   assert.equal(r.clientes.length, 2);
   assert.equal(r.truncado, true);
 });
+
+import { elegirParaBorrar, borrarClientes } from './clientes-diagnostico.js';
+
+const fila = (campos) => ({ id: '1', clase: 'huerfano-sin-correo', pedidos: 0, gastado: 0, verificado: null, ...campos });
+
+test('nunca se elige para borrar a un registrado, aunque no haya comprado', () => {
+  const elegidos = elegirParaBorrar({
+    filas: [fila({ id: '1', clase: 'registrado', verificado: false })],
+  });
+  assert.deepEqual(elegidos, []);
+});
+
+test('nunca se elige para borrar a quien tenga pedidos o haya gastado', () => {
+  const elegidos = elegirParaBorrar({
+    filas: [
+      fila({ id: '1', clase: 'comprador', pedidos: 1 }),
+      // Un huerfano que compro entre la pasada en seco y la real deja de serlo.
+      fila({ id: '2', pedidos: 1 }),
+      fila({ id: '3', gastado: 19000 }),
+    ],
+  });
+  assert.deepEqual(elegidos, []);
+});
+
+test('se eligen los huerfanos, con o sin correo', () => {
+  const elegidos = elegirParaBorrar({
+    filas: [fila({ id: '1' }), fila({ id: '2', clase: 'huerfano-con-correo' })],
+  });
+  assert.deepEqual(elegidos.map((f) => f.id), ['1', '2']);
+});
+
+test('la pasada real solo borra a quien vino en la lista confirmada', () => {
+  // Un huerfano nuevo que aparecio despues de la pasada en seco no se ha
+  // revisado: no se toca aunque cumpla las condiciones.
+  const elegidos = elegirParaBorrar({
+    filas: [fila({ id: '1' }), fila({ id: '99' })],
+    confirmados: ['1'],
+  });
+  assert.deepEqual(elegidos.map((f) => f.id), ['1']);
+});
+
+test('un cliente que Shopify se niega a borrar se reporta y se sigue', async () => {
+  const r = await borrarClientes({
+    dominio: 'tienda',
+    token: 'secreto',
+    ids: ['1', '2'],
+    fetchImpl: async (_url, opts) => {
+      const id = JSON.parse(opts.body).variables.input.id;
+      const data = id.endsWith('/1')
+        ? { customerDelete: { deletedCustomerId: id, userErrors: [] } }
+        : { customerDelete: { deletedCustomerId: null, userErrors: [{ message: 'Customer can’t be deleted because they have orders' }] } };
+      return { ok: true, status: 200, json: async () => ({ data }) };
+    },
+  });
+
+  assert.deepEqual(r.borrados, ['1']);
+  assert.equal(r.fallidos.length, 1);
+  assert.match(r.fallidos[0].motivo, /have orders/);
+});

@@ -174,3 +174,75 @@ export const diagnosticarClientes = ({ clientes = [], registrados = [] } = {}) =
     clientes: filas,
   };
 };
+
+const CLASES_BORRABLES = new Set(['huerfano-sin-correo', 'huerfano-con-correo']);
+
+/**
+ * Decide quien se puede borrar. Las condiciones se vuelven a comprobar aqui
+ * aunque el diagnostico ya las haya mirado: entre la pasada en seco y la real
+ * pueden pasar minutos, y en ese tiempo alguien pudo registrarse o comprar.
+ *
+ * Con `confirmados` solo entra quien este en esa lista: la pasada real nunca
+ * borra a nadie que no se haya visto antes en la pasada en seco.
+ */
+export const elegirParaBorrar = ({ filas = [], confirmados = null } = {}) => {
+  const permitidos = confirmados ? new Set(confirmados.map(String)) : null;
+
+  return filas.filter((f) =>
+    CLASES_BORRABLES.has(f.clase) &&
+    f.pedidos === 0 &&
+    f.gastado === 0 &&
+    f.verificado === null &&
+    (!permitidos || permitidos.has(String(f.id))),
+  );
+};
+
+const MUTACION_BORRAR = `#graphql
+  mutation BorrarCliente($input: CustomerDeleteInput!) {
+    customerDelete(input: $input) {
+      deletedCustomerId
+      userErrors { field message }
+    }
+  }
+`;
+
+/**
+ * Borra de a pocos a la vez: cada borrado gasta cupo de la API de Shopify y una
+ * rafaga de cien lo agota. Shopify rechaza por su cuenta borrar un cliente con
+ * pedidos; si lo hace, se reporta y se sigue con el resto.
+ */
+export const borrarClientes = async ({ dominio, token, ids = [], concurrencia = 5, fetchImpl = fetch }) => {
+  const borrados = [];
+  const fallidos = [];
+
+  const borrarUno = async (id) => {
+    try {
+      const res = await fetchImpl(`https://${dominio}/admin/api/2026-04/graphql.json`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Shopify-Access-Token': token },
+        body: JSON.stringify({
+          query: MUTACION_BORRAR,
+          variables: { input: { id: `gid://shopify/Customer/${id}` } },
+        }),
+      });
+      const data = await res.json().catch(() => null);
+      const errores = [
+        ...(data?.errors || []).map((e) => e.message),
+        ...(data?.data?.customerDelete?.userErrors || []).map((e) => e.message),
+      ];
+      if (!res.ok || errores.length > 0 || !data?.data?.customerDelete?.deletedCustomerId) {
+        fallidos.push({ id, motivo: errores.join(' | ') || `Shopify ${res.status}` });
+      } else {
+        borrados.push(id);
+      }
+    } catch (err) {
+      fallidos.push({ id, motivo: err.message });
+    }
+  };
+
+  for (let i = 0; i < ids.length; i += concurrencia) {
+    await Promise.all(ids.slice(i, i + concurrencia).map(borrarUno));
+  }
+
+  return { borrados, fallidos };
+};
