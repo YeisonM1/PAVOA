@@ -13,6 +13,8 @@ import {
 } from './_helpers/email-templates.js';
 import { supabase } from './_helpers/supabase.js';
 import { crearClienteShopify } from './_helpers/shopify-customer.js';
+import { diagnosticarClientes, traerClientesShopify } from './_helpers/clientes-diagnostico.js';
+import { getShopifyToken } from './_helpers/shopify-token.js';
 import { consumeRateLimit, getClientIp } from './_helpers/durable-security.js';
 
 const CONTACT_LIMIT = 5;
@@ -282,6 +284,42 @@ export default async function handler(req, res) {
       procesados,
       siguienteOffset: procesados === limite ? desde + limite : null,
     });
+  }
+
+  // Solo lectura: cruza la lista de clientes de Shopify contra los registrados
+  // para saber de donde salen los repetidos antes de cortar o limpiar nada.
+  // "eventos": false la repite sin el historial, por si esta version de la API
+  // no lo acepta en la consulta.
+  if (req.body?.type === 'clientes-diagnostico') {
+    const acceso = validatePreviewAccess(req);
+    if (!acceso.ok) return res.status(acceso.status).json({ error: acceso.error });
+
+    try {
+      const [{ data: registrados, error: errUsuarios }, token] = await Promise.all([
+        supabase.from('usuarios').select('email, email_verified, created_at'),
+        getShopifyToken(),
+      ]);
+      if (errUsuarios) {
+        return res.status(500).json({ error: 'No se pudieron leer las cuentas.', detalle: errUsuarios.message });
+      }
+
+      const traidos = await traerClientesShopify({
+        dominio: process.env.SHOPIFY_DOMAIN || process.env.VITE_SHOPIFY_DOMAIN,
+        token,
+        conEventos: req.body?.eventos !== false,
+      });
+      if (!traidos.ok) return res.status(502).json({ error: traidos.error });
+
+      return res.status(200).json({
+        ok: true,
+        paginas: traidos.paginas,
+        listaIncompleta: traidos.truncado,
+        ...diagnosticarClientes({ clientes: traidos.clientes, registrados: registrados || [] }),
+      });
+    } catch (err) {
+      console.error('clientes-diagnostico fallo:', err.message);
+      return res.status(500).json({ error: err.message });
+    }
   }
 
   if (req.body?.type === 'newsletter-subscribe') {
