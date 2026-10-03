@@ -152,6 +152,21 @@ export const completarDraftOrder = async (draftOrderId, { financialStatus = 'pen
       email: draft.email || emailCliente,
       send_receipt: false,
       send_fulfillment_receipt: false,
+      // Sin esto Shopify no descuenta nada: POST /orders.json trae
+      // inventory_behaviour en "bypass" por defecto, o sea "no reclames
+      // inventario". draft_orders/complete si descontaba, asi que al cambiar de
+      // endpoint para callar el correo nativo de Shopify las unidades dejaron
+      // de bajar en silencio, en las compras pagadas y en las contraentrega.
+      //
+      // Se ignora la politica a proposito. Con decrement_obeying_policy Shopify
+      // responde 422 "Unable to reserve inventory" cuando la variante ya no
+      // tiene stock y su politica es negar la venta: eso tumbaria la creacion de
+      // una orden que el cliente ya pago, que es el peor desenlace posible. El
+      // carrito se valida contra el stock de Shopify en /api/pedido segundos
+      // antes, asi que vender de mas solo puede pasar en una carrera real, y
+      // entonces un inventario en negativo es informacion correcta: se debe una
+      // prenda que no hay.
+      inventory_behaviour: 'decrement_ignoring_policy',
       line_items: lineItems,
       shipping_lines: shippingLines,
       note: draft.note,
