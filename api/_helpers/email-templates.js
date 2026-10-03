@@ -19,6 +19,13 @@ const EMAIL_COLOR_BLACK = "#0B0B0B";
 const EMAIL_COLOR_CHARCOAL = "#3A3A3A";
 const EMAIL_COLOR_MUTED = "#7B746B";
 const EMAIL_COLOR_MUTED_SOFT = "#8A8175";
+// Fondos de recuadro y etiqueta en color solido, no en degradado ni rgba. Gmail
+// en modo oscuro oscurece los colores solidos y aclara el texto, pero deja los
+// degradados como estan: el recuadro quedaba beige con el texto vuelto blanco y
+// no se leia. Son la mezcla de los degradados que habia, asi que en modo claro
+// se ven igual.
+const EMAIL_COLOR_CARD = "#FBF7F2";
+const EMAIL_COLOR_BADGE = "#F2EADF";
 
 const escapeHtml = (value) =>
   String(value || "")
@@ -175,7 +182,7 @@ const renderInfoRows = (
     .join("");
 
 const renderCard = ({ content, background = "#ffffff", padding = "22px 24px" }) => `
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid ${EMAIL_COLOR_BORDER};background:${background};">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="${background}" style="border:1px solid ${EMAIL_COLOR_BORDER};background-color:${background};">
     <tr>
       <td style="padding:${padding};">
         ${content}
@@ -184,8 +191,8 @@ const renderCard = ({ content, background = "#ffffff", padding = "22px 24px" }) 
   </table>
 `;
 
-const renderTextBlock = (html) => `
-  <p style="margin:0;font-size:13px;line-height:1.8;color:${EMAIL_COLOR_CHARCOAL};font-family:${EMAIL_FONT_BODY};">
+const renderTextBlock = (html, { align = "left" } = {}) => `
+  <p style="margin:0;text-align:${align};font-size:13px;line-height:1.8;color:${EMAIL_COLOR_CHARCOAL};font-family:${EMAIL_FONT_BODY};">
     ${html}
   </p>
 `;
@@ -207,7 +214,7 @@ const renderHeroStatusCard = ({
   rowsCentered = centered,
 }) =>
   renderCard({
-    background: "linear-gradient(180deg, rgba(246,241,234,0.92), rgba(255,253,250,0.96))",
+    background: EMAIL_COLOR_CARD,
     padding: "0",
     content: `
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
@@ -232,7 +239,7 @@ const renderHeroStatusCard = ({
                 <td>
                   <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="${centered ? "margin:0 auto;" : ""}">
                     <tr>
-                      <td style="padding:10px 14px;border:1px solid rgba(223,205,180,0.9);background:rgba(238,229,216,0.72);font-size:10px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:${EMAIL_COLOR_BLACK};font-family:${EMAIL_FONT_UI};">
+                      <td style="padding:10px 14px;border:1px solid rgba(223,205,180,0.9);background:${EMAIL_COLOR_BADGE};font-size:10px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:${EMAIL_COLOR_BLACK};font-family:${EMAIL_FONT_UI};">
                         ${escapeHtml(badge)}
                       </td>
                     </tr>
@@ -430,12 +437,15 @@ const renderLayout = ({
                 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid ${EMAIL_COLOR_COFFEE_SOFT};background:#fffdfa;">
                   <tr>
                     <td align="center" class="email-hero" style="padding:44px 24px 28px;background:${EMAIL_COLOR_IVORY};border-bottom:1px solid ${EMAIL_COLOR_BORDER};">
-                      <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 auto 24px;">
+                      <!-- Placa marfil hecha con degradado: Gmail no oscurece los degradados, asi
+                           que el logo negro conserva su fondo claro en modo oscuro. En modo claro es
+                           marfil sobre el mismo marfil y no se nota. -->
+                      <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 auto 24px;background-image:linear-gradient(${EMAIL_COLOR_IVORY},${EMAIL_COLOR_IVORY});">
                         <tr>
-                          <td style="vertical-align:middle;">
+                          <td style="padding:8px 0 8px 12px;vertical-align:middle;">
                             <img src="${LOGO_URL}" alt="PAVOA" width="138" class="email-logo" style="display:block;width:138px;height:auto;">
                           </td>
-                          <td style="padding-left:14px;vertical-align:middle;">
+                          <td style="padding:8px 12px 8px 14px;vertical-align:middle;">
                             <img src="${MARK_URL}" alt="" width="28" class="email-mark" style="display:block;width:28px;height:auto;">
                           </td>
                         </tr>
@@ -641,12 +651,13 @@ export const emailDespacho = ({
 
                 <tr>
                   <td align="center" style="padding:40px 40px 32px;border-bottom:1px solid ${EMAIL_COLOR_BORDER};background:${EMAIL_COLOR_IVORY};">
-                    <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 auto;">
+                    <!-- Misma placa marfil que el encabezado general: ver renderLayout. -->
+                    <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 auto;background-image:linear-gradient(${EMAIL_COLOR_IVORY},${EMAIL_COLOR_IVORY});">
                       <tr>
-                        <td style="vertical-align:middle;">
+                        <td style="padding:8px 0 8px 12px;vertical-align:middle;">
                           <img src="${LOGO_URL}" alt="PAVOA" width="120" style="display:block;width:120px;height:auto;max-height:48px;object-fit:contain;" />
                         </td>
-                        <td style="padding-left:12px;vertical-align:middle;">
+                        <td style="padding:8px 12px 8px 12px;vertical-align:middle;">
                           <img src="${MARK_URL}" alt="" width="26" style="display:block;width:26px;height:auto;" />
                         </td>
                       </tr>
@@ -731,12 +742,12 @@ export const emailEntregado = ({ nombreCliente, orderName }) =>
     body: `Hola, ${escapeHtml(formatCustomerName(nombreCliente))}. Tu pedido <strong style="color:${EMAIL_COLOR_BLACK};">${escapeHtml(orderName)}</strong> fue entregado correctamente.`,
     afterHero:
       renderCard({
-        background: "linear-gradient(180deg, rgba(246,241,234,0.92), rgba(255,253,250,0.96))",
+        background: EMAIL_COLOR_CARD,
         content: `
           <div align="center">
             <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 auto 18px;">
               <tr>
-                <td style="padding:10px 14px;border:1px solid rgba(223,205,180,0.9);background:rgba(238,229,216,0.72);font-size:10px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:${EMAIL_COLOR_BLACK};font-family:${EMAIL_FONT_UI};">
+                <td style="padding:10px 14px;border:1px solid rgba(223,205,180,0.9);background:${EMAIL_COLOR_BADGE};font-size:10px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:${EMAIL_COLOR_BLACK};font-family:${EMAIL_FONT_UI};">
                   Entregado
                 </td>
               </tr>
@@ -773,7 +784,7 @@ export const emailPedidoCancelado = ({
     refunded: 'El reembolso ya quedó registrado. El tiempo final para verlo reflejado puede depender del medio de pago o de la entidad bancaria.',
     partially_refunded: `Este pedido tiene un reembolso parcial registrado. Si necesitas claridad sobre el valor, escríbenos a ${SUPPORT_EMAIL} y te ayudamos.`,
     paid: 'Como este pedido tenía pago aprobado, revisaremos el movimiento correspondiente y te compartiremos cualquier actualización necesaria.',
-    pending: 'Este pedido no figura como pagado completamente. Por eso no debería requerir un reembolso final.',
+    pending: 'Este pedido no tenía un pago registrado, así que no hay nada que reembolsar.',
     voided: 'El pago fue anulado correctamente antes de completarse.',
   };
   const refundCopy = refundCopyByStatus[String(refundStatus || '').trim().toLowerCase()]
@@ -811,6 +822,8 @@ export const emailPedidoCancelado = ({
         body: 'Este es el estado actualizado del pedido y de la gestión asociada al pago.',
         badge: 'Pedido cancelado',
         rows,
+        centered: true,
+        rowsCentered: false,
       }) +
       (lineItems?.length
         ? `<div style="height:18px;line-height:18px;">&nbsp;</div>${renderOrderItemsCard(lineItems)}`
@@ -819,7 +832,7 @@ export const emailPedidoCancelado = ({
       renderCard({
         content: `
           ${renderSectionHeading('Sobre el pago')}
-          ${renderTextBlock(escapeHtml(refundCopy))}
+          ${renderTextBlock(escapeHtml(refundCopy), { align: 'center' })}
         `,
       }) +
       `<div style="height:18px;line-height:18px;">&nbsp;</div>` +
@@ -884,12 +897,12 @@ export const emailContactoCliente = ({ nombre, asunto }) =>
     },
     afterHero:
       renderCard({
-        background: "linear-gradient(180deg, rgba(246,241,234,0.92), rgba(255,253,250,0.96))",
+        background: EMAIL_COLOR_CARD,
         content: `
           <div align="center">
             <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 auto 18px;">
               <tr>
-                <td style="padding:10px 14px;border:1px solid rgba(223,205,180,0.9);background:rgba(238,229,216,0.72);font-size:10px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:${EMAIL_COLOR_BLACK};font-family:${EMAIL_FONT_UI};">
+                <td style="padding:10px 14px;border:1px solid rgba(223,205,180,0.9);background:${EMAIL_COLOR_BADGE};font-size:10px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:${EMAIL_COLOR_BLACK};font-family:${EMAIL_FONT_UI};">
                   Mensaje recibido
                 </td>
               </tr>
@@ -919,7 +932,7 @@ export const emailContactoInterno = ({ nombre, contacto, asunto, mensaje }) =>
       "Correo operativo para revisar rápido quién escribió, desde qué contacto y cuál fue el mensaje recibido desde el formulario.",
     afterHero:
       renderCard({
-        background: "linear-gradient(180deg, rgba(246,241,234,0.92), rgba(255,253,250,0.96))",
+        background: EMAIL_COLOR_CARD,
         padding: "0",
         content: `
           <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
