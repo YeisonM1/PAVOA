@@ -820,12 +820,12 @@ export default async function handler(req, res) {
     const { data: bitacora, error: errBitacora } = await supabase
       .from('mp_webhook_log')
       .select('*')
-      .order('created_at', { ascending: false })
+      .order('received_at', { ascending: false })
       .limit(Math.min(100, Math.max(1, Number(req.body?.limite) || 40)));
 
     const ids = (Array.isArray(req.body?.paymentIds) ? req.body.paymentIds : [])
       .map((id) => String(id || '').trim())
-      .filter((id) => /^d+$/.test(id))
+      .filter((id) => /^\d+$/.test(id))
       .slice(0, 5);
 
     const pagos = [];
