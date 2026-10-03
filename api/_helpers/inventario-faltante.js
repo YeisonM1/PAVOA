@@ -20,7 +20,18 @@ const LIMITE_POR_PAGINA = 250;
 
 // Lo justo para la cuenta: pedir la orden completa multiplica el peso de la
 // respuesta y la funcion de Vercel se corta a los diez segundos.
-const CAMPOS = 'id,name,created_at,cancelled_at,line_items,refunds';
+const CAMPOS = 'id,name,created_at,cancelled_at,line_items,refunds,tags';
+
+// Solo las ordenes que nacieron en el storefront pasaron por POST /orders.json
+// sin reclamar inventario. Una creada a mano en el panel de Shopify, o por el
+// checkout propio de Shopify, si descuenta: contarla inflaria el descuadre.
+const ETIQUETA_STOREFRONT = 'pavoa-web';
+
+export const esOrdenDelStorefront = (orden) =>
+  String(orden?.tags || '')
+    .split(',')
+    .map((e) => e.trim().toLowerCase())
+    .includes(ETIQUETA_STOREFRONT);
 
 const siguientePagina = (linkHeader) => {
   const enlaces = String(linkHeader || '').split(',');
@@ -83,6 +94,7 @@ export const acumularDescuadre = (ordenes = []) => {
   const porVariante = new Map();
   let canceladas = 0;
   let revisadas = 0;
+  const ajenas = [];
 
   const entrada = (li) => {
     const variantId = String(li?.variant_id || '').trim();
@@ -103,6 +115,13 @@ export const acumularDescuadre = (ordenes = []) => {
   };
 
   for (const orden of ordenes) {
+    // Se nombran las que se dejan fuera. Un total que descarta cosas en silencio
+    // no se puede comprobar, y este numero se va a usar para recontar prendas.
+    if (!esOrdenDelStorefront(orden)) {
+      ajenas.push({ orden: orden?.name || String(orden?.id || ''), motivo: 'no nacio en el storefront' });
+      continue;
+    }
+
     revisadas += 1;
     const cancelada = Boolean(orden?.cancelled_at);
     if (cancelada) canceladas += 1;
@@ -134,6 +153,7 @@ export const acumularDescuadre = (ordenes = []) => {
   return {
     revisadas,
     canceladas,
+    ajenas,
     totalQueSobra: filas.reduce((suma, f) => suma + f.sobran, 0),
     porVariante: filas,
   };

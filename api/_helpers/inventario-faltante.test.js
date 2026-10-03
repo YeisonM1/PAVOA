@@ -1,7 +1,10 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { acumularDescuadre, traerOrdenesDesde } from './inventario-faltante.js';
+import { acumularDescuadre, esOrdenDelStorefront, traerOrdenesDesde } from './inventario-faltante.js';
+
+const TAGS_WEB = 'pavoa-web,mercadopago';
+const orden = (campos) => ({ tags: TAGS_WEB, ...campos });
 
 const linea = (variantId, cantidad, extra = {}) => ({
   variant_id: variantId,
@@ -22,8 +25,8 @@ const respuesta = (status, cuerpo, link = null) => ({
 
 test('lo que sobra es lo vendido', () => {
   const { totalQueSobra, porVariante } = acumularDescuadre([
-    { line_items: [linea(111, 2)] },
-    { line_items: [linea(111, 1), linea(222, 3, { variant_title: 'NEGRO / M' })] },
+    orden({ line_items: [linea(111, 2)] }),
+    orden({ line_items: [linea(111, 1), linea(222, 3, { variant_title: 'NEGRO / M' })] }),
   ]);
 
   assert.equal(totalQueSobra, 6);
@@ -35,10 +38,10 @@ test('una devolucion no cambia lo que sobra, solo se informa', () => {
   // La devolucion sube el numero de Shopify y tambien el real —la prenda vuelve
   // al estante— asi que se cancelan. Si se restara, la cuenta quedaria corta.
   const { totalQueSobra, porVariante } = acumularDescuadre([
-    {
+    orden({
       line_items: [linea(111, 2)],
       refunds: [{ refund_line_items: [{ quantity: 1, line_item: linea(111, 1) }] }],
-    },
+    }),
   ]);
 
   assert.equal(totalQueSobra, 2);
@@ -48,7 +51,7 @@ test('una devolucion no cambia lo que sobra, solo se informa', () => {
 test('una orden cancelada se cuenta aparte, no como sobrante', () => {
   // Nunca se descontó ni se devolvió nada: no mueve la diferencia.
   const { totalQueSobra, canceladas, porVariante } = acumularDescuadre([
-    { cancelled_at: '2026-08-01T10:00:00-05:00', line_items: [linea(111, 5)] },
+    orden({ cancelled_at: '2026-08-01T10:00:00-05:00', line_items: [linea(111, 5)] }),
   ]);
 
   assert.equal(totalQueSobra, 0);
@@ -58,7 +61,7 @@ test('una orden cancelada se cuenta aparte, no como sobrante', () => {
 
 test('una linea sin variante no tiene unidades que descontar', () => {
   const { totalQueSobra, porVariante } = acumularDescuadre([
-    { line_items: [{ title: 'Ajuste manual', quantity: 1, variant_id: null }] },
+    orden({ line_items: [{ title: 'Ajuste manual', quantity: 1, variant_id: null }] }),
   ]);
 
   assert.equal(totalQueSobra, 0);
@@ -67,9 +70,9 @@ test('una linea sin variante no tiene unidades que descontar', () => {
 
 test('las tallas salen ordenadas por lo que mas sobra', () => {
   const { porVariante } = acumularDescuadre([
-    { line_items: [linea(1, 1, { variant_title: 'NEGRO / S' })] },
-    { line_items: [linea(2, 9, { variant_title: 'NEGRO / L' })] },
-    { line_items: [linea(3, 4, { variant_title: 'NEGRO / M' })] },
+    orden({ line_items: [linea(1, 1, { variant_title: 'NEGRO / S' })] }),
+    orden({ line_items: [linea(2, 9, { variant_title: 'NEGRO / L' })] }),
+    orden({ line_items: [linea(3, 4, { variant_title: 'NEGRO / M' })] }),
   ]);
 
   assert.deepEqual(porVariante.map((f) => f.sobran), [9, 4, 1]);
@@ -77,8 +80,8 @@ test('las tallas salen ordenadas por lo que mas sobra', () => {
 
 test('se sigue la paginacion de Shopify hasta el final', async () => {
   const paginas = [
-    respuesta(200, { orders: [{ line_items: [linea(111, 1)] }] }, '<https://tienda/pagina2>; rel="next"'),
-    respuesta(200, { orders: [{ line_items: [linea(111, 1)] }] }),
+    respuesta(200, { orders: [orden({ line_items: [linea(111, 1)] })] }, '<https://tienda/pagina2>; rel="next"'),
+    respuesta(200, { orders: [orden({ line_items: [linea(111, 1)] })] }),
   ];
 
   const r = await traerOrdenesDesde({
@@ -118,4 +121,25 @@ test('un fallo de Shopify no se devuelve como una cuenta en cero', async () => {
 
   assert.equal(r.ok, false);
   assert.match(r.error, /401/);
+});
+
+test('una orden creada a mano en Shopify no cuenta: esa si descontó', () => {
+  // Solo las del storefront pasaron por POST /orders.json sin reclamar
+  // inventario. Sumar una del panel inflaria el descuadre y mandaria a recontar
+  // prendas que estan bien.
+  const { totalQueSobra, ajenas } = acumularDescuadre([
+    { name: '#1001', tags: 'manual', line_items: [linea(111, 7)] },
+  ]);
+
+  assert.equal(totalQueSobra, 0);
+  assert.deepEqual(ajenas, [{ orden: '#1001', motivo: 'no nacio en el storefront' }]);
+});
+
+test('la etiqueta se reconoce aunque venga con espacios o mayusculas', () => {
+  assert.equal(esOrdenDelStorefront({ tags: 'PAVOA-WEB, contraentrega' }), true);
+  assert.equal(esOrdenDelStorefront({ tags: 'pavoa-web,mercadopago' }), true);
+  assert.equal(esOrdenDelStorefront({ tags: '' }), false);
+  assert.equal(esOrdenDelStorefront({}), false);
+  // "pavoa-webhook" no es "pavoa-web": se compara la etiqueta entera.
+  assert.equal(esOrdenDelStorefront({ tags: 'pavoa-webhook' }), false);
 });

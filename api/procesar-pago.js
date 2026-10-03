@@ -832,6 +832,7 @@ export default async function handler(req, res) {
         desde,
         ordenesRevisadas: cuenta.revisadas,
         ordenesCanceladas: cuenta.canceladas,
+        ordenesAjenas: cuenta.ajenas,
         paginas: traidas.paginas,
         cuentaIncompleta: traidas.truncado,
         totalQueSobra: cuenta.totalQueSobra,
