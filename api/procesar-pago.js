@@ -25,6 +25,19 @@ const client = new mercadopago.MercadoPagoConfig({
 });
 
 const APP_URL = process.env.VITE_APP_URL || 'https://pavoa.com.co';
+
+// Mercado Pago no sigue redirecciones: un aviso mandado a una direccion que
+// redirige muere en la puerta, antes de llegar a la funcion, y ni la bitacora
+// lo registra. pavoa.com.co sin www responde 307 hacia www, asi que el aviso
+// no llego nunca. Los pedidos que si entraban los creaba la pagina de
+// confirmacion al volver la clienta con el pago ya aprobado; un PSE que seguia
+// en proceso quedaba sin orden hasta que la conciliacion lo encontraba, horas
+// despues. Paso el 1 y el 2 de octubre de 2026.
+//
+// Va fijo y no derivado de APP_URL para que ninguna variable de entorno lo
+// devuelva a una direccion que redirige. Las back_urls si pueden redirigir:
+// esas las sigue el navegador.
+const MP_NOTIFICATION_URL = 'https://www.pavoa.com.co/api/webhook-mercadopago';
 const SHOPIFY_DOMAIN = process.env.VITE_SHOPIFY_DOMAIN;
 const MP_EXPECTED_USER_ID = String(
   process.env.MP_EXPECTED_USER_ID || process.env.MP_SELLER_USER_ID || ''
@@ -595,7 +608,7 @@ const createPaymentPreference = async ({
         },
         auto_return: 'approved',
         external_reference: externalRef,
-        notification_url: `${APP_URL}/api/webhook-mercadopago`,
+        notification_url: MP_NOTIFICATION_URL,
         statement_descriptor: 'PAVOA',
       },
     });

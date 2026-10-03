@@ -5,7 +5,12 @@ import SEO from '../components/SEO';
 import { thumbImage } from '../utils/imageUrl';
 import { trackPurchase } from '../lib/analytics';
 import { getCliente } from '../services/authService';
-import { getVerifiedPaymentState } from '../utils/paymentStatus';
+import {
+  getVerifiedPaymentState,
+  INTERVALO_VERIFICACION_MS,
+  MAX_VERIFICACIONES,
+  sigueEnProceso,
+} from '../utils/paymentStatus';
 
 const formatCustomerName = (value, fallback = 'Cliente') => {
   const normalized = String(value || '').trim().replace(/\s+/g, ' ');
@@ -88,34 +93,56 @@ export default function OrdenConfirmadaPage() {
     if (!paymentIdParam) return;
 
     let cancelled = false;
+    let temporizador = null;
+    let intentos = 0;
     setVerifyingPayment(true);
 
-    fetch('/api/procesar-pago', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ type: 'mp-finalizar', paymentId: paymentIdParam, checkoutToken }),
-    })
-      .then((res) => res.json().catch(() => null))
-      .then((data) => {
-        if (cancelled) return;
-        if (!data?.ok) {
-          console.warn('[PAVOA] No se pudo verificar el pago desde la pagina de confirmacion.', data);
-          return;
-        }
-        if (data.status) setVerifiedPaymentStatus(String(data.status).toLowerCase());
-        console.info('[PAVOA] Pago verificado desde la pagina de confirmacion.', data);
+    // Antes se preguntaba una sola vez al cargar. Un PSE que llegaba aqui
+    // todavia en proceso se aprobaba un minuto despues con la clienta mirando
+    // la pagina, y la orden dependia de un aviso de Mercado Pago que no llego.
+    // Ahora se vuelve a preguntar mientras siga en proceso: mp-finalizar crea
+    // la orden por el mismo camino que el aviso, y repetirlo no duplica nada.
+    const reintentar = () => {
+      if (cancelled || intentos >= MAX_VERIFICACIONES) return;
+      temporizador = setTimeout(verificar, INTERVALO_VERIFICACION_MS);
+    };
+
+    const verificar = () => {
+      intentos += 1;
+      fetch('/api/procesar-pago', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'mp-finalizar', paymentId: paymentIdParam, checkoutToken }),
       })
-      .catch((err) => {
-        if (!cancelled) {
+        .then((res) => res.json().catch(() => null))
+        .then((data) => {
+          if (cancelled) return;
+          if (!data?.ok) {
+            console.warn('[PAVOA] No se pudo verificar el pago desde la pagina de confirmacion.', data);
+            return;
+          }
+          const estado = String(data.status || '').toLowerCase();
+          if (estado) setVerifiedPaymentStatus(estado);
+          console.info('[PAVOA] Pago verificado desde la pagina de confirmacion.', data);
+          if (sigueEnProceso(estado)) reintentar();
+        })
+        .catch((err) => {
+          if (cancelled) return;
           console.warn('[PAVOA] Error verificando pago desde la pagina de confirmacion.', err);
-        }
-      })
-      .finally(() => {
-        if (!cancelled) setVerifyingPayment(false);
-      });
+          // Una caida de red no dice nada del pago: vale la pena volver a
+          // preguntar. Un rechazo del servidor si es respuesta y no se repite.
+          reintentar();
+        })
+        .finally(() => {
+          if (!cancelled && intentos === 1) setVerifyingPayment(false);
+        });
+    };
+
+    verificar();
 
     return () => {
       cancelled = true;
+      clearTimeout(temporizador);
     };
   }, [paymentIdParam, checkoutToken]);
 
