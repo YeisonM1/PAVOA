@@ -799,6 +799,60 @@ export default async function handler(req, res) {
     return res.status(200).json(resultado);
   }
 
+  // Solo lectura, para diagnosticar avisos que no llegan: las ultimas entradas
+  // de la bitacora y, por cada pago pedido, lo que Mercado Pago tiene de el —
+  // cuando lo aprobo y a que URL quedo mandando sus avisos. Sin datos del
+  // pagador: no hacen falta para saber si el aviso llego.
+  if (req.body?.type === 'mp-bitacora') {
+    const secreto = String(process.env.PREVIEW_EMAIL_SECRET || '');
+    if (!secreto) return res.status(503).json({ error: 'No configurado.' });
+    const recibido = String(req.headers['x-preview-secret'] || '');
+    let coincide = false;
+    try {
+      const a = Buffer.from(recibido);
+      const b = Buffer.from(secreto);
+      coincide = a.length === b.length && crypto.timingSafeEqual(a, b);
+    } catch {
+      coincide = false;
+    }
+    if (!coincide) return res.status(401).json({ error: 'No autorizado.' });
+
+    const { data: bitacora, error: errBitacora } = await supabase
+      .from('mp_webhook_log')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(Math.min(100, Math.max(1, Number(req.body?.limite) || 40)));
+
+    const ids = (Array.isArray(req.body?.paymentIds) ? req.body.paymentIds : [])
+      .map((id) => String(id || '').trim())
+      .filter((id) => /^d+$/.test(id))
+      .slice(0, 5);
+
+    const pagos = [];
+    for (const id of ids) {
+      const r = await mpFetchJson(`https://api.mercadopago.com/v1/payments/${id}`);
+      pagos.push(r.ok
+        ? {
+            id,
+            status: r.data?.status,
+            status_detail: r.data?.status_detail,
+            metodo: r.data?.payment_method_id,
+            tipo: r.data?.payment_type_id,
+            creado: r.data?.date_created,
+            aprobado: r.data?.date_approved,
+            ultimaActualizacion: r.data?.date_last_updated,
+            notification_url: r.data?.notification_url || null,
+          }
+        : { id, error: r.error, status: r.status });
+    }
+
+    return res.status(200).json({
+      ok: true,
+      bitacora: errBitacora ? { error: errBitacora.message } : bitacora,
+      pagos,
+    });
+  }
+
   // Cuenta cuanto inventario sobra en Shopify por no haberse descontado nunca.
   // Vive aqui, con los otros trabajos de mantenimiento, porque comparte el mismo
   // candado por secreto y el plan Hobby no deja abrir otra funcion en api/.
