@@ -8,6 +8,8 @@ import SkeletonCard from '../components/SkeletonCard';
 import { getProductos, getCategoriaById } from '../services/productService';
 import SEO from '../components/SEO';
 import { heroImage, heroSrcSetMobile } from '../utils/imageUrl';
+import { productosPorPagina } from '../utils/catalogoPaginas';
+import { useColumnasCatalogo } from '../hooks/useColumnasCatalogo';
 
 const CATEGORY_GROUPS = {
   mujer: {
@@ -43,8 +45,6 @@ const CATEGORY_GROUPS = {
     },
   },
 };
-
-const PRODUCTS_PER_PAGE = 9;
 
 const normalizeTag = (value) => String(value || '')
   .normalize('NFD')
@@ -97,6 +97,7 @@ export default function CategoriaPage() {
   const [tallasFiltro, setTallasFiltro]   = useState([]);
   const [coloresFiltro, setColoresFiltro] = useState([]);
   const [currentPage, setCurrentPage]     = useState(1);
+  const columnasCatalogo = useColumnasCatalogo();
   const productsSectionRef = useRef(null);
 
   useEffect(() => {
@@ -195,13 +196,18 @@ export default function CategoriaPage() {
 
   const hayFiltrosActivos = tallasFiltro.length > 0 || coloresFiltro.length > 0;
 
-  const totalPages = Math.ceil(productosFiltrados.length / PRODUCTS_PER_PAGE);
+  // Ocho en celular y tablet (dos columnas), nueve en computador (tres): asi
+  // ninguna prenda queda sola en la ultima fila.
+  const porPagina = productosPorPagina(columnasCatalogo);
+  const totalPages = Math.ceil(productosFiltrados.length / porPagina);
   const productosPaginados = useMemo(() => {
-    const start = (currentPage - 1) * PRODUCTS_PER_PAGE;
-    return productosFiltrados.slice(start, start + PRODUCTS_PER_PAGE);
-  }, [currentPage, productosFiltrados]);
+    const start = (currentPage - 1) * porPagina;
+    return productosFiltrados.slice(start, start + porPagina);
+  }, [currentPage, productosFiltrados, porPagina]);
 
-  useEffect(() => { setCurrentPage(1); }, [productosFiltrados]);
+  // Si cambia cuantas caben por pagina —se giro el celular— la pagina actual
+  // puede dejar de existir: se vuelve a la primera.
+  useEffect(() => { setCurrentPage(1); }, [productosFiltrados, porPagina]);
 
   const goToPage = (page) => {
     if (page < 1 || page > totalPages || page === currentPage) return;
