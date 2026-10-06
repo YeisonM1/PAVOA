@@ -24,3 +24,18 @@ test('un valor raro no deja la pagina vacia', () => {
   assert.equal(productosPorPagina(0), 9);
   assert.equal(productosPorPagina(undefined), 9);
 });
+
+test('la ultima prenda queda sola solo cuando sobra una', async () => {
+  const { quedaSolaEnSuFila } = await import('./catalogoPaginas.js');
+
+  // Pagina 2 de hoy en celular: Chaqueta, Licra y Top Bela.
+  assert.equal(quedaSolaEnSuFila(3, 2), true);
+  assert.equal(quedaSolaEnSuFila(3, 1), false);
+
+  // Paginas parejas: nadie queda solo.
+  assert.equal(quedaSolaEnSuFila(8, 7), false);
+  assert.equal(quedaSolaEnSuFila(2, 1), false);
+
+  // Una sola prenda en la pagina tambien se centra.
+  assert.equal(quedaSolaEnSuFila(1, 0), true);
+});

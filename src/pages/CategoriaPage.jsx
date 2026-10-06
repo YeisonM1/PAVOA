@@ -8,7 +8,7 @@ import SkeletonCard from '../components/SkeletonCard';
 import { getProductos, getCategoriaById } from '../services/productService';
 import SEO from '../components/SEO';
 import { heroImage, heroSrcSetMobile } from '../utils/imageUrl';
-import { productosPorPagina } from '../utils/catalogoPaginas';
+import { productosPorPagina, quedaSolaEnSuFila } from '../utils/catalogoPaginas';
 import { useColumnasCatalogo } from '../hooks/useColumnasCatalogo';
 
 const CATEGORY_GROUPS = {
@@ -356,8 +356,20 @@ export default function CategoriaPage() {
             {productosFiltrados.length > 0 ? (
               <>
                 <div className="grid grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-12 md:gap-x-8 md:gap-y-16">
-                  {productosPaginados.map(p => (
-                    <ProductCard key={p.id} producto={p} />
+                  {productosPaginados.map((p, i) => (
+                    // En dos columnas, la ultima que queda sola se centra: ocupa
+                    // la fila entera pero se muestra con el ancho de una columna
+                    // (la mitad, menos el espacio entre columnas: 1rem, y 2rem
+                    // desde md). En tres columnas se ve como cualquier otra.
+                    quedaSolaEnSuFila(productosPaginados.length, i) ? (
+                      <div key={p.id} className="col-span-2 lg:col-span-1">
+                        <div className="mx-auto w-[calc((100%_-_1rem)/2)] md:w-[calc((100%_-_2rem)/2)] lg:w-full">
+                          <ProductCard producto={p} />
+                        </div>
+                      </div>
+                    ) : (
+                      <ProductCard key={p.id} producto={p} />
+                    )
                   ))}
                 </div>
                 {totalPages > 1 && (
