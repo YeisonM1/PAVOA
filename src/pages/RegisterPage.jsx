@@ -41,7 +41,7 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen flex" style={{ backgroundColor: '#F2E4E1' }}>
+    <div className="min-h-screen flex" style={{ backgroundColor: '#EDE6DA' }}>
       <SEO title="Crear cuenta" url="/register" noIndex />
 
       {/* ── LADO IZQUIERDO — decorativo (solo desktop) ── */}

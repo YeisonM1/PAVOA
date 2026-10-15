@@ -259,7 +259,7 @@ export default function OrdenConfirmadaPage() {
           <p className="text-[13px] text-stone-500 leading-relaxed tracking-[0.05em]">{message}</p>
         </div>
 
-        <div className="bg-[#F2E4E1] px-6 py-5 mb-10 flex items-center justify-between">
+        <div className="bg-[#EDE6DA] px-6 py-5 mb-10 flex items-center justify-between">
           <div>
             <p className="text-[9px] tracking-[0.25em] text-stone-400 uppercase mb-1">Referencia de pago</p>
             <p className="text-[13px] font-semibold text-stone-900 tracking-[0.08em]">MP #{paymentId}</p>

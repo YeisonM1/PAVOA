@@ -103,7 +103,7 @@ export default function GuiaTallasModal({ onClose }) {
           <div className="w-full h-[1px] bg-stone-100 my-6" />
 
           {/* Talla única */}
-          <div className="bg-[#F2E4E1] px-5 py-4">
+          <div className="bg-[#EDE6DA] px-5 py-4">
             <p className="text-[9px] font-bold tracking-[0.25em] text-stone-700 uppercase mb-1">Talla Única</p>
             <p className="text-[11px] text-stone-600 leading-relaxed">
               Nuestras piezas de talla única están diseñadas para adaptarse a cuerpos entre S y L, con tejidos de alta elasticidad que se moldean a tu figura.

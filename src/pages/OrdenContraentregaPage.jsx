@@ -80,7 +80,7 @@ export default function OrdenContraentregaPage() {
           </p>
         </div>
 
-        <div className="bg-[#F2E4E1] px-6 py-5 mb-10 flex items-center justify-between flex-wrap gap-3">
+        <div className="bg-[#EDE6DA] px-6 py-5 mb-10 flex items-center justify-between flex-wrap gap-3">
           {orderName && (
             <div>
               <p className="text-[9px] tracking-[0.25em] text-stone-400 uppercase mb-1">Número de pedido</p>

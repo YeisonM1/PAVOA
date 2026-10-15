@@ -110,7 +110,7 @@ export default function AyudaMenu({ ayudaOpen, setAyudaOpen, isScrolled, panelRe
             )}
             <div style={{
               position: 'absolute', inset: 0,
-              background: 'linear-gradient(to top, rgba(242,228,225,0.92) 0%, rgba(242,228,225,0.2) 60%, transparent 100%)',
+              background: 'linear-gradient(to top, rgba(237,230,218,0.92) 0%, rgba(237,230,218,0.2) 60%, transparent 100%)',
             }} />
             <div style={{ position: 'absolute', bottom: 28, left: 28, right: 16 }}>
               <p style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.32em', color: 'var(--color-black)', marginBottom: 8 }}>{menu.soporte.eyebrow}</p>

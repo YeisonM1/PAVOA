@@ -7,7 +7,7 @@ export default function VerifyEmailPage() {
   const email = state?.email || 'tu correo';
 
   return (
-    <div className="min-h-screen flex" style={{ backgroundColor: '#F2E4E1' }}>
+    <div className="min-h-screen flex" style={{ backgroundColor: '#EDE6DA' }}>
       <SEO title="Verifica tu correo — PAVOA" url="/verify-email" noIndex />
 
       {/* ── LADO IZQUIERDO — decorativo (solo desktop) ── */}

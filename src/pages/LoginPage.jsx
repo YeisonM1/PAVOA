@@ -32,7 +32,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex" style={{ backgroundColor: '#F2E4E1' }}>
+    <div className="min-h-screen flex" style={{ backgroundColor: '#EDE6DA' }}>
       <SEO title="Iniciar sesión" url="/login" noIndex />
 
       {/* ── LADO IZQUIERDO — decorativo (solo desktop) ── */}

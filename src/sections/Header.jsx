@@ -113,7 +113,7 @@ const Header = () => {
           isScrolled ? 'border-white/10 py-1 md:py-2 shadow-lg' : 'border-transparent py-2 md:py-4'
         } backdrop-blur-md`}
         style={{
-          background: isScrolled ? 'rgba(242, 228, 225, 0.98)' : 'rgba(242, 228, 225, 0.92)',
+          background: isScrolled ? 'rgba(237, 230, 218, 0.98)' : 'rgba(237, 230, 218, 0.92)',
           transition: 'background 500ms, box-shadow 500ms, padding 500ms',
         }}
       >
@@ -326,7 +326,7 @@ const Header = () => {
                       : 'opacity-0 -translate-y-2 invisible pointer-events-none'
                   }`}
                   style={{
-                    background: 'rgba(242, 228, 225, 0.98)',
+                    background: 'rgba(237, 230, 218, 0.98)',
                     border: '1px solid var(--color-border)',
                     borderTop: '2px solid var(--color-gold)',
                     boxShadow: '0 8px 40px rgba(11,11,11,0.10)',

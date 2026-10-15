@@ -27,7 +27,7 @@ export default function VerifyPage() {
   }, []);
 
   return (
-    <div className="min-h-screen flex" style={{ backgroundColor: '#F2E4E1' }}>
+    <div className="min-h-screen flex" style={{ backgroundColor: '#EDE6DA' }}>
 
       {/* Panel izquierdo */}
       <div className="hidden lg:flex lg:w-1/2 flex-col justify-between p-16" style={{ backgroundColor: '#0B0B0B' }}>
