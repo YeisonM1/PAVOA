@@ -113,9 +113,7 @@ const Header = () => {
           isScrolled ? 'border-white/10 py-1 md:py-2 shadow-lg' : 'border-transparent py-2 md:py-4'
         } backdrop-blur-md`}
         style={{
-          // #EBE48A, pedido por la duena solo para la barra del nav. Los menus
-          // desplegables y el resto de la pagina siguen en el beige #EDE6DA.
-          background: isScrolled ? 'rgba(235, 228, 138, 0.98)' : 'rgba(235, 228, 138, 0.92)',
+          background: isScrolled ? 'rgba(237, 230, 218, 0.98)' : 'rgba(237, 230, 218, 0.92)',
           transition: 'background 500ms, box-shadow 500ms, padding 500ms',
         }}
       >
