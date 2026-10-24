@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { categoriaHref, leerGenero } from './categoriaGenero.js';
+import { categoriaHref, generoDeProducto, leerGenero } from './categoriaGenero.js';
 
 test('el link del menu lleva el lado de Mujer u Hombre', () => {
   assert.equal(categoriaHref('Camisetas', 'mujer'), '/categoria/camisetas?genero=mujer');
@@ -18,4 +18,12 @@ test('solo acepta mujer u hombre desde la URL', () => {
   assert.equal(leerGenero(' mujer '), 'mujer');
   assert.equal(leerGenero('unisex'), null);
   assert.equal(leerGenero(null), null);
+});
+
+test('la ficha del producto vuelve al lado de su genero', () => {
+  assert.equal(generoDeProducto(['hombre', 'nuevo']), 'hombre');
+  assert.equal(generoDeProducto(['Masculino']), 'hombre');
+  assert.equal(generoDeProducto(['bestseller']), 'mujer');
+  assert.equal(generoDeProducto(['unisex', 'hombre']), null);
+  assert.equal(generoDeProducto(undefined), 'mujer');
 });

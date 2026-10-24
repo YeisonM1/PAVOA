@@ -7,6 +7,15 @@ export const leerGenero = (valor) => {
   return GENEROS_CATALOGO.includes(genero) ? genero : null;
 };
 
+// Para volver desde la ficha al lado del menu de donde es el producto.
+export const generoDeProducto = (tags) => {
+  const normalizados = (Array.isArray(tags) ? tags : [])
+    .map((tag) => String(tag || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim());
+  if (normalizados.includes('unisex')) return null;
+  if (normalizados.includes('hombre') || normalizados.includes('masculino')) return 'hombre';
+  return 'mujer';
+};
+
 export const categoriaHref = (item, genero) => {
   const base = `/categoria/${String(item).toLowerCase()}`;
   return leerGenero(genero) ? `${base}?genero=${genero}` : base;

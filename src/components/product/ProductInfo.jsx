@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useWishlist } from '../../context/WishlistContext';
+import { categoriaHref, generoDeProducto } from '../../utils/categoriaGenero';
 
 const normalizeDescription = (value) =>
   String(value || '')
@@ -71,7 +72,7 @@ export default function ProductInfo({
           <span className="mx-2">/</span>
           {producto.categoria && (
             <>
-              <Link to={`/categoria/${producto.categoria.toLowerCase()}`} className="hover:text-stone-900 transition-colors">
+              <Link to={categoriaHref(producto.categoria, generoDeProducto(producto.tags))} className="hover:text-stone-900 transition-colors">
                 {producto.categoria}
               </Link>
               <span className="mx-2">/</span>

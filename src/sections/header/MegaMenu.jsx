@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { categoriaHref } from '../../utils/categoriaGenero';
+import { getMegamenuImage } from '../../utils/megamenuImages';
 
 const defaultImage = 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=800&q=80';
 
@@ -9,7 +10,9 @@ const defaultImage = 'https://images.unsplash.com/photo-1490481651871-ab68de25d4
 export default function MegaMenu({ catalogoOpen, setCatalogoOpen, isScrolled, panelRef, megamenuConfig }) {
   const [hoveredItem, setHoveredItem] = useState(null);
   const [hoveredGenero, setHoveredGenero] = useState(null);
-  const activeImage = hoveredItem ? (megamenuConfig?.images?.[hoveredItem] || defaultImage) : defaultImage;
+  const activeImage = hoveredItem
+    ? (getMegamenuImage(megamenuConfig, hoveredGenero, hoveredItem) || defaultImage)
+    : defaultImage;
 
   const HEADER_H_DEFAULT  = '116px';
   const HEADER_H_SCROLLED = '100px';

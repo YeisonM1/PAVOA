@@ -130,7 +130,12 @@ export default function CategoriaPage() {
           : todosLosProductos;
         setProductosDB(filtrados);
 
-        let infoCategoria = await getCategoriaById(categoriaIdBusqueda);
+        // Camisetas de Mujer y de Hombre tienen cada una su portada en pavoa-control.
+        let infoCategoria = generoMenu && !groupedCategory
+          ? await getCategoriaById(`${categoriaIdBusqueda} ${generoMenu}`)
+          : null;
+        if (cancelled) return;
+        if (!infoCategoria) infoCategoria = await getCategoriaById(categoriaIdBusqueda);
         if (cancelled) return;
         if (!infoCategoria && groupedCategory?.header) infoCategoria = groupedCategory.header;
         if (!infoCategoria) infoCategoria = await getCategoriaById('default');
