@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { InstagramIcon, WhatsAppIcon } from '../../components/Icons';
 import { buildWhatsAppUrl } from '../../utils/whatsapp';
+import { categoriaHref } from '../../utils/categoriaGenero';
 
 const hombreItems = ['Pantalonetas', 'Camisetas', 'Buzos', 'Joggers'];
 
@@ -91,7 +92,7 @@ export default function MobileMenu({
               <p style={{ fontSize: 8.5, fontWeight: 600, letterSpacing: '0.28em', color: 'var(--color-gold)', marginBottom: 8, paddingLeft: 8 }}>SUPERIOR</p>
               <div className="flex flex-col gap-1">
                 {['Camisetas', 'Tops Deportivos', 'Buzos', 'Chaquetas', 'Bodies', 'Enterizos'].map(item => (
-                  <Link key={item} to={`/categoria/${item.toLowerCase()}`} onClick={() => { setMenuOpen(false); window.scrollTo(0, 0); }} className="block py-3 px-2 rounded-lg text-[12px] font-medium tracking-[0.15em] text-stone-800 active:bg-stone-100/60 transition-colors">{item.toUpperCase()}</Link>
+                  <Link key={item} to={categoriaHref(item, 'mujer')} onClick={() => { setMenuOpen(false); window.scrollTo(0, 0); }} className="block py-3 px-2 rounded-lg text-[12px] font-medium tracking-[0.15em] text-stone-800 active:bg-stone-100/60 transition-colors">{item.toUpperCase()}</Link>
                 ))}
               </div>
             </div>
@@ -99,7 +100,7 @@ export default function MobileMenu({
               <p style={{ fontSize: 8.5, fontWeight: 600, letterSpacing: '0.28em', color: 'var(--color-gold)', marginBottom: 8, paddingLeft: 8 }}>INFERIOR</p>
               <div className="flex flex-col gap-1">
                 {['Licras', 'Shorts', 'Faldas', 'Sudaderas', 'Bikers', 'Pantalonetas'].map(item => (
-                  <Link key={item} to={`/categoria/${item.toLowerCase()}`} onClick={() => { setMenuOpen(false); window.scrollTo(0, 0); }} className="block py-3 px-2 rounded-lg text-[12px] font-medium tracking-[0.15em] text-stone-800 active:bg-stone-100/60 transition-colors">{item.toUpperCase()}</Link>
+                  <Link key={item} to={categoriaHref(item, 'mujer')} onClick={() => { setMenuOpen(false); window.scrollTo(0, 0); }} className="block py-3 px-2 rounded-lg text-[12px] font-medium tracking-[0.15em] text-stone-800 active:bg-stone-100/60 transition-colors">{item.toUpperCase()}</Link>
                 ))}
               </div>
             </div>
@@ -107,7 +108,7 @@ export default function MobileMenu({
               <p style={{ fontSize: 8.5, fontWeight: 600, letterSpacing: '0.28em', color: 'var(--color-gold)', marginBottom: 8, paddingLeft: 8 }}>OTROS</p>
               <div className="flex flex-col gap-1">
                 {['Sets', 'Vestidos', 'Accesorios'].map(item => (
-                  <Link key={item} to={`/categoria/${item.toLowerCase()}`} onClick={() => { setMenuOpen(false); window.scrollTo(0, 0); }} className="block py-3 px-2 rounded-lg text-[12px] font-medium tracking-[0.15em] text-stone-800 active:bg-stone-100/60 transition-colors">{item.toUpperCase()}</Link>
+                  <Link key={item} to={categoriaHref(item, 'mujer')} onClick={() => { setMenuOpen(false); window.scrollTo(0, 0); }} className="block py-3 px-2 rounded-lg text-[12px] font-medium tracking-[0.15em] text-stone-800 active:bg-stone-100/60 transition-colors">{item.toUpperCase()}</Link>
                 ))}
               </div>
             </div>
@@ -117,7 +118,7 @@ export default function MobileMenu({
         {mobileTab === 'hombre' && (
           <div className="flex flex-col gap-1 animate-fade-in">
             {hombreItems.map(item => (
-              <Link key={item} to={`/categoria/${item.toLowerCase()}`} onClick={() => { setMenuOpen(false); window.scrollTo(0, 0); }} className="block py-3 px-2 rounded-lg text-[12px] font-medium tracking-[0.15em] text-stone-800 active:bg-stone-100/60 transition-colors">{item.toUpperCase()}</Link>
+              <Link key={item} to={categoriaHref(item, 'hombre')} onClick={() => { setMenuOpen(false); window.scrollTo(0, 0); }} className="block py-3 px-2 rounded-lg text-[12px] font-medium tracking-[0.15em] text-stone-800 active:bg-stone-100/60 transition-colors">{item.toUpperCase()}</Link>
             ))}
           </div>
         )}

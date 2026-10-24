@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { parsePrice } from '../utils/price';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, useSearchParams, Link } from 'react-router-dom';
 import FilterDrawer from '../sections/FilterDrawer';
 import ProductCard from '../components/ProductCard';
 import SkeletonCard from '../components/SkeletonCard';
@@ -10,6 +10,7 @@ import SEO from '../components/SEO';
 import { heroImage, heroSrcSetMobile } from '../utils/imageUrl';
 import { productosPorPagina, quedaSolaEnSuFila } from '../utils/catalogoPaginas';
 import { useColumnasCatalogo } from '../hooks/useColumnasCatalogo';
+import { leerGenero } from '../utils/categoriaGenero';
 
 const CATEGORY_GROUPS = {
   mujer: {
@@ -28,6 +29,7 @@ const CATEGORY_GROUPS = {
   },
   superior: {
     categorias: ['tops deportivos', 'camisetas'],
+    gender: 'mujer',
     header: {
       titulo1: 'Tops y ',
       titulo2: 'Camisetas',
@@ -84,6 +86,8 @@ function SkeletonHero() {
 
 export default function CategoriaPage() {
   const { id } = useParams();
+  const [searchParams] = useSearchParams();
+  const generoMenu = leerGenero(searchParams.get('genero'));
 
   const [productosDB, setProductosDB] = useState([]);
   const [dataHeader, setDataHeader]   = useState(null);
@@ -115,10 +119,13 @@ export default function CategoriaPage() {
         const filtrados = categoriaIdBusqueda !== 'default'
           ? todosLosProductos.filter((p) => {
               const categoria = p.categoria?.toLowerCase().trim() || '';
-              return groupedCategory
-                ? groupedCategory.categorias.includes(categoria)
-                  && (!groupedCategory.gender || productMatchesGender(p, groupedCategory.gender))
-                : categoria === categoriaIdBusqueda;
+              if (groupedCategory) {
+                return groupedCategory.categorias.includes(categoria)
+                  && (!groupedCategory.gender || productMatchesGender(p, groupedCategory.gender));
+              }
+              // Desde el menu, Camisetas de Mujer y de Hombre no se mezclan.
+              return categoria === categoriaIdBusqueda
+                && (!generoMenu || productMatchesGender(p, generoMenu));
             })
           : todosLosProductos;
         setProductosDB(filtrados);
@@ -141,7 +148,7 @@ export default function CategoriaPage() {
     };
     cargarTodo();
     return () => { cancelled = true; };
-  }, [id]);
+  }, [id, generoMenu]);
 
   useEffect(() => {
     document.body.style.overflow = isFilterOpen ? 'hidden' : '';

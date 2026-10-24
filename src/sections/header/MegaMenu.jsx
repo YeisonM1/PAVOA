@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { categoriaHref } from '../../utils/categoriaGenero';
 
 const defaultImage = 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=800&q=80';
 
@@ -7,22 +8,23 @@ const defaultImage = 'https://images.unsplash.com/photo-1490481651871-ab68de25d4
 
 export default function MegaMenu({ catalogoOpen, setCatalogoOpen, isScrolled, panelRef, megamenuConfig }) {
   const [hoveredItem, setHoveredItem] = useState(null);
+  const [hoveredGenero, setHoveredGenero] = useState(null);
   const activeImage = hoveredItem ? (megamenuConfig?.images?.[hoveredItem] || defaultImage) : defaultImage;
 
   const HEADER_H_DEFAULT  = '116px';
   const HEADER_H_SCROLLED = '100px';
 
-  const renderDesktopLink = (item, badge = null) => {
-    const isHovered = hoveredItem === item;
+  const renderDesktopLink = (item, badge = null, genero = null) => {
+    const isHovered = hoveredItem === item && hoveredGenero === genero;
     const isDimmed  = hoveredItem && !isHovered && hoveredItem !== 'destacados';
 
     return (
       <li key={item}>
         <Link
-          to={`/categoria/${item.toLowerCase()}`}
+          to={categoriaHref(item, genero)}
           onClick={() => { setCatalogoOpen(false); window.scrollTo(0, 0); }}
-          onMouseEnter={() => setHoveredItem(item)}
-          onMouseLeave={() => setHoveredItem(null)}
+          onMouseEnter={() => { setHoveredItem(item); setHoveredGenero(genero); }}
+          onMouseLeave={() => { setHoveredItem(null); setHoveredGenero(null); }}
           className={`flex items-center gap-2.5 py-1.5 relative transition-all duration-300 ease-out ${
             isDimmed ? 'opacity-35' : 'opacity-100'
           } ${isHovered ? 'translate-x-1.5' : 'translate-x-0'}`}
@@ -99,7 +101,7 @@ export default function MegaMenu({ catalogoOpen, setCatalogoOpen, isScrolled, pa
                 <div>
                   <p style={{ fontSize: 7.5, fontWeight: 600, letterSpacing: '0.2em', color: 'var(--color-charcoal)', opacity: 0.5, marginBottom: 8 }}>SUPERIOR</p>
                   <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 0 }}>
-                    {megamenuConfig.mujerSuperior.map(i => renderDesktopLink(i.label, i.badge))}
+                    {megamenuConfig.mujerSuperior.map(i => renderDesktopLink(i.label, i.badge, 'mujer'))}
                   </ul>
                 </div>
               )}
@@ -107,7 +109,7 @@ export default function MegaMenu({ catalogoOpen, setCatalogoOpen, isScrolled, pa
                 <div>
                   <p style={{ fontSize: 7.5, fontWeight: 600, letterSpacing: '0.2em', color: 'var(--color-charcoal)', opacity: 0.5, marginBottom: 8 }}>INFERIOR</p>
                   <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 0 }}>
-                    {megamenuConfig.mujerInferior.map(i => renderDesktopLink(i.label, i.badge))}
+                    {megamenuConfig.mujerInferior.map(i => renderDesktopLink(i.label, i.badge, 'mujer'))}
                   </ul>
                 </div>
               )}
@@ -115,7 +117,7 @@ export default function MegaMenu({ catalogoOpen, setCatalogoOpen, isScrolled, pa
                 <div>
                   <p style={{ fontSize: 7.5, fontWeight: 600, letterSpacing: '0.2em', color: 'var(--color-charcoal)', opacity: 0.5, marginBottom: 8 }}>OTROS</p>
                   <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 0 }}>
-                    {megamenuConfig.mujerOtros.map(i => renderDesktopLink(i.label, i.badge))}
+                    {megamenuConfig.mujerOtros.map(i => renderDesktopLink(i.label, i.badge, 'mujer'))}
                   </ul>
                 </div>
               )}
@@ -129,7 +131,7 @@ export default function MegaMenu({ catalogoOpen, setCatalogoOpen, isScrolled, pa
             <div>
               <h2 className="text-stone-700 text-[15px] font-bold tracking-[0.32em] mb-6 block whitespace-nowrap">HOMBRE</h2>
               <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 0 }}>
-                {megamenuConfig?.hombre?.map(i => renderDesktopLink(i.label, i.badge))}
+                {megamenuConfig?.hombre?.map(i => renderDesktopLink(i.label, i.badge, 'hombre'))}
               </ul>
             </div>
             <div style={{ marginTop: 'auto', paddingTop: 32, borderTop: '1px solid var(--color-border)' }}>
@@ -161,7 +163,7 @@ export default function MegaMenu({ catalogoOpen, setCatalogoOpen, isScrolled, pa
 
           {/* IMAGEN */}
           <Link
-            to={hoveredItem && hoveredItem !== 'destacados' ? `/categoria/${hoveredItem.toLowerCase()}` : '/categoria'}
+            to={hoveredItem && hoveredItem !== 'destacados' ? categoriaHref(hoveredItem, hoveredGenero) : '/categoria'}
             onClick={() => { setCatalogoOpen(false); window.scrollTo(0, 0); }}
             style={{ paddingLeft: 48, position: 'relative', height: 420, display: 'block', textDecoration: 'none' }}
           >
